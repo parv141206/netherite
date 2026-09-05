@@ -8,9 +8,54 @@ import { ThemeProvider } from "~/components/ThemeProvider";
 import "katex/dist/katex.min.css";
 
 export const metadata: Metadata = {
-  title: "Netherite | Sophisticated Monochromatic Notes",
-  description: "Sophisticated note-taking app backed by your Google Drive",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://craftnetherite.vercel.app"
+  ),
+  title: "Netherite — Sovereign Markdown Studio",
+  description:
+    "A sovereign, distraction-free markdown studio for mathematics, scientific prose, and thought. Stored 100% in your Google Drive.",
+  keywords: [
+    "markdown",
+    "katex",
+    "latex",
+    "math editor",
+    "google drive notes",
+    "sovereign notes",
+    "scientific writing",
+  ],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "Netherite — Sovereign Markdown Studio",
+    description:
+      "A sovereign, distraction-free markdown studio for mathematics, scientific prose, and thought. Backed 100% by your Google Drive.",
+    url: "https://craftnetherite.vercel.app",
+    siteName: "Netherite",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Netherite Studio",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Netherite — Sovereign Markdown Studio",
+    description:
+      "A sovereign, distraction-free markdown studio backed 100% by your Google Drive with native KaTeX.",
+    images: ["/og-image.png"],
+  },
 };
 
 const geist = Geist({

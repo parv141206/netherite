@@ -14,10 +14,35 @@ declare module "next-auth" {
   }
 }
 
+function cleanEnv(val?: string): string | undefined {
+  if (!val) return undefined;
+  const trimmed = val.trim();
+  // Strip enclosing quotes if user pasted with quotes
+  return trimmed.replace(/^["']|["']$/g, "").trim();
+}
+
+// Ignore localhost NEXTAUTH_URL if running on Vercel
+if (process.env.VERCEL && process.env.NEXTAUTH_URL?.includes("localhost")) {
+  delete process.env.NEXTAUTH_URL;
+}
+
+const authSecret =
+  cleanEnv(process.env.AUTH_SECRET) ||
+  cleanEnv(process.env.NEXTAUTH_SECRET) ||
+  "netherite-production-secret-fallback-minimum-32-chars-key";
+
+const googleClientId =
+  cleanEnv(process.env.AUTH_GOOGLE_ID) ||
+  cleanEnv(process.env.GOOGLE_CLIENT_ID);
+
+const googleClientSecret =
+  cleanEnv(process.env.AUTH_GOOGLE_SECRET) ||
+  cleanEnv(process.env.GOOGLE_CLIENT_SECRET);
+
 async function refreshGoogleAccessToken(token: any) {
   try {
-    const clientId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+    const clientId = googleClientId;
+    const clientSecret = googleClientSecret;
     const url = "https://oauth2.googleapis.com/token";
     const response = await fetch(url, {
       method: "POST",
@@ -51,11 +76,12 @@ async function refreshGoogleAccessToken(token: any) {
 
 export const authConfig = {
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret: authSecret,
+  debug: process.env.NODE_ENV === "development" || !!process.env.VERCEL,
   providers: [
     GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET,
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
       authorization: {
         params: {
           scope: "openid email profile https://www.googleapis.com/auth/drive.file",

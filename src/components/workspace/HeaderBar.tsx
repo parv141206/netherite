@@ -19,6 +19,7 @@ import {
   SunMedium,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
+import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 
 interface HeaderBarProps {
   noteTitle?: string;
@@ -196,6 +197,15 @@ export function HeaderBar({
         >
           <Menu className="w-4 h-4" />
         </button>
+
+        {sidebarCollapsed && (
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold mr-1">
+            <div className="w-5 h-5 rounded bg-foreground text-background flex items-center justify-center p-0.5 shadow-xs">
+              <NetheriteLogo size={13} className="text-background" />
+            </div>
+            <span className="tracking-widest text-[10px] font-extrabold">NETHERITE</span>
+          </div>
+        )}
 
         {/* Minimal Notion Breadcrumb or Workspace Title */}
         {cleanTitle ? (

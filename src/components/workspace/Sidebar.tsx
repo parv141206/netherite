@@ -24,6 +24,7 @@ import {
 import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
 import { signOut } from "next-auth/react";
+import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 
 function InlineRenameInput({
   initialValue,
@@ -713,8 +714,8 @@ export function Sidebar({
       {/* Notion-Style Workspace Header */}
       <div className="px-3 py-2.5 border-b border-border/40 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-5 h-5 rounded bg-foreground text-background font-bold text-xs flex items-center justify-center shrink-0">
-            N
+          <div className="w-5 h-5 rounded bg-foreground text-background flex items-center justify-center p-0.5 shrink-0 shadow-xs">
+            <NetheriteLogo size={13} className="text-background" />
           </div>
           <span className="font-semibold text-xs text-foreground truncate">
             {userSession?.user?.name ? `${userSession.user.name.split(" ")[0]}'s Notes` : "Netherite"}

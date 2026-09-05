@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import katex from "katex";
+import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 
 export function LandingPage() {
   const { theme, setTheme } = useTheme();
@@ -63,8 +64,8 @@ export function LandingPage() {
       <header className="px-6 py-4 border-b border-border/40 backdrop-blur-md sticky top-0 z-50 bg-background/80">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold text-sm shadow-md tracking-wider">
-              N
+            <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center p-1.5 shadow-md">
+              <NetheriteLogo size={18} className="text-background" />
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold tracking-widest text-xs">NETHERITE</span>
