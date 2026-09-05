@@ -2343,6 +2343,8 @@ class App extends React.Component<AppProps, AppState> {
           "excalidraw excalidraw-container notranslate",
           this.props.className,
           {
+            "theme--dark":
+              (this.props.theme || this.state.theme) === THEME.DARK,
             "excalidraw--view-mode":
               this.state.viewModeEnabled ||
               this.state.openDialog?.name === "elementLinkSelector",
@@ -3731,6 +3733,13 @@ class App extends React.Component<AppProps, AppState> {
     this.scene.onUpdate(this.triggerRender);
     this.addEventListeners();
 
+    if (this.excalidrawContainerRef.current) {
+      this.excalidrawContainerRef.current.classList.toggle(
+        "theme--dark",
+        (this.props.theme || this.state.theme) === THEME.DARK,
+      );
+    }
+
     if (this.props.autoFocus && this.excalidrawContainerRef.current) {
       this.focusContainer();
     }
@@ -4191,7 +4200,7 @@ class App extends React.Component<AppProps, AppState> {
 
     this.excalidrawContainerRef.current?.classList.toggle(
       "theme--dark",
-      this.state.theme === THEME.DARK,
+      (this.props.theme || this.state.theme) === THEME.DARK,
     );
 
     if (

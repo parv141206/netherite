@@ -161,13 +161,17 @@
     --default-icon-size: 1.25rem;
   }
 
-  &.theme--dark {
+  &.theme--dark,
+  :root.dark &,
+  :global(.dark) & {
     &.theme--dark-background-none {
       background: none;
     }
   }
 
-  &.theme--dark {
+  &.theme--dark,
+  :root.dark &,
+  :global(.dark) & {
     --theme-filter: invert(93%) hue-rotate(180deg);
     --button-destructive-bg-color: #450a0a;
     --button-destructive-color: #f87171;

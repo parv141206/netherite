@@ -48,7 +48,7 @@ export function WorkspaceLayout({
   initialContent = "",
   initialMetadata,
 }: WorkspaceLayoutProps) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return window.innerWidth < 768;
@@ -1197,7 +1197,7 @@ export function WorkspaceLayout({
                     <DrawingCanvas
                       key={activeTabId}
                       initialContent={noteContent}
-                      theme={theme === "dark" ? "dark" : "light"}
+                      theme={isDark ? "dark" : "light"}
                       onChange={(updatedContent) => {
                         setNoteContent(updatedContent);
                         if (activeTabId && typeof window !== "undefined") {
@@ -1251,7 +1251,7 @@ export function WorkspaceLayout({
                       <DrawingCanvas
                         key={splitTabId || "split-drawing"}
                         initialContent={splitNoteContent}
-                        theme={theme === "dark" ? "dark" : "light"}
+                        theme={isDark ? "dark" : "light"}
                         onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
                         onSave={() => {
                           if (splitTabId && !splitTabId.startsWith("temp-")) {

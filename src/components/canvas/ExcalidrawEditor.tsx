@@ -18,6 +18,7 @@ import {
 } from "@/features/engineering-canvas/engineering-sidebar";
 import { EngineeringBottomPanel } from "@/features/engineering-canvas/engineering-bottom-panel";
 import engineeringStyles from "@/features/engineering-canvas/engineering-sidebar.module.scss";
+import { useTheme } from "~/components/ThemeProvider";
 
 interface ExcalidrawEditorProps {
   initialContent?: string;
@@ -28,10 +29,13 @@ interface ExcalidrawEditorProps {
 
 export default function ExcalidrawEditor({
   initialContent = "",
-  theme = "dark",
+  theme: propTheme,
   onChange,
   onSave,
 }: ExcalidrawEditorProps) {
+  const { isDark } = useTheme();
+  const activeTheme = propTheme ?? (isDark ? "dark" : "light");
+
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   const [elements, setElements] = useState<readonly ExcalidrawElement[]>([]);
   const [appState, setAppState] = useState<AppState | null>(null);
@@ -46,12 +50,15 @@ export default function ExcalidrawEditor({
 
   // Parse initial content safely
   const initialData = useMemo<ExcalidrawInitialDataState>(() => {
+    const isDarkTheme = activeTheme === "dark";
+    const defaultBg = isDarkTheme ? "#09090b" : "#fcfcfc";
+
     if (!initialContent || initialContent.trim() === "") {
       return {
         elements: [],
         appState: {
-          theme: theme === "dark" ? "dark" : "light",
-          viewBackgroundColor: theme === "dark" ? "#09090b" : "#fcfcfc",
+          theme: isDarkTheme ? "dark" : "light",
+          viewBackgroundColor: defaultBg,
         },
         files: {},
       };
@@ -59,11 +66,19 @@ export default function ExcalidrawEditor({
 
     try {
       const parsed = JSON.parse(initialContent);
+      const isDefaultBg =
+        !parsed.appState?.viewBackgroundColor ||
+        parsed.appState.viewBackgroundColor === "#121212" ||
+        parsed.appState.viewBackgroundColor === "#ffffff" ||
+        parsed.appState.viewBackgroundColor === "#09090b" ||
+        parsed.appState.viewBackgroundColor === "#fcfcfc";
+
       return {
         elements: Array.isArray(parsed.elements) ? parsed.elements : [],
         appState: {
           ...(parsed.appState || {}),
-          theme: theme === "dark" ? "dark" : "light",
+          theme: isDarkTheme ? "dark" : "light",
+          ...(isDefaultBg ? { viewBackgroundColor: defaultBg } : {}),
         },
         files: parsed.files || {},
         scrollToContent: true,
@@ -73,12 +88,13 @@ export default function ExcalidrawEditor({
       return {
         elements: [],
         appState: {
-          theme: theme === "dark" ? "dark" : "light",
+          theme: isDarkTheme ? "dark" : "light",
+          viewBackgroundColor: defaultBg,
         },
         files: {},
       };
     }
-  }, [initialContent, theme]);
+  }, [initialContent, activeTheme]);
 
   const handleApi = useCallback((nextApi: ExcalidrawImperativeAPI | null) => {
     setApi(nextApi);
@@ -142,18 +158,33 @@ export default function ExcalidrawEditor({
   // Sync theme changes to Excalidraw appState when user toggles dark/light mode
   useEffect(() => {
     if (api && !api.isDestroyed) {
+      const isDarkTheme = activeTheme === "dark";
+      const targetBg = isDarkTheme ? "#09090b" : "#fcfcfc";
       const current = api.getAppState();
-      const targetTheme = theme === "dark" ? "dark" : "light";
-      if (current.theme !== targetTheme) {
+
+      const isDefaultBg =
+        !current.viewBackgroundColor ||
+        current.viewBackgroundColor === "#121212" ||
+        current.viewBackgroundColor === "#ffffff" ||
+        current.viewBackgroundColor === "#09090b" ||
+        current.viewBackgroundColor === "#fcfcfc";
+
+      if (isDefaultBg) {
         api.updateScene({
           appState: {
-            theme: targetTheme,
-            viewBackgroundColor: targetTheme === "dark" ? "#09090b" : "#fcfcfc",
+            theme: activeTheme,
+            viewBackgroundColor: targetBg,
+          },
+        });
+      } else {
+        api.updateScene({
+          appState: {
+            theme: activeTheme,
           },
         });
       }
     }
-  }, [api, theme]);
+  }, [api, activeTheme]);
 
   // Global Ctrl+S handler for sketch canvas
   useEffect(() => {
@@ -174,11 +205,16 @@ export default function ExcalidrawEditor({
   }, []);
 
   return (
-    <div className={engineeringStyles.editorShell}>
+    <div
+      className={`${engineeringStyles.editorShell} ${
+        activeTheme === "dark" ? "theme--dark" : ""
+      }`}
+    >
       <Excalidraw
         autoFocus
+        className={activeTheme === "dark" ? "theme--dark" : ""}
         initialData={initialData}
-        theme={theme === "dark" ? "dark" : "light"}
+        theme={activeTheme}
         onExcalidrawAPI={handleApi}
         onChange={handleChange}
         renderTopRightUI={() => <EngineeringSidebarTrigger />}
