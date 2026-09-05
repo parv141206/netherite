@@ -84,6 +84,18 @@ const cssInvert = (
 };
 
 export const applyDarkModeFilter = (color: string, enable = true): string => {
+  const normalized = color?.toLowerCase?.().trim();
+  const isDefaultBg =
+    normalized === "#ffffff" ||
+    normalized === "#fff" ||
+    normalized === "#fcfcfc" ||
+    normalized === "#09090b" ||
+    normalized === "#121212";
+
+  if (isDefaultBg) {
+    return enable ? "#09090b" : "#fcfcfc";
+  }
+
   if (!enable) {
     return color;
   }
