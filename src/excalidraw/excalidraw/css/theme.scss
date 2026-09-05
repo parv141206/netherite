@@ -162,16 +162,14 @@
   }
 
   &.theme--dark,
-  :root.dark &,
-  :global(.dark) & {
+  .dark & {
     &.theme--dark-background-none {
       background: none;
     }
   }
 
   &.theme--dark,
-  :root.dark &,
-  :global(.dark) & {
+  .dark & {
     --theme-filter: invert(93%) hue-rotate(180deg);
     --button-destructive-bg-color: #450a0a;
     --button-destructive-color: #f87171;
