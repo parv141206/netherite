@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#09090b" />
-  <polygon points="303.9,76.0 343.8,133.4 338.7,388.9 300.3,364.3 248.1,254.7 249.6,382.2 231.2,436.0 207.6,363.3 204.5,181.0 168.2,160.5 205.0,160.0 245.5,143.1 300.8,284.9" fill="#fafafa" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 343 703">
+  <style>
+    polygon { fill: #09090b; }
+    @media (prefers-color-scheme: dark) {
+      polygon { fill: #fafafa; }
+    }
+  </style>
+  <polygon points="265,0 343,112 333,611 258,563 156,349 159,598 123,703 77,561 71,205 0,165 72,164 151,131 259,408" />
 </svg>

@@ -64,9 +64,7 @@ export function LandingPage() {
       <header className="px-6 py-4 border-b border-border/40 backdrop-blur-md sticky top-0 z-50 bg-background/80">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center p-1.5 shadow-md">
-              <NetheriteLogo size={18} className="text-background" />
-            </div>
+            <NetheriteLogo className="h-8 w-auto text-foreground shrink-0 transition-transform duration-200 hover:scale-105" />
             <div className="flex flex-col">
               <span className="font-extrabold tracking-widest text-xs">NETHERITE</span>
               <span className="text-[10px] text-muted-foreground font-mono tracking-tight">studio</span>

@@ -5,7 +5,7 @@ interface NetheriteLogoProps extends React.SVGProps<SVGSVGElement> {
 }
 
 export function NetheriteLogo({
-  size = 24,
+  size,
   className = "",
   fill = "currentColor",
   ...props

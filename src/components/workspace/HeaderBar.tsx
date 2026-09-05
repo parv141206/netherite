@@ -199,10 +199,8 @@ export function HeaderBar({
         </button>
 
         {sidebarCollapsed && (
-          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold mr-1">
-            <div className="w-5 h-5 rounded bg-foreground text-background flex items-center justify-center p-0.5 shadow-xs">
-              <NetheriteLogo size={13} className="text-background" />
-            </div>
+          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold mr-1">
+            <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
             <span className="tracking-widest text-[10px] font-extrabold">NETHERITE</span>
           </div>
         )}
