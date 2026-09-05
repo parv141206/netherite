@@ -888,7 +888,7 @@ export function Editor({
         className="flex-1 w-full overflow-y-auto transition-colors duration-200"
         style={{ filter: "var(--editor-filter, none)" }}
       >
-        <div className="max-w-3xl lg:max-w-4xl mx-auto px-4 sm:px-16 py-6 sm:py-12 min-h-full">
+        <div className="max-w-7xl  mx-auto px-4 sm:px-16 py-6 sm:py-12 min-h-full">
           {/* Editable Title without .md extension */}
           <div className="mb-6">
             <DocumentTitleInput title={title} onTitleChange={onTitleChange} />
