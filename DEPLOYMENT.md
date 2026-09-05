@@ -57,7 +57,9 @@ Netherite uses Google OAuth to authenticate users and read/write `.md` notes and
 | `AUTH_TRUST_HOST` | `true` | Required for NextAuth on Vercel |
 | `AUTH_GOOGLE_ID` | `your-client-id.apps.googleusercontent.com` | From Google Cloud Console |
 | `AUTH_GOOGLE_SECRET` | `your-client-secret` | From Google Cloud Console |
-| `DATABASE_URL` | `file:./db.sqlite` | Auth session store (notes live in Drive) |
+
+> [!NOTE]
+> **Zero Database Required**: Netherite uses encrypted JWT sessions and stores all notes, folders, and assets directly in your Google Drive (`/netherite`). No database, connection string, or serverless storage setup is needed!
 
 4. Click **Deploy**.
 5. Once deployment completes, copy your Vercel URL (e.g. `https://netherite-studio.vercel.app`) and update the **Authorized JavaScript origins** and **Authorized redirect URIs** in your Google Cloud Console.

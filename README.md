@@ -57,7 +57,6 @@ AUTH_SECRET="<generate-with-openssl-rand-base64-32>"
 AUTH_TRUST_HOST="true"
 AUTH_GOOGLE_ID="your-client-id.apps.googleusercontent.com"
 AUTH_GOOGLE_SECRET="your-client-secret"
-DATABASE_URL="file:./db.sqlite"
 ```
 
 ### 3. Run Locally
