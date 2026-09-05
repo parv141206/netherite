@@ -459,28 +459,11 @@ export const exportToSvg = async (
     const rect = svgRoot.ownerDocument.createElementNS(SVG_NS, "rect");
     rect.setAttribute("x", "0");
     rect.setAttribute("y", "0");
-    const bg = viewBackgroundColor?.toLowerCase?.().trim();
-    const isDefaultBg =
-      !bg ||
-      bg === "#ffffff" ||
-      bg === "#fff" ||
-      bg === "#fcfcfc" ||
-      bg === "#09090b" ||
-      bg === "#121212" ||
-      bg === "#18181b" ||
-      bg === "#1e1e1e" ||
-      bg === "#dedede" ||
-      bg === "#e5e5e6" ||
-      bg === "#d3d3d3" ||
-      bg === "transparent";
-
+    rect.setAttribute("width", `${width}`);
+    rect.setAttribute("height", `${height}`);
     rect.setAttribute(
       "fill",
-      isDefaultBg
-        ? exportWithDarkMode
-          ? "#09090b"
-          : "#fcfcfc"
-        : applyDarkModeFilter(viewBackgroundColor, exportWithDarkMode),
+      applyDarkModeFilter(viewBackgroundColor, exportWithDarkMode),
     );
     svgRoot.appendChild(rect);
   }

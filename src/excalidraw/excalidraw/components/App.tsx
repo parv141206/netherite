@@ -3043,7 +3043,7 @@ class App extends React.Component<AppProps, AppState> {
       let viewModeEnabled = actionResult?.appState?.viewModeEnabled || false;
       let zenModeEnabled = actionResult?.appState?.zenModeEnabled || false;
       const theme =
-        this.props.theme || actionResult?.appState?.theme || THEME.LIGHT;
+        actionResult?.appState?.theme || this.props.theme || THEME.LIGHT;
       const name = actionResult?.appState?.name ?? this.state.name;
       const errorMessage =
         actionResult?.appState?.errorMessage ?? this.state.errorMessage;
@@ -4195,29 +4195,7 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     if (prevProps.theme !== this.props.theme && this.props.theme) {
-      const isDark = this.props.theme === THEME.DARK;
-      const targetBg = isDark ? "#09090b" : "#fcfcfc";
-      const bg = this.state.viewBackgroundColor?.toLowerCase?.()?.trim();
-      const isDefaultBg =
-        !bg ||
-        bg === "#121212" ||
-        bg === "#ffffff" ||
-        bg === "#fff" ||
-        bg === "#09090b" ||
-        bg === "#fcfcfc" ||
-        bg === "#18181b" ||
-        bg === "#1e1e1e" ||
-        bg === "#dedede" ||
-        bg === "#e5e5e6" ||
-        bg === "#d3d3d3" ||
-        bg === "transparent";
-
-      this.setState({
-        theme: this.props.theme,
-        viewBackgroundColor: isDefaultBg
-          ? targetBg
-          : this.state.viewBackgroundColor,
-      });
+      this.setState({ theme: this.props.theme });
     }
 
     this.excalidrawContainerRef.current?.classList.toggle(

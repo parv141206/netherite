@@ -65,58 +65,21 @@ export const bootstrapCanvas = ({
       context.clearRect(0, 0, normalizedWidth, normalizedHeight);
     }
 
-    const isDark =
-      theme === THEME.DARK ||
-      (typeof document !== "undefined" &&
-        (document.documentElement.classList.contains("dark") ||
-          canvas.closest?.(".theme--dark") !== null ||
-          canvas.closest?.(".dark") !== null));
-
-    const bg = viewBackgroundColor?.toLowerCase?.().trim();
-    const isDefaultBg =
-      !bg ||
-      bg === COLOR_WHITE ||
-      bg === "#ffffff" ||
-      bg === "#fff" ||
-      bg === "#fcfcfc" ||
-      bg === "#09090b" ||
-      bg === "#121212" ||
-      bg === "#18181b" ||
-      bg === "#1e1e1e" ||
-      bg === "#dedede" ||
-      bg === "#e5e5e6" ||
-      bg === "#d3d3d3" ||
-      bg === "transparent";
-
-    if (viewBackgroundColor !== "transparent" || !isExporting) {
+    if (viewBackgroundColor !== "transparent") {
       context.save();
-      if (isDefaultBg) {
-        context.fillStyle = isDark ? "#09090b" : "#fcfcfc";
-      } else {
-        context.fillStyle = COLOR_WHITE;
-        context.fillStyle = applyDarkModeFilter(
-          viewBackgroundColor,
-          isDark,
-        );
-      }
+      // The canvas silently ignores an invalid fillStyle, which would leave a
+      // stale color from a previous draw. Seed a sane default so corrupted
+      // values fall back to white instead of painting garbage.
+      context.fillStyle = COLOR_WHITE;
+      context.fillStyle = applyDarkModeFilter(
+        viewBackgroundColor,
+        theme === THEME.DARK,
+      );
       context.fillRect(0, 0, normalizedWidth, normalizedHeight);
       context.restore();
     }
   } else {
-    const isDark =
-      theme === THEME.DARK ||
-      (typeof document !== "undefined" &&
-        (document.documentElement.classList.contains("dark") ||
-          canvas.closest?.(".theme--dark") !== null ||
-          canvas.closest?.(".dark") !== null));
-
     context.clearRect(0, 0, normalizedWidth, normalizedHeight);
-    if (!isExporting) {
-      context.save();
-      context.fillStyle = isDark ? "#09090b" : "#fcfcfc";
-      context.fillRect(0, 0, normalizedWidth, normalizedHeight);
-      context.restore();
-    }
   }
 
   return context;
