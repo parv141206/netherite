@@ -524,11 +524,11 @@ export function Sidebar({
             onDrop={(e) => handleDropOnFolder(e, item.id)}
             onClick={(e) => handleItemClick(e, item)}
             onContextMenu={(e) => handleItemContextMenu(e, item.id, item.name, true)}
-            className={`flex items-center justify-between px-1.5 py-1 rounded-md cursor-pointer group transition-all select-none ${
+            className={`flex items-center border-0 ring-0 justify-between px-1.5 py-1 rounded-md cursor-pointer group transition-all select-none ${
               isTarget
-                ? "bg-accent border border-foreground text-foreground"
+                ? "bg-accent   text-foreground"
                 : selectedIds.size > 1 && isSelected
-                ? "bg-accent/60 text-foreground font-medium ring-1 ring-border/60 shadow-2xs"
+                ? "bg-accent/60 text-foreground font-medium  shadow-2xs"
                 : (() => {
                     const assignedColor = folderColors[item.id];
                     const colorDef = assignedColor ? FOLDER_COLOR_PALETTE.find((c) => c.id === assignedColor) : null;

@@ -45,6 +45,11 @@
     --border: #e4e4e7;
     --input: #e4e4e7;
     --ring: #09090b;
+    --highlight-yellow: #fef08a; /* Tailwind yellow-200 */
+    --highlight-green: #bbf7d0;  /* Tailwind green-200 */
+    --highlight-blue: #bfdbfe;   /* Tailwind blue-200 */
+    --highlight-pink: #fbcfe8;   /* Tailwind pink-200 */
+    --highlight-purple: #e9d5ff; /* Tailwind purple-200 */
   }
 
   .dark {
@@ -61,6 +66,11 @@
     --border: #27272a;
     --input: #27272a;
     --ring: #fafafa;
+    --highlight-yellow: #854d0e; /* Tailwind yellow-800 */
+    --highlight-green: #166534;  /* Tailwind green-800 */
+    --highlight-blue: #1e40af;   /* Tailwind blue-800 */
+    --highlight-pink: #9d174d;   /* Tailwind pink-800 */
+    --highlight-purple: #6b21a8; /* Tailwind purple-800 */
   }
 }
 

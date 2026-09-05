@@ -585,11 +585,11 @@ export function Editor({
   ];
 
   const highlightColors = [
-    { name: "Yellow", color: "#fef08a" },
-    { name: "Green", color: "#bbf7d0" },
-    { name: "Blue", color: "#bfdbfe" },
-    { name: "Pink", color: "#fbcfe8" },
-    { name: "Purple", color: "#e9d5ff" },
+    { name: "Yellow", color: "var(--highlight-yellow)" },
+    { name: "Green", color: "var(--highlight-green)" },
+    { name: "Blue", color: "var(--highlight-blue)" },
+    { name: "Pink", color: "var(--highlight-pink)" },
+    { name: "Purple", color: "var(--highlight-purple)" },
   ];
 
   return (
