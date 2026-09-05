@@ -41,8 +41,6 @@ import MainMenu from "./main-menu/MainMenu";
 import { ActiveConfirmDialog } from "./ActiveConfirmDialog";
 import { useAppProps, useEditorInterface, useStylesPanelMode } from "./App";
 import { OverwriteConfirmDialog } from "./OverwriteConfirm/OverwriteConfirm";
-import { sidebarRightIcon } from "./icons";
-import { DefaultSidebar } from "./DefaultSidebar";
 import { TTDDialog } from "./TTDDialog/TTDDialog";
 import { Stats } from "./Stats";
 import ElementLinkDialog from "./ElementLinkDialog";
@@ -435,24 +433,7 @@ const LayerUI = ({
   };
 
   const renderSidebars = () => {
-    if (!defaultUIEnabled) {
-      return null;
-    }
-
-    return (
-      <DefaultSidebar
-        __fallback
-        onDock={(docked) => {
-          trackEvent(
-            "sidebar",
-            `toggleDock (${docked ? "dock" : "undock"})`,
-            `(${
-              editorInterface.formFactor === "phone" ? "mobile" : "desktop"
-            })`,
-          );
-        }}
-      />
-    );
+    return null;
   };
 
   const isSidebarDocked = useAtomValue(isSidebarDockedAtom);
@@ -473,25 +454,6 @@ const LayerUI = ({
       {defaultUIEnabled && (
         <>
           <DefaultMainMenu UIOptions={UIOptions} />
-          <DefaultSidebar.Trigger
-            __fallback
-            icon={sidebarRightIcon}
-            title={capitalizeString(t("toolBar.library"))}
-            onToggle={(open) => {
-              if (open) {
-                trackEvent(
-                  "sidebar",
-                  `${DEFAULT_SIDEBAR.name} (open)`,
-                  `button (${
-                    editorInterface.formFactor === "phone"
-                      ? "mobile"
-                      : "desktop"
-                  })`,
-                );
-              }
-            }}
-            tab={DEFAULT_SIDEBAR.defaultTab}
-          />
         </>
       )}
       {/* Keep supporting surfaces available to host-supplied UI, including

@@ -317,8 +317,8 @@
   }
 
   .deleteButton {
-    color: #c92a2a;
-    background: #fff5f5;
+    color: var(--color-danger-darkest, #f87171);
+    background: var(--color-danger-background, rgba(239, 68, 68, 0.1));
   }
 }
 
@@ -449,8 +449,8 @@
   cursor: pointer;
 
   &:hover {
-    color: #c92a2a;
-    background: #fff5f5;
+    color: var(--color-danger-darkest, #f87171);
+    background: var(--color-danger-background, rgba(239, 68, 68, 0.1));
   }
 }
 

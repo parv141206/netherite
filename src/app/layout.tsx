@@ -7,7 +7,9 @@ import { TRPCReactProvider } from "~/trpc/react";
 import { ThemeProvider } from "~/components/ThemeProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "katex/dist/katex.min.css";
-import { Analytics } from "@vercel/analytics/next"
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -96,6 +98,17 @@ export default function RootLayout({
         <TRPCReactProvider>
           <ThemeProvider>{children}</ThemeProvider>
         </TRPCReactProvider>
+        <ToastContainer
+          position="bottom-right"
+          autoClose={1400}
+          hideProgressBar
+          newestOnTop
+          closeOnClick
+          pauseOnHover={false}
+          pauseOnFocusLoss={false}
+          theme="dark"
+          toastClassName="netherite-toast"
+        />
         <Analytics />
         <SpeedInsights />
       </body>

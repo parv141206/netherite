@@ -73,7 +73,24 @@ const Footer = ({
             },
           )}
         >
-          <div style={{ position: "relative" }}>
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
+            <a
+              href="https://excalidraw.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="excalidraw-attribution-link"
+              title="Powered by Excalidraw (Open Source)"
+            >
+              <span>Powered by</span>
+              <strong>Excalidraw</strong>
+            </a>
             {renderWelcomeScreen && <WelcomeScreenHelpHintTunnel.Out />}
             {defaultUIEnabled && (
               <HelpButton

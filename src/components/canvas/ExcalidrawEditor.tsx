@@ -51,7 +51,7 @@ export default function ExcalidrawEditor({
         elements: [],
         appState: {
           theme: theme === "dark" ? "dark" : "light",
-          viewBackgroundColor: theme === "dark" ? "#121212" : "#ffffff",
+          viewBackgroundColor: theme === "dark" ? "#09090b" : "#fcfcfc",
         },
         files: {},
       };
@@ -148,6 +148,7 @@ export default function ExcalidrawEditor({
         api.updateScene({
           appState: {
             theme: targetTheme,
+            viewBackgroundColor: targetTheme === "dark" ? "#09090b" : "#fcfcfc",
           },
         });
       }

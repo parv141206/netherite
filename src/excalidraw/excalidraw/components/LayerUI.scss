@@ -117,6 +117,49 @@
     .layer-ui__wrapper__footer-right {
       margin-top: auto;
       margin-bottom: auto;
+
+      .excalidraw-attribution-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        line-height: 1;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        color: var(--color-disabled, #a1a1aa);
+        text-decoration: none;
+        padding: 0.35rem 0.65rem;
+        border-radius: 9999px;
+        background: var(--island-bg-color);
+        border: 1px solid var(--default-border-color);
+        box-shadow: var(--shadow-island);
+        transition: all 0.15s ease-in-out;
+        user-select: none;
+        pointer-events: auto;
+
+        span,
+        strong {
+          white-space: nowrap !important;
+          flex-shrink: 0 !important;
+          line-height: 1;
+        }
+
+        span {
+          opacity: 0.75;
+          font-weight: 400;
+        }
+
+        strong {
+          color: var(--text-primary-color);
+          font-weight: 600;
+        }
+
+        &:hover {
+          color: var(--text-primary-color);
+          border-color: var(--color-primary);
+          transform: translateY(-1px);
+        }
+      }
     }
   }
 

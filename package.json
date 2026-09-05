@@ -79,6 +79,7 @@
     "radix-ui": "1.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-toastify": "^11.1.0",
     "roughjs": "4.6.4",
     "sass": "1.51.0",
     "server-only": "^0.0.1",

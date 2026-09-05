@@ -14,6 +14,7 @@ import type {
   ExcalidrawImperativeAPI,
   UIAppState,
 } from "@excalidraw/excalidraw/types";
+import { toast } from "react-toastify";
 
 import { DIAGRAM_PALETTE, getSymbolDefinition } from "./catalog";
 import {
@@ -1107,7 +1108,10 @@ export const insertEngineeringNode = (
     appState: getCreatedNodeSelection(created),
     captureUpdate: CaptureUpdateAction.IMMEDIATELY,
   });
-  api.setToast({ message: `${definition.label} added`, duration: 1200 });
+  toast(`${definition.label} added`, {
+    autoClose: 1400,
+    hideProgressBar: true,
+  });
   return created.nodeId;
 };
 

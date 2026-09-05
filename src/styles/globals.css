@@ -527,3 +527,38 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 .katex {
   font-size: 1.05em;
 }
+
+/* React-Toastify Minimal Netherite Theme */
+.Toastify__toast-container--bottom-right {
+  bottom: 1.5rem !important;
+  right: 1.5rem !important;
+  width: auto !important;
+  max-width: 380px !important;
+  z-index: 999999 !important;
+}
+
+.Toastify__toast.netherite-toast {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  padding: 0.625rem 0.875rem !important;
+  min-height: 2.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.Toastify__toast-body {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.Toastify__close-button {
+  display: none !important;
+}
