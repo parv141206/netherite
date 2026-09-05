@@ -13,10 +13,19 @@
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "cap:sync": "cap sync",
+    "cap:run:android": "ANDROID_HOME=/home/parv/Android/Sdk ANDROID_SDK_ROOT=/home/parv/Android/Sdk cap run android",
+    "cap:open:android": "cap open android"
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.2",
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/status-bar": "^8.0.3",
     "@codemirror/commands": "^6.0.0",
     "@codemirror/language": "^6.0.0",
     "@codemirror/state": "^6.0.0",
@@ -26,6 +35,7 @@
     "@lezer/highlight": "^1.0.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.69.0",
+    "@tauri-apps/api": "^2.11.1",
     "@tiptap/core": "^3.31.3",
     "@tiptap/extension-bubble-menu": "^3.31.3",
     "@tiptap/extension-character-count": "^3.31.3",
@@ -92,8 +102,10 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.1",
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.0.15",
+    "@tauri-apps/cli": "^2.11.4",
     "@types/katex": "^0.16.8",
     "@types/lodash.debounce": "4.0.8",
     "@types/lodash.throttle": "4.1.7",

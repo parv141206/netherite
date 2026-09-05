@@ -10,6 +10,7 @@ import {
   FileText,
   Plus,
   Minus,
+  RefreshCw,
 } from "lucide-react";
 import {
   computeLineDiff,
@@ -26,6 +27,8 @@ interface DiffModalProps {
   currentContent: string;
   onSaveToDrive: () => void;
   isSaving: boolean;
+  onDiscardAndSync?: () => void;
+  isSyncing?: boolean;
 }
 
 export function DiffModal({
@@ -37,6 +40,8 @@ export function DiffModal({
   currentContent,
   onSaveToDrive,
   isSaving,
+  onDiscardAndSync,
+  isSyncing = false,
 }: DiffModalProps) {
   const [activeView, setActiveView] = useState<"diff" | "history">("diff");
 
@@ -104,6 +109,21 @@ export function DiffModal({
                 <History className="w-3.5 h-3.5" /> Changelog ({changelog.length})
               </button>
             </div>
+
+            {/* Discard & Pull Button */}
+            {diff.hasChanges && onDiscardAndSync && (
+              <button
+                onClick={() => {
+                  onDiscardAndSync();
+                }}
+                disabled={isSaving || isSyncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-all cursor-pointer"
+                title="Discard your changes and pull latest from Drive"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+                <span>Discard & Pull</span>
+              </button>
+            )}
 
             {/* Save Button */}
             <button

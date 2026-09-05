@@ -19,6 +19,7 @@ import {
   Undo,
   Redo,
   Sigma,
+  RefreshCw,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 
@@ -33,6 +34,8 @@ interface MobileBottomBarProps {
   isSaving?: boolean;
   onSave?: () => void;
   onOpenDiff?: () => void;
+  onManualSync?: () => void;
+  isSyncing?: boolean;
   diffSummary?: string;
 }
 
@@ -45,6 +48,8 @@ export function MobileBottomBar({
   isSaving = false,
   onSave,
   onOpenDiff,
+  onManualSync,
+  isSyncing = false,
   diffSummary = "",
 }: MobileBottomBarProps) {
   const { theme, setTheme } = useTheme();
@@ -180,6 +185,21 @@ export function MobileBottomBar({
         >
           <Redo className="w-3.5 h-3.5" />
         </button>
+
+        {onManualSync && (
+          <>
+            <div className="h-4 w-[1px] bg-border/60 mx-0.5 shrink-0" />
+            <button
+              onClick={onManualSync}
+              disabled={isSyncing}
+              className="p-1.5 hover:bg-accent/70 text-foreground rounded-md active:scale-95 transition-all shrink-0 flex items-center gap-1 text-xs"
+              title="Sync with Google Drive"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+              <span className="text-[10px] font-medium">Sync</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Main Navigation Tab Bar */}

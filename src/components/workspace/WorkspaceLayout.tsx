@@ -8,11 +8,13 @@ import { DrawingCanvas } from "~/components/canvas/DrawingCanvas";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
+import { SyncModal } from "./SyncModal";
 import { MobileBottomBar } from "./MobileBottomBar";
-import { computeLineDiff, saveChangelogEntry, type ChangelogEntry } from "./diffUtils";
+import { computeLineDiff, saveChangelogEntry, clearChangelog, type ChangelogEntry } from "./diffUtils";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { useTheme } from "~/components/ThemeProvider";
+import { useCapacitorBackButton } from "~/hooks/useCapacitorBackButton";
 import { api } from "~/trpc/react";
 import {
   FileText,
@@ -208,6 +210,49 @@ export function WorkspaceLayout({
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [contentRevision, setContentRevision] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Native Android Hardware Back Button Handling via Capacitor
+  useCapacitorBackButton({
+    closeModals: () => {
+      if (isDeleteModalOpen) {
+        setIsDeleteModalOpen(false);
+        setDeleteTarget(null);
+        return true;
+      }
+      if (isSyncModalOpen) {
+        setIsSyncModalOpen(false);
+        return true;
+      }
+      if (isDiffModalOpen) {
+        setIsDiffModalOpen(false);
+        return true;
+      }
+      if (isSettingsOpen) {
+        setIsSettingsOpen(false);
+        return true;
+      }
+      if (toastMessage) {
+        setToastMessage(null);
+        return true;
+      }
+      return false;
+    },
+    closeSidebar: () => {
+      if (typeof window !== "undefined" && window.innerWidth < 768 && !sidebarCollapsed) {
+        setSidebarCollapsed(true);
+        return true;
+      }
+      if (typeof window !== "undefined" && window.innerWidth < 1280 && isOutlineOpen) {
+        setIsOutlineOpen(false);
+        return true;
+      }
+      return false;
+    },
+  });
 
   const utils = api.useUtils();
 
@@ -405,6 +450,34 @@ export function WorkspaceLayout({
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
+
+  // Auto-refresh from Google Drive when tab/app regains focus if no unsaved changes exist
+  useEffect(() => {
+    if (typeof window === "undefined" || !session?.user) return;
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") {
+        const hasDraft =
+          activeTabId &&
+          typeof window !== "undefined" &&
+          localStorage.getItem(`netherite_draft_${activeTabId}`) !== null;
+
+        if (!unsavedRef.current && !hasDraft) {
+          utils.notes.list.invalidate();
+          if (activeTabId && !activeTabId.startsWith("temp-")) {
+            utils.notes.get.invalidate({ id: activeTabId });
+          }
+        }
+      }
+    };
+
+    window.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    return () => {
+      window.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
+  }, [activeTabId, session?.user, utils]);
 
   const handleManualSave = async () => {
     if (!activeTabId || !session?.user || activeTabId.startsWith("temp-") || isLoadingContent) return;
@@ -931,6 +1004,80 @@ export function WorkspaceLayout({
   const liveDiff = computeLineDiff(lastSavedContent, noteContent);
   const isDirty = liveDiff.hasChanges;
 
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((current) => (current === msg ? null : current));
+    }, 3500);
+  };
+
+  const handleOpenSyncModal = () => {
+    const hasLocalDraft =
+      typeof window !== "undefined" &&
+      activeTabId &&
+      localStorage.getItem(`netherite_draft_${activeTabId}`) !== null;
+
+    if (isDirty || hasLocalDraft) {
+      setIsSyncModalOpen(true);
+    } else {
+      void executeSync(false);
+    }
+  };
+
+  const executeSync = async (clearAllDrafts: boolean) => {
+    if (isSyncing || !session?.user) return;
+    setIsSyncing(true);
+
+    try {
+      if (typeof window !== "undefined") {
+        if (activeTabId) {
+          localStorage.removeItem(`netherite_draft_${activeTabId}`);
+          clearChangelog(activeTabId);
+        }
+
+        if (clearAllDrafts) {
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith("netherite_draft_")) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+        }
+      }
+
+      pendingImagesRef.current.clear();
+
+      await utils.notes.list.refetch();
+
+      if (activeTabId && !activeTabId.startsWith("temp-")) {
+        await utils.notes.get.invalidate({ id: activeTabId });
+        const fresh = await utils.notes.get.fetch({ id: activeTabId }, { staleTime: 0 });
+        const cleanContent = typeof fresh === "string" ? fresh : "";
+        setNoteContent(cleanContent);
+        setLastSavedContent(cleanContent);
+        setContentRevision((r) => r + 1);
+
+        if (activeEditorRef.current) {
+          activeEditorRef.current.commands.setContent(cleanContent, { emitUpdate: false });
+        }
+      }
+
+      setIsSyncModalOpen(false);
+      showToast(
+        isDirty
+          ? "Discarded local changes and synced latest from Google Drive."
+          : "Workspace is in sync with Google Drive."
+      );
+    } catch (err) {
+      console.error("Failed to sync from Google Drive:", err);
+      showToast("Failed to sync with Drive. Please check your connection.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleExportMarkdown = () => {
     const blob = new Blob([noteContent], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
@@ -964,6 +1111,8 @@ export function WorkspaceLayout({
         setEditingId={setEditingId}
         folderColors={folderColors}
         onSetFolderColor={handleSetFolderColor}
+        onManualSync={handleOpenSyncModal}
+        isSyncing={isSyncing}
         isMutating={
           createMutation.isPending ||
           renameMutation.isPending ||
@@ -981,6 +1130,8 @@ export function WorkspaceLayout({
           isDirty={isDirty}
           diffSummary={liveDiff.summary}
           onOpenDiff={() => setIsDiffModalOpen(true)}
+          onManualSync={handleOpenSyncModal}
+          isSyncing={isSyncing}
           isSplitView={isSplitView}
           onToggleSplitView={() => {
             setIsSplitView(!isSplitView);
@@ -1195,7 +1346,7 @@ export function WorkspaceLayout({
                   {currentNote?.name?.endsWith(".excalidraw") ||
                   currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
                     <DrawingCanvas
-                      key={activeTabId}
+                      key={`${activeTabId}-${contentRevision}`}
                       initialContent={noteContent}
                       theme={isDark ? "dark" : "light"}
                       onChange={(updatedContent) => {
@@ -1208,7 +1359,7 @@ export function WorkspaceLayout({
                     />
                   ) : (
                     <Editor
-                      key={activeTabId}
+                      key={`${activeTabId}-${contentRevision}`}
                       initialContent={noteContent}
                       title={currentNote?.name || "Untitled.md"}
                       editorFont={editorFont}
@@ -1363,6 +1514,8 @@ export function WorkspaceLayout({
           isSaving={isSaving}
           onSave={handleManualSave}
           onOpenDiff={() => setIsDiffModalOpen(true)}
+          onManualSync={handleOpenSyncModal}
+          isSyncing={isSyncing}
           diffSummary={liveDiff.summary}
         />
       </div>
@@ -1377,6 +1530,22 @@ export function WorkspaceLayout({
         currentContent={noteContent}
         onSaveToDrive={handleManualSave}
         isSaving={isSaving}
+        onDiscardAndSync={() => {
+          setIsDiffModalOpen(false);
+          setIsSyncModalOpen(true);
+        }}
+        isSyncing={isSyncing}
+      />
+
+      {/* Sync & Discard Confirmation Modal */}
+      <SyncModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        noteTitle={currentNote?.name || "Untitled.md"}
+        isDirty={isDirty}
+        diffSummary={liveDiff.summary}
+        isSyncing={isSyncing}
+        onConfirmSync={executeSync}
       />
 
       {/* Settings Modal */}
@@ -1397,6 +1566,21 @@ export function WorkspaceLayout({
           setDeleteTarget(null);
         }}
       />
+
+      {/* Floating Sync / Status Notification Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-16 sm:bottom-6 left-1/2 -translate-x-1/2 z-[110] max-w-md w-auto px-4 py-2.5 bg-foreground text-background text-xs font-medium rounded-xl shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 select-none">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2 text-background/60 hover:text-background p-0.5 cursor-pointer"
+            aria-label="Close"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

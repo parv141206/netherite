@@ -26,6 +26,7 @@ import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
 import { signOut } from "next-auth/react";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
+import { WindowControls } from "./WindowControls";
 
 function InlineRenameInput({
   initialValue,
@@ -181,6 +182,8 @@ interface SidebarProps {
   setEditingId?: (id: string | null) => void;
   folderColors?: Record<string, string>;
   onSetFolderColor?: (folderId: string, color: string | null) => void;
+  onManualSync?: () => void;
+  isSyncing?: boolean;
 }
 
 export function Sidebar({
@@ -204,6 +207,8 @@ export function Sidebar({
   setEditingId,
   folderColors = {},
   onSetFolderColor,
+  onManualSync,
+  isSyncing = false,
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -641,8 +646,13 @@ export function Sidebar({
 
   if (collapsed) {
     return (
-      <aside className="hidden sm:flex w-14 border-r border-border bg-[var(--sidebar-bg)] flex-col items-center py-3 justify-between select-none">
-        <div className="flex flex-col items-center gap-4">
+      <aside className="hidden sm:flex w-14 border-r border-border bg-[var(--sidebar-bg)] flex-col items-center py-2.5 justify-between select-none">
+        <div className="flex flex-col items-center gap-3 w-full">
+          {/* Top Window Drag Area with Traffic Lights */}
+          <div className="w-full flex justify-center py-1" data-tauri-drag-region>
+            <WindowControls />
+          </div>
+
           <button
             onClick={onToggleCollapse}
             className="p-2 hover:bg-[var(--accent)] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
@@ -714,19 +724,15 @@ export function Sidebar({
         onContextMenu={handleRootContextMenu}
         className="fixed sm:relative inset-y-0 left-0 z-50 w-72 sm:w-64 border-r border-border bg-[var(--sidebar-bg)] flex flex-col h-full select-none shadow-2xl sm:shadow-none animate-in slide-in-from-left duration-200"
       >
-      {/* Notion-Style Workspace Header */}
-      <div className="px-3 py-2.5 border-b border-border/40 flex items-center justify-between">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
-          <span className="font-semibold text-xs text-foreground truncate">
-            {userSession?.user?.name ? `${userSession.user.name.split(" ")[0]}'s Notes` : "Netherite"}
-          </span>
-          {isMutating && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+      {/* Line 1: Top Bar with Mac Traffic Lights on Left & Workspace Action Icons on Right */}
+      <div className="px-3 pt-3 pb-1.5 flex items-center justify-between" data-tauri-drag-region>
+        <div className="flex items-center pl-0.5">
+          <WindowControls />
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1" data-tauri-no-drag>
           <button
             onClick={() => onCreateNote()}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             title="New Page (Ctrl+N)"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -734,7 +740,7 @@ export function Sidebar({
           {onCreateDrawing && (
             <button
               onClick={() => onCreateDrawing()}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               title="New Whiteboard / Sketch"
             >
               <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
@@ -742,25 +748,43 @@ export function Sidebar({
           )}
           <button
             onClick={() => onCreateFolder()}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             title="New Folder"
           >
             <FolderPlus className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => utils.notes.list.invalidate()}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors"
-            title="Refresh"
+            onClick={() => {
+              if (onManualSync) {
+                onManualSync();
+              } else {
+                utils.notes.list.invalidate();
+              }
+            }}
+            disabled={isSyncing}
+            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+            title="Sync with Google Drive"
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-foreground" : ""}`} />
           </button>
           <button
             onClick={onToggleCollapse}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             title="Collapse Sidebar"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
+        </div>
+      </div>
+
+      {/* Line 2: Full Width Workspace Title */}
+      <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between">
+        <div className="flex items-center gap-2.5 min-w-0 w-full">
+          <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
+          <span className="font-semibold text-xs sm:text-sm text-foreground truncate tracking-tight">
+            {userSession?.user?.name ? `${userSession.user.name.split(" ")[0]}'s Notes` : "Netherite"}
+          </span>
+          {isMutating && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground ml-auto" />}
         </div>
       </div>
 
@@ -937,12 +961,17 @@ export function Sidebar({
               </div>
               <button
                 onClick={() => {
-                  utils.notes.list.invalidate();
+                  if (onManualSync) {
+                    onManualSync();
+                  } else {
+                    utils.notes.list.invalidate();
+                  }
                   setContextMenu(null);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                disabled={isSyncing}
+                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground disabled:opacity-50"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> Refresh Explorer
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} /> Refresh Explorer
               </button>
             </>
           ) : selectedIds.size > 1 ? (

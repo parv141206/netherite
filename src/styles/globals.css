@@ -78,10 +78,37 @@
   * {
     border-color: var(--border);
   }
-  body {
+  html, body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
+    overscroll-behavior: none;
+    touch-action: pan-x pan-y;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .tiptap,
+  .ProseMirror,
+  [contenteditable="true"],
+  .cm-editor,
+  input,
+  textarea,
+  .selectable-text {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+
+  [data-tauri-drag-region] {
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  [data-tauri-no-drag] {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
   }
 }
 

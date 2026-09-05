@@ -269,7 +269,6 @@ export function Editor({
       }
     },
     onCreate({ editor }) {
-      isInternalUpdateRef.current = true;
       transformMathInEditor(editor);
       const rawMarkdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getText();
       const formattedMarkdown = postprocessMathMarkdown(rawMarkdown);
@@ -284,27 +283,25 @@ export function Editor({
 
   // Update content and transform math when note changes from outside
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || initialContent === undefined) return;
 
-    // If the change came from our own editor actions, ignore it
-    if (isInternalUpdateRef.current) {
-      isInternalUpdateRef.current = false;
+    // If the content is identical to what the editor already loaded, do nothing
+    if (initialContent === lastLoadedContentRef.current) {
       return;
     }
 
-    // Only update if initialContent actually changed from what the editor currently holds
-    if (initialContent !== undefined && initialContent !== lastLoadedContentRef.current) {
-      // If user is focused and actively typing, do not overwrite
-      if (editor.isFocused && editor.getText().trim().length > 0) {
-        return;
-      }
-
+    // If the change came from user typing in this editor, update reference and skip
+    if (isInternalUpdateRef.current) {
+      isInternalUpdateRef.current = false;
       lastLoadedContentRef.current = initialContent;
-      const processed = preprocessMarkdownMath(initialContent);
-      editor.commands.setContent(processed, { emitUpdate: false });
-      isInternalUpdateRef.current = true;
-      transformMathInEditor(editor);
+      return;
     }
+
+    // External content change (e.g. note fetched from Drive / switched tab)
+    lastLoadedContentRef.current = initialContent;
+    const processed = preprocessMarkdownMath(initialContent);
+    editor.commands.setContent(processed, { emitUpdate: false });
+    transformMathInEditor(editor);
   }, [editor, initialContent]);
 
   // Expose editor instance via onEditorReady
@@ -331,25 +328,45 @@ export function Editor({
     const container = editorContainerRef.current;
     if (!container) return;
 
+    let wheelAcc = 0;
+    let initialDist = 0;
+    let initialSize = fontSize;
+
+    const applyFontSize = (updater: (prev: number) => number) => {
+      setFontSize((prev) => {
+        const next = updater(prev);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("netherite_editor_font_size", next.toString());
+        }
+        return next;
+      });
+      setShowZoomBadge(true);
+      if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+      zoomTimeoutRef.current = setTimeout(() => setShowZoomBadge(false), 1500);
+    };
+
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        const delta = e.deltaY < 0 ? 1 : -1;
-        setFontSize((prev) => {
-          const next = Math.min(32, Math.max(11, prev + delta));
-          if (typeof window !== "undefined") {
-            localStorage.setItem("netherite_editor_font_size", next.toString());
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        if (Math.abs(e.deltaY) >= 40) {
+          // Discrete mouse wheel notch (typically +/- 100 or 120)
+          const delta = e.deltaY < 0 ? 1 : -1;
+          applyFontSize((prev) => Math.min(32, Math.max(11, prev + delta)));
+          wheelAcc = 0;
+        } else {
+          // Continuous trackpad pinch delta
+          wheelAcc += e.deltaY;
+          if (Math.abs(wheelAcc) >= 15) {
+            const delta = wheelAcc < 0 ? 1 : -1;
+            applyFontSize((prev) => Math.min(32, Math.max(11, prev + delta)));
+            wheelAcc = 0;
           }
-          return next;
-        });
-        setShowZoomBadge(true);
-        if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
-        zoomTimeoutRef.current = setTimeout(() => setShowZoomBadge(false), 1500);
+        }
       }
     };
-
-    let initialDist = 0;
-    let initialSize = 15;
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2 && e.touches[0] && e.touches[1]) {
@@ -364,30 +381,79 @@ export function Editor({
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2 && initialDist > 0 && e.touches[0] && e.touches[1]) {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         const dist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
         );
         const ratio = dist / initialDist;
         const next = Math.min(32, Math.max(11, Math.round(initialSize * ratio)));
-        setFontSize(next);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("netherite_editor_font_size", next.toString());
-        }
-        setShowZoomBadge(true);
-        if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
-        zoomTimeoutRef.current = setTimeout(() => setShowZoomBadge(false), 1500);
+        applyFontSize(() => next);
       }
     };
 
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    container.addEventListener("touchstart", handleTouchStart, { passive: true });
-    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+    const handleGestureStart = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    };
+
+    const handleGestureChange = (e: any) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if (e.scale && e.scale !== 1) {
+        const delta = e.scale > 1 ? 1 : -1;
+        applyFontSize((prev) => Math.min(32, Math.max(11, prev + delta)));
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === "=" || e.key === "+") {
+          e.preventDefault();
+          e.stopPropagation();
+          applyFontSize((prev) => Math.min(32, prev + 1));
+        } else if (e.key === "-" || e.key === "_") {
+          e.preventDefault();
+          e.stopPropagation();
+          applyFontSize((prev) => Math.max(11, prev - 1));
+        } else if (e.key === "0") {
+          e.preventDefault();
+          e.stopPropagation();
+          applyFontSize(() => 15);
+        }
+      }
+    };
+
+    // Attach capture-phase listeners to prevent WebKit/browser native page zoom
+    window.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    document.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    container.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+
+    container.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false, capture: true });
+
+    window.addEventListener("gesturestart", handleGestureStart, { passive: false, capture: true });
+    window.addEventListener("gesturechange", handleGestureChange, { passive: false, capture: true });
+    window.addEventListener("gestureend", handleGestureStart, { passive: false, capture: true });
+
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
 
     return () => {
-      container.removeEventListener("wheel", handleWheel);
-      container.removeEventListener("touchstart", handleTouchStart);
-      container.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("wheel", handleWheel, { capture: true });
+      document.removeEventListener("wheel", handleWheel, { capture: true });
+      container.removeEventListener("wheel", handleWheel, { capture: true });
+
+      container.removeEventListener("touchstart", handleTouchStart, { capture: true });
+      container.removeEventListener("touchmove", handleTouchMove, { capture: true });
+
+      window.removeEventListener("gesturestart", handleGestureStart, { capture: true });
+      window.removeEventListener("gesturechange", handleGestureChange, { capture: true });
+      window.removeEventListener("gestureend", handleGestureStart, { capture: true });
+
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
       if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
     };
   }, [fontSize, mounted, isLoading, editor]);
@@ -595,6 +661,7 @@ export function Editor({
   return (
     <div
       ref={editorContainerRef}
+      data-editor-container="true"
       style={{ "--editor-font-size": `${fontSize}px` } as React.CSSProperties}
       className="w-full h-full flex flex-col bg-background text-foreground overflow-hidden relative"
     >

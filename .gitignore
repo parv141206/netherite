@@ -26,6 +26,7 @@ next-env.d.ts
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
@@ -44,5 +45,33 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-# idea files
+# IDE files
 .idea
+.vscode/
+
+# Rust / Tauri build artifacts
+/src-tauri/target/
+**/target/
+
+# Android / Gradle build artifacts
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/capacitor-cordova-android-plugins/build/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Large binary downloads (hosted on GitHub Releases)
+/public/downloads/*.AppImage
+/public/downloads/*.deb
+/public/downloads/*.rpm
+/public/downloads/*.apk
+/public/downloads/*.exe
+!/public/downloads/.gitkeep
+
+# Legacy Flutter
+.dart_tool/
+flutter_archive/

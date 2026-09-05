@@ -20,6 +20,12 @@ import {
   Cpu,
   Layers,
   Sparkles,
+  Download,
+  Smartphone,
+  Monitor,
+  Terminal,
+  CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import katex from "katex";
@@ -29,10 +35,17 @@ export function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"math" | "whiteboard" | "code">("math");
+  const [copiedCmd, setCopiedCmd] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleCopyCmd = () => {
+    navigator.clipboard.writeText("chmod +x Netherite.AppImage && ./Netherite.AppImage");
+    setCopiedCmd(true);
+    setTimeout(() => setCopiedCmd(false), 2000);
+  };
 
   const renderedLatex = (() => {
     try {
@@ -60,7 +73,7 @@ export function LandingPage() {
   })();
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-background text-foreground transition-colors duration-300 selection:bg-foreground selection:text-background relative overflow-x-hidden">
+    <div className="min-h-screen h-screen flex flex-col justify-between bg-background text-foreground transition-colors duration-300 selection:bg-foreground selection:text-background relative overflow-x-hidden overflow-y-auto">
       {/* Atmospheric Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-amber-500/10 via-rose-500/5 to-transparent blur-3xl pointer-events-none -z-10 dark:from-amber-500/5 dark:via-purple-500/5" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-t from-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
@@ -76,7 +89,15 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a
+              href="#downloads"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 hover:bg-accent text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Download</span>
+            </a>
+
             {mounted && (
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -129,10 +150,17 @@ export function LandingPage() {
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </button>
           <a
-            href="#features"
-            className="px-5 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            href="#downloads"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 border border-border/80 bg-card hover:bg-accent text-foreground text-xs font-medium rounded-xl transition-all shadow-sm"
           >
-            Explore Architecture ↓
+            <Download className="w-3.5 h-3.5" />
+            <span>Download Native Apps</span>
+          </a>
+          <a
+            href="#features"
+            className="px-4 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Architecture ↓
           </a>
         </div>
 
@@ -370,6 +398,184 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
           </div>
         </div>
+
+        {/* Native Multi-Platform Downloads Section */}
+        <section id="downloads" className="w-full pt-4 pb-16 scroll-mt-20">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border/60 bg-muted/40 text-[11px] font-mono text-muted-foreground mb-3">
+              <Download className="w-3 h-3 text-emerald-500" />
+              <span>Native Shell Ecosystem</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
+              Download Netherite Studio
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
+              Standalone desktop and mobile apps engineered with native frameless shells, hardware acceleration, and seamless Google Drive cloud synchronization.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            {/* 1. Linux Desktop Card */}
+            <div className="p-6 rounded-2xl border border-border/80 bg-card/80 backdrop-blur-md flex flex-col justify-between shadow-lg hover:border-foreground/40 transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-muted/80 border border-border/60 flex items-center justify-center text-foreground group-hover:scale-105 transition-transform">
+                    <Monitor className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+                    Linux (x86_64)
+                  </span>
+                </div>
+
+                <h3 className="font-bold text-base text-foreground mb-1">Linux Desktop</h3>
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  High-performance Tauri 2.x native shell with custom Mac traffic lights and WebKitGTK acceleration.
+                </p>
+
+                <div className="space-y-2 mb-6">
+                  <a
+                    href="/downloads/netherite-linux.AppImage"
+                    download="Netherite.AppImage"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-md active:scale-95 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download .AppImage (96 MB)</span>
+                  </a>
+
+                  <a
+                    href="/downloads/netherite-linux.deb"
+                    download="Netherite_1.0.0_amd64.deb"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-muted hover:bg-accent text-foreground text-xs font-medium rounded-xl border border-border/60 transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5 opacity-70" />
+                    <span>Download .deb (Debian/Ubuntu)</span>
+                  </a>
+                </div>
+
+                {/* Quick Linux terminal hint */}
+                <div className="p-2.5 rounded-lg bg-muted/50 border border-border/40 font-mono text-[10px] text-muted-foreground flex items-center justify-between gap-2 mb-4">
+                  <span className="truncate">chmod +x Netherite.AppImage</span>
+                  <button
+                    onClick={handleCopyCmd}
+                    className="text-foreground hover:underline shrink-0 text-[10px] cursor-pointer"
+                  >
+                    {copiedCmd ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+
+                <ul className="space-y-1.5 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>Frameless Mac traffic-light window</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>Zero sandbox bloat (Native WebKit)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>Google Drive sovereign sync</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 2. Android Mobile Card */}
+            <div className="p-6 rounded-2xl border border-border/80 bg-card/80 backdrop-blur-md flex flex-col justify-between shadow-lg hover:border-foreground/40 transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-muted/80 border border-border/60 flex items-center justify-center text-foreground group-hover:scale-105 transition-transform">
+                    <Smartphone className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-medium">
+                    Android 8.0+
+                  </span>
+                </div>
+
+                <h3 className="font-bold text-base text-foreground mb-1">Android Mobile</h3>
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  Sleek Capacitor mobile application with AMOLED dark status bar and bottom Obsidian markdown ribbon.
+                </p>
+
+                <div className="space-y-2 mb-6">
+                  <a
+                    href="/downloads/netherite-android.apk"
+                    download="Netherite.apk"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-md active:scale-95 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download .apk (4.3 MB)</span>
+                  </a>
+                </div>
+
+                <ul className="space-y-1.5 text-xs text-muted-foreground pt-4 border-t border-border/30">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span>Dynamic Dark/Light status bar matching</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span>Obsidian-style formatting toolbar</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span>Touch-optimized Excalidraw whiteboards</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 3. Windows Desktop Card */}
+            <div className="p-6 rounded-2xl border border-border/80 bg-card/80 backdrop-blur-md flex flex-col justify-between shadow-lg hover:border-foreground/40 transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-muted/80 border border-border/60 flex items-center justify-center text-foreground group-hover:scale-105 transition-transform">
+                    <Monitor className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-medium">
+                    Windows 10 / 11
+                  </span>
+                </div>
+
+                <h3 className="font-bold text-base text-foreground mb-1">Windows Desktop</h3>
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  Fast native Windows desktop build powered by Tauri 2.x and Microsoft Edge WebView2 runtime.
+                </p>
+
+                <div className="space-y-2 mb-6">
+                  <a
+                    href="https://github.com/parv141206/netherite/releases"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-md active:scale-95 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download .exe Installer</span>
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </a>
+                </div>
+
+                <ul className="space-y-1.5 text-xs text-muted-foreground pt-4 border-t border-border/30">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span>Native WebView2 engine with zero bloat</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span>Frameless dark window & smooth font scaling</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span>Direct Google Drive cloud persistence</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Architectural Pillars / Features */}
         <section id="features" className="w-full pt-6">

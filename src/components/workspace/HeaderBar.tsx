@@ -18,9 +18,11 @@ import {
   Check,
   SunMedium,
   Palette,
+  RefreshCw,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
+import { WindowControls } from "./WindowControls";
 
 interface HeaderBarProps {
   noteTitle?: string;
@@ -31,6 +33,8 @@ interface HeaderBarProps {
   isSplitView?: boolean;
   onToggleSplitView?: () => void;
   onSave?: () => void;
+  onManualSync?: () => void;
+  isSyncing?: boolean;
   onExportMarkdown?: () => void;
   onToggleSidebar?: () => void;
   sidebarCollapsed?: boolean;
@@ -51,6 +55,8 @@ export function HeaderBar({
   isSplitView = false,
   onToggleSplitView,
   onSave,
+  onManualSync,
+  isSyncing = false,
   onExportMarkdown,
   onToggleSidebar,
   sidebarCollapsed = false,
@@ -187,7 +193,10 @@ export function HeaderBar({
   const cleanTitle = noteTitle.replace(/\.(md|excalidraw)$/i, "");
 
   return (
-    <header className="h-11 border-b border-border/40 bg-background/80 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between gap-3 sticky top-0 z-40 select-none shrink-0">
+    <header
+      className="h-11 border-b border-border/40 bg-background/80 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between gap-3 sticky top-0 z-40 select-none shrink-0"
+      data-tauri-drag-region
+    >
       {/* Left: Sidebar Toggle & Notion Page Breadcrumb */}
       <div className="flex items-center gap-2 min-w-0">
         <button
@@ -257,7 +266,7 @@ export function HeaderBar({
       </div>
 
       {/* Right: Whisper-quiet Notion Actions */}
-      <div className="flex items-center gap-1 sm:gap-1.5 relative" ref={menuRef}>
+      <div className="flex items-center gap-1 sm:gap-1.5 relative" ref={menuRef} data-tauri-no-drag>
         {/* Save Button (prominent only when dirty, like Notion) */}
         {cleanTitle && isDirty && (
           <button
@@ -268,6 +277,20 @@ export function HeaderBar({
           >
             <Save className="w-3 h-3" />
             <span>Save</span>
+          </button>
+        )}
+
+        {/* Sync with Drive Button */}
+        {onManualSync && (
+          <button
+            onClick={onManualSync}
+            disabled={isSyncing || isSaving}
+            className={`p-1.5 rounded-md hover:bg-accent/60 transition-colors ${
+              isSyncing ? "text-foreground bg-accent/40" : "text-muted-foreground hover:text-foreground"
+            }`}
+            title="Sync with Google Drive (Pull Latest)"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-foreground" : ""}`} />
           </button>
         )}
 
@@ -409,6 +432,20 @@ export function HeaderBar({
 
             {/* Actions: Export Markdown & Copy Link */}
             <div className="p-1 space-y-0.5">
+              {onManualSync && (
+                <button
+                  onClick={() => {
+                    onManualSync();
+                    setShowMoreMenu(false);
+                  }}
+                  disabled={isSyncing}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-muted-foreground ${isSyncing ? "animate-spin" : ""}`} />
+                  <span>Sync with Google Drive</span>
+                </button>
+              )}
+
               {onExportMarkdown && (
                 <button
                   onClick={() => {

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Netherite</string>
+    <string name="title_activity_main">Netherite</string>
+    <string name="package_name">com.netherite.app</string>
+    <string name="custom_url_scheme">com.netherite.app</string>
+</resources>
