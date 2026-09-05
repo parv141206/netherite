@@ -10,6 +10,7 @@ import { DiffModal } from "./DiffModal";
 import { MobileBottomBar } from "./MobileBottomBar";
 import { computeLineDiff, saveChangelogEntry, type ChangelogEntry } from "./diffUtils";
 import { LandingPage } from "~/components/landing/LandingPage";
+import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { api } from "~/trpc/react";
 import {
   FileText,
@@ -192,6 +193,8 @@ export function WorkspaceLayout({
 
   // Note Content State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [noteContent, setNoteContent] = useState<string>(initialContent);
   const [lastSavedContent, setLastSavedContent] = useState<string>(initialContent);
   const [noteTitle, setNoteTitle] = useState<string>("");
@@ -250,13 +253,29 @@ export function WorkspaceLayout({
     }
   );
 
+  const saveBackupSnapshot = (noteId: string, content: string) => {
+    if (!noteId || !content || typeof window === "undefined") return;
+    try {
+      const key = `netherite_snapshot_${noteId}`;
+      const existing = localStorage.getItem(key);
+      const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
+      if (list.length > 0 && list[0]?.content === content) return;
+      list.unshift({ timestamp: Date.now(), content });
+      if (list.length > 10) list.length = 10;
+      localStorage.setItem(key, JSON.stringify(list));
+    } catch {}
+  };
+
   const saveMutation = api.notes.save.useMutation({
     onMutate: () => setIsSaving(true),
     onSuccess: () => {
       setIsSaving(false);
       setLastSavedContent(noteContent);
-      if (activeTabId && typeof window !== "undefined") {
-        localStorage.removeItem(`netherite_draft_${activeTabId}`);
+      if (activeTabId) {
+        saveBackupSnapshot(activeTabId, noteContent);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(`netherite_draft_${activeTabId}`);
+        }
       }
     },
     onError: () => setIsSaving(false),
@@ -320,6 +339,16 @@ export function WorkspaceLayout({
     }
   }, [fetchedContent, activeTabId]);
 
+  // Continuous local draft backup on every edit
+  useEffect(() => {
+    if (!activeTabId || activeTabId.startsWith("temp-") || typeof window === "undefined") return;
+    if (noteContent !== lastSavedContent && noteContent.length > 0) {
+      try {
+        localStorage.setItem(`netherite_draft_${activeTabId}`, noteContent);
+      } catch {}
+    }
+  }, [noteContent, lastSavedContent, activeTabId]);
+
   useEffect(() => {
     if (fetchedSplitContent !== undefined) {
       setSplitNoteContent(fetchedSplitContent);
@@ -335,12 +364,15 @@ export function WorkspaceLayout({
     }
   }, [activeTabId, localNotes]);
 
-  // Manual save ONLY: No background autosave timer and NO mutation on keystroke/cleanup!
-  const unsavedRef = useRef(false);
-  unsavedRef.current = !!activeTabId && !activeTabId.startsWith("temp-") && noteContent !== lastSavedContent;
-
   const pendingImagesRef = useRef<Map<string, File>>(new Map());
   const activeEditorRef = useRef<any>(null);
+
+  // Manual save ONLY: No background autosave timer and NO mutation on keystroke/cleanup!
+  const unsavedRef = useRef(false);
+  unsavedRef.current =
+    !!activeTabId &&
+    !activeTabId.startsWith("temp-") &&
+    (noteContent !== lastSavedContent || pendingImagesRef.current.size > 0);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -371,7 +403,7 @@ export function WorkspaceLayout({
   }, []);
 
   const handleManualSave = async () => {
-    if (!activeTabId || !session?.user || activeTabId.startsWith("temp-")) return;
+    if (!activeTabId || !session?.user || activeTabId.startsWith("temp-") || isLoadingContent) return;
 
     let contentToSave = noteContent;
     let hasNewUploads = false;
@@ -562,8 +594,45 @@ export function WorkspaceLayout({
     }
   };
 
-  // 100% INSTANT OPTIMISTIC DELETE
+  // Request delete (intercepts ALL delete actions with a confirmation modal)
   const handleDeleteFile = (id: string) => {
+    const item = localNotes.find((n) => n.id === id);
+    const isFolder = item?.mimeType === "application/vnd.google-apps.folder";
+    setDeleteTarget({
+      type: isFolder ? "folder" : "note",
+      id,
+      name: item?.name || (isFolder ? "Untitled Folder" : "Untitled.md"),
+    });
+    setIsDeleteModalOpen(true);
+  };
+
+  // Request batch delete (intercepts batch deletion with confirmation modal)
+  const handleDeleteMultiple = (ids: string[]) => {
+    if (!ids.length) return;
+    setDeleteTarget({
+      type: "batch",
+      ids,
+      count: ids.length,
+      name: `${ids.length} selected items`,
+    });
+    setIsDeleteModalOpen(true);
+  };
+
+  // Confirmed Delete execution (called only when user clicks "Move to Trash")
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setIsDeleteModalOpen(false);
+    setDeleteTarget(null);
+
+    if (target.type === "batch" && target.ids?.length) {
+      await executeBatchDelete(target.ids);
+    } else if (target.id) {
+      executeSingleDelete(target.id);
+    }
+  };
+
+  const executeSingleDelete = (id: string) => {
     setLocalNotes((prev) => prev.filter((item) => item.id !== id));
     setOpenTabIds((prev) => prev.filter((t) => t !== id));
     utils.notes.list.setData(undefined, (old: any) => {
@@ -591,9 +660,7 @@ export function WorkspaceLayout({
     }
   };
 
-  // 100% INSTANT OPTIMISTIC BATCH DELETE
-  const handleDeleteMultiple = async (ids: string[]) => {
-    if (!ids.length) return;
+  const executeBatchDelete = async (ids: string[]) => {
     const idsSet = new Set(ids);
 
     setLocalNotes((prev) => prev.filter((item) => !idsSet.has(item.id)));
@@ -1183,6 +1250,18 @@ export function WorkspaceLayout({
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         userSession={session}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        target={deleteTarget}
+        isPending={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteTarget(null);
+        }}
       />
     </div>
   );

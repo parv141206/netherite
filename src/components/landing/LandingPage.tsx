@@ -95,13 +95,7 @@ export function LandingPage() {
 
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center px-4 sm:px-6 pt-16 pb-20 max-w-5xl mx-auto w-full text-center">
-        {/* Artistic Category Eyebrow */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border/60 bg-muted/60 text-muted-foreground text-xs mb-8 shadow-2xs backdrop-blur-xs">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span className="font-mono text-[11px] tracking-wide">
-            ZERO DATABASE • GOOGLE DRIVE SOVEREIGNTY • KATEX MATH
-          </span>
-        </div>
+        
 
         {/* Grand Headline with Editorial Serif Flourish */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] max-w-4xl">
@@ -381,8 +375,6 @@ public class NoetherInvariant {
 
           <div className="flex items-center gap-4 font-mono text-[11px]">
             <span>Google Drive Native</span>
-            <span>•</span>
-            <span>Next.js 15 App Router</span>
           </div>
         </div>
       </footer>

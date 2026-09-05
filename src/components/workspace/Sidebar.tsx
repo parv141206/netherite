@@ -331,15 +331,10 @@ export function Sidebar({
           } else {
             selectedIds.forEach((id) => onDeleteNote(id));
           }
-          setSelectedIds(new Set());
         } else if (selectedIds.size === 1) {
           e.preventDefault();
           const targetId = Array.from(selectedIds)[0];
           if (targetId) onDeleteNote(targetId);
-          setSelectedIds(new Set());
-        } else if (activeNoteId) {
-          e.preventDefault();
-          onDeleteNote(activeNoteId);
         }
       }
     };
