@@ -112,15 +112,25 @@ export async function listNotes(session: any) {
     const drive = await getDriveClient(session);
 
     const res = await drive.files.list({
-      q: "trashed=false and (mimeType='text/markdown' or mimeType='application/vnd.google-apps.folder')",
+      q: "trashed=false and (mimeType='text/markdown' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or name contains '.excalidraw' or name contains '.md')",
       fields: "files(id, name, mimeType, modifiedTime, parents)",
       orderBy: "folder, modifiedTime desc",
       pageSize: 300,
     });
 
-    return (res.data.files ?? []).filter(
-      (f) => !f.name?.startsWith(".") && f.name?.toLowerCase() !== "assets"
-    );
+    return (res.data.files ?? []).filter((f) => {
+      if (!f.name || f.name.startsWith(".") || f.name.toLowerCase() === "assets") return false;
+      if (f.mimeType === "application/vnd.google-apps.folder") return true;
+      if (
+        f.name.endsWith(".md") ||
+        f.name.endsWith(".excalidraw") ||
+        f.mimeType === "text/markdown" ||
+        f.mimeType === "application/vnd.excalidraw+json"
+      ) {
+        return true;
+      }
+      return false;
+    });
   });
 }
 
@@ -184,10 +194,16 @@ export async function getNoteContent(session: any, fileId: string) {
 export async function saveNote(session: any, fileId: string, content: string) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
+    const meta = await drive.files.get({ fileId, fields: "id, name, mimeType" });
+    const isDrawing =
+      meta.data.name?.endsWith(".excalidraw") ||
+      meta.data.mimeType === "application/vnd.excalidraw+json";
+    const mimeType = isDrawing ? "application/vnd.excalidraw+json" : "text/markdown";
+
     await drive.files.update({
       fileId,
       media: {
-        mimeType: "text/markdown",
+        mimeType,
         body: content,
       },
     });
@@ -198,20 +214,40 @@ export async function createNote(
   session: any,
   name: string,
   content: string = "",
-  parentId?: string
+  parentId?: string,
+  type: "note" | "drawing" = "note"
 ) {
   const drive = await getDriveClient(session);
   const folderId = parentId || (await ensureNetheriteFolder(session));
 
+  const isDrawing = type === "drawing" || name.endsWith(".excalidraw");
+  const cleanName = isDrawing
+    ? name.replace(/\.excalidraw$/i, "")
+    : name.replace(/\.md$/i, "");
+  const finalName = isDrawing ? `${cleanName}.excalidraw` : `${cleanName}.md`;
+  const mimeType = isDrawing ? "application/vnd.excalidraw+json" : "text/markdown";
+
+  const initialBody =
+    isDrawing && !content
+      ? JSON.stringify({
+          type: "excalidraw",
+          version: 2,
+          source: "netherite",
+          elements: [],
+          appState: { viewBackgroundColor: "#ffffff", currentItemFontFamily: 1 },
+          files: {},
+        })
+      : content;
+
   const res = await drive.files.create({
     requestBody: {
-      name: name.endsWith(".md") ? name : `${name}.md`,
+      name: finalName,
       parents: [folderId],
-      mimeType: "text/markdown",
+      mimeType,
     },
     media: {
-      mimeType: "text/markdown",
-      body: content,
+      mimeType,
+      body: initialBody,
     },
     fields: "id, name, mimeType, modifiedTime, parents",
   });
@@ -221,11 +257,22 @@ export async function createNote(
 
 export async function renameNote(session: any, fileId: string, newName: string) {
   const drive = await getDriveClient(session);
-  const fileMeta = await drive.files.get({ fileId, fields: "id, mimeType" });
+  const fileMeta = await drive.files.get({ fileId, fields: "id, name, mimeType" });
   const isFolder = fileMeta.data.mimeType === "application/vnd.google-apps.folder";
+  const isDrawing =
+    fileMeta.data.name?.endsWith(".excalidraw") ||
+    fileMeta.data.mimeType === "application/vnd.excalidraw+json";
 
-  const cleanName = newName.replace(/\.md$/i, "");
-  const finalName = isFolder ? cleanName : `${cleanName}.md`;
+  let finalName = newName;
+  if (isFolder) {
+    finalName = newName;
+  } else if (isDrawing) {
+    const cleanName = newName.replace(/\.excalidraw$/i, "");
+    finalName = `${cleanName}.excalidraw`;
+  } else {
+    const cleanName = newName.replace(/\.md$/i, "");
+    finalName = `${cleanName}.md`;
+  }
 
   await drive.files.update({
     fileId,

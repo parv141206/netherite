@@ -31,6 +31,7 @@ export const notesRouter = createTRPCRouter({
         name: z.string(),
         content: z.string().optional(),
         parentId: z.string().optional(),
+        type: z.enum(["note", "drawing"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -38,7 +39,8 @@ export const notesRouter = createTRPCRouter({
         ctx.session,
         input.name,
         input.content ?? "",
-        input.parentId
+        input.parentId,
+        input.type ?? "note"
       );
     }),
 

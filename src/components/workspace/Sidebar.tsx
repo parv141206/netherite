@@ -20,6 +20,7 @@ import {
   LogOut,
   Loader2,
   Image as ImageIcon,
+  Palette,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
@@ -165,6 +166,7 @@ interface SidebarProps {
   activeNoteId?: string;
   onSelectNote: (id: string) => void;
   onCreateNote: (parentId?: string) => void;
+  onCreateDrawing?: (parentId?: string) => void;
   onCreateFolder: (parentId?: string) => void;
   onRenameNote: (id: string, newName: string) => void;
   onDeleteNote: (id: string) => void;
@@ -187,6 +189,7 @@ export function Sidebar({
   activeNoteId,
   onSelectNote,
   onCreateNote,
+  onCreateDrawing,
   onCreateFolder,
   onRenameNote,
   onDeleteNote,
@@ -348,7 +351,7 @@ export function Sidebar({
 
   const startInlineEditing = (id: string, name: string) => {
     if (setEditingId) setEditingId(id);
-    setEditingName(name.replace(/\.md$/i, ""));
+    setEditingName(name.replace(/\.(md|excalidraw)$/i, ""));
     setContextMenu(null);
   };
 
@@ -486,10 +489,13 @@ export function Sidebar({
     });
   };
 
-  // Clean minimal Notion page icon
+  // Clean minimal Notion page icon / drawing icon
   const getFileIcon = (name: string, mimeType?: string) => {
     if (mimeType?.startsWith("image/") || /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(name)) {
       return <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />;
+    }
+    if (name.endsWith(".excalidraw") || mimeType === "application/vnd.excalidraw+json") {
+      return <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />;
     }
     return <FileText className="w-3.5 h-3.5 text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-colors" />;
   };
@@ -591,7 +597,8 @@ export function Sidebar({
       );
     } else {
       const isActive = activeNoteId === item.id;
-      const displayName = item.name.replace(/\.md$/i, "");
+      const isDrawing = item.name.endsWith(".excalidraw");
+      const displayName = item.name.replace(/\.(md|excalidraw)$/i, "");
 
       return (
         <div
@@ -602,7 +609,7 @@ export function Sidebar({
           onContextMenu={(e) => handleItemContextMenu(e, item.id, item.name, false)}
           className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition-all group select-none ${
             selectedIds.size > 1 && isSelected
-              ? "bg-accent/60 text-foreground font-medium ring-1 ring-border/60 shadow-2xs"
+               ? "bg-accent/60 text-foreground font-medium ring-1 ring-border/60 shadow-2xs"
               : isActive
               ? "bg-accent text-foreground font-semibold shadow-2xs"
               : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -614,7 +621,8 @@ export function Sidebar({
               <InlineRenameInput
                 initialValue={displayName}
                 onCommit={(newName) => {
-                  const finalName = newName.endsWith(".md") ? newName : `${newName}.md`;
+                  const clean = newName.replace(/\.(md|excalidraw)$/i, "");
+                  const finalName = isDrawing ? `${clean}.excalidraw` : `${clean}.md`;
                   onRenameNote(item.id, finalName);
                   if (setEditingId) setEditingId(null);
                 }}
@@ -723,6 +731,15 @@ export function Sidebar({
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
+          {onCreateDrawing && (
+            <button
+              onClick={() => onCreateDrawing()}
+              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors"
+              title="New Whiteboard / Sketch"
+            >
+              <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+            </button>
+          )}
           <button
             onClick={() => onCreateFolder()}
             className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors"
@@ -855,8 +872,19 @@ export function Sidebar({
                 }}
                 className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
               >
-                <Plus className="w-3.5 h-3.5" /> New File
+                <Plus className="w-3.5 h-3.5" /> New Page
               </button>
+              {onCreateDrawing && (
+                <button
+                  onClick={() => {
+                    onCreateDrawing();
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                >
+                  <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /> New Whiteboard / Sketch
+                </button>
+              )}
               <button
                 onClick={() => {
                   onCreateFolder();
@@ -1003,8 +1031,19 @@ export function Sidebar({
                 }}
                 className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
               >
-                <Plus className="w-3.5 h-3.5" /> New File in Folder
+                <Plus className="w-3.5 h-3.5" /> New Page in Folder
               </button>
+              {onCreateDrawing && (
+                <button
+                  onClick={() => {
+                    onCreateDrawing(contextMenu.itemId);
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                >
+                  <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /> New Sketch in Folder
+                </button>
+              )}
               <button
                 onClick={() => {
                   onCreateFolder(contextMenu.itemId);

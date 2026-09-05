@@ -12,11 +12,10 @@
 
     /* Strictness */
     "strict": true,
-    "noUncheckedIndexedAccess": true,
     "checkJs": true,
 
     /* Bundled projects */
-    "lib": ["dom", "dom.iterable", "ES2022"],
+    "lib": ["dom", "dom.iterable", "ES2023"],
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -27,7 +26,24 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@/*": ["./src/*"],
+      "@excalidraw/common": ["./src/excalidraw/common/src/index.ts"],
+      "@excalidraw/common/*": ["./src/excalidraw/common/src/*"],
+      "@excalidraw/element": ["./src/excalidraw/element/src/index.ts"],
+      "@excalidraw/element/*": ["./src/excalidraw/element/src/*"],
+      "@excalidraw/excalidraw": ["./src/excalidraw/excalidraw/index.tsx"],
+      "@excalidraw/excalidraw/*": ["./src/excalidraw/excalidraw/*"],
+      "@excalidraw/fractional-indexing": [
+        "./src/excalidraw/fractional-indexing/src/index.ts"
+      ],
+      "@excalidraw/laser-pointer": [
+        "./src/excalidraw/laser-pointer/src/index.ts"
+      ],
+      "@excalidraw/math": ["./src/excalidraw/math/src/index.ts"],
+      "@excalidraw/math/*": ["./src/excalidraw/math/src/*"],
+      "@excalidraw/utils": ["./src/excalidraw/utils/src/index.ts"],
+      "@excalidraw/utils/*": ["./src/excalidraw/utils/src/*"]
     }
   },
   "include": [

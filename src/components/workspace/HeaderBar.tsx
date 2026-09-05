@@ -17,6 +17,7 @@ import {
   Type,
   Check,
   SunMedium,
+  Palette,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
@@ -182,7 +183,8 @@ export function HeaderBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showMoreMenu]);
 
-  const cleanTitle = noteTitle.replace(/\.md$/i, "");
+  const isDrawing = noteTitle.endsWith(".excalidraw");
+  const cleanTitle = noteTitle.replace(/\.(md|excalidraw)$/i, "");
 
   return (
     <header className="h-11 border-b border-border/40 bg-background/80 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between gap-3 sticky top-0 z-40 select-none shrink-0">
@@ -209,7 +211,11 @@ export function HeaderBar({
         {cleanTitle ? (
           <>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-              <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+              {isDrawing ? (
+                <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+              ) : (
+                <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+              )}
               <span className="truncate font-medium text-foreground text-xs sm:text-sm max-w-[150px] sm:max-w-xs">
                 {cleanTitle}
               </span>

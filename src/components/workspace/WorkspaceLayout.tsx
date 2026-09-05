@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Sidebar, type DriveItem } from "./Sidebar";
 import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
+import { DrawingCanvas } from "~/components/canvas/DrawingCanvas";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
@@ -11,6 +12,7 @@ import { MobileBottomBar } from "./MobileBottomBar";
 import { computeLineDiff, saveChangelogEntry, type ChangelogEntry } from "./diffUtils";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
+import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
 import {
   FileText,
@@ -23,6 +25,7 @@ import {
   Columns,
   CheckCircle2,
   Search,
+  Palette,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 
@@ -45,6 +48,7 @@ export function WorkspaceLayout({
   initialContent = "",
   initialMetadata,
 }: WorkspaceLayoutProps) {
+  const { theme } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return window.innerWidth < 768;
@@ -527,6 +531,74 @@ export function WorkspaceLayout({
     }
   };
 
+  // 100% INSTANT OPTIMISTIC DRAWING CREATION (Whiteboard sketch)
+  const handleCreateDrawing = async (parentId?: string) => {
+    const tempId = `temp-draw-${Date.now()}`;
+    const defaultName = `Sketch-${Date.now().toString().slice(-4)}.excalidraw`;
+    const defaultContent = JSON.stringify(
+      {
+        type: "excalidraw",
+        version: 2,
+        source: "netherite",
+        elements: [],
+        appState: {
+          viewBackgroundColor: theme === "dark" ? "#121212" : "#ffffff",
+          currentItemFontFamily: 1,
+        },
+        files: {},
+      },
+      null,
+      2
+    );
+
+    const newItem: DriveItem = {
+      id: tempId,
+      name: defaultName,
+      mimeType: "application/vnd.excalidraw+json",
+      modifiedTime: new Date().toISOString(),
+      parents: parentId ? [parentId] : undefined,
+    };
+
+    setLocalNotes((prev) => [newItem, ...prev]);
+    openFileInTab(tempId);
+    setNoteContent(defaultContent);
+    setLastSavedContent(defaultContent);
+    setEditingId(tempId);
+
+    try {
+      const realNote = await createMutation.mutateAsync({
+        name: defaultName,
+        content: defaultContent,
+        parentId,
+        type: "drawing",
+      });
+      if (realNote?.id) {
+        utils.notes.list.setData(undefined, (old: any) => {
+          const items = old ? [...old] : [];
+          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          return [realNote, ...filtered];
+        });
+        setLocalNotes((prev) =>
+          prev.map((item) =>
+            item.id === tempId
+              ? {
+                  ...item,
+                  id: realNote.id!,
+                  parents: realNote.parents,
+                  mimeType: "application/vnd.excalidraw+json",
+                }
+              : item
+          )
+        );
+        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
+        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setEditingId(realNote.id!);
+      }
+    } catch (err) {
+      console.error("Background drawing creation failed:", err);
+    }
+  };
+
   // 100% INSTANT OPTIMISTIC FOLDER CREATION
   const handleCreateFolder = async (parentId?: string) => {
     const tempId = `temp-folder-${Date.now()}`;
@@ -574,8 +646,20 @@ export function WorkspaceLayout({
 
     const targetItem = localNotes.find((n) => n.id === id);
     const isFolder = targetItem?.mimeType === "application/vnd.google-apps.folder";
-    const cleanName = newName.replace(/\.md$/i, "");
-    const finalName = isFolder ? cleanName : `${cleanName}.md`;
+    const isDrawing =
+      targetItem?.name.endsWith(".excalidraw") ||
+      targetItem?.mimeType === "application/vnd.excalidraw+json";
+
+    let finalName = newName;
+    if (isFolder) {
+      finalName = newName;
+    } else if (isDrawing) {
+      const cleanName = newName.replace(/\.(md|excalidraw)$/i, "");
+      finalName = `${cleanName}.excalidraw`;
+    } else {
+      const cleanName = newName.replace(/\.(md|excalidraw)$/i, "");
+      finalName = `${cleanName}.md`;
+    }
 
     setLocalNotes((prev) =>
       prev.map((item) => (item.id === id ? { ...item, name: finalName } : item))
@@ -866,6 +950,7 @@ export function WorkspaceLayout({
         activeNoteId={activeTabId}
         onSelectNote={(id) => openFileInTab(id)}
         onCreateNote={handleCreateFile}
+        onCreateDrawing={handleCreateDrawing}
         onCreateFolder={handleCreateFolder}
         onRenameNote={handleRenameFile}
         onDeleteNote={handleDeleteFile}
@@ -938,9 +1023,13 @@ export function WorkspaceLayout({
                         : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
                     }`}
                   >
-                    <FileText className={`w-3.5 h-3.5 ${isActive ? "text-foreground" : "opacity-60"}`} />
+                    {note?.name.endsWith(".excalidraw") || note?.mimeType === "application/vnd.excalidraw+json" ? (
+                      <Palette className={`w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                    ) : (
+                      <FileText className={`w-3.5 h-3.5 ${isActive ? "text-foreground" : "opacity-60"}`} />
+                    )}
                     <span className="truncate max-w-[130px]">
-                      {(note?.name || "Untitled").replace(/\.md$/i, "")}
+                      {(note?.name || "Untitled").replace(/\.(md|excalidraw)$/i, "")}
                     </span>
                     <div className="flex items-center ml-1">
                       {hasLocalDiff ? (
@@ -968,10 +1057,17 @@ export function WorkspaceLayout({
 
               <button
                 onClick={() => handleCreateFile()}
-                className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors mx-1"
-                title="New File Tab"
+                className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors ml-1"
+                title="New Note Tab"
               >
                 <Plus className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleCreateDrawing()}
+                className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors mr-1"
+                title="New Whiteboard Tab"
+              >
+                <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
               </button>
             </div>
 
@@ -1065,6 +1161,13 @@ export function WorkspaceLayout({
                       New Note
                     </button>
                     <button
+                      onClick={() => handleCreateDrawing()}
+                      className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground font-medium text-xs rounded-xl border border-border/60 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+                      New Whiteboard
+                    </button>
+                    <button
                       onClick={() => setSidebarCollapsed(false)}
                       className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground font-medium text-xs rounded-xl border border-border/60 transition-all shadow-2xs active:scale-95 cursor-pointer"
                     >
@@ -1079,7 +1182,7 @@ export function WorkspaceLayout({
                       <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">Ctrl + N</kbd>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Save note</span>
+                      <span>Save note / whiteboard</span>
                       <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">Ctrl + S</kbd>
                     </div>
                   </div>
@@ -1089,33 +1192,49 @@ export function WorkspaceLayout({
               <>
                 {/* Primary Pane */}
                 <div className="h-full w-full overflow-hidden flex flex-col">
-                  <Editor
-                    key={activeTabId}
-                    initialContent={noteContent}
-                    title={currentNote?.name || "Untitled.md"}
-                    editorFont={editorFont}
-                    isLoading={isLoadingContent && !activeTabId?.startsWith("temp-")}
-                    onTitleChange={(newTitle) => {
-                      if (activeTabId) {
-                        handleRenameFile(activeTabId, newTitle);
-                      }
-                    }}
-                    onChange={(updatedContent) => {
-                      setNoteContent(updatedContent);
-                      if (activeTabId && typeof window !== "undefined") {
-                        localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
-                      }
-                    }}
-                    onSave={handleManualSave}
-                    onImageUpload={handleImageUpload}
-                    onEditorReady={(editor) => {
-                      activeEditorRef.current = editor;
-                    }}
-                    onStatsChange={({ words, chars }) => {
-                      setWordCount(words);
-                      setCharCount(chars);
-                    }}
-                  />
+                  {currentNote?.name?.endsWith(".excalidraw") ||
+                  currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
+                    <DrawingCanvas
+                      key={activeTabId}
+                      initialContent={noteContent}
+                      theme={theme === "dark" ? "dark" : "light"}
+                      onChange={(updatedContent) => {
+                        setNoteContent(updatedContent);
+                        if (activeTabId && typeof window !== "undefined") {
+                          localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
+                        }
+                      }}
+                      onSave={handleManualSave}
+                    />
+                  ) : (
+                    <Editor
+                      key={activeTabId}
+                      initialContent={noteContent}
+                      title={currentNote?.name || "Untitled.md"}
+                      editorFont={editorFont}
+                      isLoading={isLoadingContent && !activeTabId?.startsWith("temp-")}
+                      onTitleChange={(newTitle) => {
+                        if (activeTabId) {
+                          handleRenameFile(activeTabId, newTitle);
+                        }
+                      }}
+                      onChange={(updatedContent) => {
+                        setNoteContent(updatedContent);
+                        if (activeTabId && typeof window !== "undefined") {
+                          localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
+                        }
+                      }}
+                      onSave={handleManualSave}
+                      onImageUpload={handleImageUpload}
+                      onEditorReady={(editor) => {
+                        activeEditorRef.current = editor;
+                      }}
+                      onStatsChange={({ words, chars }) => {
+                        setWordCount(words);
+                        setCharCount(chars);
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* Secondary Split Pane */}
@@ -1127,19 +1246,34 @@ export function WorkspaceLayout({
                         : ""
                     }`}
                   >
-                    <Editor
-                      key={splitTabId || "split-editor"}
-                      initialContent={splitNoteContent}
-                      title={currentSplitNote?.name || "Split Document.md"}
-                      editorFont={editorFont}
-                      onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
-                      onSave={() => {
-                        if (splitTabId && !splitTabId.startsWith("temp-")) {
-                          saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
-                        }
-                      }}
-                      onImageUpload={handleImageUpload}
-                    />
+                    {currentSplitNote?.name?.endsWith(".excalidraw") ||
+                    currentSplitNote?.mimeType === "application/vnd.excalidraw+json" ? (
+                      <DrawingCanvas
+                        key={splitTabId || "split-drawing"}
+                        initialContent={splitNoteContent}
+                        theme={theme === "dark" ? "dark" : "light"}
+                        onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                        onSave={() => {
+                          if (splitTabId && !splitTabId.startsWith("temp-")) {
+                            saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                          }
+                        }}
+                      />
+                    ) : (
+                      <Editor
+                        key={splitTabId || "split-editor"}
+                        initialContent={splitNoteContent}
+                        title={currentSplitNote?.name || "Split Document.md"}
+                        editorFont={editorFont}
+                        onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                        onSave={() => {
+                          if (splitTabId && !splitTabId.startsWith("temp-")) {
+                            saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                          }
+                        }}
+                        onImageUpload={handleImageUpload}
+                      />
+                    )}
                   </div>
                 )}
               </>
