@@ -66,12 +66,20 @@ export default function ExcalidrawEditor({
 
     try {
       const parsed = JSON.parse(initialContent);
+      const rawBg = parsed.appState?.viewBackgroundColor?.toLowerCase?.()?.trim();
       const isDefaultBg =
-        !parsed.appState?.viewBackgroundColor ||
-        parsed.appState.viewBackgroundColor === "#121212" ||
-        parsed.appState.viewBackgroundColor === "#ffffff" ||
-        parsed.appState.viewBackgroundColor === "#09090b" ||
-        parsed.appState.viewBackgroundColor === "#fcfcfc";
+        !rawBg ||
+        rawBg === "#121212" ||
+        rawBg === "#ffffff" ||
+        rawBg === "#fff" ||
+        rawBg === "#09090b" ||
+        rawBg === "#fcfcfc" ||
+        rawBg === "#18181b" ||
+        rawBg === "#1e1e1e" ||
+        rawBg === "#dedede" ||
+        rawBg === "#e5e5e6" ||
+        rawBg === "#d3d3d3" ||
+        rawBg === "transparent";
 
       return {
         elements: Array.isArray(parsed.elements) ? parsed.elements : [],
@@ -162,12 +170,20 @@ export default function ExcalidrawEditor({
       const targetBg = isDarkTheme ? "#09090b" : "#fcfcfc";
       const current = api.getAppState();
 
+      const rawBg = current.viewBackgroundColor?.toLowerCase?.()?.trim();
       const isDefaultBg =
-        !current.viewBackgroundColor ||
-        current.viewBackgroundColor === "#121212" ||
-        current.viewBackgroundColor === "#ffffff" ||
-        current.viewBackgroundColor === "#09090b" ||
-        current.viewBackgroundColor === "#fcfcfc";
+        !rawBg ||
+        rawBg === "#121212" ||
+        rawBg === "#ffffff" ||
+        rawBg === "#fff" ||
+        rawBg === "#09090b" ||
+        rawBg === "#fcfcfc" ||
+        rawBg === "#18181b" ||
+        rawBg === "#1e1e1e" ||
+        rawBg === "#dedede" ||
+        rawBg === "#e5e5e6" ||
+        rawBg === "#d3d3d3" ||
+        rawBg === "transparent";
 
       if (isDefaultBg) {
         api.updateScene({

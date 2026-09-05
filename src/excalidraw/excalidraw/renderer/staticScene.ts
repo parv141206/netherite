@@ -259,7 +259,7 @@ const _renderStaticScene = ({
     scale,
     normalizedWidth,
     normalizedHeight,
-    theme: appState.theme,
+    theme: renderConfig.theme || appState.theme,
     isExporting,
     viewBackgroundColor: appState.viewBackgroundColor,
   });

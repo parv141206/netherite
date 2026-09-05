@@ -4,6 +4,8 @@
 
 .excalidraw {
   --theme-filter: none;
+  --default-bg-color: #fcfcfc;
+  background-color: var(--default-bg-color);
   --button-destructive-bg-color: #{$color-red-1};
   --button-destructive-color: #{$color-red-9};
   --button-gray-1: #f4f4f5;
@@ -185,6 +187,7 @@
     --focus-highlight-color: #fafafa;
     --icon-green-fill-color: #4ade80;
     --default-bg-color: #09090b;
+    background-color: var(--default-bg-color);
     --input-bg-color: #121215;
     --input-border-color: #27272a;
     --input-hover-bg-color: #18181b;
