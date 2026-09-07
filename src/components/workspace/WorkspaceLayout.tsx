@@ -464,6 +464,7 @@ export function WorkspaceLayout({
 
         if (!unsavedRef.current && !hasDraft) {
           utils.notes.list.invalidate();
+          utils.notes.getMetadata.invalidate();
           if (activeTabId && !activeTabId.startsWith("temp-")) {
             utils.notes.get.invalidate({ id: activeTabId });
           }
@@ -1049,7 +1050,10 @@ export function WorkspaceLayout({
 
       pendingImagesRef.current.clear();
 
-      await utils.notes.list.refetch();
+      await Promise.all([
+        utils.notes.list.refetch(),
+        utils.notes.getMetadata.refetch(),
+      ]);
 
       if (activeTabId && !activeTabId.startsWith("temp-")) {
         await utils.notes.get.invalidate({ id: activeTabId });

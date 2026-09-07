@@ -102,9 +102,12 @@ export const notesRouter = createTRPCRouter({
 
   saveMetadata: protectedProcedure
     .input(
-      z.object({
-        folderColors: z.record(z.string()).optional(),
-      })
+      z
+        .object({
+          folderColors: z.record(z.string()).optional(),
+          files: z.record(z.any()).optional(),
+        })
+        .passthrough()
     )
     .mutation(async ({ ctx, input }) => {
       return await saveWorkspaceMetadata(ctx.session, input);

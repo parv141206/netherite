@@ -107,30 +107,294 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 1000): 
   throw new Error("Retry failed");
 }
 
+export interface FileMetadata {
+  id: string;
+  name: string;
+  mimeType?: string;
+  type: "note" | "drawing" | "folder";
+  parentId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+
+export interface WorkspaceMetadata {
+  version: number;
+  folderColors: Record<string, string>;
+  files?: Record<string, FileMetadata>;
+  [key: string]: any;
+}
+
+export async function getWorkspaceMetadata(session: any): Promise<WorkspaceMetadata> {
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    const rootFolderId = await ensureNetheriteFolder(session);
+
+    const res = await drive.files.list({
+      q: `'${rootFolderId}' in parents and (name='.netherite.json' or name='netherite_workspace_metadata.json') and trashed=false`,
+      fields: "files(id, name)",
+      spaces: "drive",
+    });
+
+    if (!res.data.files || res.data.files.length === 0 || !res.data.files[0]?.id) {
+      return { version: 1, folderColors: {}, files: {} };
+    }
+
+    const fileId = res.data.files[0].id;
+    try {
+      const fileRes = await drive.files.get(
+        { fileId, alt: "media" },
+        { responseType: "text" }
+      );
+      const data = typeof fileRes.data === "string" ? JSON.parse(fileRes.data) : fileRes.data;
+      return { version: 1, folderColors: {}, files: {}, ...data };
+    } catch (err) {
+      console.warn("Failed to parse .netherite.json:", err);
+      return { version: 1, folderColors: {}, files: {} };
+    }
+  });
+}
+
+export async function saveWorkspaceMetadata(
+  session: any,
+  metadata: Partial<WorkspaceMetadata>
+): Promise<{ success: boolean; id?: string }> {
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    const rootFolderId = await ensureNetheriteFolder(session);
+
+    // Fetch existing metadata to merge cleanly
+    const existing = await getWorkspaceMetadata(session);
+    const merged = {
+      ...existing,
+      ...metadata,
+      folderColors: { ...(existing.folderColors ?? {}), ...(metadata.folderColors ?? {}) },
+      files: { ...(existing.files ?? {}), ...(metadata.files ?? {}) },
+      updatedAt: new Date().toISOString(),
+    };
+    const jsonString = JSON.stringify(merged, null, 2);
+
+    const res = await drive.files.list({
+      q: `'${rootFolderId}' in parents and (name='.netherite.json' or name='netherite_workspace_metadata.json') and trashed=false`,
+      fields: "files(id, name)",
+      spaces: "drive",
+    });
+
+    if (res.data.files && res.data.files.length > 0 && res.data.files[0]?.id) {
+      const fileId = res.data.files[0].id;
+      await drive.files.update({
+        fileId,
+        media: {
+          mimeType: "application/json",
+          body: jsonString,
+        },
+      });
+      return { success: true, id: fileId };
+    } else {
+      const createRes = await drive.files.create({
+        requestBody: {
+          name: ".netherite.json",
+          parents: [rootFolderId],
+          mimeType: "application/json",
+        },
+        media: {
+          mimeType: "application/json",
+          body: jsonString,
+        },
+        fields: "id",
+      });
+      return { success: true, id: createRes.data.id ?? undefined };
+    }
+  });
+}
+
 export async function listNotes(session: any) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
+    const rootFolderId = await ensureNetheriteFolder(session);
 
-    const res = await drive.files.list({
-      q: "trashed=false and (mimeType='text/markdown' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or name contains '.excalidraw' or name contains '.md')",
+    // 1. Fetch all folders to recursively discover Netherite's folder tree
+    const foldersRes = await drive.files.list({
+      q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
       fields: "files(id, name, mimeType, modifiedTime, parents)",
-      orderBy: "folder, modifiedTime desc",
-      pageSize: 300,
+      pageSize: 500,
+      spaces: "drive",
     });
 
-    return (res.data.files ?? []).filter((f) => {
-      if (!f.name || f.name.startsWith(".") || f.name.toLowerCase() === "assets") return false;
-      if (f.mimeType === "application/vnd.google-apps.folder") return true;
-      if (
+    const allFolders = foldersRes.data.files ?? [];
+    const netheriteFolderIds = new Set<string>([rootFolderId]);
+
+    // Recursively add all descendants of Netherite folder
+    let addedNew = true;
+    while (addedNew) {
+      addedNew = false;
+      for (const folder of allFolders) {
+        if (!folder.id || netheriteFolderIds.has(folder.id)) continue;
+        if (folder.name?.toLowerCase() === "assets") continue;
+        const isChild = folder.parents?.some((p) => netheriteFolderIds.has(p));
+        if (isChild) {
+          netheriteFolderIds.add(folder.id);
+          addedNew = true;
+        }
+      }
+    }
+
+    // 2. Query all files that belong to Netherite folders OR match markdown/drawings
+    const filesRes = await drive.files.list({
+      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or mimeType='application/octet-stream' or name contains '.excalidraw' or name contains '.md' or name contains '.txt' or name contains '.markdown')",
+      fields: "files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
+      orderBy: "folder, modifiedTime desc",
+      pageSize: 1000,
+      spaces: "drive",
+    });
+
+    const rawFiles = filesRes.data.files ?? [];
+
+    // 3. Load workspace metadata (.netherite.json)
+    const existingMeta = await getWorkspaceMetadata(session);
+    const updatedFilesMeta: Record<string, FileMetadata> = { ...(existingMeta.files || {}) };
+    let metadataNeedsSave = false;
+
+    // 4. Filter, normalize manually added items, and generate metadata
+    const itemsToReturn: Array<{
+      id: string;
+      name: string;
+      mimeType: string;
+      modifiedTime: string;
+      parents: string[];
+    }> = [];
+
+    for (const f of rawFiles) {
+      if (!f.id || !f.name) continue;
+      // Skip internal dotfiles (e.g. .netherite.json) and assets folder
+      if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
+
+      const isFolder = f.mimeType === "application/vnd.google-apps.folder";
+
+      if (isFolder) {
+        // Exclude root folder itself from list
+        if (f.id === rootFolderId || f.name === "Netherite") continue;
+        // Only include folders that are inside Netherite
+        if (!netheriteFolderIds.has(f.id)) continue;
+
+        const folderMime = f.mimeType ?? "application/vnd.google-apps.folder";
+
+        itemsToReturn.push({
+          id: f.id,
+          name: f.name,
+          mimeType: folderMime,
+          modifiedTime: f.modifiedTime ?? new Date().toISOString(),
+          parents: f.parents ?? [rootFolderId],
+        });
+
+        if (!updatedFilesMeta[f.id]) {
+          updatedFilesMeta[f.id] = {
+            id: f.id,
+            name: f.name,
+            mimeType: folderMime,
+            type: "folder",
+            parentId: f.parents?.[0] ?? rootFolderId,
+            updatedAt: f.modifiedTime ?? new Date().toISOString(),
+          };
+          metadataNeedsSave = true;
+        }
+        continue;
+      }
+
+      // Check if file is inside Netherite workspace
+      const isInsideNetherite = f.parents?.some((p) => netheriteFolderIds.has(p));
+      const hasMarkdownOrDrawingName =
         f.name.endsWith(".md") ||
         f.name.endsWith(".excalidraw") ||
+        f.name.endsWith(".markdown") ||
         f.mimeType === "text/markdown" ||
-        f.mimeType === "application/vnd.excalidraw+json"
-      ) {
-        return true;
+        f.mimeType === "application/vnd.excalidraw+json";
+
+      // If it's outside Netherite and not a note/drawing, ignore
+      if (!isInsideNetherite && !hasMarkdownOrDrawingName) continue;
+
+      // Determine item type
+      const isDrawing =
+        f.name.endsWith(".excalidraw") ||
+        f.mimeType === "application/vnd.excalidraw+json" ||
+        f.properties?.netheriteType === "drawing";
+
+      let displayName = f.name;
+
+      // If file was manually added inside Netherite without a valid extension, normalize to .md
+      if (!isDrawing && !displayName.endsWith(".md")) {
+        const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
+        const normalizedName = `${cleanBase}.md`;
+        try {
+          await drive.files.update({
+            fileId: f.id,
+            requestBody: {
+              name: normalizedName,
+              properties: {
+                netheriteType: "note",
+                netheriteManaged: "true",
+              },
+            },
+          });
+          displayName = normalizedName;
+        } catch (renameErr) {
+          console.warn("Could not rename manually added file:", renameErr);
+          displayName = normalizedName;
+        }
+      } else if (!f.properties?.netheriteManaged) {
+        // Tag with Drive properties so it is recognized as managed by Netherite
+        try {
+          await drive.files.update({
+            fileId: f.id,
+            requestBody: {
+              properties: {
+                netheriteType: isDrawing ? "drawing" : "note",
+                netheriteManaged: "true",
+              },
+            },
+          });
+        } catch {
+          // Non-fatal if property update is restricted
+        }
       }
-      return false;
-    });
+
+      const effectiveMimeType = isDrawing
+        ? "application/vnd.excalidraw+json"
+        : "text/markdown";
+
+      itemsToReturn.push({
+        id: f.id,
+        name: displayName,
+        mimeType: effectiveMimeType,
+        modifiedTime: f.modifiedTime ?? new Date().toISOString(),
+        parents: f.parents ?? [rootFolderId],
+      });
+
+      // Automatically generate metadata entry if missing
+      if (!updatedFilesMeta[f.id]) {
+        updatedFilesMeta[f.id] = {
+          id: f.id,
+          name: displayName,
+          mimeType: effectiveMimeType,
+          type: isDrawing ? "drawing" : "note",
+          parentId: f.parents?.[0] ?? rootFolderId,
+          createdAt: f.createdTime ?? f.modifiedTime ?? new Date().toISOString(),
+          updatedAt: f.modifiedTime ?? new Date().toISOString(),
+        };
+        metadataNeedsSave = true;
+      }
+    }
+
+    // 5. Persist auto-generated metadata back to .netherite.json if newly discovered items were added
+    if (metadataNeedsSave) {
+      try {
+        await saveWorkspaceMetadata(session, { files: updatedFilesMeta });
+      } catch (saveMetaErr) {
+        console.warn("Failed to persist auto-generated workspace metadata:", saveMetaErr);
+      }
+    }
+
+    return itemsToReturn;
   });
 }
 
@@ -338,85 +602,4 @@ export async function uploadAsset(
   };
 }
 
-export interface WorkspaceMetadata {
-  version: number;
-  folderColors: Record<string, string>;
-  [key: string]: any;
-}
 
-export async function getWorkspaceMetadata(session: any): Promise<WorkspaceMetadata> {
-  return withRetry(async () => {
-    const drive = await getDriveClient(session);
-    const rootFolderId = await ensureNetheriteFolder(session);
-
-    const res = await drive.files.list({
-      q: `'${rootFolderId}' in parents and name='.netherite.json' and trashed=false`,
-      fields: "files(id, name)",
-      spaces: "drive",
-    });
-
-    if (!res.data.files || res.data.files.length === 0 || !res.data.files[0]?.id) {
-      return { version: 1, folderColors: {} };
-    }
-
-    const fileId = res.data.files[0].id;
-    try {
-      const fileRes = await drive.files.get(
-        { fileId, alt: "media" },
-        { responseType: "text" }
-      );
-      const data = typeof fileRes.data === "string" ? JSON.parse(fileRes.data) : fileRes.data;
-      return { version: 1, folderColors: {}, ...data };
-    } catch (err) {
-      console.warn("Failed to parse .netherite.json:", err);
-      return { version: 1, folderColors: {} };
-    }
-  });
-}
-
-export async function saveWorkspaceMetadata(
-  session: any,
-  metadata: Partial<WorkspaceMetadata>
-): Promise<{ success: boolean; id?: string }> {
-  return withRetry(async () => {
-    const drive = await getDriveClient(session);
-    const rootFolderId = await ensureNetheriteFolder(session);
-
-    // Fetch existing metadata to merge cleanly
-    const existing = await getWorkspaceMetadata(session);
-    const merged = { ...existing, ...metadata, updatedAt: new Date().toISOString() };
-    const jsonString = JSON.stringify(merged, null, 2);
-
-    const res = await drive.files.list({
-      q: `'${rootFolderId}' in parents and name='.netherite.json' and trashed=false`,
-      fields: "files(id, name)",
-      spaces: "drive",
-    });
-
-    if (res.data.files && res.data.files.length > 0 && res.data.files[0]?.id) {
-      const fileId = res.data.files[0].id;
-      await drive.files.update({
-        fileId,
-        media: {
-          mimeType: "application/json",
-          body: jsonString,
-        },
-      });
-      return { success: true, id: fileId };
-    } else {
-      const createRes = await drive.files.create({
-        requestBody: {
-          name: ".netherite.json",
-          parents: [rootFolderId],
-          mimeType: "application/json",
-        },
-        media: {
-          mimeType: "application/json",
-          body: jsonString,
-        },
-        fields: "id",
-      });
-      return { success: true, id: createRes.data.id ?? undefined };
-    }
-  });
-}
