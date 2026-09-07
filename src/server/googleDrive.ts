@@ -208,40 +208,54 @@ export async function saveWorkspaceMetadata(
   });
 }
 
+
+export async function checkDriveScope(session: any): Promise<{ hasFullDriveScope: boolean; scopes: string[] }> {
+  try {
+    const token = session?.accessToken;
+    if (!token) return { hasFullDriveScope: false, scopes: [] };
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.AUTH_GOOGLE_ID,
+      process.env.AUTH_GOOGLE_SECRET
+    );
+    oauth2Client.setCredentials({ access_token: token });
+    const tokenInfo = await oauth2Client.getTokenInfo(token);
+    const scopes: string[] = tokenInfo.scopes ?? [];
+    const hasFullDriveScope = scopes.some(
+      (s) => s.includes("auth/drive") && !s.endsWith("drive.file") && !s.endsWith("drive.appdata")
+    );
+    return { hasFullDriveScope, scopes };
+  } catch (err) {
+    console.warn("Error checking drive scope:", err);
+    return { hasFullDriveScope: true, scopes: [] };
+  }
+}
+
 export async function listNotes(session: any) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
     const rootFolderId = await ensureNetheriteFolder(session);
 
-    // 1. Fetch all folders to recursively discover Netherite's folder tree
+    // 1. Fetch all folders in Drive
     const foldersRes = await drive.files.list({
       q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
       fields: "files(id, name, mimeType, modifiedTime, parents)",
-      pageSize: 500,
+      pageSize: 1000,
       spaces: "drive",
     });
 
     const allFolders = foldersRes.data.files ?? [];
-    const netheriteFolderIds = new Set<string>([rootFolderId]);
+    const allUserFolderIds = new Set<string>();
 
-    // Recursively add all descendants of Netherite folder
-    let addedNew = true;
-    while (addedNew) {
-      addedNew = false;
-      for (const folder of allFolders) {
-        if (!folder.id || netheriteFolderIds.has(folder.id)) continue;
-        if (folder.name?.toLowerCase() === "assets") continue;
-        const isChild = folder.parents?.some((p) => netheriteFolderIds.has(p));
-        if (isChild) {
-          netheriteFolderIds.add(folder.id);
-          addedNew = true;
-        }
-      }
+    for (const folder of allFolders) {
+      if (!folder.id) continue;
+      if (folder.name?.toLowerCase() === "assets") continue;
+      if (folder.id === rootFolderId || folder.name === "Netherite") continue;
+      allUserFolderIds.add(folder.id);
     }
 
-    // 2. Query all files that belong to Netherite folders OR match markdown/drawings
+    // 2. Query all files that belong to user folders OR match markdown/drawings/docs
     const filesRes = await drive.files.list({
-      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or mimeType='application/octet-stream' or name contains '.excalidraw' or name contains '.md' or name contains '.txt' or name contains '.markdown')",
+      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or mimeType='application/octet-stream' or name contains '.excalidraw' or name contains '.md' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
       fields: "files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
       orderBy: "folder, modifiedTime desc",
       pageSize: 1000,
@@ -252,7 +266,7 @@ export async function listNotes(session: any) {
 
     // 3. Load workspace metadata (.netherite.json)
     const existingMeta = await getWorkspaceMetadata(session);
-    const updatedFilesMeta: Record<string, FileMetadata> = { ...(existingMeta.files || {}) };
+    const updatedFilesMeta: Record<string, FileMetadata> = { ...(existingMeta.files ?? {}) };
     let metadataNeedsSave = false;
 
     // 4. Filter, normalize manually added items, and generate metadata
@@ -264,54 +278,54 @@ export async function listNotes(session: any) {
       parents: string[];
     }> = [];
 
-    for (const f of rawFiles) {
+    // Include all user folders
+    for (const f of allFolders) {
       if (!f.id || !f.name) continue;
-      // Skip internal dotfiles (e.g. .netherite.json) and assets folder
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
+      if (f.id === rootFolderId || f.name === "Netherite") continue;
 
-      const isFolder = f.mimeType === "application/vnd.google-apps.folder";
+      const folderMime = f.mimeType ?? "application/vnd.google-apps.folder";
 
-      if (isFolder) {
-        // Exclude root folder itself from list
-        if (f.id === rootFolderId || f.name === "Netherite") continue;
-        // Only include folders that are inside Netherite
-        if (!netheriteFolderIds.has(f.id)) continue;
+      itemsToReturn.push({
+        id: f.id,
+        name: f.name,
+        mimeType: folderMime,
+        modifiedTime: f.modifiedTime ?? new Date().toISOString(),
+        parents: f.parents ?? [rootFolderId],
+      });
 
-        const folderMime = f.mimeType ?? "application/vnd.google-apps.folder";
-
-        itemsToReturn.push({
+      if (!updatedFilesMeta[f.id]) {
+        updatedFilesMeta[f.id] = {
           id: f.id,
           name: f.name,
           mimeType: folderMime,
-          modifiedTime: f.modifiedTime ?? new Date().toISOString(),
-          parents: f.parents ?? [rootFolderId],
-        });
-
-        if (!updatedFilesMeta[f.id]) {
-          updatedFilesMeta[f.id] = {
-            id: f.id,
-            name: f.name,
-            mimeType: folderMime,
-            type: "folder",
-            parentId: f.parents?.[0] ?? rootFolderId,
-            updatedAt: f.modifiedTime ?? new Date().toISOString(),
-          };
-          metadataNeedsSave = true;
-        }
-        continue;
+          type: "folder",
+          parentId: f.parents?.[0] ?? rootFolderId,
+          updatedAt: f.modifiedTime ?? new Date().toISOString(),
+        };
+        metadataNeedsSave = true;
       }
+    }
 
-      // Check if file is inside Netherite workspace
-      const isInsideNetherite = f.parents?.some((p) => netheriteFolderIds.has(p));
-      const hasMarkdownOrDrawingName =
+    // Process all files
+    for (const f of rawFiles) {
+      if (!f.id || !f.name) continue;
+      if (f.mimeType === "application/vnd.google-apps.folder") continue;
+      if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
+
+      // Check if file is inside Netherite root, inside any user folder, or is a markdown/drawing anywhere
+      const isInsideAnyFolder = f.parents?.some(
+        (p) => p === rootFolderId || allUserFolderIds.has(p)
+      );
+      const isMarkdownOrDrawing =
         f.name.endsWith(".md") ||
         f.name.endsWith(".excalidraw") ||
         f.name.endsWith(".markdown") ||
         f.mimeType === "text/markdown" ||
         f.mimeType === "application/vnd.excalidraw+json";
 
-      // If it's outside Netherite and not a note/drawing, ignore
-      if (!isInsideNetherite && !hasMarkdownOrDrawingName) continue;
+      // If it's outside our folders and not a note/drawing, ignore
+      if (!isInsideAnyFolder && !isMarkdownOrDrawing) continue;
 
       // Determine item type
       const isDrawing =
@@ -321,7 +335,7 @@ export async function listNotes(session: any) {
 
       let displayName = f.name;
 
-      // If file was manually added inside Netherite without a valid extension, normalize to .md
+      // If file was manually added inside a folder without a valid extension, normalize to .md
       if (!isDrawing && !displayName.endsWith(".md")) {
         const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
         const normalizedName = `${cleanBase}.md`;
@@ -337,8 +351,7 @@ export async function listNotes(session: any) {
             },
           });
           displayName = normalizedName;
-        } catch (renameErr) {
-          console.warn("Could not rename manually added file:", renameErr);
+        } catch {
           displayName = normalizedName;
         }
       } else if (!f.properties?.netheriteManaged) {
@@ -442,6 +455,13 @@ export async function getNoteContent(session: any, fileId: string) {
         meta.data.mimeType?.startsWith("image/")
       ) {
         return "";
+      }
+      if (meta.data.mimeType === "application/vnd.google-apps.document") {
+        const exportRes = await drive.files.export(
+          { fileId, mimeType: "text/plain" },
+          { responseType: "text" }
+        );
+        return (exportRes.data as string) ?? "";
       }
       const res = await drive.files.get(
         { fileId, alt: "media" },

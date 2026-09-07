@@ -12,6 +12,7 @@ import {
   moveItem,
   getWorkspaceMetadata,
   saveWorkspaceMetadata,
+  checkDriveScope,
 } from "~/server/googleDrive";
 
 export const notesRouter = createTRPCRouter({
@@ -112,5 +113,9 @@ export const notesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await saveWorkspaceMetadata(ctx.session, input);
     }),
+
+  checkScope: protectedProcedure.query(async ({ ctx }) => {
+    return await checkDriveScope(ctx.session);
+  }),
 });
 

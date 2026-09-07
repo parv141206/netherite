@@ -1069,11 +1069,17 @@ export function WorkspaceLayout({
       }
 
       setIsSyncModalOpen(false);
-      showToast(
-        isDirty
-          ? "Discarded local changes and synced latest from Google Drive."
-          : "Workspace is in sync with Google Drive."
-      );
+
+      const scopeCheck = await utils.notes.checkScope.fetch().catch(() => null);
+      if (scopeCheck && !scopeCheck.hasFullDriveScope) {
+        showToast("Drive permissions update required to access files created directly in Google Drive. Re-authorize in Sync menu.");
+      } else {
+        showToast(
+          isDirty
+            ? "Discarded local changes and synced latest from Google Drive."
+            : "Workspace is in sync with Google Drive."
+        );
+      }
     } catch (err) {
       console.error("Failed to sync from Google Drive:", err);
       showToast("Failed to sync with Drive. Please check your connection.");

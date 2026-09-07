@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { RefreshCw, AlertTriangle, CheckCircle2, X, CloudDownload } from "lucide-react";
+import { api } from "~/trpc/react";
+import { signIn } from "next-auth/react";
 
 interface SyncModalProps {
   isOpen: boolean;
@@ -24,6 +26,11 @@ export function SyncModal({
 }: SyncModalProps) {
   const [clearAllDrafts, setClearAllDrafts] = useState(false);
   const actionBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const { data: scopeData } = api.notes.checkScope.useQuery(undefined, {
+    enabled: isOpen,
+    staleTime: 60000,
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -154,6 +161,25 @@ export function SyncModal({
             <p className="text-[11px]">
               Netherite will re-fetch the explorer file tree and retrieve the latest document version from Google Drive.
             </p>
+          </div>
+        )}
+
+        {scopeData && !scopeData.hasFullDriveScope && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 text-xs flex flex-col gap-2">
+            <div className="font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>Drive Permission Update Needed</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              To sync files or folders created or copied directly in Google Drive, Google requires you to grant Drive permissions. Please re-authorize your session once to allow access.
+            </p>
+            <button
+              type="button"
+              onClick={() => signIn("google")}
+              className="mt-0.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-medium text-xs self-start transition-colors cursor-pointer"
+            >
+              Re-authorize Google Drive Access
+            </button>
           </div>
         )}
 
