@@ -263,7 +263,7 @@ export async function listNotes(session: any) {
 
     // 2. Query files inside Drive
     const filesRes = await drive.files.list({
-      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
+      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/vnd.apollon+json' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.apollon' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
       fields: "files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
       orderBy: "folder, modifiedTime desc",
       pageSize: 1000,
@@ -336,11 +336,19 @@ export async function listNotes(session: any) {
           f.mimeType === "application/vnd.excalidraw+json" ||
           f.properties?.netheriteType === "drawing");
 
+      const isUml =
+        !isImage &&
+        !isDrawing &&
+        (f.name.endsWith(".apollon") ||
+          f.name.endsWith(".uml") ||
+          f.mimeType === "application/vnd.apollon+json" ||
+          f.properties?.netheriteType === "uml");
+
       let displayName = f.name;
 
       if (isImage) {
         displayName = f.name;
-      } else if (!isDrawing && !displayName.endsWith(".md")) {
+      } else if (!isDrawing && !isUml && !displayName.endsWith(".md")) {
         const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
         const normalizedName = `${cleanBase}.md`;
         try {
@@ -364,7 +372,7 @@ export async function listNotes(session: any) {
             fileId: f.id,
             requestBody: {
               properties: {
-                netheriteType: isDrawing ? "drawing" : isImage ? "image" : "note",
+                netheriteType: isDrawing ? "drawing" : isUml ? "uml" : isImage ? "image" : "note",
                 netheriteManaged: "true",
               },
             },
@@ -378,6 +386,8 @@ export async function listNotes(session: any) {
         ? f.mimeType ?? "image/png"
         : isDrawing
         ? "application/vnd.excalidraw+json"
+        : isUml
+        ? "application/vnd.apollon+json"
         : "text/markdown";
 
       itemsToReturn.push({
@@ -488,7 +498,16 @@ export async function saveNote(session: any, fileId: string, content: string) {
     const isDrawing =
       meta.data.name?.endsWith(".excalidraw") ||
       meta.data.mimeType === "application/vnd.excalidraw+json";
-    const mimeType = isDrawing ? "application/vnd.excalidraw+json" : "text/markdown";
+    const isUml =
+      meta.data.name?.endsWith(".apollon") ||
+      meta.data.name?.endsWith(".uml") ||
+      meta.data.mimeType === "application/vnd.apollon+json";
+
+    const mimeType = isDrawing
+      ? "application/vnd.excalidraw+json"
+      : isUml
+      ? "application/vnd.apollon+json"
+      : "text/markdown";
 
     await drive.files.update({
       fileId,
@@ -505,17 +524,31 @@ export async function createNote(
   name: string,
   content: string = "",
   parentId?: string,
-  type: "note" | "drawing" = "note"
+  type: "note" | "drawing" | "uml" = "note"
 ) {
   const drive = await getDriveClient(session);
   const folderId = parentId || (await ensureNetheriteFolder(session));
 
   const isDrawing = type === "drawing" || name.endsWith(".excalidraw");
-  const cleanName = isDrawing
-    ? name.replace(/\.excalidraw$/i, "")
-    : name.replace(/\.md$/i, "");
-  const finalName = isDrawing ? `${cleanName}.excalidraw` : `${cleanName}.md`;
-  const mimeType = isDrawing ? "application/vnd.excalidraw+json" : "text/markdown";
+  const isUml = type === "uml" || name.endsWith(".apollon") || name.endsWith(".uml");
+
+  let cleanName = name;
+  let finalName = name;
+  let mimeType = "text/markdown";
+
+  if (isDrawing) {
+    cleanName = name.replace(/\.excalidraw$/i, "");
+    finalName = `${cleanName}.excalidraw`;
+    mimeType = "application/vnd.excalidraw+json";
+  } else if (isUml) {
+    cleanName = name.replace(/\.(apollon|uml)$/i, "");
+    finalName = `${cleanName}.apollon`;
+    mimeType = "application/vnd.apollon+json";
+  } else {
+    cleanName = name.replace(/\.md$/i, "");
+    finalName = `${cleanName}.md`;
+    mimeType = "text/markdown";
+  }
 
   const initialBody =
     isDrawing && !content
@@ -527,6 +560,20 @@ export async function createNote(
           appState: { viewBackgroundColor: "#ffffff", currentItemFontFamily: 1 },
           files: {},
         })
+      : isUml && !content
+      ? JSON.stringify(
+          {
+            version: "4.0.0",
+            id: `uml-${Date.now()}`,
+            title: cleanName,
+            type: "ClassDiagram",
+            nodes: [],
+            edges: [],
+            assessments: {},
+          },
+          null,
+          2
+        )
       : content;
 
   const res = await drive.files.create({
@@ -552,6 +599,10 @@ export async function renameNote(session: any, fileId: string, newName: string) 
   const isDrawing =
     fileMeta.data.name?.endsWith(".excalidraw") ||
     fileMeta.data.mimeType === "application/vnd.excalidraw+json";
+  const isUml =
+    fileMeta.data.name?.endsWith(".apollon") ||
+    fileMeta.data.name?.endsWith(".uml") ||
+    fileMeta.data.mimeType === "application/vnd.apollon+json";
 
   let finalName = newName;
   if (isFolder) {
@@ -559,6 +610,9 @@ export async function renameNote(session: any, fileId: string, newName: string) 
   } else if (isDrawing) {
     const cleanName = newName.replace(/\.excalidraw$/i, "");
     finalName = `${cleanName}.excalidraw`;
+  } else if (isUml) {
+    const cleanName = newName.replace(/\.(apollon|uml)$/i, "");
+    finalName = `${cleanName}.apollon`;
   } else {
     const cleanName = newName.replace(/\.md$/i, "");
     finalName = `${cleanName}.md`;

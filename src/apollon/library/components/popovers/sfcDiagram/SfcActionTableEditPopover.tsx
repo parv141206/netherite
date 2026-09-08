@@ -1,0 +1,240 @@
+import React, { useState, KeyboardEvent, ChangeEvent } from "react"
+import { Plus, Trash2 } from "lucide-react"
+import { IconButton, TextField } from "@tumaet/apollon/components/ui"
+import { NodeStyleEditor } from "@tumaet/apollon/components/styleEditor"
+import { generateUUID } from "@tumaet/apollon/utils"
+import { useDiagramStore } from "@tumaet/apollon/store"
+import { useShallow } from "zustand/shallow"
+import { SfcActionTableProps, SfcActionRow } from "@tumaet/apollon/types"
+import { PopoverProps } from "../types"
+import { LAYOUT } from "@tumaet/apollon/constants"
+import { useReactFlow } from "@xyflow/react"
+import { useLabels } from "@tumaet/apollon/i18n/useLabels"
+import { PopoverLayout, PopoverSection } from "../PopoverLayout"
+
+export const SfcActionTableEditPopover: React.FC<PopoverProps> = ({
+  elementId,
+}) => {
+  const t = useLabels()
+  const { updateNodeData } = useReactFlow()
+  const { nodes, setNodes } = useDiagramStore(
+    useShallow((state) => ({ setNodes: state.setNodes, nodes: state.nodes }))
+  )
+  const [newIdentifier, setNewIdentifier] = useState("")
+  const [newName, setNewName] = useState("")
+
+  const nodeData = nodes.find((node) => node.id === elementId)
+    ?.data as SfcActionTableProps
+  const actionRows = nodeData?.actionRows || []
+
+  const handleRowChange = (
+    id: string,
+    key: keyof SfcActionRow,
+    newValue: string
+  ) => {
+    const updatedRows = actionRows.map((row) =>
+      row.id === id ? { ...row, [key]: newValue } : row
+    )
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === elementId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              actionRows: updatedRows,
+            },
+          }
+        }
+        return node
+      })
+    )
+  }
+
+  const handleRowDelete = (id: string) => {
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === elementId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              actionRows: actionRows.filter((row) => row.id !== id),
+            },
+            height: node.height! - LAYOUT.DEFAULT_ATTRIBUTE_HEIGHT,
+            measured: {
+              ...node.measured,
+              height: node.height! - LAYOUT.DEFAULT_ATTRIBUTE_HEIGHT,
+            },
+          }
+        }
+        return node
+      })
+    )
+  }
+
+  const handleAddRow = () => {
+    if (newIdentifier.trim() === "" && newName.trim() === "") return
+
+    const newRow: SfcActionRow = {
+      id: generateUUID(),
+      identifier: newIdentifier.trim(),
+      name: newName.trim(),
+    }
+
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === elementId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              actionRows: [...actionRows, newRow],
+            },
+            height: node.height! + LAYOUT.DEFAULT_ATTRIBUTE_HEIGHT,
+            measured: {
+              ...node.measured,
+              height: node.height! + LAYOUT.DEFAULT_ATTRIBUTE_HEIGHT,
+            },
+          }
+        }
+        return node
+      })
+    )
+
+    setNewIdentifier("")
+    setNewName("")
+  }
+
+  const handleKeyDown = (
+    event: KeyboardEvent<HTMLInputElement | HTMLDivElement>,
+    field: "identifier" | "name"
+  ) => {
+    if (event.key === "Enter") {
+      if (field === "identifier") {
+        // Move focus to name field
+        const nameInput = document.querySelector(
+          '[data-field="name"][data-new="true"]'
+        ) as HTMLInputElement
+        nameInput?.focus()
+      } else {
+        // Add the row
+        handleAddRow()
+      }
+    }
+  }
+
+  const handleDataFieldUpdate = (key: string, value: string) => {
+    updateNodeData(elementId, {
+      ...nodeData,
+      [key]: value,
+    })
+  }
+
+  return (
+    <PopoverLayout title={t.actionTable}>
+      <NodeStyleEditor
+        nodeData={nodeData}
+        handleDataFieldUpdate={handleDataFieldUpdate}
+        showNameInputChange={false}
+      />
+      <PopoverSection title={t.actions} divider>
+        {actionRows.map((row) => (
+          <div
+            key={row.id}
+            style={{
+              display: "flex",
+              gap: 4,
+              alignItems: "center",
+            }}
+          >
+            <NodeStyleEditor
+              nodeData={row}
+              handleDataFieldUpdate={(key, value) => {
+                handleRowChange(row.id, key, value)
+              }}
+              sideElements={[
+                <IconButton
+                  key={`${row.id}-delete`}
+                  ariaLabel={t.deleteActionRow}
+                  tooltip={t.deleteActionRow}
+                  onClick={() => handleRowDelete(row.id)}
+                >
+                  <Trash2 width={16} height={16} aria-hidden="true" />
+                </IconButton>,
+              ]}
+              preElements={[
+                <TextField
+                  key={`${row.id}-identifier`}
+                  value={row.identifier}
+                  placeholder={t.id}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    handleRowChange(row.id, "identifier", e.target.value)
+                  }
+                  style={{
+                    width: "60px",
+                  }}
+                />,
+              ]}
+              inputPlaceholder={t.actionName}
+            />
+          </div>
+        ))}
+
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            placeholder={t.id}
+            value={newIdentifier}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setNewIdentifier(e.target.value)
+            }
+            onBlur={() => {
+              if (newIdentifier.trim() === "" && newName.trim() === "") {
+                setNewIdentifier("")
+              } else if (newIdentifier.trim() !== "" && newName.trim() !== "") {
+                handleAddRow()
+              }
+            }}
+            onKeyDown={(e) => handleKeyDown(e, "identifier")}
+            data-field="identifier"
+            data-new="true"
+            style={{
+              width: "60px",
+            }}
+          />
+          <TextField
+            fullWidth
+            placeholder={t.actionName}
+            value={newName}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setNewName(e.target.value)
+            }
+            onBlur={() => {
+              if (newIdentifier.trim() === "" && newName.trim() === "") {
+                setNewName("")
+              } else if (newIdentifier.trim() !== "" && newName.trim() !== "") {
+                handleAddRow()
+              }
+            }}
+            onKeyDown={(e) => handleKeyDown(e, "name")}
+            data-field="name"
+            data-new="true"
+          />
+          <IconButton
+            ariaLabel={t.addActionRow}
+            tooltip={t.addActionRow}
+            onClick={handleAddRow}
+          >
+            <Plus width={16} height={16} aria-hidden="true" />
+          </IconButton>
+        </div>
+      </PopoverSection>
+    </PopoverLayout>
+  )
+}

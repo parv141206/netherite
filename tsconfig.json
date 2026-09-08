@@ -8,7 +8,7 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
 
     /* Strictness */
     "strict": true,
@@ -43,7 +43,15 @@
       "@excalidraw/math": ["./src/excalidraw/math/src/index.ts"],
       "@excalidraw/math/*": ["./src/excalidraw/math/src/*"],
       "@excalidraw/utils": ["./src/excalidraw/utils/src/index.ts"],
-      "@excalidraw/utils/*": ["./src/excalidraw/utils/src/*"]
+      "@excalidraw/utils/*": ["./src/excalidraw/utils/src/*"],
+      "@tumaet/apollon": ["./src/apollon/library/index.tsx"],
+      "@tumaet/apollon/*": ["./src/apollon/library/*"],
+      "@tumaet/ui/components/*": ["./src/apollon/ui/components/*"],
+      "@tumaet/ui/styles/*": ["./src/apollon/ui/styles/*"],
+      "@tumaet/ui/lib/*": ["./src/apollon/ui/lib/*"],
+      "@tumaet/ui/theme": ["./src/apollon/ui/theme.ts"],
+      "@tumaet/ui/dist/*": ["./src/apollon/ui/dist/*"],
+      "@tumaet/ui/*": ["./src/apollon/ui/*"]
     }
   },
   "include": [

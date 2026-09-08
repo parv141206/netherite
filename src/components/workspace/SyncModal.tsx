@@ -63,7 +63,7 @@ export function SyncModal({
     }
   };
 
-  const cleanTitle = noteTitle.replace(/\.(md|excalidraw)$/i, "");
+  const cleanTitle = noteTitle.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
 
   return (
     <div

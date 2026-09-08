@@ -17,6 +17,7 @@ import {
   Sigma,
   Code2,
   Palette,
+  Network,
   Columns,
   Cpu,
   Layers,
@@ -35,7 +36,7 @@ import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 export function LandingPage({ session }: { session?: any } = {}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"math" | "whiteboard" | "code">("math");
+  const [activeTab, setActiveTab] = useState<"math" | "whiteboard" | "uml" | "code">("math");
   const [copiedCmd, setCopiedCmd] = useState(false);
 
   useEffect(() => {
@@ -209,12 +210,10 @@ export function LandingPage({ session }: { session?: any } = {}) {
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
               </div>
               <span className="font-mono text-[11px] text-muted-foreground truncate ml-1">
-                ~/Google Drive/netherite/Quantum Mechanics/{activeTab === "whiteboard" ? "System Topology.excalidraw" : "Noether Symmetries.md"}
+                ~/Google Drive/netherite/Quantum Mechanics/{activeTab === "whiteboard" ? "System Topology.excalidraw" : activeTab === "uml" ? "Architecture.apollon" : "Noether Symmetries.md"}
               </span>
-            </div>
-            <div className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground shrink-0">
-              <span className="px-2 py-0.5 rounded bg-muted border border-border/40 text-[10px] hidden sm:inline">
-                {activeTab === "whiteboard" ? "Vector Canvas" : "Literata Serif"}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground border border-border/40 shrink-0">
+                {activeTab === "whiteboard" ? "Vector Canvas" : activeTab === "uml" ? "UML Studio" : "Literata Serif"}
               </span>
               <span className="hidden sm:inline">Saved</span>
             </div>
@@ -279,7 +278,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-border/30">
                   <span className="text-xs text-muted-foreground truncate">
-                    Quantum Mechanics / {activeTab === "whiteboard" ? "System Topology.excalidraw" : "Noether Symmetries.md"}
+                    Quantum Mechanics / {activeTab === "whiteboard" ? "System Topology.excalidraw" : activeTab === "uml" ? "Architecture.apollon" : "Noether Symmetries.md"}
                   </span>
                   <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/40 shrink-0 self-start sm:self-auto overflow-x-auto max-w-full">
                     <button
@@ -296,8 +295,17 @@ export function LandingPage({ session }: { session?: any } = {}) {
                         activeTab === "whiteboard" ? "bg-background text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      <Palette className="w-3 h-3 text-purple-400" />
+                      <Palette className="w-3 h-3 text-indigo-400" />
                       <span>Architecture Canvas</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("uml")}
+                      className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                        activeTab === "uml" ? "bg-background text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Network className="w-3 h-3 text-purple-400" />
+                      <span>UML Studio</span>
                     </button>
                     <button
                       onClick={() => setActiveTab("code")}
@@ -395,6 +403,64 @@ export function LandingPage({ session }: { session?: any } = {}) {
                   </div>
                 )}
 
+                {activeTab === "uml" && (
+                  <div className="space-y-4 font-sans">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
+                        <span>Object & System Architecture</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
+                          UML 2.5
+                        </span>
+                      </h2>
+                      <a
+                        href="https://github.com/ls1intum/Apollon"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] text-muted-foreground hover:text-foreground font-mono hidden sm:inline-flex items-center gap-1 transition-colors"
+                      >
+                        Powered by Apollon
+                        <ExternalLink className="w-3 h-3 opacity-60" />
+                      </a>
+                    </div>
+
+                    {/* Visual UML diagram representation matching Apollon Studio UI */}
+                    <div className="relative p-5 rounded-xl bg-card border border-border/60 overflow-hidden shadow-inner min-h-[220px] flex flex-col justify-center">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                        {/* Class Box */}
+                        <div className="rounded-lg border border-purple-500/30 bg-background/90 p-3.5 shadow-sm space-y-2">
+                          <div className="border-b border-border/60 pb-1.5 flex items-center justify-between">
+                            <strong className="text-xs text-foreground font-mono">QuantumStateEngine</strong>
+                            <span className="text-[9px] text-purple-400 font-mono">«Interface»</span>
+                          </div>
+                          <div className="space-y-1 font-mono text-[10px] text-muted-foreground">
+                            <div>+ hilbertDim: Integer = 256</div>
+                            <div>+ stateVector: ComplexMatrix</div>
+                          </div>
+                          <div className="border-t border-border/40 pt-1.5 space-y-1 font-mono text-[10px] text-foreground/80">
+                            <div>+ evolveHamiltonian(dt: Float)</div>
+                            <div>+ measureObservable(O: Operator)</div>
+                          </div>
+                        </div>
+
+                        {/* Associated Observer Class */}
+                        <div className="rounded-lg border border-border/80 bg-background/80 p-3.5 shadow-sm space-y-2">
+                          <div className="border-b border-border/60 pb-1.5 flex items-center justify-between">
+                            <strong className="text-xs text-foreground font-mono">DecoherenceObserver</strong>
+                            <span className="text-[9px] text-muted-foreground font-mono">«UML Class»</span>
+                          </div>
+                          <div className="space-y-1 font-mono text-[10px] text-muted-foreground">
+                            <div>- entropyThreshold: Float</div>
+                            <div>- bathCoupling: Tensor</div>
+                          </div>
+                          <div className="border-t border-border/40 pt-1.5 space-y-1 font-mono text-[10px] text-foreground/80">
+                            <div>+ onStateCollapse(event: CollapseEvent)</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {activeTab === "code" && (
                   <div className="space-y-4 font-sans text-xs sm:text-sm">
                     <h2 className="text-lg sm:text-xl font-bold text-foreground">
@@ -423,7 +489,11 @@ impl<T: Hypersurface> CauchyState<T> {
 
               <div className="pt-5 mt-5 border-t border-border/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-muted-foreground font-mono">
                 <span className="truncate">
-                  {activeTab === "whiteboard" ? "Vector Whiteboard (.excalidraw)" : "Markdown + KaTeX Extension (.md)"}
+                  {activeTab === "whiteboard"
+                    ? "Vector Whiteboard (.excalidraw)"
+                    : activeTab === "uml"
+                    ? "Apollon UML Modeling Engine (.apollon)"
+                    : "Markdown + KaTeX Extension (.md)"}
                 </span>
                 <span className="text-emerald-500 flex items-center gap-1 font-sans font-medium shrink-0">
                   ● 100% Google Drive Sovereign

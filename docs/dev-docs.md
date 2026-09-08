@@ -71,12 +71,12 @@ Netherite requires Google Drive API access to store and retrieve user notes and 
 - A metadata file `netherite_workspace_metadata.json` stores workspace customizations such as custom folder color tags.
 
 ### Supported File Types
-| Type | Extension | MIME Type |
-| :--- | :--- | :--- |
-| Markdown Note | `.md` | `text/markdown` |
-| Vector Whiteboard | `.excalidraw` | `application/vnd.excalidraw+json` |
-| Folder | N/A | `application/vnd.google-apps.folder` |
-| Image Attachment | `.png`, `.jpg`, `.webp` | `image/*` (stored under `attachments/`) |
+| Type | Extension | MIME Type | Viewer / Editor |
+| :--- | :--- | :--- | :--- |
+| Markdown Note | `.md` | `text/markdown` | TipTap v3 + KaTeX |
+| Vector Whiteboard | `.excalidraw` | `application/vnd.excalidraw+json` | Excalidraw Engine |
+| Image Asset | `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg` | `image/*` | Native ImageViewer |
+| Folder | N/A | `application/vnd.google-apps.folder` | Explorer Tree |
 
 ### Token Refresh & Network Resilience
 - Google OAuth tokens are automatically refreshed in the NextAuth JWT callback using Google's token endpoint (`oauth2.googleapis.com/token`) when access tokens expire.
@@ -89,6 +89,7 @@ Netherite requires Google Drive API access to store and retrieve user notes and 
 ### 4.1 Local Draft Backups
 - Keystrokes in the active document write continuously to `localStorage` under `netherite_draft_<fileId>`.
 - If the browser tab is closed unexpectedly, reopening the tab retrieves the local draft so no unsaved thoughts are lost.
+- Empty or corrupted Excalidraw drafts are automatically detected via `isEmptyExcalidraw` and purged to prevent overriding non-empty diagrams.
 
 ### 4.2 Diff Engine (`src/components/workspace/diffUtils.ts`)
 - Computes character- and line-level diffs (`computeLineDiff`) by comparing `lastSavedContent` (from Google Drive) with `noteContent` (in-memory edits).
@@ -117,13 +118,16 @@ src/
 ├── app/
 │   ├── api/auth/         # NextAuth route handlers
 │   ├── api/trpc/         # tRPC HTTP batch endpoint
-│   ├── layout.tsx        # Root layout with ThemeProvider and tRPC React provider
-│   └── page.tsx          # Server-rendered home page with initial Drive hydration
+│   ├── editor/           # Authenticated studio workspace (/editor)
+│   ├── privacy/          # Public Google OAuth compliant Privacy Policy (/privacy)
+│   ├── terms/            # Public Terms of Service (/terms)
+│   ├── layout.tsx        # Root layout with ThemeProvider, fonts, and verification tags
+│   └── page.tsx          # Public session-aware landing page (/)
 ├── components/
 │   ├── canvas/           # Excalidraw integration & DrawingCanvas wrapper
 │   ├── editor/           # TipTap core, KaTeX math extension, bubble menu, syntax highlighting
-│   ├── landing/          # Monochromatic sovereign landing page for logged-out visitors
-│   └── workspace/        # Sidebar, HeaderBar, DiffModal, SyncModal, MobileBottomBar, Outline
+│   ├── landing/          # Monochromatic sovereign landing page with session awareness
+│   └── workspace/        # Sidebar, HeaderBar, ImageViewer, DiffModal, SyncModal, MobileBottomBar
 ├── features/
 │   └── engineering-canvas/ # Domain-specific palettes (logic gates, circuit primitives)
 ├── server/

@@ -1,0 +1,2230 @@
+/* The shared, embed-safe primitives + --apollon-/--home- design tokens are NOT
+   `@import`-ed here: this file is inlined verbatim into the headless-export CSS
+   chunk, which must stay `@import`-free (see the NOTE below and
+   exportSelfContained.test.ts). The @tumaet/ui `components.css` is instead
+   pulled in as a side-effect import in `App.tsx` (runtime) and concatenated
+   into the export chunk in `exportStyles.ts` (headless). */
+
+/* NOTE: this file is inlined verbatim into the headless-export CSS chunk
+   (see lib/utils/exportStyles.ts). Keep it free of `@font-face`, `url(...)`,
+   and `@import`, or those assets leak into that chunk. The Inter font ships
+   separately (lib/styles/fonts.css + lib/utils/exportFonts.ts). */
+
+/* The shared chrome token system (--apollon-chrome-*: glass, the surface/border/
+   text ramp, the btn/pad/island dimensional system, motion) is the SINGLE source
+   and lives in @tumaet/ui tokens.css — loaded into the editor via the
+   components.css side-effect import in App.tsx, bundled into the published
+   style.css, concatenated into the headless-export chunk, AND available to the
+   webapp HOME (which imports components.css but NOT this app.css). The editor's
+   structural rules below CONSUME those tokens via var(); they are not redefined
+   here, so there is exactly one definition and no drift. */
+
+.react-flow {
+  --panel-background: var(--apollon-background, #fff);
+  --panel-shadow: var(--apollon-shadow, 0 4px 12px rgba(0, 0, 0, 0.18));
+  --text: var(--apollon-foreground, #000);
+  --xy-edge-stroke: var(--apollon-foreground, #000);
+  --xy-edge-stroke-width: 2px;
+  --xy-controls-button-background-color: var(--apollon-background, #fff);
+
+  /* Kill React Flow's default divider between control buttons — its
+     `.controls.horizontal .controls-button { border-right }` outranks our
+     `border: 0`, so a light hairline leaked between the zoom/fit buttons
+     (glaring in dark mode). Zero it at the source via RF's own token. */
+  --xy-controls-button-border-color: transparent;
+}
+
+.apollon-editor {
+  background-color: var(--apollon-background, #fff);
+  color: var(--apollon-foreground, #000);
+
+  --popover-divider: color-mix(
+    in srgb,
+    var(--apollon-foreground, #000) 10%,
+    transparent
+  );
+
+  /* Own stacking context so the editor's internal z-indexes (canvas content at
+     9998–10001, collaboration overlays at 10001–10004, overlay chrome at
+     --apollon-z-chrome) stay self-contained and the whole editor sits below
+     host-app chrome — e.g. the webapp navbar's body-portaled dropdown menus
+     render above the presence bar. Use `isolation` (not `transform`) so we don't
+     create a containing block for those portaled popovers (see the
+     `.apollon-canvas` note below). */
+  isolation: isolate;
+
+  /* Overlay chrome (header, rails, host controls): above canvas content +
+     collaboration overlays. Single source of truth for the overlay layer. */
+  --apollon-z-chrome: 10005;
+}
+
+/* Overlay chrome regions sit above canvas content + collaboration overlays. */
+.apollon-overlay-grid {
+  z-index: var(--apollon-z-chrome);
+}
+
+/* Each editor owns a layout-neutral portal root. Floating surfaces use it only
+   while this editor participates in fullscreen, keeping them in the browser's
+   fullscreen subtree without escaping the editor's host stacking context. */
+.apollon-editor__portal-root {
+  position: absolute;
+  z-index: var(--apollon-z-chrome);
+  inset: 0;
+  pointer-events: none;
+}
+
+.apollon-editor__portal-root > * {
+  pointer-events: auto;
+}
+
+/* The chrome frame. A CSS grid over the full-bleed canvas: the header/footer own
+   the top/bottom rows, rails span the side tracks between those bands, corner
+   slots float over the side/center tracks, and the centre cell is the canvas
+   hole. The frame is pointer-transparent; each control opts its own box back in.
+   Device safe-area insets and the mobile-keyboard overlap are grid padding, so
+   every region clears the notch / gesture bar / soft keyboard in one place. */
+.apollon-overlay-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: fit-content(45%) minmax(0, 1fr) fit-content(45%);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "header   header    header"
+    "topleft  topcenter topright"
+    "leftrail center    rightrail"
+    "botleft  botcenter botright"
+    "footer   footer    footer";
+  pointer-events: none;
+  padding-top: var(--safe-area-inset-top, 0);
+  padding-left: var(--safe-area-inset-left, 0);
+  padding-right: var(--safe-area-inset-right, 0);
+
+  /* Typed zero: `calc()` rejects a unitless <number> where it wants a <length>. */
+  padding-bottom: calc(
+    var(--safe-area-inset-bottom, 0px) + var(--apollon-keyboard-inset, 0px)
+  );
+}
+
+/* Positioning context + clip region for the absolutely-positioned
+   collaboration cursor layer. Keep `position` as `relative` only: a
+   `transform`/`filter`/`perspective` here would become the containing block
+   for the body-portaled Base UI popovers (see GenericPopover) and misplace them. */
+.apollon-canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Presence avatars register as a top-right overlay control, so the grid places
+   and deconflicts them; this is the inner layout of the bar within its cell. */
+.apollon-collaboration-presence-bar {
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.apollon-collaboration-presence-bar [role="button"]:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 2px;
+}
+
+/* "Followed by N" badge on your own avatar. Theme tokens keep the chip
+   legible in light and dark; the border is tinted with the user's color
+   inline. */
+.apollon-collaboration-follower-badge {
+  position: absolute;
+  bottom: -4px;
+  left: -4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--apollon-radius-lg, 8px);
+  border: 2px solid;
+  background-color: var(--apollon-background, #fff);
+  color: var(--apollon-foreground, #000);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+/* While following, frame the editor in the followed peer's color (set inline)
+   and float a banner naming them. The frame is non-interactive so the canvas
+   below stays pannable (which is what ends the follow). */
+.apollon-collaboration-follow-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10001;
+}
+
+.apollon-collaboration-follow-banner {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(calc(100% - 32px), 420px);
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  border: 1px solid;
+  background-color: var(--apollon-background, #fff);
+  color: var(--apollon-foreground, #000);
+  box-shadow: 0 2px 12px
+    color-mix(in srgb, var(--apollon-foreground, #000) 22%, transparent);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 10004;
+  pointer-events: auto;
+  animation: apollon-collaboration-follow-banner-in 160ms ease-out;
+}
+
+@keyframes apollon-collaboration-follow-banner-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apollon-collaboration-follow-banner {
+    animation: none;
+  }
+}
+
+.apollon-collaboration-follow-banner-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.apollon-collaboration-follow-banner-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Solid button using the background/foreground pair, which is contrasting by
+   definition — so it stays legible in any theme without assuming a contrast
+   color for --apollon-primary. */
+.apollon-collaboration-follow-banner-stop {
+  flex-shrink: 0;
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 3px 12px;
+  font: inherit;
+  font-weight: 600;
+  background-color: var(--apollon-foreground, #000);
+  color: var(--apollon-background, #fff);
+}
+
+.apollon-collaboration-follow-banner-stop:hover {
+  opacity: 0.85;
+}
+
+.apollon-collaboration-follow-banner-stop:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 2px;
+}
+
+.apollon-collaboration-cursors {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10003;
+}
+
+.apollon-collaboration-cursor {
+  position: absolute;
+}
+
+.apollon-collaboration-cursor-label {
+  margin-top: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  border-radius: var(--apollon-radius-md, 6px);
+  color: var(--apollon-on-collaboration-cursor, #fff);
+  white-space: nowrap;
+}
+
+.react-flow__node.apollon-collaboration-highlighted {
+  box-shadow:
+    0 0 0 4px var(--apollon-collaboration-highlight-color),
+    0 0 16px 3px var(--apollon-collaboration-highlight-color) !important;
+  border-color: var(--apollon-collaboration-highlight-color) !important;
+}
+
+.react-flow__edge.apollon-collaboration-highlighted path {
+  stroke: var(--apollon-collaboration-highlight-color) !important;
+  stroke-width: 4.5px !important;
+  filter: drop-shadow(0 0 4px var(--apollon-collaboration-highlight-color));
+}
+
+/* Floating element palette — a rail overlay control. The rail band is stable
+   across unrelated corner chrome; the palette adds its own edge/gap breathing
+   room and caps its grid when same-side bottom chrome would otherwise overlap on
+   short viewports. Its grid columns/gap and each cell's size come inline from
+   `computePaletteLayout`; `overflow-y` is the rare last resort. */
+.apollon-palette {
+  box-sizing: border-box;
+
+  /* One gap in from the band's top/bottom edges (which already sit clear of the
+     header and bottom controls via the reserved insets) and one edge in from the
+     safe-area-adjusted left the band pins to. */
+  margin-top: var(--apollon-chrome-gap);
+  margin-bottom: var(--apollon-chrome-gap);
+  margin-left: var(--apollon-chrome-edge);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--apollon-chrome-gap);
+  align-items: center;
+  padding: var(--apollon-chrome-pad);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--apollon-chrome-glass);
+  -webkit-backdrop-filter: var(--apollon-chrome-glass-blur);
+  backdrop-filter: var(--apollon-chrome-glass-blur);
+  color: var(--apollon-chrome-text);
+  border: 1px solid var(--apollon-chrome-border);
+  border-radius: var(--apollon-chrome-radius-lg);
+  box-shadow:
+    var(--apollon-chrome-shadow-floating), var(--apollon-chrome-inset-hairline);
+}
+
+/* grid-template-columns and gap come inline from the computed layout. */
+.apollon-palette__entries {
+  display: grid;
+  justify-content: center;
+}
+
+/* Native <button> reset so the palette cell renders as a bare container; its
+   width/height come inline from the computed cell size. */
+.apollon-palette__cell {
+  display: block;
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: inherit;
+}
+
+.apollon-palette__cell:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 2px;
+  border-radius: var(--apollon-chrome-radius-sm);
+}
+
+.apollon-palette__entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  border-radius: var(--apollon-chrome-radius-sm);
+  transition: background-color 120ms ease;
+}
+
+.apollon-palette__entry:hover {
+  background: var(--apollon-chrome-surface-hover);
+}
+
+.apollon-palette__entry:active {
+  cursor: grabbing;
+}
+
+.apollon-palette__view-switch {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.apollon-palette__view-button {
+  border-radius: var(--apollon-chrome-radius-md);
+  border: 1px solid var(--apollon-chrome-border-strong);
+  background: transparent;
+  color: var(--apollon-chrome-text);
+  padding: 6px 8px;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  /* 13px keeps the palette compact while matching the select/label/hint
+     baseline below. */
+  font-size: 13px;
+}
+
+.apollon-palette__view-button:hover {
+  background: var(--apollon-chrome-surface-hover);
+}
+
+.apollon-palette__view-button--active,
+.apollon-palette__view-button--active:hover {
+  background: var(--apollon-chrome-accent);
+  color: var(--apollon-chrome-accent-contrast);
+  border-color: var(--apollon-chrome-accent);
+}
+
+.apollon-palette__hint {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 160px;
+  padding: 4px;
+  font-size: 13px; /* matches the view-button baseline above */
+  line-height: 1.4;
+}
+
+/* React Flow panels that remain self-positioned (for example the unmanaged
+   exported CustomMiniMap) line up with Apollon's edge margin and top/bottom
+   bands. Side rails are NOT applied here: rail insets are camera reservation, not
+   generic horizontal panel offsets, and the built-in minimap is grid-managed. */
+.react-flow__panel.top {
+  margin-top: calc(
+    var(--apollon-chrome-edge) + var(--safe-area-inset-top, 0px) +
+      var(--apollon-inset-top, 0px)
+  );
+}
+
+.react-flow__panel.bottom {
+  margin-bottom: calc(
+    var(--apollon-chrome-edge-safe-bottom) +
+      var(--apollon-keyboard-inset, 0px) + var(--apollon-inset-bottom, 0px)
+  );
+}
+
+.react-flow__panel.left {
+  margin-left: var(--apollon-chrome-edge-safe-left);
+}
+
+.react-flow__panel.right {
+  margin-right: var(--apollon-chrome-edge-safe-right);
+}
+
+/* The editor header is one fluid flex row inside the full-width `header` band:
+   [brand/back] [title — flex middle] [actions]. A shared flex track keeps the
+   centred title bounded between its neighbours (grow → shrink → ellipsis, never
+   overlap) at constant gaps. Floats one edge margin in from every side, plus the
+   device safe-area on the pinned left/right edges (the band already offsets the
+   top by the safe-area, so only padding-top: edge is needed here). */
+.apollon-chrome-header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--apollon-chrome-gap);
+  width: 100%;
+  box-sizing: border-box;
+  padding-top: var(--apollon-chrome-edge);
+  padding-left: var(--apollon-chrome-edge-safe-left);
+  padding-right: var(--apollon-chrome-edge-safe-right);
+  pointer-events: none;
+}
+
+/* The brand/back and actions islands NEVER shrink — only the title track (the
+   spacer) does. Otherwise flexbox shrinks all three proportionally and the fixed
+   icon buttons (theme toggle, back chevron) clip inside a squished island. */
+.apollon-chrome-header-row > :not(.apollon-chrome-header-spacer) {
+  flex-shrink: 0;
+}
+
+/* The title lives in a flex:1 track right after the brand and is LEFT-aligned to
+   it (not centered). The track fills the space between brand and actions so the
+   actions stay pinned right; the title island inside grows with the name up to
+   its own max-width and only shrinks (ellipsis) when the track is truly tight —
+   it is never artificially capped while there is room. */
+.apollon-chrome-header-spacer {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+/* Phone landscape: compact the clusters to the shorter height budget. The
+   base max(edge, safe-area) rules already pull every cluster clear of the side
+   notch / dynamic island via the real left/right safe-area inset — no extra
+   nudge needed (and none wanted: stacking a constant on top of the inset is the
+   double-spacing the safe-area model exists to remove). */
+@media (max-width: 950px) and (max-height: 500px) {
+  /* Tighter clusters in landscape so the header band fits the ≤36px budget;
+     32px buttons still center inside, and the ::before keeps a 44px hit area. */
+  :root {
+    --apollon-chrome-island-h: 36px;
+    --apollon-chrome-pad: 2px;
+  }
+
+  /* No landscape clearance floor: the base --apollon-chrome-edge-safe-* tokens
+     already hug the real left/right safe-area inset (max(edge, inset)), which on
+     a notched device IS the dynamic-island width. A hardcoded floor would
+     over-pad real hardware and re-introduce the double-spacing the inset model
+     removes. (A browser device-emulator that draws an island while env() reports
+     0 is an emulator artifact — preview it with the dev safe-area helper, not a
+     shipped floor.) */
+  .apollon-collaboration-presence-bar {
+    right: var(--apollon-chrome-edge-safe-right);
+  }
+}
+
+/* The .apollon-chrome-iconbtn idiom (the borderless-on-glass icon control used by
+   the floating chrome buttons AND the webapp mobile pills) is defined in the
+   webapp-available @tumaet/ui components.css, alongside .apollon-glass, so the
+   home band can reuse it with no editor mounted. The editor loads components.css
+   too (App.tsx), so editor chrome still gets it; it references only chrome tokens
+   so the rendered control is identical wherever the class is defined. */
+
+/* Opt-in `--toggle` peer: an unqualified `[aria-pressed="true"]` here would paint
+   every future editor chrome toggle, and the home band's pills (components.css)
+   already paint their own on-state. The hover/active peers exist because the base
+   button's own state rules would otherwise overwrite the pressed fill. */
+.apollon-chrome-iconbtn--toggle[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--apollon-chrome-accent) 18%, transparent);
+  color: var(--apollon-chrome-accent);
+}
+
+.apollon-chrome-iconbtn--toggle[aria-pressed="true"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--apollon-chrome-accent) 26%, transparent);
+}
+
+.apollon-chrome-iconbtn--toggle[aria-pressed="true"]:active:not(:disabled) {
+  background: color-mix(in srgb, var(--apollon-chrome-accent) 34%, transparent);
+}
+
+/* Forced colours drop the accent fill, which is this toggle's ONLY signal that a
+   mode is armed — repaint it with the system pair so the mode stays visible. The
+   hover/active peers are re-listed because their higher specificity would
+   otherwise restore the (now-invisible) accent fill. */
+@media (forced-colors: active) {
+  .apollon-chrome-iconbtn--toggle[aria-pressed="true"],
+  .apollon-chrome-iconbtn--toggle[aria-pressed="true"]:hover:not(:disabled),
+  .apollon-chrome-iconbtn--toggle[aria-pressed="true"]:active:not(:disabled) {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+/* Expanded minimap = its own glass card (the .react-flow__panel glass rule
+   supplies the pane). Drop the panel padding so the map fills the rounded card
+   (no fat glass gutter) and clip the svg to the card radius. */
+.react-flow__minimap.apollon-minimap {
+  overflow: hidden;
+  border-radius: var(--apollon-chrome-radius-lg);
+}
+
+.apollon-mm-shell {
+  position: relative;
+}
+
+.react-flow__panel.apollon-mm-panel,
+.react-flow__minimap.apollon-mm {
+  position: static;
+  margin: 0;
+}
+
+/* A toolbar of glass islands (the zoom cluster: view + history). The toolbar row
+   itself is a transparent layout track; each `.apollon-chrome-cluster` inside is a
+   glass island — the overlay panel wrapper is pass-through, so the island paints
+   the pane (mirroring the palette/header islands). */
+.apollon-chrome-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--apollon-chrome-gap);
+}
+
+/* Layout only — the surface comes from `.apollon-glass`, which the cluster also
+   carries. Re-declaring the glass here would fork it from the shared rule and
+   silently skip its reduced-transparency / increased-contrast fallbacks. */
+.apollon-chrome-cluster {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--apollon-chrome-pad);
+}
+
+/* React Flow's built-in zoom/fit buttons adopt the same borderless idiom. */
+.react-flow__controls-button {
+  position: relative;
+  width: var(--apollon-chrome-btn);
+  height: var(--apollon-chrome-btn);
+  padding: 0;
+  border: 0;
+  border-radius: var(--apollon-chrome-radius-sm);
+  background: transparent;
+  color: var(--apollon-chrome-text);
+  transition: background-color var(--apollon-chrome-duration-hover)
+    var(--apollon-chrome-ease-standard);
+}
+
+.react-flow__controls-button::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--apollon-chrome-btn) - var(--apollon-chrome-hit)) / 2);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--apollon-chrome-surface-hover);
+}
+
+.react-flow__controls-button > svg {
+  max-width: 18px;
+  max-height: 18px;
+  fill: currentColor;
+}
+
+/* Shared glass surface for every floating chrome object — header islands,
+   palette, zoom/undo controls, minimap — so they read as one family of
+   translucent panes over the canvas. The tint floor keeps text legible over a
+   busy diagram; the inset hairline gives crispness in dark mode.
+
+   React Flow's own panels/toolbars adopt the .apollon-glass treatment here; the
+   `.apollon-glass` CLASS itself is defined in the webapp-available components.css
+   (so the home band reuses the identical surface with no editor mounted). Both
+   resolve the same chrome tokens, so the surface is byte-identical either way. */
+.react-flow__panel,
+.react-flow__node-toolbar {
+  background-color: var(--apollon-chrome-glass);
+  -webkit-backdrop-filter: var(--apollon-chrome-glass-blur);
+  backdrop-filter: var(--apollon-chrome-glass-blur);
+  border: 1px solid var(--apollon-chrome-border);
+  box-shadow:
+    var(--apollon-chrome-shadow-floating), var(--apollon-chrome-inset-hairline);
+  border-radius: var(--apollon-chrome-radius-lg);
+}
+
+.react-flow__panel,
+.react-flow__node-toolbar {
+  padding: var(--apollon-chrome-pad);
+}
+
+/* The version-history panel is glass like the rest, but text-dense, so it uses
+   a near-opaque tint floor for list legibility. Declared after .apollon-glass
+   (wins normally) but before the reduced-transparency fallback (which then wins,
+   collapsing it to the solid surface). */
+.apollon-history-panel {
+  background-color: var(--apollon-chrome-glass-solid);
+}
+
+/* The overlay-band regions (header / side rails) AND the overlay corner cells
+   are pass-through containers — the portaled chrome (a header island, the
+   version rail) paints its own glass surface, so the region wrapper must not
+   double up a pane/shadow/blur of its own. */
+.apollon-overlay-band,
+.apollon-overlay-corner {
+  min-width: 0;
+  max-width: 100%;
+  background-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Corner clusters (zoom, minimap toggle, host buttons) float one edge margin in
+   from the container edge, matching the palette's gap. The grid pins each corner
+   cell flush to its edge (safe-area padding only), so the gap is this margin. */
+.apollon-overlay-corner {
+  margin: var(--apollon-chrome-edge);
+}
+
+/* Header islands settle in on mount (decelerated, short). */
+@keyframes apollon-island-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.apollon-chrome-island {
+  /* No fill mode: a filling animation counts as active, so Chrome never
+     released the layer and the island stayed on a stale raster for good. The
+     keyframes already end on the island's natural state. */
+  animation: apollon-island-in var(--apollon-chrome-duration-enter)
+    var(--apollon-chrome-ease-decelerate);
+}
+
+/* The borderless-input-on-glass construction (.apollon-chrome-title-island
+   focus ring + .apollon-chrome-title-input placeholder) is single-sourced in the
+   webapp-available components.css alongside .apollon-glass, so the home band's
+   search field reuses the identical idiom with no editor mounted. */
+
+@media (prefers-reduced-motion: reduce) {
+  .apollon-chrome-island {
+    animation: none;
+  }
+}
+
+/* Honour the OS reduced-transparency / increased-contrast preferences. The
+   `.apollon-glass` class carries its own matching fallbacks in components.css;
+   these cover the editor's React-Flow panels + palette. */
+@media (prefers-reduced-transparency: reduce) {
+  .react-flow__panel,
+  .react-flow__node-toolbar,
+  .apollon-palette {
+    background-color: var(--apollon-chrome-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .react-flow__panel,
+  .react-flow__node-toolbar,
+  .apollon-palette {
+    border-color: var(--apollon-chrome-border-strong);
+  }
+}
+
+.react-flow svg {
+  display: block;
+}
+
+.react-flow__node-toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.react-flow__handle {
+  background-color: transparent;
+}
+
+.react-flow__handle.apollon-arc-handle::before {
+  content: "";
+  position: absolute;
+
+  /* Transparent until the node is hovered or selected; the reveal rules below
+     supply the colour. Alpha lives in the colour, not in `opacity`. */
+  background-color: transparent;
+  box-sizing: border-box;
+
+  /* Grabbable on its own hit area, not gated behind the node body: the arc
+     protrudes past the node box, so it must be reachable when approached from
+     outside. Hovering the armed arc triggers the node :hover that fades it in.
+     Disarmed for selected-not-hovered nodes and in guidance mode (see the
+     hit-area note near the hover rules). */
+  pointer-events: all;
+  cursor: crosshair;
+
+  /* --arc-scale counter-scales the arc so it holds an on-screen size across
+     zoom. Published on the React Flow root by ArcScalePublisher; 1 if unset. */
+  --arc-long: calc(28px * var(--arc-scale, 1));
+  --arc-short: calc(14px * var(--arc-scale, 1));
+  --arc-radius: calc(14px * var(--arc-scale, 1));
+}
+
+.react-flow__handle.apollon-arc-handle--top::before {
+  width: var(--arc-long);
+  height: var(--arc-short);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -100%);
+  border-radius: var(--arc-radius) var(--arc-radius) 0 0;
+}
+
+.react-flow__handle.apollon-arc-handle--right::before {
+  width: var(--arc-short);
+  height: var(--arc-long);
+  left: 50%;
+  top: 50%;
+  transform: translate(0, -50%);
+  border-radius: 0 var(--arc-radius) var(--arc-radius) 0;
+}
+
+.react-flow__handle.apollon-arc-handle--bottom::before {
+  width: var(--arc-long);
+  height: var(--arc-short);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, 0);
+  border-radius: 0 0 var(--arc-radius) var(--arc-radius);
+}
+
+.react-flow__handle.apollon-arc-handle--left::before {
+  width: var(--arc-short);
+  height: var(--arc-long);
+  left: 50%;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  border-radius: var(--arc-radius) 0 0 var(--arc-radius);
+}
+
+.react-flow__resize-control.handle {
+  z-index: 20;
+}
+
+/* NodeResizer renders its controls before the node's own content in the DOM, so
+   without a z-index the 1px edge lines paint *behind* a filled node (a swimlane,
+   pool, package…) and can't be seen or grabbed — only the corners, lifted by the
+   rule above, stayed reachable. Lift the lines over the content but below the
+   corner handles (20) and the connection arcs (10, so an arc still wins at its
+   slot and the line fills the gaps between). */
+.react-flow__resize-control.line {
+  z-index: 9;
+}
+
+/* ── Grab targets ─────────────────────────────────────────────────────────
+   `--apollon-grab-target` (24px) is a point target — a corner handle. WCAG 2.2
+   SC 2.5.8 (AA) asks for 24x24 CSS pixels and measures the region accepting the
+   pointer, not the ink, which is what these ::before boxes widen.
+
+   `--apollon-grab-band` (14px) is for an affordance running along an edge, and
+   matches `--arc-short` so the arc at that edge's midpoint reads the same
+   thickness; z-index (arc 10, line 9) decides overlaps. A full 24px band would
+   reach past the corner handles' own targets and swallow them.
+
+   Both are on-screen sizes, but they get there differently: React Flow counter-
+   scales the corner handles for us (`autoScale` applies to its handle variant
+   only, never the line variant), so the band has to carry `--arc-scale` itself
+   at the point of use — the variable is published on the React Flow root, so a
+   `var()` in a token declared above it would resolve to the fallback. */
+.apollon-editor {
+  --apollon-grab-target: 24px;
+  --apollon-grab-band: 14px;
+}
+
+/* React Flow draws the edge lines 1px wide. Widen the hit area without moving the
+   visible border; hover-gated below, because it overhangs onto whatever sits
+   beneath the node. */
+.apollon-resize-line::before {
+  content: "";
+  position: absolute;
+  inset: calc((1px - var(--apollon-grab-band) * var(--arc-scale, 1)) / 2);
+}
+
+/* Corner handles are a point target rather than a band: the drawn square stays,
+   the ::before grows the target to 24x24. The 10px is `HANDLE_STYLE` in
+   `NodeResizer.tsx`; the two have to move together. */
+.apollon-resize-handle::before {
+  content: "";
+  position: absolute;
+  inset: calc((10px - var(--apollon-grab-target)) / 2);
+}
+
+/* A content-sized node keeps its corner handles (NodeResizer constrains each to
+   the node's free axis with `resizeDirection`), but React Flow hard-codes a
+   diagonal nwse/nesw cursor on every corner. Relabel it to the free axis's
+   cursor so the pointer tells the truth about which way a drag will go. The
+   fourth class (`nodrag`, present on every control) outranks React Flow's
+   three-class corner rules regardless of stylesheet order. */
+.react-flow__resize-control.nodrag.handle.apollon-resize-corner--x {
+  cursor: ew-resize;
+}
+
+.react-flow__resize-control.nodrag.handle.apollon-resize-corner--y {
+  cursor: ns-resize;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Why canvas affordances hide by painting transparent, never with `opacity: 0`.
+
+   `opacity` below 1 is not a paint property: it gives the element a stacking
+   context and a transparency (effect) node in the paint property tree. Toggling
+   it 0 -> 1 adds and removes an effect node per element, and hovering a node
+   flips a dozen at once (four arc handles, eight resize controls). Rebuilding
+   that much of the property tree inside `.react-flow__viewport`, whose `scale()`
+   the engine has already rasterised, forces a re-raster of the region — and
+   until the new raster lands the old one is shown scaled up. That is the
+   split-second softening when a node is hovered, and it is worst in WebKit,
+   which gives authors no control over raster scale (w3c/csswg-drafts#236, open
+   since 2016).
+
+   Transparent paint has none of that: `background-color`/`border-color`/`fill`/
+   `stroke` are plain paint, so switching them neither builds nor tears down an
+   effect node. `visibility: hidden` would also work for the raster, but it is
+   NOT equivalent here — an `opacity: 0` element still hit-tests and still takes
+   focus, which these affordances rely on (an arc is grabbable before it is
+   visible, and a waypoint is keyboard-focusable). Transparent paint preserves
+   both; `visibility` breaks them.
+
+   Nothing here animates `opacity` or `transform` either.
+
+   Chrome composites any element with an active opacity/transform animation onto
+   its own layer, and a freshly created layer is rasterised asynchronously — for
+   the first frames it shows the previous raster, scaled. Inside
+   `.react-flow__viewport`, which carries the canvas zoom, that scaled copy is
+   plainly blurry: an affordance fading in makes the node under it soften and
+   then snap back. A finished animation whose fill mode keeps it "active" never
+   releases the layer at all, so the surface stays soft indefinitely.
+
+   Colour is paint-only, so `fill`/`stroke`/`background-color` transitions are
+   free of this. Visibility changes are therefore instant here, and anything
+   that must read crisply over the canvas keeps its own raster.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.react-flow__resize-control {
+  background-color: transparent;
+  border-color: transparent;
+  pointer-events: none;
+}
+
+/* A node's resize controls protrude past its box, and a selected node is lifted
+   above its neighbours (`elevateNodesOnSelect`), so arming them on selection
+   alone would cover clicks meant for an overlapping node beneath. Arm them on
+   :hover instead — every gesture that uses them starts by hovering — so a
+   selected-not-hovered node lets clicks fall through. Touch has no :hover; see
+   the coarse-pointer fallback below. (Connection arcs face the same overlap but
+   stay armed on their own hit area, disarmed only for a selected-not-hovered
+   node — see the arc rules below.) */
+.react-flow__node:hover .react-flow__resize-control {
+  pointer-events: all;
+}
+
+.react-flow__node:hover .react-flow__resize-control.handle,
+.react-flow__node.selected .react-flow__resize-control.handle {
+  background-color: var(--apollon-primary, #3e8acc);
+  border-color: var(--apollon-background, #fff);
+}
+
+.react-flow__node:hover .react-flow__resize-control.line,
+.react-flow__node.selected .react-flow__resize-control.line {
+  border-color: var(--apollon-primary, #3e8acc);
+}
+
+/* React Flow marks every connectable handle `.connectionindicator` and gives it
+   `pointer-events: all` unconditionally; override that so handles follow the
+   hover-gated model above. Click-to-connect guidance mode is exempt (its circle
+   handles are clicked without hovering their node); guidance hides the arcs, so
+   only `.connectionindicator` is re-enabled there, not the arc ::before. */
+.react-flow__handle.connectionindicator {
+  pointer-events: none;
+}
+
+/* Assessment is a reading/feedback surface, not a connection canvas. The handles
+   stay mounted because edge geometry is measured from them, but they must be
+   invisible AND inert. `pointer-events: none` on the handle is not enough: the
+   arc's ::before sets `pointer-events: all` when its node is hovered, and a
+   descendant that opts back in is hit-testable even inside a `none` parent — so
+   it kept swallowing the pointer and showing a crosshair over a diagram nobody
+   can connect. The lower-specificity rules come before the ordinary hover rules;
+   the assessment-hover overrides follow them below. */
+.apollon-editor--assessment .react-flow__handle.apollon-arc-handle::before {
+  background-color: transparent !important;
+  pointer-events: none !important;
+}
+
+.apollon-editor--assessment .react-flow__handle,
+.apollon-editor--assessment .react-flow__handle.connectionindicator {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.react-flow__node:hover .react-flow__handle,
+.apollon-editor--connection-guidance .react-flow__handle.connectionindicator,
+.react-flow__node:hover .react-flow__handle.connectionindicator {
+  pointer-events: all;
+}
+
+.react-flow__node:hover .react-flow__handle {
+  background-color: transparent;
+  cursor: crosshair;
+}
+
+.react-flow__node:hover .react-flow__handle.apollon-arc-handle::before,
+.react-flow__node.selected .react-flow__handle.apollon-arc-handle::before {
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 40%,
+    transparent
+  );
+}
+
+.react-flow__node.selected .react-flow__handle {
+  background-color: transparent;
+}
+
+/* Arcs are armed on their own hit area (see the base rule above). A selected
+   node is lifted above its neighbours (elevateNodesOnSelect), so its protruding
+   arcs, if armed, would cover clicks meant for an overlapping node beneath it.
+   Disarm them while the node is selected but not hovered; hovering re-arms them,
+   so an arc on the node you're pointing at stays grabbable. */
+.react-flow__node.selected:not(:hover)
+  .react-flow__handle.apollon-arc-handle::before {
+  pointer-events: none;
+}
+
+.apollon-editor--assessment
+  .react-flow__node:hover
+  .react-flow__handle.apollon-arc-handle::before {
+  background-color: transparent !important;
+  pointer-events: none !important;
+}
+
+.apollon-editor--assessment .react-flow__node:hover .react-flow__handle {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.apollon-editor--connection-guidance
+  .react-flow__handle.apollon-arc-handle::before {
+  background-color: transparent;
+  pointer-events: none;
+}
+
+/* Coarse-pointer fallback for the hover-gated rules above. Touch devices never
+   fire :hover, so those rules would leave a selected node's affordances
+   ungrabbable — you could not start a connection or resize with a finger. Arm
+   them on selection instead. (A coarse pointer can't hover to disambiguate an
+   overlap anyway, so the overlap trade-off doesn't apply.) The arc ::before is
+   excluded in guidance mode so its hidden arcs stay inert while the circle
+   handles drive the connection. */
+@media (hover: none), (pointer: coarse) {
+  .react-flow__node.selected .react-flow__handle.connectionindicator,
+  .react-flow__node.selected .react-flow__resize-control,
+  .apollon-editor:not(.apollon-editor--connection-guidance)
+    .react-flow__node.selected
+    .react-flow__handle.apollon-arc-handle::before {
+    pointer-events: all;
+  }
+}
+
+.react-flow__node {
+  /* A ring drawn as a box-shadow, reserved transparent so hovering only changes
+     its colour and never its geometry — a `border` here used to nudge nodes by a
+     pixel.
+
+     box-shadow rather than outline, deliberately: an outline is painted last in
+     its element's paint order, ON TOP of every descendant, so it cut across the
+     assessment badges (check / cross / alert) that sit at the node's edge. An
+     outer box-shadow paints with the element's background, underneath its
+     content, so the badges stay legible. */
+  box-shadow: 0 0 0 2px transparent;
+  z-index: 9998;
+}
+
+.react-flow__node:hover,
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px var(--apollon-primary, #3e8acc);
+}
+
+/* During connection guidance, lift only the source and target nodes (and their
+   handle circles) above edges. Other nodes keep their normal z-index so the
+   guidance UX doesn't reorder unrelated parts of the canvas. */
+.apollon-editor--connection-guidance
+  .react-flow__node:has(.apollon-connection-guidance-source),
+.apollon-editor--connection-guidance
+  .react-flow__node:has(.react-flow__handle.connectionindicator.connectingto) {
+  /* Lift the source/target node above its peers while connecting. Pinned to
+     ZINDEX.TOOLTIP (10000) + 1; keep in sync if that constant changes. */
+  z-index: 10001 !important;
+}
+
+.apollon-editor--connection-guidance .react-flow__handle.connectionindicator {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 999px;
+  border: 2px solid var(--apollon-primary, #3e8acc);
+  background-color: var(--apollon-background, #fff);
+  box-sizing: border-box;
+}
+
+.apollon-editor--connection-guidance
+  .react-flow__handle.connectionindicator.connectingfrom,
+.apollon-editor--connection-guidance
+  .react-flow__handle.apollon-connection-guidance-source {
+  pointer-events: none !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
+}
+
+.apollon-editor--connection-guidance
+  .react-flow__handle.connectionindicator.valid {
+  background-color: var(--apollon-primary, #3e8acc) !important;
+}
+
+/* While DRAGGING a connection (the ghost line SVG is present), the edge auto-
+   anchors to a SINGLE point — the ghost marks it with one dot — rather than
+   attaching at a fixed handle. Showing a circle on every handle would mislead about
+   where it connects, so hide them for the duration of the drag. Click-to-connect
+   guidance (no ghost line) is unaffected — its circles are the click targets. */
+.apollon-editor--connection-guidance:has(.react-flow__connectionline)
+  .react-flow__handle.connectionindicator {
+  border-color: transparent !important;
+  background-color: transparent !important;
+}
+
+.edge-bend-handle {
+  opacity: 0;
+  stroke: none;
+  fill: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 34%,
+    var(--apollon-background, #fff)
+  );
+  transition: fill 120ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.edge-endpoint-grip {
+  opacity: 0;
+  fill: var(--apollon-background, #fff);
+  stroke: var(--apollon-primary, #3e8acc);
+
+  /* stroke-width is set inline, scaled by the handle screen scale, so the outline
+     tracks the handle across zoom (NO non-scaling-stroke — that would pin it to a
+     constant screen width and read as too thick zoomed out / too thin zoomed in).
+     Painted UNDER the fill so it reads as a clean outer ring. */
+  paint-order: stroke;
+  transition:
+    fill 120ms ease,
+    stroke 120ms ease;
+}
+
+.edge-endpoint-handle {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 0;
+  cursor: move;
+  vector-effect: non-scaling-stroke;
+}
+
+.edge-endpoint-handle--disabled {
+  cursor: default;
+}
+
+.react-flow__edge:hover .edge-bend-handle,
+.react-flow__edge.selected .edge-bend-handle {
+  opacity: 1;
+  fill: var(--apollon-primary, #3e8acc);
+}
+
+.react-flow__edge:hover .edge-endpoint-grip,
+.react-flow__edge.selected .edge-endpoint-grip {
+  opacity: 1;
+}
+
+.react-flow__edge.selected .edge-endpoint-grip {
+  fill: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 18%,
+    var(--apollon-background, #fff)
+  );
+}
+
+/* A USER-PINNED end (custom anchor) keeps the same clean white "handle" look as an
+   auto grip — a hollow pill with a blue outline — so it never disappears into a solid
+   bend handle it overlaps. The pinned state is surfaced through the reset affordance in
+   the edge toolbar rather than by restyling the grip. */
+
+.react-flow__edge:hover .edge-bend-handle:hover,
+.react-flow__edge.selected .edge-bend-handle:hover {
+  fill: color-mix(in srgb, var(--apollon-primary, #3e8acc) 70%, #000);
+}
+
+/* Straight-edge WAYPOINT handles follow the step-edge handle state model: hidden
+   until the edge is hovered/selected, then fully opaque primary blue. A midpoint
+   create handle is an actionable bend handle too, so fading it made the two edge
+   regimes feel inconsistent and falsely suggested that it was disabled. */
+.edge-waypoint-handle {
+  opacity: 0;
+  fill: var(--apollon-primary, #3e8acc);
+  stroke: var(--apollon-primary, #3e8acc);
+  paint-order: stroke;
+  transition:
+    fill 120ms ease,
+    stroke 120ms ease;
+}
+
+.react-flow__edge:hover .edge-waypoint-handle,
+.react-flow__edge.selected .edge-waypoint-handle {
+  opacity: 1;
+}
+
+.edge-waypoint-handle--active,
+.react-flow__edge
+  g:has(
+    .edge-waypoint-hit-target:hover,
+    .edge-waypoint-hit-target:focus-visible,
+    .edge-waypoint-hit-target:active
+  )
+  .edge-waypoint-handle {
+  opacity: 1;
+  fill: color-mix(in srgb, var(--apollon-primary, #3e8acc) 70%, #000);
+}
+
+.edge-waypoint-hit-target,
+.edge-waypoint-hit-target:focus,
+.edge-waypoint-hit-target:focus-visible {
+  /* SVG focus defaults outline the entire invisible 24px hit rectangle. Keep
+     keyboard focus visible through the darkened circle above, not a browser-
+     specific square/ring that no step-edge handle has. */
+  outline: none;
+}
+
+.edge-waypoint-hit-target:active {
+  cursor: grabbing !important;
+}
+
+/* Assessment needs the edge to be EASY TO HIT, nothing more — its selected and
+   highlighted look stays the wrapper's own inherited stroke, exactly as before.
+   Edit mode keeps the narrow 15px overlay because bend and endpoint handles sit
+   along the same path and must win; assessment has no such handles, so widen
+   the invisible ribbon to React Flow's own forgiving size. */
+.apollon-editor--assessment .edge-overlay {
+  /* Hit target only: the overlay carries no `stroke`, so widening it widens
+     only where a click lands. The colour lives on the edge path. */
+  stroke-width: 32px;
+}
+
+.react-flow__edge:hover .edge-overlay {
+  opacity: 0;
+}
+
+.react-flow__edge.selected .edge-overlay {
+  /* Invisible while selected (the coloured selection styling lives elsewhere) but
+     KEEP it pointer-live: with RF's fat interaction ribbon removed
+     (interactionWidth=0), this overlay stroke is the only mid-body click surface, so
+     clicking a selected edge's body must still land on it rather than fall through to
+     the pane and deselect. At ±7.5px it never reaches a co-located neighbour's handle. */
+  opacity: 0;
+}
+
+/* Host highlight on an edge: glow the drawn stroke, never the whole group. The
+   group also contains the edge's assessment badge, and an SVG filter applies to
+   every descendant — filtering the group tinted that badge with the highlight
+   colour, so a green "correct" check read as orange. */
+.apollon-edge-highlight .react-flow__edge-path,
+.apollon-edge-highlight [data-inline-marker] {
+  filter: drop-shadow(0 0 2px var(--apollon-edge-highlight))
+    drop-shadow(0 0 2px var(--apollon-edge-highlight));
+}
+
+.apollon-highlight--selected .react-flow__edge-path,
+.apollon-highlight--highlighted .react-flow__edge-path {
+  stroke-width: 3px;
+}
+
+.react-flow__edge:hover .react-flow__edge-path,
+.react-flow__edge:hover [data-inline-marker] {
+  stroke: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 70%,
+    #000
+  ) !important;
+}
+
+.react-flow__edge:hover [data-inline-marker-filled="true"] {
+  fill: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 70%,
+    #000
+  ) !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge.selected [data-inline-marker] {
+  stroke: var(--apollon-primary, #3e8acc) !important;
+}
+
+.react-flow__edge.selected [data-inline-marker-filled="true"] {
+  fill: var(--apollon-primary, #3e8acc) !important;
+}
+
+/* In an assessment editor, "selected" means "this is the element being read",
+   so it takes the same amber every other marked element takes — a blue edge
+   beside an amber node read as two unrelated states. Editing keeps the blue.
+   The rules above are `!important`, so these have to be too. */
+.apollon-editor--assessment .react-flow__edge.selected .react-flow__edge-path,
+.apollon-editor--assessment .react-flow__edge.selected [data-inline-marker],
+.apollon-editor--assessment
+  .react-flow__edge.apollon-assessment-focus
+  .react-flow__edge-path,
+.apollon-editor--assessment
+  .react-flow__edge.apollon-assessment-focus
+  [data-inline-marker] {
+  stroke: var(--apollon-interactive-selection, #f39c12) !important;
+}
+
+.apollon-editor--assessment
+  .react-flow__edge.selected
+  [data-inline-marker-filled="true"],
+.apollon-editor--assessment
+  .react-flow__edge.apollon-assessment-focus
+  [data-inline-marker-filled="true"] {
+  fill: var(--apollon-interactive-selection, #f39c12) !important;
+}
+
+/* Same for a node selected without its popover open. */
+.apollon-editor--assessment .react-flow__node.selected {
+  box-shadow: 0 0 0 2px var(--apollon-interactive-selection, #f39c12);
+}
+
+/* The element being assessed stays marked for as long as its feedback form is
+   open — hovering elsewhere, or the popover taking focus, must not make the
+   reader lose track of what they are looking at.
+
+   Amber, not the primary blue: this is the same "this element is marked" state
+   the highlight classes paint, and a node marked blue beside an edge marked
+   amber read as two unrelated things. Blue stays what it always was — selected
+   for EDITING.
+
+   Assessment-scoped: the focus class follows whichever popover is open, and a
+   popover exists in every mode. */
+.apollon-editor--assessment .react-flow__node.apollon-assessment-focus {
+  box-shadow: 0 0 0 2px var(--apollon-interactive-selection, #f39c12);
+}
+
+.apollon-editor--assessment
+  .react-flow__edge.apollon-assessment-focus
+  .react-flow__edge-path,
+.apollon-editor--assessment
+  .react-flow__edge.apollon-assessment-focus
+  [data-inline-marker] {
+  stroke: var(--apollon-interactive-selection, #f39c12);
+}
+
+/* ── Highlight ────────────────────────────────────────────────────────────
+   One visual language for every "this element is marked" state: the host-driven
+   element picker and assessment selection both render `.apollon-highlight`, so
+   they cannot drift apart. `--selected` is a committed mark, `--highlighted` the
+   transient one under the pointer. Named for what it does, not for the feature
+   that first needed it. Colour comes from the public
+   `--apollon-interactive-selection` token. */
+.apollon-highlight {
+  --apollon-highlight-color: var(--apollon-interactive-selection, #f39c12);
+}
+
+.apollon-highlight--selected,
+.apollon-highlight--highlighted {
+  /* Under the content, not over it — see `.react-flow__node` above. */
+  box-shadow: 0 0 0 2px var(--apollon-highlight-color);
+}
+
+.apollon-highlight--selected {
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-highlight-color) 18%,
+    transparent
+  );
+}
+
+.apollon-highlight--highlighted {
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-highlight-color) 50%,
+    transparent
+  );
+}
+
+/* Recolour the element's own strokes, never its assessment badge: the badge is a
+   descendant of the same group, and its circle and glyph carry stroke
+   attributes, so an unqualified rule repainted a green "correct" check amber. */
+.apollon-highlight--selected
+  [stroke]:not([stroke="none"]):not(.apollon-assessment-icon *),
+.apollon-highlight--highlighted
+  [stroke]:not([stroke="none"]):not(.apollon-assessment-icon *) {
+  stroke: var(--apollon-highlight-color);
+}
+
+/* The picker alone tints the edge's hit ribbon, at its own narrow width. The
+   assessment ribbon is widened for reach, so painting it there would draw a
+   slab across the diagram rather than mark a line. */
+.apollon-highlight--picker.apollon-highlight--selected .edge-overlay {
+  opacity: 0.45;
+  stroke: var(--apollon-highlight-color);
+  stroke-width: 15px;
+}
+
+.react-flow__edges {
+  z-index: 9999;
+}
+
+/* Connection line shown when dragging from a node handle to create a new edge.
+   Must sit above nodes (9998) and edges (9999) so the ghost line is visible.
+   Stroke inherits the project's edge color/width so it matches existing edges. */
+svg.react-flow__connectionline {
+  z-index: 10000;
+}
+
+.react-flow__connection-path {
+  stroke: var(--xy-edge-stroke);
+  stroke-width: var(--xy-edge-stroke-width);
+  opacity: 0.5;
+}
+
+.react-flow__minimap-mask {
+  fill: var(--apollon-chrome-text-muted);
+  opacity: 0.15;
+}
+
+.prevent-select {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Native UI primitives, tokened via `--apollon-*`. Base UI portals to
+   `document.body`, so these are global, not scoped under `.apollon-editor`;
+   theme vars are forwarded by `GenericPopover`. */
+
+/* The button / icon-button / text-field / tooltip primitives are shared from
+   @tumaet/ui and styled by the bundled, Tailwind-free components.css (data-slot
+   rules), so their `.apollon-*` rules live there, not here. */
+
+/* Checkbox */
+.apollon-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--apollon-foreground, #000);
+  cursor: pointer;
+}
+
+.apollon-checkbox {
+  accent-color: var(--apollon-primary, #3e8acc);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Checkbox primitive (Base UI). The clickable row, the 16px box, and the check
+   indicator, keyed on data-slot + Base UI's data-checked/data-disabled state,
+   routed through --apollon-* tokens (mirrors .apollon-stereotype-toggle). */
+[data-slot="checkbox-label"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--apollon-foreground, #000);
+  cursor: pointer;
+}
+
+[data-slot="checkbox"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid
+    color-mix(in srgb, var(--apollon-primary, #3e8acc) 50%, transparent);
+  border-radius: var(--apollon-radius-sm, 4px);
+  background: transparent;
+  /* The check sits on the primary fill once checked; no dedicated on-primary
+     token exists, so fall back through the page background to white. */
+  color: var(--apollon-foreground-on-accent, var(--apollon-background, #fff));
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+[data-slot="checkbox"][data-checked] {
+  background-color: var(--apollon-primary, #3e8acc);
+  border-color: var(--apollon-primary, #3e8acc);
+}
+
+[data-slot="checkbox"]:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 2px;
+}
+
+[data-slot="checkbox"][data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-slot="checkbox-label"]:has([data-slot="checkbox"][data-disabled]) {
+  cursor: not-allowed;
+}
+
+[data-slot="checkbox-indicator"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+/* Typography primitive. Color + per-variant size/weight keyed on data-variant,
+   routed through the themed contrast token. Callers' style still overrides via
+   the element's own inline style (higher specificity than this rule). h1–h5
+   inherit by design. */
+[data-slot="typography"] {
+  color: var(--apollon-foreground, #000);
+}
+
+[data-slot="typography"][data-variant="h6"] {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+[data-slot="typography"][data-variant="subtitle1"] {
+  font-size: 1rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+[data-slot="typography"][data-variant="subtitle2"] {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+[data-slot="typography"][data-variant="body1"] {
+  font-size: 1rem;
+  margin: 0;
+}
+
+[data-slot="typography"][data-variant="body2"] {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+[data-slot="typography"][data-variant="caption"] {
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* Text-field label + helper chrome. The TextField primitive sets the data-slot
+   (and data-error on the helper); the visual tokens — size, spacing, and the
+   themed contrast / danger / muted colors — live here, not inline. */
+[data-slot="textfield-label"] {
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+  color: var(--apollon-foreground, #000);
+}
+
+[data-slot="textfield-helper"] {
+  font-size: 0.75rem;
+  margin-top: 2px;
+  color: var(--apollon-gray-variant, #495057);
+}
+
+[data-slot="textfield-helper"][data-error] {
+  color: var(--apollon-danger, #721c24);
+}
+
+/* Score pill. Tone (set by the AssessmentScore primitive) selects a foreground
+   tone token + a soft same-hue tint from the --apollon-assessment-* ramp (the
+   single source in tokens.css, with light/dark deltas), so a graded element
+   reads identically here and on the canvas badge (AssessmentIcon). Geometry is
+   shared across tones. The tone pairs are SOLID AA tokens (not color-mix), so
+   axe can MEASURE the contrast and every pair clears WCAG AA in both themes. */
+[data-slot="assessment-score"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: var(--apollon-radius-md, 6px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-slot="assessment-score"] > svg {
+  flex: none;
+}
+
+/* Tone pairs read the --apollon-assessment-* ramp (light/dark deltas live in
+   tokens.css). The var() fallbacks mirror the light values per this file's
+   convention; the real source — and the dark theme — lives in tokens.css. */
+[data-slot="assessment-score"][data-tone="positive"] {
+  color: var(--apollon-assessment-positive-text, #166534);
+  background-color: var(--apollon-assessment-positive-bg, #dcfce7);
+}
+
+[data-slot="assessment-score"][data-tone="negative"] {
+  color: var(--apollon-assessment-negative-text, #991b1b);
+  background-color: var(--apollon-assessment-negative-bg, #fee2e2);
+}
+
+[data-slot="assessment-score"][data-tone="zero"] {
+  color: var(--apollon-assessment-zero-text, #1e40af);
+  background-color: var(--apollon-assessment-zero-bg, #dbeafe);
+}
+
+[data-slot="assessment-score"][data-tone="ungraded"] {
+  color: var(--apollon-assessment-ungraded-text, #475569);
+  background-color: var(--apollon-assessment-ungraded-bg, #f1f5f9);
+}
+
+/* On-canvas feedback badge: a soft drop-shadow lifts the tone-tinted disc off
+   the element it marks so it stays legible over any node fill. (Export inlines
+   the assessment tokens via CSS_VARIABLE_FALLBACKS, not this rule.) */
+.apollon-assessment-icon {
+  filter: drop-shadow(
+    0 1px 2px
+      color-mix(in srgb, var(--apollon-foreground, #000) 28%, transparent)
+  );
+}
+
+/* Feedback body text. The [data-empty] variant is the muted "No comment"
+   placeholder shown when an element is graded but carries no comment. */
+[data-slot="assessment-feedback"] {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--apollon-foreground, #000);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+[data-slot="assessment-feedback"][data-empty] {
+  color: var(--apollon-gray-variant, #495057);
+  font-style: italic;
+}
+
+/* Assessment header name chip: the assessed element's name highlighted inline
+   (instead of quotation marks) so it wraps as part of the sentence. */
+[data-slot="assessment-name-chip"] {
+  padding: 1px 6px;
+  border-radius: var(--apollon-radius-sm, 4px);
+  font-weight: 600;
+  white-space: nowrap;
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 18%,
+    transparent
+  );
+  color: var(--apollon-foreground, #000);
+}
+
+/* Divider line (StyleEditor color rows, etc). Visual tokens live here, routed
+   through --apollon-* fallbacks; callers tune geometry/color only via the
+   --divider-* custom properties (no inline visual styles). */
+[data-slot="divider-line"] {
+  width: var(--divider-width, 100%);
+  height: var(--divider-height, 1px);
+  margin: var(--divider-margin, 8px 0);
+  background-color: var(--divider-color, var(--apollon-foreground, #000));
+}
+
+/* Add-item row (attributes / methods lists): the text field grows, the named
+   add Button hugs its right edge so a screen-reader user gets a real action
+   rather than a nameless "+ Add" field. */
+.apollon-add-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apollon-add-row > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Tag control: the element's tags as removable chips. Sits on its own compact
+   line under the element's row, shown only once the element has a tag. */
+[data-slot="tag-field"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+[data-slot="tag-chip"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding-left: 8px;
+  border: 1px solid var(--popover-divider);
+  border-radius: var(--apollon-radius-sm, 4px);
+  font-size: 12px;
+  line-height: 22px;
+}
+
+[data-slot="tag-chip"] > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tag picker (Base UI Popover portaled to <body>) — a checklist of the host
+   vocabulary plus an optional add-a-tag field, Tailwind-free via --apollon-*. */
+.apollon-tag-picker__popup {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 220px;
+  max-width: 90vw;
+  padding: 8px;
+  background-color: var(--apollon-surface, #fff);
+  color: var(--apollon-foreground, #000);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-lg, 8px);
+  box-shadow: var(--apollon-shadow, 0 4px 12px rgba(0, 0, 0, 0.18));
+  z-index: 10003;
+}
+
+.apollon-tag-picker__add {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apollon-tag-picker__input {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 0.8125rem;
+  color: var(--apollon-foreground, #000);
+  background-color: var(--apollon-background, #fff);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-md, 6px);
+}
+
+.apollon-tag-picker__input:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 1px;
+}
+
+.apollon-tag-picker__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 220px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.apollon-tag-picker__option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--apollon-radius-sm, 4px);
+  cursor: pointer;
+}
+
+.apollon-tag-picker__option:hover {
+  background-color: var(--apollon-hover-neutral, rgba(0, 0, 0, 0.05));
+}
+
+.apollon-tag-picker__option:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: -2px;
+}
+
+.apollon-tag-picker__option > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The check occupies its slot always, so labels stay aligned; it's invisible
+   until the option is selected. */
+.apollon-tag-picker__check {
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.apollon-tag-picker__check[data-selected] {
+  opacity: 1;
+  color: var(--apollon-primary, #3e8acc);
+}
+
+.apollon-tag-picker__empty {
+  padding: 6px 8px;
+  font-size: 0.8125rem;
+  color: var(--apollon-secondary, #6c757d);
+}
+
+/* Drag handle (DnD rows) */
+.apollon-drag-handle {
+  cursor: grab;
+  color: var(--apollon-gray-variant, #495057);
+}
+
+.apollon-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Node and edge actions use the same compact shadcn-style button group. React
+   Flow owns positioning/scaling; the shared group owns appearance and hit areas. */
+.react-flow__node-toolbar.apollon-element-toolbar-host,
+.react-flow__edge-toolbar.apollon-element-toolbar-host {
+  padding: 0;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.apollon-element-toolbar {
+  padding: 2px;
+  background: var(--apollon-surface, #fff);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-md, 6px);
+  box-shadow: var(--apollon-shadow, 0 4px 12px rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+}
+
+.apollon-element-toolbar [data-slot="icon-button"] {
+  pointer-events: auto;
+}
+
+/* Popover (Base UI) */
+.apollon-popover {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 10px;
+  background-color: var(--apollon-surface, #fff);
+  color: var(--apollon-foreground, #000);
+  border-radius: var(--apollon-radius-lg, 8px);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  box-shadow: var(--apollon-shadow, 0 4px 12px rgba(0, 0, 0, 0.18));
+  transform-origin: var(--transform-origin, center);
+  z-index: 10003;
+}
+
+.apollon-popover__content {
+  box-sizing: border-box;
+  min-height: 0;
+
+  /* Keep Base UI/shadcn focus rings inside the scroll viewport instead of
+     letting the scroll container clip their outer ring. The negative margin
+     preserves the popover's original visual inset. */
+  padding: 3px;
+  margin: -3px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.apollon-assessment-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--apollon-border, #cdd5df);
+}
+
+.apollon-assessment-navigation > [data-slot="button"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-shrink: 1;
+  justify-content: center;
+}
+
+.apollon-popover[data-starting-style],
+.apollon-popover[data-ending-style],
+.apollon-select-content[data-starting-style],
+.apollon-select-content[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+/* Select (Base UI Popover listbox) */
+.apollon-select {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.apollon-select-label {
+  font-size: 0.8125rem; /* 13px for legibility */
+  color: var(--apollon-foreground, #000);
+  margin-bottom: 2px;
+}
+
+.apollon-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  text-align: left;
+  color: var(--apollon-foreground, #000);
+  background-color: var(--apollon-surface-sunken, #fff);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-md, 6px);
+  cursor: pointer;
+}
+
+.apollon-select-trigger:focus-visible {
+  border-color: var(--apollon-primary, #3e8acc);
+  box-shadow: 0 0 0 1px var(--apollon-primary, #3e8acc);
+  outline: none;
+}
+
+.apollon-select-value {
+  flex: 1;
+  min-width: 0;
+}
+
+.apollon-select-placeholder {
+  color: var(--apollon-gray-variant, #495057);
+  opacity: 0.7;
+}
+
+.apollon-select-icon {
+  flex: 0 0 auto;
+  color: var(--apollon-foreground, #000);
+}
+
+.apollon-select-content {
+  background-color: var(--apollon-surface, #fff);
+  color: var(--apollon-foreground, #000);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-lg, 8px);
+  box-shadow: var(--apollon-shadow, 0 4px 12px rgba(0, 0, 0, 0.18));
+  transform-origin: var(--transform-origin, center);
+  z-index: 10004;
+  overflow: hidden;
+}
+
+.apollon-select-listbox {
+  max-height: inherit;
+  overflow-y: auto;
+  /* Reliable touch scrolling inside Capacitor WebViews. */
+  -webkit-overflow-scrolling: touch;
+  padding: 4px;
+}
+
+.apollon-select-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  text-align: left;
+  color: var(--apollon-foreground, #000);
+  background-color: transparent;
+  border: none;
+  border-radius: var(--apollon-radius-md, 6px);
+  cursor: pointer;
+  /* Avoid the 300ms tap delay / double-tap zoom on touch devices. */
+  touch-action: manipulation;
+}
+
+.apollon-select-option:hover,
+.apollon-select-option:focus-visible {
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 14%,
+    transparent
+  );
+  outline: none;
+}
+
+.apollon-select-option--selected {
+  font-weight: 600;
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 22%,
+    transparent
+  );
+}
+
+/* Color swatch — both the picker trigger and each grid swatch. The fill is the
+   chosen color via the --swatch-color custom property (a swatch var(...) token
+   or a hex); a transparent trigger shows the inherited/empty state. */
+.apollon-color-swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--apollon-border-subtle, #e3e8ef);
+  cursor: pointer;
+  background-color: var(--swatch-color, transparent);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.apollon-color-swatch:hover {
+  opacity: 0.72;
+}
+
+.apollon-color-swatch:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 3px;
+}
+
+.apollon-color-swatch[aria-pressed="true"] {
+  opacity: 1;
+}
+/* The selected check mark must read on ANY swatch fill with no JS luminance
+   math: white ink with a soft dark drop-shadow stays legible on both light and
+   dark swatches. */
+.apollon-color-swatch__icon {
+  pointer-events: none;
+  color: var(--apollon-on-collaboration-cursor, #fff);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6));
+}
+
+/* Editor color-picker (Base UI Popover) — mirrors the @tumaet/ui color-picker
+   STRUCTURE, styled here Tailwind-free via the data-slots the component sets. */
+.apollon-color-picker__popup {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background-color: var(--apollon-surface, #fff);
+  color: var(--apollon-foreground, #000);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-lg, 8px);
+  box-shadow: var(--apollon-shadow, 0 4px 12px rgba(0, 0, 0, 0.18));
+  z-index: 10003;
+}
+
+.apollon-color-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  gap: 8px;
+}
+
+.apollon-color-picker__custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--apollon-secondary, #6c757d);
+}
+
+.apollon-color-picker__custom input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-md, 6px);
+  background: transparent;
+  cursor: pointer;
+}
+
+.apollon-color-picker__custom input[type="color"][data-custom-active] {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 1px;
+}
+
+.apollon-color-picker__reset {
+  align-self: stretch;
+}
+
+/* Style editor (shared Node/Edge panel). Header row, the opened color panel,
+   and each color row, keyed on the data-slots StyleEditorPanel sets and driven
+   by --apollon-* tokens. */
+.apollon-style-editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.apollon-style-editor__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+.apollon-style-editor__header[data-variant="edge"] {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.apollon-style-editor__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.apollon-style-editor__header[data-variant="edge"]
+  .apollon-style-editor__header-actions {
+  margin-left: 0;
+}
+
+/* Color panel — a Base UI Popover portaled to <body>, so it carries the same
+   surface/elevation as the swatch picker. */
+.apollon-style-editor__popup {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  background-color: var(--apollon-surface, #fff);
+  color: var(--apollon-foreground, #000);
+  border: 1px solid var(--apollon-border, #cdd5df);
+  border-radius: var(--apollon-radius-lg, 8px);
+  box-shadow: var(--apollon-shadow, 0 4px 12px rgba(0, 0, 0, 0.18));
+  z-index: 10003;
+}
+
+.apollon-style-editor__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+/* Stereotype show/hide toggle: the standalone `«keyword»` chip on
+   component/deployment headers (HeaderSwitchElement). Tailwind-free, styled via
+   --apollon-* tokens; active state keys on data-state="on". */
+.apollon-stereotype-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Sits above sibling header content. */
+  position: relative;
+  z-index: 1;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid
+    color-mix(in srgb, var(--apollon-primary, #3e8acc) 38%, transparent);
+  background: transparent;
+  color: var(--apollon-foreground, #000);
+  font: inherit;
+  font-size: 0.8125rem; /* 13px for legibility */
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.apollon-stereotype-toggle:hover {
+  background-color: var(
+    --apollon-hover-neutral,
+    color-mix(in srgb, var(--apollon-foreground, #000) 7.5%, transparent)
+  );
+}
+
+.apollon-stereotype-toggle:focus-visible {
+  outline: 2px solid var(--apollon-primary, #3e8acc);
+  outline-offset: 2px;
+  z-index: 1; /* lift the focus ring above the shared seam */
+}
+
+.apollon-stereotype-toggle[data-state="on"] {
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 20%,
+    transparent
+  );
+  border-color: var(--apollon-primary, #3e8acc);
+  /* WCAG: bare --apollon-primary as text on the primary@20% tint is only
+     ~3.6:1 (light) / ~3.8:1 (dark). Pull the label 30% toward
+     --apollon-foreground — black in light (darkens the blue), white in
+     dark (lightens it) — which lifts contrast over the tint to >=4.5:1 in both
+     themes while keeping the selected accent unmistakably the primary blue. */
+  color: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 70%,
+    var(--apollon-foreground, #000)
+  );
+  z-index: 1; /* keep the selected item's full border over its neighbour seam */
+}
+
+/* Per-method "abstract" toggle in the class editor — an icon button that marks a
+   method abstract (renders its signature in italics). Mirrors the stereotype
+   toggle's selected accent so the two controls read as one family. */
+.apollon-abstract-toggle[data-state="on"] {
+  background-color: color-mix(
+    in srgb,
+    var(--apollon-primary, #3e8acc) 20%,
+    transparent
+  );
+  color: var(--apollon-primary, #3e8acc);
+}
+
+/* Scroll lock. Centred over the canvas, no card: a caption explaining a gesture
+   the editor just declined, not an object to interact with — the same idiom as
+   an embedded map. Pointer-transparent throughout, so the very gesture that
+   summons it is never blocked by it.
+
+   Visibility is a background-colour change, NOT an opacity one. `opacity` below
+   1 would give this full-canvas element a transparency effect node directly over
+   the diagram, which is the compositing trap documented further up this file. */
+.scroll-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+  background-color: transparent;
+  transition: background-color 160ms ease;
+}
+
+.scroll-overlay--visible {
+  background-color: var(--apollon-scroll-lock-veil, rgb(18 22 31 / 45%));
+}
+
+.scroll-overlay__hint {
+  margin: 0;
+  max-width: 28rem;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--apollon-scroll-lock-text, #fff);
+
+  /* Big enough to read at a glance from anywhere on the canvas. Flat rather than
+     viewport- or container-relative: this hint appears over editors of wildly
+     different heights (a full-page canvas, a short embedded tile), and a
+     relative size lands somewhere different in each. */
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  /* The veil is translucent, so the ink needs its own separation from whatever
+     part of the diagram happens to sit behind it. */
+  text-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+}

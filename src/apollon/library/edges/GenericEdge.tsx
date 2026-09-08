@@ -1,0 +1,946 @@
+import {
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react"
+import { BaseEdge, Position, useStore } from "@xyflow/react"
+import { useDiagramStore } from "@tumaet/apollon/store/context"
+import { ExtendedEdgeProps } from "./EdgeProps"
+import { CustomEdgeToolbar } from "@tumaet/apollon/components"
+import { IPoint } from "./Connection"
+import { PopoverManager } from "@tumaet/apollon/components/popovers/PopoverManager"
+import { usePopoverAnchor } from "@tumaet/apollon/hooks/usePopoverAnchor"
+import AssessmentIcon from "@tumaet/apollon/components/svgs/AssessmentIcon"
+import {
+  EdgeInlineMarkers,
+  type InterfaceGeometry,
+} from "@tumaet/apollon/components/svgs/edges/InlineMarker"
+import type { DiagramEdgeType } from "./types"
+import { Assessment } from "@tumaet/apollon/typings"
+import type { BendHandle } from "@tumaet/apollon/utils/geometry/bendHandles"
+import { getSegmentGhostHandles } from "@tumaet/apollon/utils/geometry/freeWaypoints"
+import { isFreeformEdgeAnchor } from "@tumaet/apollon/utils/edgeUtils"
+import { EDGES } from "@tumaet/apollon/constants"
+import { useLabels } from "@tumaet/apollon/i18n/useLabels"
+import { getHandleScreenScale } from "@tumaet/apollon/utils/geometry/scalar"
+
+const useHandleScreenScale = (): number =>
+  useStore((state) => getHandleScreenScale(state.transform[2]))
+
+export type BaseEdgeProps = ExtendedEdgeProps
+const FREEFORM_ENDPOINT_HIT_TARGET_SIZE = 44
+const FREEFORM_ENDPOINT_GRIP_LONG_AXIS = 18
+/** The grip never shrinks below this on-screen length, so an endpoint always shows a
+ * visible handle even on a very short or crowded edge. The grip is purely visual
+ * (pointer-events:none), so flooring it can only ever help legibility — the interactive
+ * hit target is sized separately. */
+const FREEFORM_ENDPOINT_GRIP_MIN_LONG_AXIS = 12
+const FREEFORM_ENDPOINT_GRIP_SHORT_AXIS = 8
+const FREEFORM_ENDPOINT_GRIP_RADIUS = 4
+/** Grip outline width in flow units at natural scale. Multiplied by the handle screen
+ * scale (and drawn WITHOUT non-scaling-stroke) so the outline tracks the handle body:
+ * constant on-screen when zoomed out, growing with the handle when zoomed in. */
+const FREEFORM_ENDPOINT_GRIP_STROKE = 4
+/** Breathing room kept between a shortened grip and the middle of a short edge,
+ * so the two grips read as two handles rather than one bar. */
+const FREEFORM_ENDPOINT_GRIP_MARGIN = 2
+
+export const useEdgeState = (initialPoints?: IPoint[]) => {
+  const [customPoints, setCustomPoints] = useState<IPoint[]>([])
+
+  useEffect(() => {
+    if (initialPoints && initialPoints.length > 0) {
+      setCustomPoints(initialPoints)
+    }
+  }, [initialPoints])
+
+  return {
+    customPoints,
+    setCustomPoints,
+  }
+}
+
+type EndpointSide = Position
+
+const getEndpointDirection = (side?: EndpointSide): IPoint => {
+  switch (side?.toLowerCase()) {
+    case "top":
+      return { x: 0, y: -1 }
+    case "right":
+      return { x: 1, y: 0 }
+    case "bottom":
+      return { x: 0, y: 1 }
+    case "left":
+      return { x: -1, y: 0 }
+    default:
+      return { x: 0, y: 0 }
+  }
+}
+
+const normalizeDir = (v: IPoint): IPoint => {
+  const len = Math.hypot(v.x, v.y)
+  return len === 0 ? { x: 0, y: 0 } : { x: v.x / len, y: v.y / len }
+}
+
+/**
+ * How far out from its endpoint a handle may reach before it starts eating into
+ * the other endpoint's half of the edge. Both handles grow outward along the
+ * edge, so on a short edge they march straight into each other. Each endpoint
+ * owns half the run between the two, and `Infinity` means unconstrained — the
+ * handles only need to give way when they actually point at one another.
+ */
+const getEndpointRun = (
+  point: IPoint,
+  otherPoint: IPoint,
+  direction: IPoint
+): number => {
+  const toOther = { x: otherPoint.x - point.x, y: otherPoint.y - point.y }
+  const towardsOther = direction.x * toOther.x + direction.y * toOther.y
+  if (towardsOther <= 0) return Number.POSITIVE_INFINITY
+
+  return Math.hypot(toOther.x, toOther.y) / 2
+}
+
+/**
+ * Half the on-screen length of the bend handle `EdgeBendHandle` draws for a segment of
+ * this bendable length, expressed in FLOW units. The single source of truth shared by
+ * the handle renderer and `nearestHandleReach`: the endpoint reconnect target must stop
+ * at the handle's RENDERED near edge, and that edge is screen-scale dependent (the drawn
+ * handle is clamped to a minimum SCREEN size, so when zoomed out its flow-space half
+ * grows PAST `bendableLength / 2`). Capping against `bendableLength / 2` instead lets the
+ * drawn handle poke into the target at low zoom, and the target — drawn on top — eats it.
+ */
+const renderedBendHandleHalfLength = (
+  bendableLength: number,
+  screenScale: number
+): number => {
+  const room =
+    bendableLength - 2 * EDGES.BEND_HANDLE_CORNER_CLEARANCE_PX * screenScale
+  const longAxis = Math.min(
+    Math.max(room, EDGES.BEND_HANDLE_MIN_SCREEN_LENGTH_PX * screenScale),
+    EDGES.BEND_HANDLE_SCREEN_LENGTH_PX * screenScale
+  )
+  return longAxis / 2
+}
+
+/**
+ * How far outward the endpoint reconnect target may reach before it buries the nearest
+ * bend handle. The target is drawn ON TOP of the handles, so it must stop at the
+ * handle's RENDERED near edge — which is screen-scale dependent, hence
+ * `renderedBendHandleHalfLength` rather than the flow-space `bendableLength`. Caps
+ * against ANY handle kind: an inner handle can sit at the corner just past a short
+ * stub, and when the terminal stub is too short to bend there is no terminal handle to
+ * cap against at all. `Infinity` when nothing lies ahead of the endpoint.
+ */
+const nearestHandleReach = (
+  bendHandles: BendHandle[] | undefined,
+  endpoint: IPoint,
+  direction: IPoint,
+  screenScale: number
+): number => {
+  if (!bendHandles || bendHandles.length === 0) return Number.POSITIVE_INFINITY
+  const gap = EDGES.ENDPOINT_HANDLE_CLEARANCE_PX * screenScale
+  let reach = Number.POSITIVE_INFINITY
+  for (const handle of bendHandles) {
+    const along =
+      (handle.position.x - endpoint.x) * direction.x +
+      (handle.position.y - endpoint.y) * direction.y
+    if (along <= 0) continue // handle is beside/behind the endpoint's outward axis
+    const nearEdge =
+      along -
+      renderedBendHandleHalfLength(handle.bendableLength, screenScale) -
+      gap
+    if (nearEdge > 0) reach = Math.min(reach, nearEdge)
+  }
+  return reach
+}
+
+export const getEndpointHitTargetRect = (
+  point: IPoint,
+  side?: EndpointSide,
+  screenScale = 1,
+  hitTargetSize: number = EDGES.ENDPOINT_HIT_TARGET_SIZE,
+  // Straight (direct) edges leave the node at an angle; pass the real outward
+  // edge direction so the target follows the line instead of an orthogonal side.
+  outwardDir?: IPoint,
+  run: number = Number.POSITIVE_INFINITY,
+  /** Leave the node connection handle itself unobstructed. Straight-edge endpoint
+   * reconnect targets are intentionally large, but must begin just beyond the
+   * node border so starting a NEW connection wins at their shared endpoint. */
+  nodeGap = 0
+) => {
+  const direction = outwardDir
+    ? normalizeDir(outwardDir)
+    : getEndpointDirection(side)
+  // Keep the square inside this endpoint's half so the two hit targets meet at the
+  // midpoint instead of overlapping. Floored so a very short edge still gets two
+  // reachable targets rather than zero-sized ones.
+  const hitSize = Math.max(
+    Math.min(hitTargetSize * screenScale, run),
+    EDGES.MIN_ENDPOINT_HIT_TARGET_PX * screenScale
+  )
+  const hitOffset = hitSize / 2
+  const centreOffset = hitOffset + nodeGap
+
+  return {
+    x: point.x + direction.x * centreOffset - hitOffset,
+    y: point.y + direction.y * centreOffset - hitOffset,
+    width: hitSize,
+    height: hitSize,
+    radius: hitOffset,
+  }
+}
+
+const getEndpointGripRect = (
+  point: IPoint,
+  side?: EndpointSide,
+  screenScale = 1,
+  outwardDir?: IPoint,
+  run: number = Number.POSITIVE_INFINITY
+) => {
+  // Anchor the grip to the endpoint (+ small clearance for the marker), not the
+  // centre of the wide hit-target — otherwise it floats ~22px off the tip when
+  // zoomed out. The hit-target stays wide for grabbing.
+  const radius = FREEFORM_ENDPOINT_GRIP_RADIUS * screenScale
+  const short = FREEFORM_ENDPOINT_GRIP_SHORT_AXIS * screenScale
+  // On a short edge the full-size grip cannot sit clear of the endpoint AND stay in its
+  // own half, so shorten it and pull it in — but never below a visible minimum. The two
+  // grips give way equally (each owns its half of the edge via `run`), so they read as
+  // two handles; the floor guarantees each stays visible even when its half is tiny.
+  const margin = FREEFORM_ENDPOINT_GRIP_MARGIN * screenScale
+  const long = Math.max(
+    Math.min(FREEFORM_ENDPOINT_GRIP_LONG_AXIS * screenScale, run - margin),
+    FREEFORM_ENDPOINT_GRIP_MIN_LONG_AXIS * screenScale
+  )
+  // Keep the grip's near edge at the endpoint tip (clearance ≥ long/2) so a floored grip
+  // sits ON the edge rather than straddling the node border.
+  const baseClearance = long / 2 + radius
+  const clearance = Math.max(
+    Math.min(baseClearance, run - long / 2 - margin),
+    long / 2
+  )
+
+  if (outwardDir) {
+    // Straight edge: a bar whose long axis runs ALONG the edge, offset outward
+    // along it and rotated to its angle — so the grip tracks the line, not an
+    // orthogonal N/E/S/W side.
+    const dir = normalizeDir(outwardDir)
+    const cx = point.x + dir.x * clearance
+    const cy = point.y + dir.y * clearance
+    return {
+      x: cx - long / 2,
+      y: cy - short / 2,
+      width: long,
+      height: short,
+      radius,
+      rotationDeg: (Math.atan2(dir.y, dir.x) * 180) / Math.PI,
+      centerX: cx,
+      centerY: cy,
+    }
+  }
+
+  // Step edge: orthogonal grip aligned to the endpoint's side.
+  const isHorizontalGrip = side === Position.Left || side === Position.Right
+  const width = isHorizontalGrip ? long : short
+  const height = isHorizontalGrip ? short : long
+  const dir = getEndpointDirection(side)
+  const cx = point.x + dir.x * clearance
+  const cy = point.y + dir.y * clearance
+  return {
+    x: cx - width / 2,
+    y: cy - height / 2,
+    width,
+    height,
+    radius,
+    rotationDeg: 0,
+    centerX: cx,
+    centerY: cy,
+  }
+}
+
+export const EdgeEndpointMarkers = ({
+  sourcePoint,
+  targetPoint,
+  sourcePosition,
+  targetPosition,
+  isDiagramModifiable,
+  canEditEndpoint = true,
+  onEndpointPointerDown,
+  straight = false,
+  bendHandles,
+  sourceNeighbor,
+  targetNeighbor,
+}: {
+  sourcePoint: IPoint
+  targetPoint: IPoint
+  sourcePosition?: EndpointSide
+  targetPosition?: EndpointSide
+  isDiagramModifiable: boolean
+  canEditEndpoint?: boolean
+  onEndpointPointerDown?: (
+    event: ReactPointerEvent<SVGRectElement>,
+    endpoint: "source" | "target"
+  ) => void
+  // Direct/straight edges: orient the grip + hit-target along the actual edge
+  // angle instead of the endpoint's orthogonal N/E/S/W side.
+  straight?: boolean
+  // The edge's bend handles, so a reconnect target can cap its outward reach at
+  // this end's terminal bend handle instead of painting over it.
+  bendHandles?: BendHandle[]
+  // The adjacent route vertex just inside each endpoint (route[1] / route[len-2]).
+  // A bent straight edge orients its grip/marker along the TERMINAL segment toward
+  // this point rather than the endpoint-to-endpoint chord. Defaults to the opposite
+  // endpoint, so an unbent 2-point edge is byte-identical to before.
+  sourceNeighbor?: IPoint
+  targetNeighbor?: IPoint
+}) => {
+  const screenScale = useHandleScreenScale()
+
+  if (!isDiagramModifiable) {
+    return null
+  }
+  // For a straight edge the grip sits on the line, offset from its endpoint
+  // TOWARD the other endpoint (so it clears the marker on the node side) and
+  // rotated to the edge angle — the same "along the edge, away from the node"
+  // placement the orthogonal side gives a step edge. Step edges pass no
+  // direction and fall back to the side.
+  const sourceAnchorNeighbor = sourceNeighbor ?? targetPoint
+  const targetAnchorNeighbor = targetNeighbor ?? sourcePoint
+  const sourceOutward = straight
+    ? {
+        x: sourceAnchorNeighbor.x - sourcePoint.x,
+        y: sourceAnchorNeighbor.y - sourcePoint.y,
+      }
+    : undefined
+  const targetOutward = straight
+    ? {
+        x: targetAnchorNeighbor.x - targetPoint.x,
+        y: targetAnchorNeighbor.y - targetPoint.y,
+      }
+    : undefined
+  const sourceDir = sourceOutward
+    ? normalizeDir(sourceOutward)
+    : getEndpointDirection(sourcePosition)
+  const targetDir = targetOutward
+    ? normalizeDir(targetOutward)
+    : getEndpointDirection(targetPosition)
+  // The reconnect target reaches at most to the OTHER endpoint's half AND stops
+  // short of this end's own terminal bend handle — so a short centred stub can
+  // still expose a grabbable bend handle beyond the (now-shortened) target.
+  const sourceRun = Math.min(
+    getEndpointRun(sourcePoint, targetPoint, sourceDir),
+    nearestHandleReach(bendHandles, sourcePoint, sourceDir, screenScale)
+  )
+  const targetRun = Math.min(
+    getEndpointRun(targetPoint, sourcePoint, targetDir),
+    nearestHandleReach(bendHandles, targetPoint, targetDir, screenScale)
+  )
+  const sourceHitTarget = getEndpointHitTargetRect(
+    sourcePoint,
+    sourcePosition,
+    screenScale,
+    onEndpointPointerDown ? FREEFORM_ENDPOINT_HIT_TARGET_SIZE : undefined,
+    sourceOutward,
+    sourceRun,
+    straight && onEndpointPointerDown ? 10 * screenScale : 0
+  )
+  const targetHitTarget = getEndpointHitTargetRect(
+    targetPoint,
+    targetPosition,
+    screenScale,
+    onEndpointPointerDown ? FREEFORM_ENDPOINT_HIT_TARGET_SIZE : undefined,
+    targetOutward,
+    targetRun,
+    straight && onEndpointPointerDown ? 10 * screenScale : 0
+  )
+  const className = [
+    "edge-endpoint-handle",
+    canEditEndpoint ? "" : "edge-endpoint-handle--disabled",
+  ]
+    .filter(Boolean)
+    .join(" ")
+  const showEndpointGrips = Boolean(onEndpointPointerDown)
+  // The VISIBLE grip yields only to the other endpoint (so the two never cross the
+  // midpoint), NOT to bend handles: it is pointer-events:none, so it may cosmetically
+  // overlap a nearby bend handle without stealing any interaction. Only the hit target
+  // (above) caps against bend handles, keeping them grabbable.
+  const sourceGripRun = getEndpointRun(sourcePoint, targetPoint, sourceDir)
+  const targetGripRun = getEndpointRun(targetPoint, sourcePoint, targetDir)
+  const sourceGrip = getEndpointGripRect(
+    sourcePoint,
+    sourcePosition,
+    screenScale,
+    sourceOutward,
+    sourceGripRun
+  )
+  const targetGrip = getEndpointGripRect(
+    targetPoint,
+    targetPosition,
+    screenScale,
+    targetOutward,
+    targetGripRun
+  )
+
+  return (
+    <>
+      {showEndpointGrips && (
+        <>
+          <rect
+            className="edge-circle edge-endpoint-grip edge-endpoint-grip--source"
+            x={sourceGrip.x}
+            y={sourceGrip.y}
+            width={sourceGrip.width}
+            height={sourceGrip.height}
+            rx={sourceGrip.radius}
+            ry={sourceGrip.radius}
+            transform={`rotate(${sourceGrip.rotationDeg} ${sourceGrip.centerX} ${sourceGrip.centerY})`}
+            style={{ strokeWidth: FREEFORM_ENDPOINT_GRIP_STROKE * screenScale }}
+            pointerEvents="none"
+          />
+          <rect
+            className="edge-circle edge-endpoint-grip edge-endpoint-grip--target"
+            x={targetGrip.x}
+            y={targetGrip.y}
+            width={targetGrip.width}
+            height={targetGrip.height}
+            rx={targetGrip.radius}
+            ry={targetGrip.radius}
+            transform={`rotate(${targetGrip.rotationDeg} ${targetGrip.centerX} ${targetGrip.centerY})`}
+            style={{ strokeWidth: FREEFORM_ENDPOINT_GRIP_STROKE * screenScale }}
+            pointerEvents="none"
+          />
+        </>
+      )}
+      <rect
+        className={`${className} edge-endpoint-handle--source`}
+        x={sourceHitTarget.x}
+        y={sourceHitTarget.y}
+        width={sourceHitTarget.width}
+        height={sourceHitTarget.height}
+        rx={sourceHitTarget.radius}
+        ry={sourceHitTarget.radius}
+        // Above the bend handles (z 9999) so where the reconnect target and a bend handle
+        // OVERLAP, the reconnect handle wins even in engines that honour z-index on SVG
+        // (paint order alone already puts it on top). It is still capped short of the bend
+        // handle, so the bend stays grabbable beyond the endpoint's zone.
+        style={{ zIndex: 10000 }}
+        pointerEvents={
+          canEditEndpoint && onEndpointPointerDown ? "all" : "none"
+        }
+        onPointerDown={
+          canEditEndpoint && onEndpointPointerDown
+            ? (event) => onEndpointPointerDown(event, "source")
+            : undefined
+        }
+      />
+      <rect
+        className={`${className} edge-endpoint-handle--target`}
+        x={targetHitTarget.x}
+        y={targetHitTarget.y}
+        width={targetHitTarget.width}
+        height={targetHitTarget.height}
+        rx={targetHitTarget.radius}
+        ry={targetHitTarget.radius}
+        style={{ zIndex: 10000 }}
+        pointerEvents={
+          canEditEndpoint && onEndpointPointerDown ? "all" : "none"
+        }
+        onPointerDown={
+          canEditEndpoint && onEndpointPointerDown
+            ? (event) => onEndpointPointerDown(event, "target")
+            : undefined
+        }
+      />
+    </>
+  )
+}
+
+export const EdgeBendHandle = ({
+  id,
+  segmentIndex,
+  position,
+  orientation,
+  bendableLength,
+  onPointerDown,
+}: {
+  id: string
+  segmentIndex: number
+  position: IPoint
+  orientation: "H" | "V"
+  /** Flow-space room on this segment. The handle shrinks into it. */
+  bendableLength: number
+  onPointerDown: (e: ReactPointerEvent<SVGRectElement>) => void
+}) => {
+  const screenScale = useHandleScreenScale()
+  // Fit the handle to the segment instead of deleting the handle when a
+  // fixed-size one would not fit. A short segment gets a small nub; it is still
+  // grabbable, and a small nub beats nothing to grab at all. Clearance keeps it
+  // off the corners so a bend never reads as belonging to the next segment.
+  const longAxis = 2 * renderedBendHandleHalfLength(bendableLength, screenScale)
+  const shortAxis = 10 * screenScale
+  const width = orientation === "H" ? longAxis : shortAxis
+  const height = orientation === "H" ? shortAxis : longAxis
+
+  return (
+    <rect
+      className="edge-circle edge-bend-handle"
+      pointerEvents="all"
+      key={`${id}-bend-${segmentIndex}`}
+      x={position.x - width / 2}
+      y={position.y - height / 2}
+      width={width}
+      height={height}
+      rx={6 * screenScale}
+      ry={6 * screenScale}
+      style={{
+        cursor: orientation === "H" ? "ns-resize" : "ew-resize",
+        zIndex: 9999,
+      }}
+      onPointerDown={onPointerDown}
+    />
+  )
+}
+
+/**
+ * Waypoint editing for straight (diagonal) edges.
+ *
+ * A straight edge is not "bent" the way a step edge is — there is no segment to
+ * slide along a fixed axis. It is a polyline through POINTS, and editing it means
+ * picking a point up and putting it somewhere else. So the affordance is a round
+ * handle on the point itself, not the step edge's elongated segment pill, and it
+ * carries a `move` cursor because it travels in two dimensions rather than one.
+ *
+ * Every authored interior vertex gets one. Segment midpoints carry the same opaque
+ * handle as step-edge bendable segments; dragging one materialises a waypoint.
+ */
+export const EdgeWaypointHandles = ({
+  route,
+  interior,
+  selectedWaypointIndex,
+  onWaypointPointerDown,
+  onWaypointDoubleClick,
+  onWaypointKeyDown,
+  onGhostPointerDown,
+}: {
+  /** Full route `[source, ...interior, target]`. */
+  route: IPoint[]
+  /** The editable authored interior vertices. */
+  interior: IPoint[]
+  selectedWaypointIndex: number | null
+  onWaypointPointerDown: (
+    event: ReactPointerEvent<SVGRectElement>,
+    index: number
+  ) => void
+  onWaypointDoubleClick: (index: number) => void
+  onWaypointKeyDown: (
+    event: ReactKeyboardEvent<SVGRectElement>,
+    index: number
+  ) => void
+  onGhostPointerDown: (
+    event: ReactPointerEvent<SVGRectElement>,
+    segmentIndex: number
+  ) => void
+}) => {
+  const t = useLabels()
+  const screenScale = useHandleScreenScale()
+  // Midpoint-create handles would be misleading while another point is actively
+  // moving (especially while its path is previewing a collapse). Counter-scale
+  // the density threshold with the handles: at low zoom their 24px targets grow
+  // in flow space, so a fixed flow-space threshold would let them fuse.
+  const midpoints =
+    selectedWaypointIndex === null
+      ? getSegmentGhostHandles(
+          route,
+          EDGES.WAYPOINT_GHOST_MIN_SEGMENT_PX * screenScale
+        )
+      : []
+  const hit = EDGES.WAYPOINT_HIT_TARGET_PX * screenScale
+  const radius = EDGES.WAYPOINT_HANDLE_RADIUS_PX * screenScale
+
+  const point = (
+    centre: IPoint,
+    className: string,
+    key: string,
+    onPointerDown: (event: ReactPointerEvent<SVGRectElement>) => void,
+    accessibleName?: string,
+    onDoubleClick?: () => void,
+    onKeyDown?: (event: ReactKeyboardEvent<SVGRectElement>) => void
+  ) => (
+    <g key={key}>
+      <circle
+        className={className}
+        cx={centre.x}
+        cy={centre.y}
+        r={radius}
+        style={{ strokeWidth: FREEFORM_ENDPOINT_GRIP_STROKE * screenScale }}
+        pointerEvents="none"
+      />
+      <rect
+        className="edge-waypoint-hit-target"
+        x={centre.x - hit / 2}
+        y={centre.y - hit / 2}
+        width={hit}
+        height={hit}
+        rx={hit / 2}
+        ry={hit / 2}
+        pointerEvents="all"
+        tabIndex={onKeyDown && accessibleName ? 0 : undefined}
+        role={onKeyDown && accessibleName ? "button" : undefined}
+        aria-label={onKeyDown ? accessibleName : undefined}
+        // Above endpoint reconnect targets (z 10000): the exact visible point
+        // owns its centre, while the endpoint remains available at its separate
+        // node-adjacent grip. DOM order provides the same fallback in SVG engines
+        // that ignore z-index on graphics elements.
+        style={{ cursor: "grab", fill: "transparent", zIndex: 10001 }}
+        onPointerDown={onPointerDown}
+        onDoubleClick={(event) => {
+          if (!onDoubleClick) return
+          event.preventDefault()
+          event.stopPropagation()
+          onDoubleClick()
+        }}
+        onKeyDown={onKeyDown}
+      />
+    </g>
+  )
+
+  return (
+    <>
+      {midpoints.map((midpoint) =>
+        point(
+          midpoint.position,
+          "edge-circle edge-waypoint-handle edge-waypoint-handle--proposed",
+          `midpoint-${midpoint.segmentIndex}`,
+          (event) => onGhostPointerDown(event, midpoint.segmentIndex)
+        )
+      )}
+      {interior.map((waypoint, index) =>
+        point(
+          waypoint,
+          "edge-circle edge-waypoint-handle" +
+            (selectedWaypointIndex === index
+              ? " edge-waypoint-handle--active"
+              : ""),
+          `waypoint-${index}`,
+          (event) => onWaypointPointerDown(event, index),
+          t.moveEdgeWaypoint,
+          () => onWaypointDoubleClick(index),
+          (event) => onWaypointKeyDown(event, index)
+        )
+      )}
+    </>
+  )
+}
+
+/**
+ * One shared interaction stack for direct edges. Broad endpoint reconnect
+ * rectangles paint first; exact waypoint targets paint last and therefore own
+ * their visible circles. Keeping the order here prevents use-case, syntax-tree,
+ * and Petri-net edges from drifting into different hit-test behaviour.
+ */
+export const StraightEdgeControls = ({
+  route,
+  interior,
+  selectedWaypointIndex,
+  sourcePoint,
+  targetPoint,
+  sourcePosition,
+  targetPosition,
+  sourceNeighbor,
+  targetNeighbor,
+  isDiagramModifiable,
+  canEditEndpoint,
+  onEndpointPointerDown,
+  onWaypointPointerDown,
+  onWaypointDoubleClick,
+  onWaypointKeyDown,
+  onGhostPointerDown,
+}: {
+  route: IPoint[]
+  interior: IPoint[]
+  selectedWaypointIndex: number | null
+  sourcePoint: IPoint
+  targetPoint: IPoint
+  sourcePosition?: EndpointSide
+  targetPosition?: EndpointSide
+  sourceNeighbor?: IPoint
+  targetNeighbor?: IPoint
+  isDiagramModifiable: boolean
+  canEditEndpoint: boolean
+  onEndpointPointerDown?: (
+    event: ReactPointerEvent<SVGRectElement>,
+    endpoint: "source" | "target"
+  ) => void
+  onWaypointPointerDown: (
+    event: ReactPointerEvent<SVGRectElement>,
+    index: number
+  ) => void
+  onWaypointDoubleClick: (index: number) => void
+  onWaypointKeyDown: (
+    event: ReactKeyboardEvent<SVGRectElement>,
+    index: number
+  ) => void
+  onGhostPointerDown: (
+    event: ReactPointerEvent<SVGRectElement>,
+    segmentIndex: number
+  ) => void
+}) => (
+  <>
+    <EdgeEndpointMarkers
+      sourcePoint={sourcePoint}
+      targetPoint={targetPoint}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
+      sourceNeighbor={sourceNeighbor}
+      targetNeighbor={targetNeighbor}
+      isDiagramModifiable={isDiagramModifiable}
+      canEditEndpoint={canEditEndpoint}
+      onEndpointPointerDown={onEndpointPointerDown}
+      straight
+    />
+
+    {isDiagramModifiable && (
+      <EdgeWaypointHandles
+        route={route}
+        interior={interior}
+        selectedWaypointIndex={selectedWaypointIndex}
+        onWaypointPointerDown={onWaypointPointerDown}
+        onWaypointDoubleClick={onWaypointDoubleClick}
+        onWaypointKeyDown={onWaypointKeyDown}
+        onGhostPointerDown={onGhostPointerDown}
+      />
+    )}
+  </>
+)
+
+/**
+ * The shared SVG body for every orthogonal (step-path) edge: the base path,
+ * inline export markers, the interaction overlay, endpoint reconnect targets,
+ * and the bend handles. Diagram-specific decorations (e.g. the SFC transition
+ * bar) are passed as `children` and render inside the same group. Per-type
+ * files keep only their own config, labels, and `CommonEdgeElements`.
+ */
+export const StepEdgeBody = ({
+  id,
+  markerKey,
+  currentPath,
+  overlayPath,
+  pathRef,
+  strokeColor,
+  strokeDashArray,
+  hasInitialCalculation,
+  isBendDragging,
+  draggingHandleSegmentIndex,
+  markerStart,
+  markerEnd,
+  targetInterfaceGeometry,
+  sourcePoint,
+  targetPoint,
+  sourcePosition,
+  targetPosition,
+  isDiagramModifiable,
+  canEditEndpoint,
+  handleEndpointPointerDown,
+  allowMidpointDragging,
+  bendHandles,
+  handlePointerDown,
+  children,
+}: {
+  id: string
+  markerKey: string
+  currentPath: string
+  overlayPath: string
+  pathRef: React.Ref<SVGPathElement>
+  strokeColor: string
+  strokeDashArray?: string
+  hasInitialCalculation: boolean
+  isBendDragging: boolean
+  draggingHandleSegmentIndex: number | null
+  markerStart?: string
+  markerEnd?: string
+  targetInterfaceGeometry?: InterfaceGeometry
+  sourcePoint: IPoint
+  targetPoint: IPoint
+  sourcePosition?: Position
+  targetPosition?: Position
+  isDiagramModifiable: boolean
+  canEditEndpoint: boolean
+  handleEndpointPointerDown?: (
+    event: ReactPointerEvent<SVGRectElement>,
+    endpoint: "source" | "target"
+  ) => void
+  allowMidpointDragging: boolean
+  bendHandles: BendHandle[]
+  handlePointerDown: (
+    event: ReactPointerEvent<SVGRectElement>,
+    handle: BendHandle
+  ) => void
+  children?: ReactNode
+}) => {
+  return (
+    <g className="edge-container">
+      <BaseEdge
+        key={markerKey}
+        id={id}
+        path={currentPath}
+        // Editable diagrams use the narrow overlay so endpoint and bend handles
+        // retain priority in dense layouts. Assessment/read-only diagrams have no
+        // drag handles; use React Flow's route-following interaction ribbon as the
+        // reliable hit surface for automatically routed bends as well as straight
+        // segments. The visible overlay remains useful for hover/selection styling.
+        pointerEvents={isDiagramModifiable ? "none" : "stroke"}
+        // Assessment has no edit handles competing for the path, so give the
+        // native hit surface a forgiving width for routed segments at low zoom.
+        interactionWidth={isDiagramModifiable ? 0 : 32}
+        style={{
+          stroke: strokeColor,
+          strokeDasharray: strokeDashArray,
+          transition: hasInitialCalculation ? "opacity 0.1s ease-in" : "none",
+          opacity: 1,
+        }}
+      />
+
+      {/* Inline markers for export compatibility (survives ungrouping). */}
+      <EdgeInlineMarkers
+        pathD={currentPath}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+        strokeColor={strokeColor}
+        targetInterfaceGeometry={targetInterfaceGeometry}
+      />
+
+      <path
+        ref={pathRef}
+        className="edge-overlay"
+        d={overlayPath}
+        fill="none"
+        strokeWidth={EDGES.EDGE_HIGHLIGHT_STROKE_WIDTH}
+        pointerEvents="stroke"
+        style={{ opacity: isBendDragging ? 0 : 0.4 }}
+      />
+
+      {isDiagramModifiable &&
+        allowMidpointDragging &&
+        bendHandles
+          .filter(
+            (handle) =>
+              !isBendDragging ||
+              handle.segmentIndex === draggingHandleSegmentIndex
+          )
+          .map((handle) => (
+            <EdgeBendHandle
+              key={`${id}-bend-${handle.segmentIndex}`}
+              id={id}
+              segmentIndex={handle.segmentIndex}
+              position={handle.position}
+              orientation={handle.orientation}
+              bendableLength={handle.bendableLength}
+              onPointerDown={(e) => handlePointerDown(e, handle)}
+            />
+          ))}
+
+      {/* AFTER the bend handles, deliberately. Where an endpoint handle and a
+          bend handle overlap near a node, the later one wins the click, and it
+          should be the endpoint: a mis-grabbed bend is undone by dragging it
+          back, a mis-grabbed reconnect detaches the edge. */}
+      <EdgeEndpointMarkers
+        sourcePoint={sourcePoint}
+        targetPoint={targetPoint}
+        sourcePosition={sourcePosition}
+        targetPosition={targetPosition}
+        isDiagramModifiable={isDiagramModifiable}
+        canEditEndpoint={canEditEndpoint}
+        onEndpointPointerDown={handleEndpointPointerDown}
+        bendHandles={bendHandles}
+      />
+
+      {children}
+    </g>
+  )
+}
+
+export const CommonEdgeElements = ({
+  id,
+  data,
+  pathMiddlePosition,
+  toolbarPosition,
+  isDiagramModifiable,
+  assessments,
+  handleDelete,
+  setPopOverElementId,
+  type,
+}: {
+  id: string
+  data: BaseEdgeProps["data"]
+  pathMiddlePosition: IPoint
+  toolbarPosition?: IPoint
+  isDiagramModifiable: boolean
+  assessments: Record<string, Assessment>
+  handleDelete: () => void
+  setPopOverElementId: (id: string) => void
+  type: string
+}) => {
+  const nodeScore = assessments[id]?.score
+  const uiPosition = toolbarPosition ?? pathMiddlePosition
+  // `toolbarPosition` is placed clear of the line so the EDIT toolbar does not
+  // cover it. Assessment has no toolbar, so its badge and its popover anchor
+  // must sit on the edge itself — reusing the toolbar's offset left the badge
+  // floating in empty space and anchored the popover far enough off the line to
+  // land on top of the node the edge points at.
+  const assessmentPosition = pathMiddlePosition
+  // The callback ref makes the framework toolbar's portal content available
+  // as soon as it mounts, without reading `.current` during render.
+  const [anchorEl, anchorRef] = usePopoverAnchor<HTMLDivElement>()
+
+  const setEdges = useDiagramStore((state) => state.setEdges)
+  const points = data?.points
+  const hasManualPoints = Array.isArray(points) && points.length > 0
+  const hasPinnedAnchor =
+    isFreeformEdgeAnchor(data?.sourceAnchor) ||
+    isFreeformEdgeAnchor(data?.targetAnchor)
+  const hasManualRoute = hasManualPoints || hasPinnedAnchor
+
+  const handleResetRouting = useCallback(() => {
+    setEdges((edges) =>
+      edges.map((edge) => {
+        if (edge.id !== id) return edge
+        const nextData = { ...(edge.data ?? {}) } as Record<string, unknown>
+        nextData.points = []
+        delete nextData.sourceAnchor
+        delete nextData.targetAnchor
+        return { ...edge, data: nextData }
+      })
+    )
+  }, [id, setEdges])
+
+  return (
+    <>
+      <CustomEdgeToolbar
+        edgeId={id}
+        anchorRef={anchorRef}
+        position={isDiagramModifiable ? uiPosition : assessmentPosition}
+        onEditClick={() => setPopOverElementId(id)}
+        onDeleteClick={handleDelete}
+        canResetRouting={isDiagramModifiable && hasManualRoute}
+        onResetRoutingClick={handleResetRouting}
+      />
+
+      {!isDiagramModifiable && (
+        <AssessmentIcon
+          x={assessmentPosition.x - 15}
+          y={assessmentPosition.y - 15}
+          score={nodeScore}
+        />
+      )}
+
+      <PopoverManager
+        elementId={id}
+        anchorEl={anchorEl}
+        type={type as DiagramEdgeType}
+      />
+    </>
+  )
+}

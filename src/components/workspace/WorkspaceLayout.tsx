@@ -5,6 +5,7 @@ import { Sidebar, type DriveItem } from "./Sidebar";
 import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
 import { DrawingCanvas } from "~/components/canvas/DrawingCanvas";
+import { UmlCanvas } from "~/components/canvas/UmlCanvas";
 import { ImageViewer } from "./ImageViewer";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
@@ -29,6 +30,7 @@ import {
   CheckCircle2,
   Search,
   Palette,
+  Network,
   Loader2,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
@@ -51,6 +53,26 @@ const isEmptyExcalidraw = (content?: string | null): boolean => {
     const parsed = typeof content === "string" ? JSON.parse(content) : content;
     const elems = Array.isArray(parsed) ? parsed : parsed?.elements;
     return !elems || !Array.isArray(elems) || elems.length === 0;
+  } catch {
+    return true;
+  }
+};
+
+const isUmlFile = (item?: DriveItem | null): boolean => {
+  if (!item) return false;
+  return (
+    item.name.endsWith(".apollon") ||
+    item.name.endsWith(".uml") ||
+    item.mimeType === "application/vnd.apollon+json"
+  );
+};
+
+const isEmptyApollon = (content?: string | null): boolean => {
+  if (!content || !content.trim()) return true;
+  try {
+    const parsed = typeof content === "string" ? JSON.parse(content) : content;
+    const model = parsed && parsed.model ? parsed.model : parsed;
+    return !model || (!model.type && !model.version);
   } catch {
     return true;
   }
@@ -389,12 +411,13 @@ export function WorkspaceLayout({
     const isDrawing =
       currentItem?.name.endsWith(".excalidraw") ||
       currentItem?.mimeType === "application/vnd.excalidraw+json";
+    const isUml = isUmlFile(currentItem);
 
     if (typeof window !== "undefined") {
       const draft = localStorage.getItem(`netherite_draft_${activeTabId}`);
       if (draft !== null) {
-        // If it is a drawing and the draft is empty, it was poisoned; purge it!
-        if (isDrawing && isEmptyExcalidraw(draft)) {
+        // If it is a drawing/uml and the draft is empty, it was poisoned; purge it!
+        if ((isDrawing && isEmptyExcalidraw(draft)) || (isUml && isEmptyApollon(draft))) {
           try {
             localStorage.removeItem(`netherite_draft_${activeTabId}`);
           } catch {}
@@ -420,9 +443,13 @@ export function WorkspaceLayout({
     const isDrawing =
       currentItem?.name.endsWith(".excalidraw") ||
       currentItem?.mimeType === "application/vnd.excalidraw+json";
+    const isUml = isUmlFile(currentItem);
 
-    // NEVER save an empty drawing draft to localStorage if the original file has content!
+    // NEVER save an empty drawing/uml draft to localStorage if the original file has content!
     if (isDrawing && isEmptyExcalidraw(noteContent) && !isEmptyExcalidraw(lastSavedContent)) {
+      return;
+    }
+    if (isUml && isEmptyApollon(noteContent) && !isEmptyApollon(lastSavedContent)) {
       return;
     }
 
@@ -715,6 +742,72 @@ export function WorkspaceLayout({
     }
   };
 
+  // 100% INSTANT OPTIMISTIC UML CREATION (Apollon diagram)
+  const handleCreateUml = async (parentId?: string) => {
+    const tempId = `temp-uml-${Date.now()}`;
+    const defaultName = `Diagram-${Date.now().toString().slice(-4)}.apollon`;
+    const defaultContent = JSON.stringify(
+      {
+        version: "4.0.0",
+        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `model-${Date.now()}`,
+        title: defaultName.replace(/\.apollon$/i, ""),
+        type: "ClassDiagram",
+        nodes: [],
+        edges: [],
+        assessments: {},
+      },
+      null,
+      2
+    );
+
+    const newItem: DriveItem = {
+      id: tempId,
+      name: defaultName,
+      mimeType: "application/vnd.apollon+json",
+      modifiedTime: new Date().toISOString(),
+      parents: parentId ? [parentId] : undefined,
+    };
+
+    setLocalNotes((prev) => [newItem, ...prev]);
+    openFileInTab(tempId);
+    setNoteContent(defaultContent);
+    setLastSavedContent(defaultContent);
+    setEditingId(tempId);
+
+    try {
+      const realNote = await createMutation.mutateAsync({
+        name: defaultName,
+        content: defaultContent,
+        parentId,
+        type: "uml",
+      });
+      if (realNote?.id) {
+        utils.notes.list.setData(undefined, (old: any) => {
+          const items = old ? [...old] : [];
+          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          return [realNote, ...filtered];
+        });
+        setLocalNotes((prev) =>
+          prev.map((item) =>
+            item.id === tempId
+              ? {
+                  ...item,
+                  id: realNote.id!,
+                  parents: realNote.parents,
+                  mimeType: "application/vnd.apollon+json",
+                }
+              : item
+          )
+        );
+        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
+        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setEditingId(realNote.id!);
+      }
+    } catch (err) {
+      console.error("Background UML creation failed:", err);
+    }
+  };
+
   // 100% INSTANT OPTIMISTIC FOLDER CREATION
   const handleCreateFolder = async (parentId?: string) => {
     const tempId = `temp-folder-${Date.now()}`;
@@ -769,15 +862,24 @@ export function WorkspaceLayout({
       !isImage &&
       (targetItem?.name.endsWith(".excalidraw") ||
         targetItem?.mimeType === "application/vnd.excalidraw+json");
+    const isUml =
+      !isImage &&
+      !isDrawing &&
+      (targetItem?.name.endsWith(".apollon") ||
+        targetItem?.name.endsWith(".uml") ||
+        targetItem?.mimeType === "application/vnd.apollon+json");
 
     let finalName = newName;
     if (isFolder || isImage) {
       finalName = newName;
     } else if (isDrawing) {
-      const cleanName = newName.replace(/\.(md|excalidraw)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
       finalName = `${cleanName}.excalidraw`;
+    } else if (isUml) {
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
+      finalName = `${cleanName}.apollon`;
     } else {
-      const cleanName = newName.replace(/\.(md|excalidraw)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
       finalName = `${cleanName}.md`;
     }
 
@@ -946,13 +1048,14 @@ export function WorkspaceLayout({
     const isDrawing =
       item?.name.endsWith(".excalidraw") ||
       item?.mimeType === "application/vnd.excalidraw+json";
+    const isUml = isUmlFile(item);
 
     // Hydrate note content immediately from localStorage draft or query cache
     let contentToSet = "";
     if (typeof window !== "undefined") {
       const draft = localStorage.getItem(`netherite_draft_${fileId}`);
       if (draft !== null) {
-        if (isDrawing && isEmptyExcalidraw(draft)) {
+        if ((isDrawing && isEmptyExcalidraw(draft)) || (isUml && isEmptyApollon(draft))) {
           try {
             localStorage.removeItem(`netherite_draft_${fileId}`);
           } catch {}
@@ -963,7 +1066,11 @@ export function WorkspaceLayout({
     }
     if (!contentToSet) {
       const cached = utils.notes.get.getData({ id: fileId });
-      if (typeof cached === "string" && (!isDrawing || !isEmptyExcalidraw(cached))) {
+      if (
+        typeof cached === "string" &&
+        (!isDrawing || !isEmptyExcalidraw(cached)) &&
+        (!isUml || !isEmptyApollon(cached))
+      ) {
         contentToSet = cached;
       }
     }
@@ -1171,6 +1278,7 @@ export function WorkspaceLayout({
         onSelectNote={(id) => openFileInTab(id)}
         onCreateNote={handleCreateFile}
         onCreateDrawing={handleCreateDrawing}
+        onCreateUml={handleCreateUml}
         onCreateFolder={handleCreateFolder}
         onRenameNote={handleRenameFile}
         onDeleteNote={handleDeleteFile}
@@ -1249,11 +1357,13 @@ export function WorkspaceLayout({
                   >
                     {note?.name.endsWith(".excalidraw") || note?.mimeType === "application/vnd.excalidraw+json" ? (
                       <Palette className={`w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                    ) : isUmlFile(note) ? (
+                      <Network className={`w-3.5 h-3.5 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
                     ) : (
                       <FileText className={`w-3.5 h-3.5 ${isActive ? "text-foreground" : "opacity-60"}`} />
                     )}
                     <span className="truncate max-w-[130px]">
-                      {(note?.name || "Untitled").replace(/\.(md|excalidraw)$/i, "")}
+                      {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml)$/i, "")}
                     </span>
                     <div className="flex items-center ml-1">
                       {hasLocalDiff ? (
@@ -1423,6 +1533,28 @@ export function WorkspaceLayout({
                       fileName={currentNote?.name || "image"}
                       mimeType={currentNote?.mimeType}
                     />
+                  ) : isUmlFile(currentNote) ? (
+                    (isLoadingContent || fetchedContent === undefined) &&
+                    !activeTabId?.startsWith("temp-") &&
+                    isEmptyApollon(noteContent) ? (
+                      <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <span className="text-xs font-mono">Loading Apollon UML Model…</span>
+                      </div>
+                    ) : (
+                      <UmlCanvas
+                        key={`${activeTabId}-${contentRevision}`}
+                        initialContent={noteContent}
+                        theme={isDark ? "dark" : "light"}
+                        onChange={(updatedContent) => {
+                          setNoteContent(updatedContent);
+                          if (activeTabId && typeof window !== "undefined") {
+                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
+                          }
+                        }}
+                        onSave={handleManualSave}
+                      />
+                    )
                   ) : currentNote?.name?.endsWith(".excalidraw") ||
                   currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
                     (isLoadingContent || fetchedContent === undefined) &&
@@ -1493,6 +1625,27 @@ export function WorkspaceLayout({
                         fileName={currentSplitNote?.name || "image"}
                         mimeType={currentSplitNote?.mimeType}
                       />
+                    ) : isUmlFile(currentSplitNote) ? (
+                      (isLoadingSplitContent || fetchedSplitContent === undefined) &&
+                      !splitTabId?.startsWith("temp-") &&
+                      isEmptyApollon(splitNoteContent) ? (
+                        <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <span className="text-xs font-mono">Loading UML Diagram…</span>
+                        </div>
+                      ) : (
+                        <UmlCanvas
+                          key={splitTabId || "split-uml"}
+                          initialContent={splitNoteContent}
+                          theme={isDark ? "dark" : "light"}
+                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                          onSave={() => {
+                            if (splitTabId && !splitTabId.startsWith("temp-")) {
+                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                            }
+                          }}
+                        />
+                      )
                     ) : currentSplitNote?.name?.endsWith(".excalidraw") ||
                     currentSplitNote?.mimeType === "application/vnd.excalidraw+json" ? (
                       (isLoadingSplitContent || fetchedSplitContent === undefined) &&

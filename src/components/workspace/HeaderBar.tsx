@@ -18,6 +18,7 @@ import {
   Check,
   SunMedium,
   Palette,
+  Network,
   RefreshCw,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
@@ -190,7 +191,8 @@ export function HeaderBar({
   }, [showMoreMenu]);
 
   const isDrawing = noteTitle.endsWith(".excalidraw");
-  const cleanTitle = noteTitle.replace(/\.(md|excalidraw)$/i, "");
+  const isUml = noteTitle.endsWith(".apollon") || noteTitle.endsWith(".uml");
+  const cleanTitle = noteTitle.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
 
   return (
     <header
@@ -222,6 +224,8 @@ export function HeaderBar({
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
               {isDrawing ? (
                 <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+              ) : isUml ? (
+                <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
               ) : (
                 <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
               )}

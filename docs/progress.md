@@ -73,16 +73,34 @@
 - [x] Successfully build and install Android APK (`app-debug.apk`) on physical Samsung device (`SM-M315F`).
 - [x] 100% test pass rate on Flutter unit & diff engine test suite.
 
+### Phase 9: Drive Sync Refinement, Excalidraw Integrity, Native Images & Production Routing
+- [x] **Strict Netherite Root Scoping**: Constrained Google Drive recursive discovery to `Netherite/`, preventing user personal root folder pollution while indexing copied and nested files.
+- [x] **OAuth Scope Checker & 1-Click Upgrade**: Added `checkDriveScope` and `SyncModal` banner alerting users to upgrade from legacy `drive.file` to full `drive` permissions.
+- [x] **Excalidraw Official Restoration**: Replaced manual serialization with `@excalidraw/excalidraw`'s official `restoreElements`, `restoreAppState`, and `serializeAsJSON`.
+- [x] **Eliminated Excalidraw Mount Dirtying & Race Condition**:
+  - Gated canvas mount behind `isLoadingContent` to prevent premature mounting with empty canvas.
+  - Implemented `isEmptyExcalidraw` to automatically purge empty/poisoned drafts from `localStorage`.
+  - Added robust baseline scene fingerprinting based on element geometry and text, suppressing false `+10 -4133` diffs on initial load.
+- [x] **Native Image Viewer**: Built `src/components/workspace/ImageViewer.tsx` with zoom, pan, fit-to-screen, and download controls; backed by `getImageAsset` base64 streaming. Preserved image file extensions during inline renames.
+- [x] **Route Restructuring & Dedicated Landing Page**:
+  - Relocated full studio editor to `/editor` (`src/app/editor/page.tsx`).
+  - Set root `/` (`src/app/page.tsx`) to session-aware landing page with dynamic "Open Editor" / "Launch Studio" CTAs.
+- [x] **Google OAuth Production Compliance**:
+  - Created `/privacy` compliant with Google API Services User Data Policy and Limited Use disclosures.
+  - Created `/terms` covering sovereign ownership, zero-database architecture, and disclaimers.
+  - Verified site ownership in Google Search Console via HTML meta tag, enabling **Production (External)** publishing status in Google Cloud Console.
+
 ---
 
-## Current Status: Multi-Platform Production Ready (v1.1)
+## Current Status: Multi-Platform Production Ready (v1.2)
 
-Netherite is fully functional on Web (Next.js 15), Linux Desktop, Windows Desktop, and Android (Flutter), sharing the same zero-database Google Drive storage structure and monochromatic design language.
+Netherite is fully functional on Web (Next.js 15), Linux Desktop, Windows Desktop, and Android (Flutter), sharing the same zero-database Google Drive storage structure and monochromatic design language. Google OAuth is in Production mode.
 
 ---
 
 ## Future Roadmap & Explorations
 
+- [ ] **Apollon Integration**: Integrate the standalone Apollon modeling/diagramming repository into Netherite's workspace.
 - [ ] **Bi-directional Wikilinks & Graph View**: Inter-note `[[Note Title]]` link resolution and visual knowledge graph visualization.
 - [ ] **Offline PWA Support**: Full Service Worker caching to permit offline draft creation with automatic sync queue when reconnected.
 - [ ] **PDF Export with KaTeX**: Server-side or client-side print stylesheets tailored for publishing academic PDFs.
