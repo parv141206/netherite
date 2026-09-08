@@ -57,11 +57,26 @@ export default function ExcalidrawEditor({
   // Track the baseline signature to prevent initial mount / layout from dirtying the note
   const initialSignatureRef = useRef<string | null>(null);
 
+  const getDrawingSignature = (
+    nextElements: readonly ExcalidrawElement[],
+    nextAppState?: Partial<AppState> | null
+  ) => {
+    const elemSig = nextElements
+      .filter((e) => !e.isDeleted)
+      .map((e: any) =>
+        `${e.id}:${e.type}:${Math.round(e.x)}:${Math.round(e.y)}:${Math.round(e.width)}:${Math.round(e.height)}:${e.strokeColor ?? ""}:${e.backgroundColor ?? ""}:${e.text ?? ""}`
+      )
+      .join(";");
+    const bgSig = nextAppState?.viewBackgroundColor ? `|bg:${nextAppState.viewBackgroundColor}` : "";
+    return `${elemSig}${bgSig}`;
+  };
+
   // Parse initial content safely with official Excalidraw restoration
   const initialData = useMemo<ExcalidrawInitialDataState>(() => {
     const isDarkTheme = activeTheme === "dark";
 
-    if (!initialContent || initialContent.trim() === "") {
+    if (!initialContent || (typeof initialContent === "string" && initialContent.trim() === "")) {
+      initialSignatureRef.current = "";
       return {
         elements: [],
         appState: {
@@ -73,7 +88,13 @@ export default function ExcalidrawEditor({
     }
 
     try {
-      const parsed = JSON.parse(initialContent);
+      let parsed: any;
+      if (typeof initialContent === "string") {
+        parsed = JSON.parse(initialContent);
+      } else {
+        parsed = initialContent;
+      }
+
       let rawElements: any[] = [];
       let rawAppState: any = {};
       let rawFiles: any = {};
@@ -95,6 +116,9 @@ export default function ExcalidrawEditor({
         null
       );
 
+      // Establish baseline signature directly from restored data
+      initialSignatureRef.current = getDrawingSignature(restoredElements, restoredState);
+
       return {
         elements: restoredElements,
         appState: {
@@ -106,6 +130,7 @@ export default function ExcalidrawEditor({
       };
     } catch (err) {
       console.warn("Could not parse drawing JSON content:", err);
+      initialSignatureRef.current = "";
       return {
         elements: [],
         appState: {
@@ -134,16 +159,6 @@ export default function ExcalidrawEditor({
     }
   }, []);
 
-  const getDrawingSignature = (
-    nextElements: readonly ExcalidrawElement[],
-    nextAppState: AppState
-  ) => {
-    const elemSig = nextElements
-      .map((e) => `${e.id}:${e.version}:${e.isDeleted}`)
-      .join(";");
-    return `${elemSig}|${nextAppState.viewBackgroundColor ?? ""}|${nextAppState.gridSize ?? ""}`;
-  };
-
   const handleChange = useCallback(
     (
       nextElements: readonly ExcalidrawElement[],
@@ -167,6 +182,9 @@ export default function ExcalidrawEditor({
       if (currentSig === initialSignatureRef.current) {
         return;
       }
+
+      // Record new signature baseline and dispatch user change
+      initialSignatureRef.current = currentSig;
 
       if (onChangeRef.current) {
         try {

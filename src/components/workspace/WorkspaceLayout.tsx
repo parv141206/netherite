@@ -29,6 +29,7 @@ import {
   CheckCircle2,
   Search,
   Palette,
+  Loader2,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 
@@ -43,6 +44,17 @@ interface WorkspaceLayoutProps {
     [key: string]: any;
   };
 }
+
+const isEmptyExcalidraw = (content?: string | null): boolean => {
+  if (!content || !content.trim()) return true;
+  try {
+    const parsed = typeof content === "string" ? JSON.parse(content) : content;
+    const elems = Array.isArray(parsed) ? parsed : parsed?.elements;
+    return !elems || !Array.isArray(elems) || elems.length === 0;
+  } catch {
+    return true;
+  }
+};
 
 export function WorkspaceLayout({
   session,
@@ -295,7 +307,7 @@ export function WorkspaceLayout({
   );
 
   // Split Active Note Content Query
-  const { data: fetchedSplitContent } = api.notes.get.useQuery(
+  const { data: fetchedSplitContent, isLoading: isLoadingSplitContent } = api.notes.get.useQuery(
     { id: splitTabId! },
     {
       enabled: !!session?.user && !!splitTabId && !splitTabId.startsWith("temp-") && isSplitView,
@@ -373,31 +385,53 @@ export function WorkspaceLayout({
       setNoteTitle("");
       return;
     }
+    const currentItem = localNotes.find((n) => n.id === activeTabId);
+    const isDrawing =
+      currentItem?.name.endsWith(".excalidraw") ||
+      currentItem?.mimeType === "application/vnd.excalidraw+json";
+
     if (typeof window !== "undefined") {
       const draft = localStorage.getItem(`netherite_draft_${activeTabId}`);
       if (draft !== null) {
-        setNoteContent(draft);
-        if (fetchedContent !== undefined) {
-          setLastSavedContent(fetchedContent);
+        // If it is a drawing and the draft is empty, it was poisoned; purge it!
+        if (isDrawing && isEmptyExcalidraw(draft)) {
+          try {
+            localStorage.removeItem(`netherite_draft_${activeTabId}`);
+          } catch {}
+        } else {
+          setNoteContent(draft);
+          if (fetchedContent !== undefined) {
+            setLastSavedContent(fetchedContent);
+          }
+          return;
         }
-        return;
       }
     }
     if (fetchedContent !== undefined) {
       setNoteContent(fetchedContent);
       setLastSavedContent(fetchedContent);
     }
-  }, [fetchedContent, activeTabId]);
+  }, [fetchedContent, activeTabId, localNotes]);
 
   // Continuous local draft backup on every edit
   useEffect(() => {
     if (!activeTabId || activeTabId.startsWith("temp-") || typeof window === "undefined") return;
+    const currentItem = localNotes.find((n) => n.id === activeTabId);
+    const isDrawing =
+      currentItem?.name.endsWith(".excalidraw") ||
+      currentItem?.mimeType === "application/vnd.excalidraw+json";
+
+    // NEVER save an empty drawing draft to localStorage if the original file has content!
+    if (isDrawing && isEmptyExcalidraw(noteContent) && !isEmptyExcalidraw(lastSavedContent)) {
+      return;
+    }
+
     if (noteContent !== lastSavedContent && noteContent.length > 0) {
       try {
         localStorage.setItem(`netherite_draft_${activeTabId}`, noteContent);
       } catch {}
     }
-  }, [noteContent, lastSavedContent, activeTabId]);
+  }, [noteContent, lastSavedContent, activeTabId, localNotes]);
 
   useEffect(() => {
     if (fetchedSplitContent !== undefined) {
@@ -909,17 +943,27 @@ export function WorkspaceLayout({
       setOpenTabIds([...openTabIds, fileId]);
     }
 
+    const isDrawing =
+      item?.name.endsWith(".excalidraw") ||
+      item?.mimeType === "application/vnd.excalidraw+json";
+
     // Hydrate note content immediately from localStorage draft or query cache
     let contentToSet = "";
     if (typeof window !== "undefined") {
       const draft = localStorage.getItem(`netherite_draft_${fileId}`);
       if (draft !== null) {
-        contentToSet = draft;
+        if (isDrawing && isEmptyExcalidraw(draft)) {
+          try {
+            localStorage.removeItem(`netherite_draft_${fileId}`);
+          } catch {}
+        } else {
+          contentToSet = draft;
+        }
       }
     }
     if (!contentToSet) {
       const cached = utils.notes.get.getData({ id: fileId });
-      if (typeof cached === "string") {
+      if (typeof cached === "string" && (!isDrawing || !isEmptyExcalidraw(cached))) {
         contentToSet = cached;
       }
     }
@@ -1381,18 +1425,27 @@ export function WorkspaceLayout({
                     />
                   ) : currentNote?.name?.endsWith(".excalidraw") ||
                   currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
-                    <DrawingCanvas
-                      key={`${activeTabId}-${contentRevision}`}
-                      initialContent={noteContent}
-                      theme={isDark ? "dark" : "light"}
-                      onChange={(updatedContent) => {
-                        setNoteContent(updatedContent);
-                        if (activeTabId && typeof window !== "undefined") {
-                          localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
-                        }
-                      }}
-                      onSave={handleManualSave}
-                    />
+                    (isLoadingContent || fetchedContent === undefined) &&
+                    !activeTabId?.startsWith("temp-") &&
+                    isEmptyExcalidraw(noteContent) ? (
+                      <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <span className="text-xs font-mono">Loading Canvas & Excalidraw scene…</span>
+                      </div>
+                    ) : (
+                      <DrawingCanvas
+                        key={`${activeTabId}-${contentRevision}`}
+                        initialContent={noteContent}
+                        theme={isDark ? "dark" : "light"}
+                        onChange={(updatedContent) => {
+                          setNoteContent(updatedContent);
+                          if (activeTabId && typeof window !== "undefined") {
+                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
+                          }
+                        }}
+                        onSave={handleManualSave}
+                      />
+                    )
                   ) : (
                     <Editor
                       key={`${activeTabId}-${contentRevision}`}
@@ -1442,17 +1495,26 @@ export function WorkspaceLayout({
                       />
                     ) : currentSplitNote?.name?.endsWith(".excalidraw") ||
                     currentSplitNote?.mimeType === "application/vnd.excalidraw+json" ? (
-                      <DrawingCanvas
-                        key={splitTabId || "split-drawing"}
-                        initialContent={splitNoteContent}
-                        theme={isDark ? "dark" : "light"}
-                        onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
-                        onSave={() => {
-                          if (splitTabId && !splitTabId.startsWith("temp-")) {
-                            saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
-                          }
-                        }}
-                      />
+                      (isLoadingSplitContent || fetchedSplitContent === undefined) &&
+                      !splitTabId?.startsWith("temp-") &&
+                      isEmptyExcalidraw(splitNoteContent) ? (
+                        <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <span className="text-xs font-mono">Loading Drawing…</span>
+                        </div>
+                      ) : (
+                        <DrawingCanvas
+                          key={splitTabId || "split-drawing"}
+                          initialContent={splitNoteContent}
+                          theme={isDark ? "dark" : "light"}
+                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                          onSave={() => {
+                            if (splitTabId && !splitTabId.startsWith("temp-")) {
+                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                            }
+                          }}
+                        />
+                      )
                     ) : (
                       <Editor
                         key={splitTabId || "split-editor"}

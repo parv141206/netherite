@@ -470,7 +470,10 @@ export async function getNoteContent(session: any, fileId: string) {
         { fileId, alt: "media" },
         { responseType: "text" }
       );
-      return res.data as string;
+      if (typeof res.data === "object" && res.data !== null) {
+        return JSON.stringify(res.data);
+      }
+      return (res.data as string) ?? "";
     } catch (error) {
       console.error(`Error in getNoteContent for ${fileId}:`, error);
       return "";
