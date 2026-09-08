@@ -5,6 +5,7 @@ import { Sidebar, type DriveItem } from "./Sidebar";
 import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
 import { DrawingCanvas } from "~/components/canvas/DrawingCanvas";
+import { ImageViewer } from "./ImageViewer";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
@@ -483,6 +484,14 @@ export function WorkspaceLayout({
   const handleManualSave = async () => {
     if (!activeTabId || !session?.user || activeTabId.startsWith("temp-") || isLoadingContent) return;
 
+    const currentNoteItem = localNotes.find((n) => n.id === activeTabId);
+    if (
+      currentNoteItem?.mimeType?.startsWith("image/") ||
+      /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNoteItem?.name || "")
+    ) {
+      return;
+    }
+
     let contentToSave = noteContent;
     let hasNewUploads = false;
 
@@ -542,7 +551,6 @@ export function WorkspaceLayout({
     const diff = computeLineDiff(lastSavedContent, contentToSave);
     if (!diff.hasChanges && !saveMutation.isPending) return;
 
-    const currentNoteItem = localNotes.find((n) => n.id === activeTabId);
     const logEntry: ChangelogEntry = {
       id: `log-${Date.now()}`,
       noteId: activeTabId,
@@ -720,12 +728,16 @@ export function WorkspaceLayout({
 
     const targetItem = localNotes.find((n) => n.id === id);
     const isFolder = targetItem?.mimeType === "application/vnd.google-apps.folder";
+    const isImage =
+      targetItem?.mimeType?.startsWith("image/") ||
+      /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(targetItem?.name ?? "");
     const isDrawing =
-      targetItem?.name.endsWith(".excalidraw") ||
-      targetItem?.mimeType === "application/vnd.excalidraw+json";
+      !isImage &&
+      (targetItem?.name.endsWith(".excalidraw") ||
+        targetItem?.mimeType === "application/vnd.excalidraw+json");
 
     let finalName = newName;
-    if (isFolder) {
+    if (isFolder || isImage) {
       finalName = newName;
     } else if (isDrawing) {
       const cleanName = newName.replace(/\.(md|excalidraw)$/i, "");
@@ -1002,8 +1014,15 @@ export function WorkspaceLayout({
 
   const currentNote = localNotes.find((n) => n.id === activeTabId);
   const currentSplitNote = localNotes.find((n) => n.id === splitTabId);
+  const isCurrentImage =
+    currentNote?.mimeType?.startsWith("image/") ||
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNote?.name || "");
+  const isSplitImage =
+    currentSplitNote?.mimeType?.startsWith("image/") ||
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentSplitNote?.name || "");
+
   const liveDiff = computeLineDiff(lastSavedContent, noteContent);
-  const isDirty = liveDiff.hasChanges;
+  const isDirty = !isCurrentImage && liveDiff.hasChanges;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -1353,7 +1372,14 @@ export function WorkspaceLayout({
               <>
                 {/* Primary Pane */}
                 <div className="h-full w-full overflow-hidden flex flex-col">
-                  {currentNote?.name?.endsWith(".excalidraw") ||
+                  {isCurrentImage ? (
+                    <ImageViewer
+                      key={activeTabId}
+                      fileId={currentNote?.id || ""}
+                      fileName={currentNote?.name || "image"}
+                      mimeType={currentNote?.mimeType}
+                    />
+                  ) : currentNote?.name?.endsWith(".excalidraw") ||
                   currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
                     <DrawingCanvas
                       key={`${activeTabId}-${contentRevision}`}
@@ -1407,7 +1433,14 @@ export function WorkspaceLayout({
                         : ""
                     }`}
                   >
-                    {currentSplitNote?.name?.endsWith(".excalidraw") ||
+                    {isSplitImage ? (
+                      <ImageViewer
+                        key={splitTabId || "split-image"}
+                        fileId={currentSplitNote?.id || ""}
+                        fileName={currentSplitNote?.name || "image"}
+                        mimeType={currentSplitNote?.mimeType}
+                      />
+                    ) : currentSplitNote?.name?.endsWith(".excalidraw") ||
                     currentSplitNote?.mimeType === "application/vnd.excalidraw+json" ? (
                       <DrawingCanvas
                         key={splitTabId || "split-drawing"}

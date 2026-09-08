@@ -603,7 +603,12 @@ export function Sidebar({
     } else {
       const isActive = activeNoteId === item.id;
       const isDrawing = item.name.endsWith(".excalidraw");
-      const displayName = item.name.replace(/\.(md|excalidraw)$/i, "");
+      const isImage =
+        item.mimeType?.startsWith("image/") ||
+        /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(item.name);
+      const displayName = isImage
+        ? item.name
+        : item.name.replace(/\.(md|excalidraw)$/i, "");
 
       return (
         <div
@@ -626,9 +631,13 @@ export function Sidebar({
               <InlineRenameInput
                 initialValue={displayName}
                 onCommit={(newName) => {
-                  const clean = newName.replace(/\.(md|excalidraw)$/i, "");
-                  const finalName = isDrawing ? `${clean}.excalidraw` : `${clean}.md`;
-                  onRenameNote(item.id, finalName);
+                  if (isImage) {
+                    onRenameNote(item.id, newName);
+                  } else {
+                    const clean = newName.replace(/\.(md|excalidraw)$/i, "");
+                    const finalName = isDrawing ? `${clean}.excalidraw` : `${clean}.md`;
+                    onRenameNote(item.id, finalName);
+                  }
                   if (setEditingId) setEditingId(null);
                 }}
                 onCancel={() => {

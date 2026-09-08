@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Excalidraw, Footer } from "@excalidraw/excalidraw";
+import {
+  Excalidraw,
+  Footer,
+  restoreElements,
+  restoreAppState,
+  serializeAsJSON,
+} from "@excalidraw/excalidraw";
 import type { ExcalidrawElement } from "@excalidraw/element/types";
 import type {
   AppState,
@@ -48,7 +54,10 @@ export default function ExcalidrawEditor({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  // Parse initial content safely
+  // Track the baseline signature to prevent initial mount / layout from dirtying the note
+  const initialSignatureRef = useRef<string | null>(null);
+
+  // Parse initial content safely with official Excalidraw restoration
   const initialData = useMemo<ExcalidrawInitialDataState>(() => {
     const isDarkTheme = activeTheme === "dark";
 
@@ -57,7 +66,7 @@ export default function ExcalidrawEditor({
         elements: [],
         appState: {
           theme: isDarkTheme ? "dark" : "light",
-          viewBackgroundColor: "#ffffff",
+          viewBackgroundColor: isDarkTheme ? "#121212" : "#ffffff",
         },
         files: {},
       };
@@ -65,23 +74,34 @@ export default function ExcalidrawEditor({
 
     try {
       const parsed = JSON.parse(initialContent);
-      const bg = parsed.appState?.viewBackgroundColor?.toLowerCase?.()?.trim();
-      const isDefaultBg =
-        !bg ||
-        bg === "#121212" ||
-        bg === "#ffffff" ||
-        bg === "#fff" ||
-        bg === "#09090b" ||
-        bg === "#fcfcfc";
+      let rawElements: any[] = [];
+      let rawAppState: any = {};
+      let rawFiles: any = {};
+
+      if (Array.isArray(parsed)) {
+        rawElements = parsed;
+      } else if (parsed && typeof parsed === "object") {
+        rawElements = Array.isArray(parsed.elements) ? parsed.elements : [];
+        rawAppState = parsed.appState || {};
+        rawFiles = parsed.files || {};
+      }
+
+      const restoredElements = restoreElements(rawElements, null);
+      const restoredState = restoreAppState(
+        {
+          ...rawAppState,
+          theme: isDarkTheme ? "dark" : "light",
+        },
+        null
+      );
 
       return {
-        elements: Array.isArray(parsed.elements) ? parsed.elements : [],
+        elements: restoredElements,
         appState: {
-          ...(parsed.appState || {}),
+          ...restoredState,
           theme: isDarkTheme ? "dark" : "light",
-          ...(isDefaultBg ? { viewBackgroundColor: "#ffffff" } : {}),
         },
-        files: parsed.files || {},
+        files: rawFiles,
         scrollToContent: true,
       };
     } catch (err) {
@@ -90,7 +110,7 @@ export default function ExcalidrawEditor({
         elements: [],
         appState: {
           theme: isDarkTheme ? "dark" : "light",
-          viewBackgroundColor: "#ffffff",
+          viewBackgroundColor: isDarkTheme ? "#121212" : "#ffffff",
         },
         files: {},
       };
@@ -114,6 +134,16 @@ export default function ExcalidrawEditor({
     }
   }, []);
 
+  const getDrawingSignature = (
+    nextElements: readonly ExcalidrawElement[],
+    nextAppState: AppState
+  ) => {
+    const elemSig = nextElements
+      .map((e) => `${e.id}:${e.version}:${e.isDeleted}`)
+      .join(";");
+    return `${elemSig}|${nextAppState.viewBackgroundColor ?? ""}|${nextAppState.gridSize ?? ""}`;
+  };
+
   const handleChange = useCallback(
     (
       nextElements: readonly ExcalidrawElement[],
@@ -125,27 +155,26 @@ export default function ExcalidrawEditor({
         setAppState(nextAppState);
       });
 
+      const currentSig = getDrawingSignature(nextElements, nextAppState);
+
+      // On initial mount / scene setup, establish the baseline signature and do not fire onChange
+      if (initialSignatureRef.current === null) {
+        initialSignatureRef.current = currentSig;
+        return;
+      }
+
+      // If nothing has actually changed in document elements or document properties, ignore event
+      if (currentSig === initialSignatureRef.current) {
+        return;
+      }
+
       if (onChangeRef.current) {
         try {
-          const serialized = JSON.stringify(
-            {
-              type: "excalidraw",
-              version: 2,
-              source: "netherite",
-              elements: nextElements,
-              appState: {
-                viewBackgroundColor: nextAppState.viewBackgroundColor,
-                currentItemFontFamily: nextAppState.currentItemFontFamily,
-                theme: nextAppState.theme,
-                gridSize: nextAppState.gridSize,
-                zoom: nextAppState.zoom,
-                scrollX: nextAppState.scrollX,
-                scrollY: nextAppState.scrollY,
-              },
-              files: nextFiles,
-            },
-            null,
-            2
+          const serialized = serializeAsJSON(
+            nextElements,
+            nextAppState,
+            nextFiles,
+            "local"
           );
           onChangeRef.current(serialized);
         } catch (e) {

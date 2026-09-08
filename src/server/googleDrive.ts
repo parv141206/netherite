@@ -111,7 +111,7 @@ export interface FileMetadata {
   id: string;
   name: string;
   mimeType?: string;
-  type: "note" | "drawing" | "folder";
+  type: "note" | "drawing" | "folder" | "image";
   parentId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -235,7 +235,7 @@ export async function listNotes(session: any) {
     const drive = await getDriveClient(session);
     const rootFolderId = await ensureNetheriteFolder(session);
 
-    // 1. Fetch all folders in Drive
+    // 1. Fetch all folders in Drive to resolve descendants of Netherite folder ONLY
     const foldersRes = await drive.files.list({
       q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
       fields: "files(id, name, mimeType, modifiedTime, parents)",
@@ -244,18 +244,26 @@ export async function listNotes(session: any) {
     });
 
     const allFolders = foldersRes.data.files ?? [];
-    const allUserFolderIds = new Set<string>();
+    const netheriteFolderIds = new Set<string>([rootFolderId]);
 
-    for (const folder of allFolders) {
-      if (!folder.id) continue;
-      if (folder.name?.toLowerCase() === "assets") continue;
-      if (folder.id === rootFolderId || folder.name === "Netherite") continue;
-      allUserFolderIds.add(folder.id);
+    // Recursively collect all descendant folders strictly inside Netherite
+    let addedNew = true;
+    while (addedNew) {
+      addedNew = false;
+      for (const folder of allFolders) {
+        if (!folder.id || netheriteFolderIds.has(folder.id)) continue;
+        if (folder.name?.toLowerCase() === "assets") continue;
+        const isChild = folder.parents?.some((p) => netheriteFolderIds.has(p));
+        if (isChild) {
+          netheriteFolderIds.add(folder.id);
+          addedNew = true;
+        }
+      }
     }
 
-    // 2. Query all files that belong to user folders OR match markdown/drawings/docs
+    // 2. Query files inside Drive
     const filesRes = await drive.files.list({
-      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or mimeType='application/octet-stream' or name contains '.excalidraw' or name contains '.md' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
+      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
       fields: "files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
       orderBy: "folder, modifiedTime desc",
       pageSize: 1000,
@@ -278,11 +286,12 @@ export async function listNotes(session: any) {
       parents: string[];
     }> = [];
 
-    // Include all user folders
+    // Include only folders belonging to Netherite
     for (const f of allFolders) {
       if (!f.id || !f.name) continue;
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
       if (f.id === rootFolderId || f.name === "Netherite") continue;
+      if (!netheriteFolderIds.has(f.id)) continue;
 
       const folderMime = f.mimeType ?? "application/vnd.google-apps.folder";
 
@@ -307,36 +316,31 @@ export async function listNotes(session: any) {
       }
     }
 
-    // Process all files
+    // Process files strictly belonging to Netherite folders
     for (const f of rawFiles) {
       if (!f.id || !f.name) continue;
       if (f.mimeType === "application/vnd.google-apps.folder") continue;
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
 
-      // Check if file is inside Netherite root, inside any user folder, or is a markdown/drawing anywhere
-      const isInsideAnyFolder = f.parents?.some(
-        (p) => p === rootFolderId || allUserFolderIds.has(p)
-      );
-      const isMarkdownOrDrawing =
-        f.name.endsWith(".md") ||
-        f.name.endsWith(".excalidraw") ||
-        f.name.endsWith(".markdown") ||
-        f.mimeType === "text/markdown" ||
-        f.mimeType === "application/vnd.excalidraw+json";
+      // STRICT CHECK: Only include files that are inside Netherite or its subfolders
+      const isInsideNetherite = f.parents?.some((p) => netheriteFolderIds.has(p));
+      if (!isInsideNetherite) continue;
 
-      // If it's outside our folders and not a note/drawing, ignore
-      if (!isInsideAnyFolder && !isMarkdownOrDrawing) continue;
+      const isImage =
+        f.mimeType?.startsWith("image/") ||
+        /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(f.name);
 
-      // Determine item type
       const isDrawing =
-        f.name.endsWith(".excalidraw") ||
-        f.mimeType === "application/vnd.excalidraw+json" ||
-        f.properties?.netheriteType === "drawing";
+        !isImage &&
+        (f.name.endsWith(".excalidraw") ||
+          f.mimeType === "application/vnd.excalidraw+json" ||
+          f.properties?.netheriteType === "drawing");
 
       let displayName = f.name;
 
-      // If file was manually added inside a folder without a valid extension, normalize to .md
-      if (!isDrawing && !displayName.endsWith(".md")) {
+      if (isImage) {
+        displayName = f.name;
+      } else if (!isDrawing && !displayName.endsWith(".md")) {
         const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
         const normalizedName = `${cleanBase}.md`;
         try {
@@ -355,23 +359,24 @@ export async function listNotes(session: any) {
           displayName = normalizedName;
         }
       } else if (!f.properties?.netheriteManaged) {
-        // Tag with Drive properties so it is recognized as managed by Netherite
         try {
           await drive.files.update({
             fileId: f.id,
             requestBody: {
               properties: {
-                netheriteType: isDrawing ? "drawing" : "note",
+                netheriteType: isDrawing ? "drawing" : isImage ? "image" : "note",
                 netheriteManaged: "true",
               },
             },
           });
         } catch {
-          // Non-fatal if property update is restricted
+          // Non-fatal
         }
       }
 
-      const effectiveMimeType = isDrawing
+      const effectiveMimeType = isImage
+        ? f.mimeType ?? "image/png"
+        : isDrawing
         ? "application/vnd.excalidraw+json"
         : "text/markdown";
 
@@ -383,13 +388,12 @@ export async function listNotes(session: any) {
         parents: f.parents ?? [rootFolderId],
       });
 
-      // Automatically generate metadata entry if missing
       if (!updatedFilesMeta[f.id]) {
         updatedFilesMeta[f.id] = {
           id: f.id,
           name: displayName,
           mimeType: effectiveMimeType,
-          type: isDrawing ? "drawing" : "note",
+          type: isImage ? "image" : isDrawing ? "drawing" : "note",
           parentId: f.parents?.[0] ?? rootFolderId,
           createdAt: f.createdTime ?? f.modifiedTime ?? new Date().toISOString(),
           updatedAt: f.modifiedTime ?? new Date().toISOString(),
@@ -398,7 +402,6 @@ export async function listNotes(session: any) {
       }
     }
 
-    // 5. Persist auto-generated metadata back to .netherite.json if newly discovered items were added
     if (metadataNeedsSave) {
       try {
         await saveWorkspaceMetadata(session, { files: updatedFilesMeta });
@@ -622,4 +625,22 @@ export async function uploadAsset(
   };
 }
 
-
+export async function getImageAsset(session: any, fileId: string) {
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    const meta = await drive.files.get({ fileId, fields: "id, name, mimeType" });
+    const res = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "arraybuffer" }
+    );
+    const buffer = Buffer.from(res.data as ArrayBuffer);
+    const mimeType = meta.data.mimeType ?? "image/png";
+    const base64 = buffer.toString("base64");
+    return {
+      id: fileId,
+      name: meta.data.name ?? "image",
+      mimeType,
+      dataUrl: `data:${mimeType};base64,${base64}`,
+    };
+  });
+}
