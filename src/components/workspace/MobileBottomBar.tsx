@@ -29,6 +29,7 @@ interface MobileBottomBarProps {
   onToggleOutline: () => void;
   onToggleSplitView?: () => void;
   isSplitView?: boolean;
+  showOutline?: boolean;
   isOutlineOpen: boolean;
   isDirty?: boolean;
   isSaving?: boolean;
@@ -43,6 +44,7 @@ export function MobileBottomBar({
   onToggleSidebar,
   onCreateNote,
   onToggleOutline,
+  showOutline = true,
   isOutlineOpen,
   isDirty = false,
   isSaving = false,
@@ -213,16 +215,18 @@ export function MobileBottomBar({
           <span className="text-[10px] font-medium">Pages</span>
         </button>
 
-        <button
-          onClick={onToggleOutline}
-          className={`flex flex-col items-center gap-0.5 p-1 active:scale-95 transition-all ${
-            isOutlineOpen ? "text-foreground font-bold" : "text-muted-foreground hover:text-foreground"
-          }`}
-          title="Outline"
-        >
-          <ListTree className="w-4 h-4" />
-          <span className="text-[10px] font-medium">Outline</span>
-        </button>
+        {showOutline && (
+          <button
+            onClick={onToggleOutline}
+            className={`flex flex-col items-center gap-0.5 p-1 active:scale-95 transition-all ${
+              isOutlineOpen ? "text-foreground font-bold" : "text-muted-foreground hover:text-foreground"
+            }`}
+            title="Outline"
+          >
+            <ListTree className="w-4 h-4" />
+            <span className="text-[10px] font-medium">Outline</span>
+          </button>
+        )}
 
         {/* Floating Center Action Button */}
         {isDirty ? (

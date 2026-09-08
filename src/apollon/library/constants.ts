@@ -96,15 +96,15 @@ export const CSS_VARIABLE_FALLBACKS: Readonly<Record<string, string>> =
     // so without a value here a swatched element resolves to "" and vanishes from
     // headless/compat export (issue #828). Light-theme primitives, like the rest of
     // this map; kept in sync with tokens.css by cssVariableContract.test.ts.
-    "--apollon-swatch-slate": "#64748b",
-    "--apollon-swatch-red": "#dc2626",
-    "--apollon-swatch-orange": "#ea580c",
-    "--apollon-swatch-amber": "#d97706",
-    "--apollon-swatch-green": "#16a34a",
-    "--apollon-swatch-teal": "#0d9488",
-    "--apollon-swatch-blue": "#2563eb",
-    "--apollon-swatch-violet": "#7c3aed",
-    "--apollon-swatch-pink": "#db2777",
+    "--apollon-swatch-slate": "#cbd5e1",
+    "--apollon-swatch-red": "#fca5a5",
+    "--apollon-swatch-orange": "#fdba74",
+    "--apollon-swatch-amber": "#fde047",
+    "--apollon-swatch-green": "#86efac",
+    "--apollon-swatch-teal": "#99f6e4",
+    "--apollon-swatch-blue": "#bfdbfe",
+    "--apollon-swatch-violet": "#ddd6fe",
+    "--apollon-swatch-pink": "#fbcfe8",
     "--apollon-background": "#ffffff",
     "--apollon-background-variant": "#f8f9fa",
     "--apollon-hover-neutral":

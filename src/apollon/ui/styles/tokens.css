@@ -151,15 +151,15 @@
   /* Color-picker swatch palette (light). A fixed, accessible set of element
      fill colors offered by the color-picker; the component reads these as
      tokens (NO inline hex array lives in the component). */
-  --primitive-swatch-slate: #64748b;
-  --primitive-swatch-red: #dc2626;
-  --primitive-swatch-orange: #ea580c;
-  --primitive-swatch-amber: #d97706;
-  --primitive-swatch-green: #16a34a;
-  --primitive-swatch-teal: #0d9488;
-  --primitive-swatch-blue: #2563eb;
-  --primitive-swatch-violet: #7c3aed;
-  --primitive-swatch-pink: #db2777;
+  --primitive-swatch-slate: #cbd5e1;
+  --primitive-swatch-red: #fca5a5;
+  --primitive-swatch-orange: #fdba74;
+  --primitive-swatch-amber: #fde047;
+  --primitive-swatch-green: #86efac;
+  --primitive-swatch-teal: #99f6e4;
+  --primitive-swatch-blue: #bfdbfe;
+  --primitive-swatch-violet: #ddd6fe;
+  --primitive-swatch-pink: #fbcfe8;
 
   /* Interactive-selection accent (light). The amber ring/fill used to mark
      interactive (quiz-pickable) elements; distinct from the brand primary so
@@ -677,17 +677,17 @@
   --primitive-toast-warning: #ffd47a;
   --primitive-toast-info: #5aa0e0;
 
-  /* Color-picker swatch palette (dark) — brightened a step so each swatch stays
-     legible against the dark popover surface. */
-  --primitive-swatch-slate: #94a3b8;
-  --primitive-swatch-red: #f87171;
-  --primitive-swatch-orange: #fb923c;
-  --primitive-swatch-amber: #fbbf24;
-  --primitive-swatch-green: #4ade80;
-  --primitive-swatch-teal: #2dd4bf;
-  --primitive-swatch-blue: #60a5fa;
-  --primitive-swatch-violet: #a78bfa;
-  --primitive-swatch-pink: #f472b6;
+  /* Color-picker swatch palette (dark) — refined, elegant muted pastels
+     that harmonize with dark diagrams without eye-scorching neon glare. */
+  --primitive-swatch-slate: #475569;
+  --primitive-swatch-red: #e28585;
+  --primitive-swatch-orange: #e49e75;
+  --primitive-swatch-amber: #ddb86d;
+  --primitive-swatch-green: #7bc49b;
+  --primitive-swatch-teal: #67bdb4;
+  --primitive-swatch-blue: #7aa8e0;
+  --primitive-swatch-violet: #a695e7;
+  --primitive-swatch-pink: #df8cb5;
 
   /* Interactive-selection accent (dark) — brightened a step so the amber ring
      reads against the dark canvas. */

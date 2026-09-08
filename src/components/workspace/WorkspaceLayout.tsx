@@ -34,6 +34,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { AppleSpinner } from "~/components/ui/AppleSpinner";
 
 interface WorkspaceLayoutProps {
   session: any;
@@ -128,6 +129,9 @@ export function WorkspaceLayout({
     }
     return initialMetadata?.folderColors || {};
   });
+
+  // Stable session tracking per tab to prevent component unmounting / flickering on ID promotion
+  const tabSessionsRef = useRef<Record<string, string>>({});
 
   const { data: serverMeta } = api.notes.getMetadata.useQuery(undefined, {
     enabled: !!session?.user,
@@ -628,10 +632,14 @@ export function WorkspaceLayout({
     saveMutation.mutate({ id: activeTabId, content: contentToSave });
   };
 
-  // 100% INSTANT OPTIMISTIC FILE CREATION (0ms response time!)
+  // 100% INSTANT OPTIMISTIC FILE CREATION (0ms response time, zero blink!)
   const handleCreateFile = async (parentId?: string) => {
     const tempId = `temp-${Date.now()}`;
     const defaultName = `Untitled-${Date.now().toString().slice(-4)}.md`;
+
+    // Establish stable session ID so React does not unmount editor upon ID promotion
+    const stableSession = `session-${Date.now()}`;
+    tabSessionsRef.current[tempId] = stableSession;
 
     const newItem: DriveItem = {
       id: tempId,
@@ -653,6 +661,21 @@ export function WorkspaceLayout({
         parentId,
       });
       if (realNote?.id) {
+        // Transfer stable session so key remains identical
+        tabSessionsRef.current[realNote.id] = stableSession;
+
+        // Synchronously populate query cache so useQuery({ id: realNote.id }) does NOT flip to loading!
+        utils.notes.get.setData({ id: realNote.id }, "");
+
+        // Transfer local draft if any exists
+        if (typeof window !== "undefined") {
+          const draft = localStorage.getItem(`netherite_draft_${tempId}`);
+          if (draft) {
+            localStorage.setItem(`netherite_draft_${realNote.id}`, draft);
+            localStorage.removeItem(`netherite_draft_${tempId}`);
+          }
+        }
+
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
           const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
@@ -678,6 +701,9 @@ export function WorkspaceLayout({
   const handleCreateDrawing = async (parentId?: string) => {
     const tempId = `temp-draw-${Date.now()}`;
     const defaultName = `Sketch-${Date.now().toString().slice(-4)}.excalidraw`;
+    const stableSession = `session-draw-${Date.now()}`;
+    tabSessionsRef.current[tempId] = stableSession;
+
     const defaultContent = JSON.stringify(
       {
         type: "excalidraw",
@@ -716,6 +742,17 @@ export function WorkspaceLayout({
         type: "drawing",
       });
       if (realNote?.id) {
+        tabSessionsRef.current[realNote.id] = stableSession;
+        utils.notes.get.setData({ id: realNote.id }, defaultContent);
+
+        if (typeof window !== "undefined") {
+          const draft = localStorage.getItem(`netherite_draft_${tempId}`);
+          if (draft) {
+            localStorage.setItem(`netherite_draft_${realNote.id}`, draft);
+            localStorage.removeItem(`netherite_draft_${tempId}`);
+          }
+        }
+
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
           const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
@@ -746,6 +783,9 @@ export function WorkspaceLayout({
   const handleCreateUml = async (parentId?: string) => {
     const tempId = `temp-uml-${Date.now()}`;
     const defaultName = `Diagram-${Date.now().toString().slice(-4)}.apollon`;
+    const stableSession = `session-uml-${Date.now()}`;
+    tabSessionsRef.current[tempId] = stableSession;
+
     const defaultContent = JSON.stringify(
       {
         version: "4.0.0",
@@ -782,6 +822,17 @@ export function WorkspaceLayout({
         type: "uml",
       });
       if (realNote?.id) {
+        tabSessionsRef.current[realNote.id] = stableSession;
+        utils.notes.get.setData({ id: realNote.id }, defaultContent);
+
+        if (typeof window !== "undefined") {
+          const draft = localStorage.getItem(`netherite_draft_${tempId}`);
+          if (draft) {
+            localStorage.setItem(`netherite_draft_${realNote.id}`, draft);
+            localStorage.removeItem(`netherite_draft_${tempId}`);
+          }
+        }
+
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
           const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
@@ -1041,6 +1092,10 @@ export function WorkspaceLayout({
     const item = localNotes.find((n) => n.id === fileId);
     if (item?.mimeType === "application/vnd.google-apps.folder") return;
 
+    if (!tabSessionsRef.current[fileId]) {
+      tabSessionsRef.current[fileId] = `session-${fileId}`;
+    }
+
     if (!openTabIds.includes(fileId)) {
       setOpenTabIds([...openTabIds, fileId]);
     }
@@ -1171,6 +1226,13 @@ export function WorkspaceLayout({
   const isSplitImage =
     currentSplitNote?.mimeType?.startsWith("image/") ||
     /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentSplitNote?.name || "");
+
+  const isCurrentDrawing =
+    currentNote?.name?.endsWith(".excalidraw") ||
+    currentNote?.mimeType === "application/vnd.excalidraw+json";
+  const isCurrentUml = isUmlFile(currentNote);
+  const isCurrentMarkdown =
+    Boolean(currentNote) && !isCurrentDrawing && !isCurrentUml && !isCurrentImage;
 
   const liveDiff = computeLineDiff(lastSavedContent, noteContent);
   const isDirty = !isCurrentImage && liveDiff.hasChanges;
@@ -1538,12 +1600,12 @@ export function WorkspaceLayout({
                     !activeTabId?.startsWith("temp-") &&
                     isEmptyApollon(noteContent) ? (
                       <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <AppleSpinner size="md" className="text-foreground" />
                         <span className="text-xs font-mono">Loading Apollon UML Model…</span>
                       </div>
                     ) : (
                       <UmlCanvas
-                        key={`${activeTabId}-${contentRevision}`}
+                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
                         initialContent={noteContent}
                         theme={isDark ? "dark" : "light"}
                         onChange={(updatedContent) => {
@@ -1561,12 +1623,12 @@ export function WorkspaceLayout({
                     !activeTabId?.startsWith("temp-") &&
                     isEmptyExcalidraw(noteContent) ? (
                       <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <AppleSpinner size="md" className="text-foreground" />
                         <span className="text-xs font-mono">Loading Canvas & Excalidraw scene…</span>
                       </div>
                     ) : (
                       <DrawingCanvas
-                        key={`${activeTabId}-${contentRevision}`}
+                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
                         initialContent={noteContent}
                         theme={isDark ? "dark" : "light"}
                         onChange={(updatedContent) => {
@@ -1580,11 +1642,15 @@ export function WorkspaceLayout({
                     )
                   ) : (
                     <Editor
-                      key={`${activeTabId}-${contentRevision}`}
+                      key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
                       initialContent={noteContent}
                       title={currentNote?.name || "Untitled.md"}
                       editorFont={editorFont}
-                      isLoading={isLoadingContent && !activeTabId?.startsWith("temp-")}
+                      isLoading={
+                        isLoadingContent &&
+                        !activeTabId?.startsWith("temp-") &&
+                        (!noteContent || noteContent === "")
+                      }
                       onTitleChange={(newTitle) => {
                         if (activeTabId) {
                           handleRenameFile(activeTabId, newTitle);
@@ -1630,7 +1696,7 @@ export function WorkspaceLayout({
                       !splitTabId?.startsWith("temp-") &&
                       isEmptyApollon(splitNoteContent) ? (
                         <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <AppleSpinner size="md" className="text-foreground" />
                           <span className="text-xs font-mono">Loading UML Diagram…</span>
                         </div>
                       ) : (
@@ -1652,7 +1718,7 @@ export function WorkspaceLayout({
                       !splitTabId?.startsWith("temp-") &&
                       isEmptyExcalidraw(splitNoteContent) ? (
                         <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <AppleSpinner size="md" className="text-foreground" />
                           <span className="text-xs font-mono">Loading Drawing…</span>
                         </div>
                       ) : (
@@ -1689,68 +1755,49 @@ export function WorkspaceLayout({
             )}
           </main>
 
-          {/* Right Outline Sidebar */}
-          <OutlineSidebar
-            isOpen={isOutlineOpen}
-            onClose={() => setIsOutlineOpen(false)}
-            headings={documentHeadings}
-            onSelectHeading={(text) => {
-              // Smooth scroll to heading element in editor
-              const editorElements = Array.from(
-                document.querySelectorAll("h1, h2, h3, h4, h5, h6, [data-type='heading']")
-              );
-              const match = editorElements.find((el) => {
-                const elText = (el.textContent || "").trim().toLowerCase();
-                const targetText = text.trim().toLowerCase();
-                return elText.includes(targetText) || targetText.includes(elText);
-              });
-              if (match) {
-                match.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }}
-          />
+          {/* Right Outline Sidebar - strictly only for Markdown (.md) documents */}
+          {isCurrentMarkdown && (
+            <OutlineSidebar
+              isOpen={isOutlineOpen}
+              onClose={() => setIsOutlineOpen(false)}
+              headings={documentHeadings}
+              onSelectHeading={(text) => {
+                // Smooth scroll to heading element in editor
+                const editorElements = Array.from(
+                  document.querySelectorAll("h1, h2, h3, h4, h5, h6, [data-type='heading']")
+                );
+                const match = editorElements.find((el) => {
+                  const elText = (el.textContent || "").trim().toLowerCase();
+                  const targetText = text.trim().toLowerCase();
+                  return elText.includes(targetText) || targetText.includes(elText);
+                });
+                if (match) {
+                  match.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+              }}
+            />
+          )}
         </div>
 
         {/* VS Code / Antigravity IDE Bottom Status Bar (Desktop only) */}
-        <footer className="hidden sm:flex h-6 border-t border-border bg-muted/40 px-3 items-center justify-between text-[11px] text-muted-foreground select-none font-mono shrink-0">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsDiffModalOpen(true)}
-              className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer"
-              title="View live diff & changelog"
-            >
-              <GitCompare className="w-3 h-3" />
-              <span>drive</span>
-              <span>•</span>
-              <span className={isDirty ? "text-amber-500 font-semibold" : "text-emerald-500"}>
-                {isDirty ? liveDiff.summary : "in sync"}
-              </span>
-            </button>
-
-            <span>•</span>
-
-            <span className="flex items-center gap-1">
-              {isSaving ? (
-                <span className="text-amber-500 animate-pulse">Saving to Drive...</span>
-              ) : isDirty ? (
-                <span className="text-amber-500">Local diffs pending</span>
-              ) : (
-                <span className="text-emerald-500 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Synced
-                </span>
-              )}
+        <footer className="h-6 border-t border-border/60 bg-muted/40 px-3 flex items-center justify-between text-[11px] font-mono text-muted-foreground select-none shrink-0 hidden sm:flex">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Google Drive</span>
             </span>
-
-            <span>•</span>
-
-            <span className="hidden sm:inline opacity-60">0 ⊗ 0 ⚠</span>
+            {isDirty && (
+              <span className="text-amber-500 font-medium flex items-center gap-1">
+                <span>●</span> Unsaved changes
+              </span>
+            )}
+            {isSaving && <span className="text-primary animate-pulse">Saving…</span>}
           </div>
-
-          <div className="flex items-center gap-3">
-            <span>Spaces: 2</span>
+          <div className="flex items-center gap-4">
+            <span>{wordCount} words</span>
+            <span>{charCount} chars</span>
+            <span className="capitalize">{editorFont}</span>
             <span>UTF-8</span>
-            <span>LF</span>
-            <span className="font-sans">Markdown + KaTeX</span>
           </div>
         </footer>
 
@@ -1759,6 +1806,7 @@ export function WorkspaceLayout({
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           onCreateNote={() => handleCreateFile()}
           onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
+          showOutline={isCurrentMarkdown}
           onToggleSplitView={() => {
             setIsSplitView(!isSplitView);
             if (!splitTabId && localNotes.length > 1) {

@@ -10,6 +10,7 @@ import {
 } from "@tumaet/apollon";
 import { ExternalLink, Download, FileJson, Sparkles } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
+import { UmlExportModal } from "./UmlExportModal";
 
 interface UmlEditorProps {
   initialContent?: string;
@@ -42,6 +43,7 @@ export default function UmlEditor({
   const activeTheme = propTheme ?? (isDark ? "dark" : "light");
 
   const [editorInstance, setEditorInstance] = useState<ApollonEditor | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
 
@@ -88,8 +90,8 @@ export default function UmlEditor({
         initialSignatureRef.current = getModelSignature(validated);
         return validated;
       }
-    } catch (err) {
-      console.warn("Could not parse UML diagram JSON content:", err);
+    } catch {
+      // Fall through to default model
     }
 
     const fallback = createDefaultModel();
@@ -97,7 +99,7 @@ export default function UmlEditor({
     return fallback;
   }, [initialContent]);
 
-  // Handle Ctrl+S / Cmd+S save shortcut
+  // Handle Ctrl+S / Cmd+S manual save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -116,74 +118,54 @@ export default function UmlEditor({
   }, []);
 
   // Theme configuration tailored to Netherite's zinc / dark mode aesthetic
+  // with curated pastel palettes for both light and dark mode
   const themeConfig = useMemo(() => {
-    if (activeTheme === "dark") {
-      return createApollonTheme({
-        primary: "#6366f1", // Indigo accent
-        primaryForeground: "#ffffff",
-        background: "#09090b", // Netherite dark background
-        backgroundVariant: "#121215", // Netherite card/sidebar background
-        surface: "#18181b", // Raised popover surface
-        surfaceSunken: "#0e0e11",
-        foreground: "#fafafa", // Netherite dark foreground
-        secondary: "#27272a",
-        border: "#27272a", // Netherite border
-        borderSubtle: "#1f1f23",
-        grid: "rgba(255, 255, 255, 0.04)",
-        radius: "0.5rem",
-      });
-    } else {
-      return createApollonTheme({
-        primary: "#4f46e5",
-        primaryForeground: "#ffffff",
-        background: "#fcfcfc", // Netherite light background
-        backgroundVariant: "#f4f4f5",
-        surface: "#ffffff",
-        surfaceSunken: "#f4f4f5",
-        foreground: "#09090b", // Netherite light foreground
-        secondary: "#e4e4e7",
-        border: "#e4e4e7", // Netherite border
-        borderSubtle: "#ebebef",
-        grid: "rgba(0, 0, 0, 0.04)",
-        radius: "0.5rem",
-      });
-    }
+    const isDark = activeTheme === "dark";
+
+    const baseTheme = isDark
+      ? createApollonTheme({
+          primary: "#6366f1", // Indigo accent
+          primaryForeground: "#ffffff",
+          background: "#09090b", // Netherite dark background
+          backgroundVariant: "#121215", // Netherite card/sidebar background
+          surface: "#18181b", // Raised popover surface
+          surfaceSunken: "#0e0e11",
+          foreground: "#fafafa", // Netherite dark foreground
+          secondary: "#27272a",
+          border: "#27272a", // Netherite border
+          borderSubtle: "#1f1f23",
+          grid: "rgba(255, 255, 255, 0.04)",
+          radius: "0.5rem",
+        })
+      : createApollonTheme({
+          primary: "#4f46e5",
+          primaryForeground: "#ffffff",
+          background: "#fcfcfc", // Netherite light background
+          backgroundVariant: "#f4f4f5",
+          surface: "#ffffff",
+          surfaceSunken: "#f4f4f5",
+          foreground: "#09090b", // Netherite light foreground
+          secondary: "#e4e4e7",
+          border: "#e4e4e7", // Netherite border
+          borderSubtle: "#ebebef",
+          grid: "rgba(0, 0, 0, 0.04)",
+          radius: "0.5rem",
+        });
+
+    // Inject pastel color swatches that eliminate harsh neon glare
+    return {
+      ...baseTheme,
+      "--apollon-swatch-slate": isDark ? "#475569" : "#cbd5e1",
+      "--apollon-swatch-red": isDark ? "#e28585" : "#fca5a5",
+      "--apollon-swatch-orange": isDark ? "#e49e75" : "#fdba74",
+      "--apollon-swatch-amber": isDark ? "#ddb86d" : "#fde047",
+      "--apollon-swatch-green": isDark ? "#7bc49b" : "#86efac",
+      "--apollon-swatch-teal": isDark ? "#67bdb4" : "#99f6e4",
+      "--apollon-swatch-blue": isDark ? "#7aa8e0" : "#bfdbfe",
+      "--apollon-swatch-violet": isDark ? "#a695e7" : "#ddd6fe",
+      "--apollon-swatch-pink": isDark ? "#df8cb5" : "#fbcfe8",
+    } as Record<string, string>;
   }, [activeTheme]);
-
-  const handleExportSvg = useCallback(async () => {
-    if (!editorInstance) return;
-    try {
-      const res = await editorInstance.exportAsSVG();
-      if (res && res.svg) {
-        const blob = new Blob([res.svg], { type: "image/svg+xml;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${parsedModel.title || "diagram"}.svg`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      console.error("Failed to export SVG:", err);
-    }
-  }, [editorInstance, parsedModel.title]);
-
-  const handleExportJson = useCallback(() => {
-    if (!editorInstance) return;
-    try {
-      const model = editorInstance.model;
-      const json = JSON.stringify(model, null, 2);
-      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${parsedModel.title || "diagram"}.apollon`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Failed to export JSON:", err);
-    }
-  }, [editorInstance, parsedModel.title]);
 
   return (
     <div
@@ -235,25 +217,17 @@ export default function UmlEditor({
       {/* Floating Netherite Top-Right Quick Actions */}
       <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 pointer-events-auto">
         <button
-          onClick={handleExportSvg}
-          className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono font-medium rounded-lg backdrop-blur-md bg-card/85 hover:bg-accent/80 border border-border/60 text-muted-foreground hover:text-foreground shadow-sm transition-all cursor-pointer"
-          title="Export Diagram as Vector SVG"
+          onClick={() => setIsExportModalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-xl backdrop-blur-md bg-card/85 hover:bg-accent/80 border border-border/60 text-muted-foreground hover:text-foreground shadow-sm transition-all cursor-pointer"
+          title="Export Diagram (PNG, JPEG, PDF, SVG, JSON)"
         >
-          <Download className="w-3 h-3" />
-          <span className="hidden sm:inline">SVG</span>
-        </button>
-        <button
-          onClick={handleExportJson}
-          className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono font-medium rounded-lg backdrop-blur-md bg-card/85 hover:bg-accent/80 border border-border/60 text-muted-foreground hover:text-foreground shadow-sm transition-all cursor-pointer"
-          title="Export Raw .apollon JSON file"
-        >
-          <FileJson className="w-3 h-3" />
-          <span className="hidden sm:inline">JSON</span>
+          <Download className="w-3.5 h-3.5" />
+          <span>Export...</span>
         </button>
       </div>
 
-      {/* Floating Bottom-Left Official Attribution Pill in Netherite's Signature Aesthetic */}
-      <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 pointer-events-auto">
+      {/* Floating Attribution Pill Placed Directly Beside the Minimap Toggle (Bottom-Right) */}
+      <div className="absolute bottom-3 right-16 z-20 flex items-center gap-2 pointer-events-auto">
         <a
           href="https://github.com/ls1intum/Apollon"
           target="_blank"
@@ -266,6 +240,15 @@ export default function UmlEditor({
           <ExternalLink className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 transition-opacity" />
         </a>
       </div>
+
+      {/* Full Diagram Export Dialog */}
+      <UmlExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        editorInstance={editorInstance}
+        diagramTitle={parsedModel.title || "diagram"}
+        isDark={activeTheme === "dark"}
+      />
     </div>
   );
 }

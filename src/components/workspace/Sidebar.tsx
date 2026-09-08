@@ -28,6 +28,7 @@ import { api } from "~/trpc/react";
 import { signOut } from "next-auth/react";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 import { WindowControls } from "./WindowControls";
+import { AppleSpinner } from "~/components/ui/AppleSpinner";
 
 function InlineRenameInput({
   initialValue,
@@ -813,7 +814,7 @@ export function Sidebar({
           <span className="font-semibold text-xs sm:text-sm text-foreground truncate tracking-tight">
             {userSession?.user?.name ? `${userSession.user.name.split(" ")[0]}'s Notes` : "Netherite"}
           </span>
-          {isMutating && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground ml-auto" />}
+          {isMutating && <AppleSpinner size="xs" className="text-muted-foreground ml-auto" />}
         </div>
       </div>
 

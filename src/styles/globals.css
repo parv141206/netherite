@@ -589,3 +589,21 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 .Toastify__close-button {
   display: none !important;
 }
+
+@keyframes appleSpinnerFade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes appleShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

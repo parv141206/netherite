@@ -32,12 +32,14 @@ import {
 import { useTheme } from "~/components/ThemeProvider";
 import katex from "katex";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
+import { AppleFullPageLoader } from "~/components/ui/AppleFullPageLoader";
 
 export function LandingPage({ session }: { session?: any } = {}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"math" | "whiteboard" | "uml" | "code">("math");
   const [copiedCmd, setCopiedCmd] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -76,6 +78,12 @@ export function LandingPage({ session }: { session?: any } = {}) {
 
   return (
     <div className="min-h-screen h-screen flex flex-col justify-between bg-background text-foreground transition-colors duration-300 selection:bg-foreground selection:text-background relative overflow-x-hidden overflow-y-auto">
+      {isNavigating && (
+        <AppleFullPageLoader
+          message="Opening sovereign workspace..."
+          subMessage="Fetching your notes and whiteboards from Google Drive"
+        />
+      )}
       {/* Atmospheric Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-amber-500/10 via-rose-500/5 to-transparent blur-3xl pointer-events-none -z-10 dark:from-amber-500/5 dark:via-purple-500/5" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-t from-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
@@ -127,6 +135,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
             {session?.user ? (
               <Link
                 href="/editor"
+                onClick={() => setIsNavigating(true)}
                 className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -134,7 +143,10 @@ export function LandingPage({ session }: { session?: any } = {}) {
               </Link>
             ) : (
               <button
-                onClick={() => signIn("google", { callbackUrl: "/editor" })}
+                onClick={() => {
+                  setIsNavigating(true);
+                  signIn("google", { callbackUrl: "/editor" });
+                }}
                 className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5" />
@@ -170,6 +182,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
           {session?.user ? (
             <Link
               href="/editor"
+              onClick={() => setIsNavigating(true)}
               className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3 bg-foreground text-background font-semibold text-sm rounded-xl hover:opacity-90 transition-all shadow-xl hover:shadow-2xl active:scale-95 cursor-pointer group"
             >
               <span>Launch Studio Workspace</span>
@@ -177,7 +190,10 @@ export function LandingPage({ session }: { session?: any } = {}) {
             </Link>
           ) : (
             <button
-              onClick={() => signIn("google", { callbackUrl: "/editor" })}
+              onClick={() => {
+                setIsNavigating(true);
+                signIn("google", { callbackUrl: "/editor" });
+              }}
               className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3 bg-foreground text-background font-semibold text-sm rounded-xl hover:opacity-90 transition-all shadow-xl hover:shadow-2xl active:scale-95 cursor-pointer group"
             >
               <span>Open Studio in Google Drive</span>

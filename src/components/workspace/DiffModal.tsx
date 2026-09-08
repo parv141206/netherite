@@ -57,67 +57,77 @@ export function DiffModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
-        {/* Modal Header */}
-        <div className="px-5 py-3 border-b border-border flex items-center justify-between bg-muted/40 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-accent text-foreground">
+      <div className="bg-card border border-border/80 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+        {/* Modal Header Row 1: Title & Close */}
+        <div className="px-6 py-3.5 border-b border-border/50 flex items-center justify-between bg-muted/20 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-xl bg-accent text-foreground shrink-0">
               <GitCompare className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-foreground">
-                  Changes & Diff: {noteTitle.replace(/\.md$/i, "")}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-sm text-foreground truncate">
+                  Changes & Diff: {noteTitle.replace(/\.(md|excalidraw|apollon|uml)$/i, "")}
                 </span>
                 {diff.hasChanges ? (
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20">
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20 shrink-0">
                     {diff.summary}
                   </span>
                 ) : (
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 flex items-center gap-1">
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 flex items-center gap-1 shrink-0">
                     <CheckCircle2 className="w-3 h-3" /> Up to date
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                 In-browser changelog diff against latest Google Drive version
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* View Switcher */}
-            <div className="flex items-center p-0.5 bg-muted rounded-lg text-xs">
-              <button
-                onClick={() => setActiveView("diff")}
-                className={`px-2.5 py-1 rounded-md transition-colors flex items-center gap-1.5 ${
-                  activeView === "diff"
-                    ? "bg-background text-foreground font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <GitCompare className="w-3.5 h-3.5" /> Live Diff
-              </button>
-              <button
-                onClick={() => setActiveView("history")}
-                className={`px-2.5 py-1 rounded-md transition-colors flex items-center gap-1.5 ${
-                  activeView === "history"
-                    ? "bg-background text-foreground font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <History className="w-3.5 h-3.5" /> Changelog ({changelog.length})
-              </button>
-            </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-full bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-            {/* Discard & Pull Button */}
+        {/* Modal Header Row 2: Sub-toolbar Controls */}
+        <div className="px-6 py-2.5 border-b border-border/60 flex items-center justify-between bg-muted/40 shrink-0 flex-wrap gap-2">
+          {/* View Switcher Segmented Control */}
+          <div className="flex items-center p-1 bg-background/80 border border-border/60 rounded-xl text-xs shadow-2xs">
+            <button
+              onClick={() => setActiveView("diff")}
+              className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeView === "diff"
+                  ? "bg-card text-foreground font-semibold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <GitCompare className="w-3.5 h-3.5" /> Live Diff
+            </button>
+            <button
+              onClick={() => setActiveView("history")}
+              className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeView === "history"
+                  ? "bg-card text-foreground font-semibold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <History className="w-3.5 h-3.5" /> Changelog ({changelog.length})
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
             {diff.hasChanges && onDiscardAndSync && (
               <button
                 onClick={() => {
                   onDiscardAndSync();
                 }}
                 disabled={isSaving || isSyncing}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-all cursor-pointer disabled:opacity-50"
                 title="Discard your changes and pull latest from Drive"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
@@ -125,27 +135,19 @@ export function DiffModal({
               </button>
             )}
 
-            {/* Save Button */}
             <button
               onClick={() => {
                 onSaveToDrive();
               }}
               disabled={isSaving || !diff.hasChanges}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
                 diff.hasChanges
-                  ? "bg-foreground text-background hover:opacity-90 shadow-sm"
+                  ? "bg-foreground text-background hover:opacity-90 shadow-sm active:scale-95"
                   : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
               }`}
             >
               <Save className="w-3.5 h-3.5" />
-              {isSaving ? "Saving to Drive..." : "Save to Drive"}
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors ml-1"
-            >
-              <X className="w-4 h-4" />
+              {isSaving ? "Saving..." : "Save to Drive"}
             </button>
           </div>
         </div>

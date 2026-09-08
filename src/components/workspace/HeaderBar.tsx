@@ -311,18 +311,23 @@ export function HeaderBar({
           </button>
         )}
 
-        {/* Outline Toggle */}
-        {cleanTitle && onToggleOutline && (
-          <button
-            onClick={onToggleOutline}
-            className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors ${
-              isOutlineOpen ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
-            }`}
-            title="Toggle Document Outline"
-          >
-            <ListTree className="w-4 h-4" />
-          </button>
-        )}
+        {/* Outline Toggle - strictly available for Markdown (.md) documents */}
+        {cleanTitle &&
+          !noteTitle.endsWith(".excalidraw") &&
+          !noteTitle.endsWith(".apollon") &&
+          !noteTitle.endsWith(".uml") &&
+          !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(noteTitle) &&
+          onToggleOutline && (
+            <button
+              onClick={onToggleOutline}
+              className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors ${
+                isOutlineOpen ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Toggle Document Outline"
+            >
+              <ListTree className="w-4 h-4" />
+            </button>
+          )}
 
         {/* Notion-Style More Options (...) Button */}
         <button
