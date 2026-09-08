@@ -1,7 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, HardDrive, Moon, Sun, Monitor, Type, Folder, Check } from "lucide-react";
+import {
+  X,
+  HardDrive,
+  Moon,
+  Sun,
+  Monitor,
+  Type,
+  Folder,
+  Check,
+  Bot,
+  Copy,
+  Terminal,
+} from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 
 interface SettingsModalProps {
@@ -14,6 +26,7 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
   const { theme, setTheme } = useTheme();
   const [folderPath, setFolderPath] = useState("Netherite");
   const [fontFamily, setFontFamily] = useState("sans");
+  const [copiedMcp, setCopiedMcp] = useState<"claude" | "cli" | null>(null);
 
   if (!isOpen) return null;
 
@@ -91,6 +104,87 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* AI & MCP Server Section */}
+          <div className="space-y-3 p-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                    <span>Model Context Protocol (MCP)</span>
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Connect AI assistants (Claude Desktop, Cursor, Antigravity) to your Drive notes
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Enables agents to autonomously author Markdown with KaTeX math, Apollon 13 UML models, Excalidraw whiteboards, and Mermaid diagrams directly into your Google Drive.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => {
+                  const cwd = typeof window !== "undefined" ? window.location.origin : "";
+                  const config = {
+                    mcpServers: {
+                      netherite: {
+                        command: "bun",
+                        args: ["run", "src/mcp/cli.ts"],
+                        env: {
+                          NETHERITE_GOOGLE_REFRESH_TOKEN: userSession?.refreshToken || "",
+                        },
+                      },
+                    },
+                  };
+                  navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+                  setCopiedMcp("claude");
+                  setTimeout(() => setCopiedMcp(null), 2500);
+                }}
+                className="flex items-center justify-center gap-2 p-2 rounded-lg border border-border/70 hover:border-foreground/30 bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer"
+              >
+                {copiedMcp === "claude" ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-emerald-500 font-semibold text-[11px]">Copied Config!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[11px]">Claude Desktop JSON</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  const cmd = "bun run mcp";
+                  navigator.clipboard.writeText(cmd);
+                  setCopiedMcp("cli");
+                  setTimeout(() => setCopiedMcp(null), 2500);
+                }}
+                className="flex items-center justify-center gap-2 p-2 rounded-lg border border-border/70 hover:border-foreground/30 bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer"
+              >
+                {copiedMcp === "cli" ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-emerald-500 font-semibold text-[11px]">Copied Command!</span>
+                  </>
+                ) : (
+                  <>
+                    <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[11px]">Copy CLI Command</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 

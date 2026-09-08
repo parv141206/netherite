@@ -74,6 +74,8 @@ async function refreshGoogleAccessToken(token: any) {
   }
 }
 
+import { saveLocalCredentials } from "~/mcp/auth";
+
 export const authConfig = {
   trustHost: true,
   secret: authSecret,
@@ -101,6 +103,12 @@ export const authConfig = {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at ?? Math.floor(Date.now() / 1000 + 3600);
+        if (token.refreshToken) {
+          saveLocalCredentials({
+            refreshToken: token.refreshToken as string,
+            accessToken: token.accessToken as string,
+          });
+        }
         return token;
       }
 
@@ -111,7 +119,14 @@ export const authConfig = {
 
       // Access token has expired or is nearing expiration, refresh it
       if (token.refreshToken) {
-        return await refreshGoogleAccessToken(token);
+        const refreshed = await refreshGoogleAccessToken(token);
+        if (refreshed?.refreshToken) {
+          saveLocalCredentials({
+            refreshToken: refreshed.refreshToken as string,
+            accessToken: refreshed.accessToken as string,
+          });
+        }
+        return refreshed;
       }
 
       return token;
