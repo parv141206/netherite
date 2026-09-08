@@ -152,18 +152,18 @@ export default function UmlEditor({
           radius: "0.5rem",
         });
 
-    // Inject pastel color swatches that eliminate harsh neon glare
+    // Inject refined color swatches: soft pastels for light mode, deep rich tones for dark mode
     return {
       ...baseTheme,
-      "--apollon-swatch-slate": isDark ? "#475569" : "#cbd5e1",
-      "--apollon-swatch-red": isDark ? "#e28585" : "#fca5a5",
-      "--apollon-swatch-orange": isDark ? "#e49e75" : "#fdba74",
-      "--apollon-swatch-amber": isDark ? "#ddb86d" : "#fde047",
-      "--apollon-swatch-green": isDark ? "#7bc49b" : "#86efac",
-      "--apollon-swatch-teal": isDark ? "#67bdb4" : "#99f6e4",
-      "--apollon-swatch-blue": isDark ? "#7aa8e0" : "#bfdbfe",
-      "--apollon-swatch-violet": isDark ? "#a695e7" : "#ddd6fe",
-      "--apollon-swatch-pink": isDark ? "#df8cb5" : "#fbcfe8",
+      "--apollon-swatch-slate": isDark ? "#1e293b" : "#cbd5e1",
+      "--apollon-swatch-red": isDark ? "#7f1d1d" : "#fca5a5",
+      "--apollon-swatch-orange": isDark ? "#7c2d12" : "#fdba74",
+      "--apollon-swatch-amber": isDark ? "#713f12" : "#fde047",
+      "--apollon-swatch-green": isDark ? "#14532d" : "#86efac",
+      "--apollon-swatch-teal": isDark ? "#134e4a" : "#99f6e4",
+      "--apollon-swatch-blue": isDark ? "#1e3a8a" : "#bfdbfe",
+      "--apollon-swatch-violet": isDark ? "#4c1d95" : "#ddd6fe",
+      "--apollon-swatch-pink": isDark ? "#701a75" : "#fbcfe8",
     } as Record<string, string>;
   }, [activeTheme]);
 

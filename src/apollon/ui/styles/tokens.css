@@ -677,17 +677,17 @@
   --primitive-toast-warning: #ffd47a;
   --primitive-toast-info: #5aa0e0;
 
-  /* Color-picker swatch palette (dark) — refined, elegant muted pastels
-     that harmonize with dark diagrams without eye-scorching neon glare. */
-  --primitive-swatch-slate: #475569;
-  --primitive-swatch-red: #e28585;
-  --primitive-swatch-orange: #e49e75;
-  --primitive-swatch-amber: #ddb86d;
-  --primitive-swatch-green: #7bc49b;
-  --primitive-swatch-teal: #67bdb4;
-  --primitive-swatch-blue: #7aa8e0;
-  --primitive-swatch-violet: #a695e7;
-  --primitive-swatch-pink: #df8cb5;
+  /* Color-picker swatch palette (dark) — deep, rich tones that blend
+     seamlessly into dark diagrams while giving white text high contrast. */
+  --primitive-swatch-slate: #1e293b;
+  --primitive-swatch-red: #7f1d1d;
+  --primitive-swatch-orange: #7c2d12;
+  --primitive-swatch-amber: #713f12;
+  --primitive-swatch-green: #14532d;
+  --primitive-swatch-teal: #134e4a;
+  --primitive-swatch-blue: #1e3a8a;
+  --primitive-swatch-violet: #4c1d95;
+  --primitive-swatch-pink: #701a75;
 
   /* Interactive-selection accent (dark) — brightened a step so the amber ring
      reads against the dark canvas. */
