@@ -17,6 +17,9 @@ import { CharacterCount } from "@tiptap/extension-character-count";
 import { MathInline, MathBlock } from "./MathExtension";
 import { ImageUploadExtension } from "./ImageUploadExtension";
 
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { CodeBlockView } from "./CodeBlockView";
+
 const lowlight = createLowlight(all);
 
 export function buildExtensions(uploadFn?: (file: File) => void) {
@@ -26,6 +29,9 @@ export function buildExtensions(uploadFn?: (file: File) => void) {
       codeBlock: false,
     }),
     CodeBlockLowlight.extend({
+      addNodeView() {
+        return ReactNodeViewRenderer(CodeBlockView);
+      },
       addKeyboardShortcuts() {
         return {
           ...this.parent?.(),

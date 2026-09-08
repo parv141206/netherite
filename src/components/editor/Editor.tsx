@@ -30,6 +30,7 @@ import {
   Redo,
   Highlighter,
   Minus,
+  Workflow,
 } from "lucide-react";
 
 interface Props {
@@ -629,6 +630,26 @@ export function Editor({
       sub: "Syntax-highlighted code snippet (e.g. ```java)",
       icon: Code,
       action: () => editor.chain().focus().toggleCodeBlock().run(),
+    },
+    {
+      title: "Mermaid Diagram",
+      sub: "Interactive diagram (flowchart, sequence, class, state)",
+      icon: Workflow,
+      action: () =>
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "codeBlock",
+            attrs: { language: "mermaid" },
+            content: [
+              {
+                type: "text",
+                text: "graph TD\n    Start([Start]) --> Process[Process Data]\n    Process --> Done([Done])",
+              },
+            ],
+          })
+          .run(),
     },
     {
       title: "Insert Table",
