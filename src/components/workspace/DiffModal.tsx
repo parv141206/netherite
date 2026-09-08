@@ -60,19 +60,41 @@ export function DiffModal({
   const [expandedBlocks, setExpandedBlocks] = useState<Set<string>>(new Set());
   const [isSemanticExpanded, setIsSemanticExpanded] = useState<boolean>(true);
 
-  if (!isOpen) return null;
+  const diff = useMemo(() => {
+    if (!isOpen) {
+      return {
+        hasChanges: false,
+        additions: 0,
+        deletions: 0,
+        totalChanges: 0,
+        summary: "0 changes",
+        lines: [],
+      };
+    }
+    return computeLineDiff(baselineContent, currentContent);
+  }, [isOpen, baselineContent, currentContent]);
 
-  const diff = computeLineDiff(baselineContent, currentContent);
-  const semanticChanges = computeApollonSemanticDiff(baselineContent, currentContent);
-  const changelog = loadChangelog(noteId);
+  const semanticChanges = useMemo(() => {
+    if (!isOpen) return [];
+    return computeApollonSemanticDiff(baselineContent, currentContent);
+  }, [isOpen, baselineContent, currentContent]);
 
-  const isUml =
-    noteTitle.endsWith(".apollon") ||
-    noteTitle.endsWith(".uml") ||
-    semanticChanges.length > 0;
+  const changelog = useMemo(() => {
+    if (!isOpen) return [];
+    return loadChangelog(noteId);
+  }, [isOpen, noteId]);
+
+  const isUml = useMemo(() => {
+    return (
+      noteTitle.endsWith(".apollon") ||
+      noteTitle.endsWith(".uml") ||
+      semanticChanges.length > 0
+    );
+  }, [noteTitle, semanticChanges.length]);
 
   // Group unchanged lines for compact view with fold bars
   const displayItems = useMemo<DiffDisplayItem[]>(() => {
+    if (!isOpen) return [];
     if (diffDisplayMode === "full") {
       return diff.lines.map((line, index) => ({ type: "line", line, index }));
     }
@@ -144,7 +166,7 @@ export function DiffModal({
     }
     flushUnchanged();
     return items;
-  }, [diff.lines, diffDisplayMode, expandedBlocks]);
+  }, [isOpen, diff.lines, diffDisplayMode, expandedBlocks]);
 
   const toggleBlockExpand = (key: string) => {
     setExpandedBlocks((prev) => {
@@ -157,6 +179,8 @@ export function DiffModal({
       return next;
     });
   };
+
+  if (!isOpen) return null;
 
   return (
     <div
