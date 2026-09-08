@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
   Palette,
   Network,
+  Workflow,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
@@ -171,6 +172,7 @@ interface SidebarProps {
   onCreateNote: (parentId?: string) => void;
   onCreateDrawing?: (parentId?: string) => void;
   onCreateUml?: (parentId?: string) => void;
+  onCreateMermaid?: (parentId?: string) => void;
   onCreateFolder: (parentId?: string) => void;
   onRenameNote: (id: string, newName: string) => void;
   onDeleteNote: (id: string) => void;
@@ -197,6 +199,7 @@ export function Sidebar({
   onCreateNote,
   onCreateDrawing,
   onCreateUml,
+  onCreateMermaid,
   onCreateFolder,
   onRenameNote,
   onDeleteNote,
@@ -360,7 +363,7 @@ export function Sidebar({
 
   const startInlineEditing = (id: string, name: string) => {
     if (setEditingId) setEditingId(id);
-    setEditingName(name.replace(/\.(md|excalidraw|apollon|uml)$/i, ""));
+    setEditingName(name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, ""));
     setContextMenu(null);
   };
 
@@ -509,6 +512,9 @@ export function Sidebar({
     if (name.endsWith(".apollon") || name.endsWith(".uml") || mimeType === "application/vnd.apollon+json") {
       return <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />;
     }
+    if (name.endsWith(".mmd") || name.endsWith(".mermaid") || mimeType === "text/vnd.mermaid") {
+      return <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />;
+    }
     return <FileText className="w-3.5 h-3.5 text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-colors" />;
   };
 
@@ -611,12 +617,13 @@ export function Sidebar({
       const isActive = activeNoteId === item.id;
       const isDrawing = item.name.endsWith(".excalidraw");
       const isUml = item.name.endsWith(".apollon") || item.name.endsWith(".uml");
+      const isMermaid = item.name.endsWith(".mmd") || item.name.endsWith(".mermaid");
       const isImage =
         item.mimeType?.startsWith("image/") ||
         /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(item.name);
       const displayName = isImage
         ? item.name
-        : item.name.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
+        : item.name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
 
       return (
         <div
@@ -642,11 +649,13 @@ export function Sidebar({
                   if (isImage) {
                     onRenameNote(item.id, newName);
                   } else {
-                    const clean = newName.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
+                    const clean = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
                     const finalName = isDrawing
                       ? `${clean}.excalidraw`
                       : isUml
                       ? `${clean}.apollon`
+                      : isMermaid
+                      ? `${clean}.mmd`
                       : `${clean}.md`;
                     onRenameNote(item.id, finalName);
                   }
@@ -774,6 +783,15 @@ export function Sidebar({
               title="New UML Diagram (Apollon)"
             >
               <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+            </button>
+          )}
+          {onCreateMermaid && (
+            <button
+              onClick={() => onCreateMermaid()}
+              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              title="New Mermaid Diagram"
+            >
+              <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
             </button>
           )}
           <button
@@ -950,6 +968,17 @@ export function Sidebar({
                   <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" /> New UML Diagram
                 </button>
               )}
+              {onCreateMermaid && (
+                <button
+                  onClick={() => {
+                    onCreateMermaid();
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                >
+                  <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> New Mermaid Diagram
+                </button>
+              )}
               <button
                 onClick={() => {
                   onCreateFolder();
@@ -1123,6 +1152,17 @@ export function Sidebar({
                   className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
                 >
                   <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" /> New UML in Folder
+                </button>
+              )}
+              {onCreateMermaid && (
+                <button
+                  onClick={() => {
+                    onCreateMermaid(contextMenu.itemId);
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                >
+                  <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> New Mermaid in Folder
                 </button>
               )}
               <button

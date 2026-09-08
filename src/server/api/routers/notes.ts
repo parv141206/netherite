@@ -39,7 +39,7 @@ export const notesRouter = createTRPCRouter({
         name: z.string(),
         content: z.string().optional(),
         parentId: z.string().optional(),
-        type: z.enum(["note", "drawing", "uml"]).optional(),
+        type: z.enum(["note", "drawing", "uml", "mermaid"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

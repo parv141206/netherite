@@ -19,6 +19,7 @@ import {
   SunMedium,
   Palette,
   Network,
+  Workflow,
   RefreshCw,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
@@ -192,7 +193,8 @@ export function HeaderBar({
 
   const isDrawing = noteTitle.endsWith(".excalidraw");
   const isUml = noteTitle.endsWith(".apollon") || noteTitle.endsWith(".uml");
-  const cleanTitle = noteTitle.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
+  const isMermaid = noteTitle.endsWith(".mmd") || noteTitle.endsWith(".mermaid");
+  const cleanTitle = noteTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
 
   return (
     <header
@@ -226,6 +228,8 @@ export function HeaderBar({
                 <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
               ) : isUml ? (
                 <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
+              ) : isMermaid ? (
+                <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
               ) : (
                 <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
               )}
@@ -316,6 +320,8 @@ export function HeaderBar({
           !noteTitle.endsWith(".excalidraw") &&
           !noteTitle.endsWith(".apollon") &&
           !noteTitle.endsWith(".uml") &&
+          !noteTitle.endsWith(".mmd") &&
+          !noteTitle.endsWith(".mermaid") &&
           !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(noteTitle) &&
           onToggleOutline && (
             <button

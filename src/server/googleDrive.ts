@@ -263,7 +263,7 @@ export async function listNotes(session: any) {
 
     // 2. Query files inside Drive
     const filesRes = await drive.files.list({
-      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/vnd.apollon+json' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.apollon' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
+      q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/vnd.apollon+json' or mimeType='text/vnd.mermaid' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.apollon' or name contains '.mmd' or name contains '.mermaid' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
       fields: "files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
       orderBy: "folder, modifiedTime desc",
       pageSize: 1000,
@@ -344,11 +344,20 @@ export async function listNotes(session: any) {
           f.mimeType === "application/vnd.apollon+json" ||
           f.properties?.netheriteType === "uml");
 
+      const isMermaid =
+        !isImage &&
+        !isDrawing &&
+        !isUml &&
+        (f.name.endsWith(".mmd") ||
+          f.name.endsWith(".mermaid") ||
+          f.mimeType === "text/vnd.mermaid" ||
+          f.properties?.netheriteType === "mermaid");
+
       let displayName = f.name;
 
       if (isImage) {
         displayName = f.name;
-      } else if (!isDrawing && !isUml && !displayName.endsWith(".md")) {
+      } else if (!isDrawing && !isUml && !isMermaid && !displayName.endsWith(".md")) {
         const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
         const normalizedName = `${cleanBase}.md`;
         try {
@@ -524,13 +533,14 @@ export async function createNote(
   name: string,
   content: string = "",
   parentId?: string,
-  type: "note" | "drawing" | "uml" = "note"
+  type: "note" | "drawing" | "uml" | "mermaid" = "note"
 ) {
   const drive = await getDriveClient(session);
   const folderId = parentId || (await ensureNetheriteFolder(session));
 
   const isDrawing = type === "drawing" || name.endsWith(".excalidraw");
   const isUml = type === "uml" || name.endsWith(".apollon") || name.endsWith(".uml");
+  const isMermaid = type === "mermaid" || name.endsWith(".mmd") || name.endsWith(".mermaid");
 
   let cleanName = name;
   let finalName = name;
@@ -544,6 +554,10 @@ export async function createNote(
     cleanName = name.replace(/\.(apollon|uml)$/i, "");
     finalName = `${cleanName}.apollon`;
     mimeType = "application/vnd.apollon+json";
+  } else if (isMermaid) {
+    cleanName = name.replace(/\.(mmd|mermaid)$/i, "");
+    finalName = `${cleanName}.mmd`;
+    mimeType = "text/vnd.mermaid";
   } else {
     cleanName = name.replace(/\.md$/i, "");
     finalName = `${cleanName}.md`;
@@ -563,7 +577,7 @@ export async function createNote(
       : isUml && !content
       ? JSON.stringify(
           {
-            version: "4.0.0",
+            version: "4.2.0",
             id: `uml-${Date.now()}`,
             title: cleanName,
             type: "ClassDiagram",
@@ -574,6 +588,8 @@ export async function createNote(
           null,
           2
         )
+      : isMermaid && !content
+      ? `flowchart TD\n  Start([Start]) --> Process[Process Request]\n  Process --> Decision{Is Valid?}\n  Decision -- Yes --> Success[Operation Complete]\n  Decision -- No --> Error[Handle Error]\n  Success --> End([Finish])\n  Error --> End`
       : content;
 
   const res = await drive.files.create({
@@ -603,6 +619,10 @@ export async function renameNote(session: any, fileId: string, newName: string) 
     fileMeta.data.name?.endsWith(".apollon") ||
     fileMeta.data.name?.endsWith(".uml") ||
     fileMeta.data.mimeType === "application/vnd.apollon+json";
+  const isMermaid =
+    fileMeta.data.name?.endsWith(".mmd") ||
+    fileMeta.data.name?.endsWith(".mermaid") ||
+    fileMeta.data.mimeType === "text/vnd.mermaid";
 
   let finalName = newName;
   if (isFolder) {
@@ -613,6 +633,9 @@ export async function renameNote(session: any, fileId: string, newName: string) 
   } else if (isUml) {
     const cleanName = newName.replace(/\.(apollon|uml)$/i, "");
     finalName = `${cleanName}.apollon`;
+  } else if (isMermaid) {
+    const cleanName = newName.replace(/\.(mmd|mermaid)$/i, "");
+    finalName = `${cleanName}.mmd`;
   } else {
     const cleanName = newName.replace(/\.md$/i, "");
     finalName = `${cleanName}.md`;

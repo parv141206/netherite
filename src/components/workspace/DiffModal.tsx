@@ -92,6 +92,10 @@ export function DiffModal({
     );
   }, [noteTitle, semanticChanges.length]);
 
+  const isMermaid = useMemo(() => {
+    return noteTitle.endsWith(".mmd") || noteTitle.endsWith(".mermaid");
+  }, [noteTitle]);
+
   // Group unchanged lines for compact view with fold bars
   const displayItems = useMemo<DiffDisplayItem[]>(() => {
     if (!isOpen) return [];
@@ -199,11 +203,16 @@ export function DiffModal({
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-sm text-foreground truncate">
-                  Changes & Diff: {noteTitle.replace(/\.(md|excalidraw|apollon|uml)$/i, "")}
+                  Changes & Diff: {noteTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "")}
                 </span>
                 {isUml && (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 font-medium border border-sky-500/20 shrink-0">
                     Apollon UML
+                  </span>
+                )}
+                {isMermaid && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20 shrink-0">
+                    Mermaid Diagram
                   </span>
                 )}
                 {diff.hasChanges ? (

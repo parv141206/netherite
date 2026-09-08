@@ -6,6 +6,7 @@ import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
 import { DrawingCanvas } from "~/components/canvas/DrawingCanvas";
 import { UmlCanvas } from "~/components/canvas/UmlCanvas";
+import { MermaidCanvas } from "~/components/canvas/MermaidCanvas";
 import { ImageViewer } from "./ImageViewer";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
@@ -33,6 +34,7 @@ import {
   Search,
   Palette,
   Network,
+  Workflow,
   Loader2,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
@@ -67,6 +69,15 @@ const isUmlFile = (item?: DriveItem | null): boolean => {
     item.name.endsWith(".apollon") ||
     item.name.endsWith(".uml") ||
     item.mimeType === "application/vnd.apollon+json"
+  );
+};
+
+const isMermaidFile = (item?: DriveItem | null): boolean => {
+  if (!item) return false;
+  return (
+    item.name.endsWith(".mmd") ||
+    item.name.endsWith(".mermaid") ||
+    item.mimeType === "text/vnd.mermaid"
   );
 };
 
@@ -885,6 +896,80 @@ export function WorkspaceLayout({
     }
   };
 
+  // 100% INSTANT OPTIMISTIC MERMAID CREATION
+  const handleCreateMermaid = async (parentId?: string) => {
+    const tempId = `temp-mermaid-${Date.now()}`;
+    const defaultName = `Diagram-${Date.now().toString().slice(-4)}.mmd`;
+    const stableSession = `session-mermaid-${Date.now()}`;
+    tabSessionsRef.current[tempId] = stableSession;
+
+    const defaultContent = `flowchart TD
+    Start([Start]) --> Process[Process Data]
+    Process --> Decision{Is Valid?}
+    Decision -- Yes --> Success[Operation Complete]
+    Decision -- No --> Error[Log Error]
+    Success --> End([Finish])
+    Error --> End`;
+
+    const newItem: DriveItem = {
+      id: tempId,
+      name: defaultName,
+      mimeType: "text/vnd.mermaid",
+      modifiedTime: new Date().toISOString(),
+      parents: parentId ? [parentId] : undefined,
+    };
+
+    setLocalNotes((prev) => [newItem, ...prev]);
+    openFileInTab(tempId);
+    setNoteContent(defaultContent);
+    setLastSavedContent(defaultContent);
+    setEditingId(tempId);
+
+    try {
+      const realNote = await createMutation.mutateAsync({
+        name: defaultName,
+        content: defaultContent,
+        parentId,
+        type: "mermaid",
+      });
+      if (realNote?.id) {
+        tabSessionsRef.current[realNote.id] = stableSession;
+        utils.notes.get.setData({ id: realNote.id }, defaultContent);
+
+        if (typeof window !== "undefined") {
+          const draft = localStorage.getItem(`netherite_draft_${tempId}`);
+          if (draft) {
+            localStorage.setItem(`netherite_draft_${realNote.id}`, draft);
+            localStorage.removeItem(`netherite_draft_${tempId}`);
+          }
+        }
+
+        utils.notes.list.setData(undefined, (old: any) => {
+          const items = old ? [...old] : [];
+          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          return [realNote, ...filtered];
+        });
+        setLocalNotes((prev) =>
+          prev.map((item) =>
+            item.id === tempId
+              ? {
+                  ...item,
+                  id: realNote.id!,
+                  parents: realNote.parents,
+                  mimeType: "text/vnd.mermaid",
+                }
+              : item
+          )
+        );
+        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
+        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setEditingId(realNote.id!);
+      }
+    } catch (err) {
+      console.error("Background Mermaid creation failed:", err);
+    }
+  };
+
   // 100% INSTANT OPTIMISTIC FOLDER CREATION
   const handleCreateFolder = async (parentId?: string) => {
     const tempId = `temp-folder-${Date.now()}`;
@@ -945,18 +1030,26 @@ export function WorkspaceLayout({
       (targetItem?.name.endsWith(".apollon") ||
         targetItem?.name.endsWith(".uml") ||
         targetItem?.mimeType === "application/vnd.apollon+json");
+    const isMermaid =
+      !isImage &&
+      !isDrawing &&
+      !isUml &&
+      isMermaidFile(targetItem);
 
     let finalName = newName;
     if (isFolder || isImage) {
       finalName = newName;
     } else if (isDrawing) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
       finalName = `${cleanName}.excalidraw`;
     } else if (isUml) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
       finalName = `${cleanName}.apollon`;
+    } else if (isMermaid) {
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+      finalName = `${cleanName}.mmd`;
     } else {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
       finalName = `${cleanName}.md`;
     }
 
@@ -1257,8 +1350,9 @@ export function WorkspaceLayout({
     currentNote?.name?.endsWith(".excalidraw") ||
     currentNote?.mimeType === "application/vnd.excalidraw+json";
   const isCurrentUml = isUmlFile(currentNote);
+  const isCurrentMermaid = isMermaidFile(currentNote);
   const isCurrentMarkdown =
-    Boolean(currentNote) && !isCurrentDrawing && !isCurrentUml && !isCurrentImage;
+    Boolean(currentNote) && !isCurrentDrawing && !isCurrentUml && !isCurrentMermaid && !isCurrentImage;
 
   const liveDiff = computeLineDiff(lastSavedContent, noteContent);
   const isDirty = !isCurrentImage && liveDiff.hasChanges;
@@ -1367,6 +1461,7 @@ export function WorkspaceLayout({
         onCreateNote={handleCreateFile}
         onCreateDrawing={handleCreateDrawing}
         onCreateUml={handleOpenCreateDiagramModal}
+        onCreateMermaid={handleCreateMermaid}
         onCreateFolder={handleCreateFolder}
         onRenameNote={handleRenameFile}
         onDeleteNote={handleDeleteFile}
@@ -1447,11 +1542,13 @@ export function WorkspaceLayout({
                       <Palette className={`w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
                     ) : isUmlFile(note) ? (
                       <Network className={`w-3.5 h-3.5 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                    ) : isMermaidFile(note) ? (
+                      <Workflow className={`w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
                     ) : (
                       <FileText className={`w-3.5 h-3.5 ${isActive ? "text-foreground" : "opacity-60"}`} />
                     )}
                     <span className="truncate max-w-[130px]">
-                      {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml)$/i, "")}
+                      {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "")}
                     </span>
                     <div className="flex items-center ml-1">
                       {hasLocalDiff ? (
@@ -1643,6 +1740,20 @@ export function WorkspaceLayout({
                         onSave={handleManualSave}
                       />
                     )
+                  ) : isMermaidFile(currentNote) ? (
+                    <MermaidCanvas
+                      key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                      initialContent={noteContent}
+                      theme={isDark ? "dark" : "light"}
+                      title={currentNote?.name}
+                      onChange={(updatedContent) => {
+                        setNoteContent(updatedContent);
+                        if (activeTabId && typeof window !== "undefined") {
+                          localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
+                        }
+                      }}
+                      onSave={handleManualSave}
+                    />
                   ) : currentNote?.name?.endsWith(".excalidraw") ||
                   currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
                     (isLoadingContent || fetchedContent === undefined) &&
@@ -1738,6 +1849,19 @@ export function WorkspaceLayout({
                           }}
                         />
                       )
+                    ) : isMermaidFile(currentSplitNote) ? (
+                      <MermaidCanvas
+                        key={splitTabId || "split-mermaid"}
+                        initialContent={splitNoteContent}
+                        theme={isDark ? "dark" : "light"}
+                        title={currentSplitNote?.name}
+                        onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                        onSave={() => {
+                          if (splitTabId && !splitTabId.startsWith("temp-")) {
+                            saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                          }
+                        }}
+                      />
                     ) : currentSplitNote?.name?.endsWith(".excalidraw") ||
                     currentSplitNote?.mimeType === "application/vnd.excalidraw+json" ? (
                       (isLoadingSplitContent || fetchedSplitContent === undefined) &&

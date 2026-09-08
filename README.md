@@ -12,6 +12,7 @@
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 [![KaTeX](https://img.shields.io/badge/KaTeX-Math-3298dc?style=flat-square)](https://katex.org/)
 [![Apollon](https://img.shields.io/badge/UML-Apollon_Engine-6366f1?style=flat-square)](https://github.com/ls1intum/Apollon)
+[![Mermaid](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?style=flat-square&logo=mermaid)](https://mermaid.js.org/)
 [![Excalidraw](https://img.shields.io/badge/Canvas-Excalidraw-e02424?style=flat-square)](https://excalidraw.com/)
 [![Google Drive Native](https://img.shields.io/badge/Storage-Google_Drive-4285F4?style=flat-square&logo=googledrive)](https://developers.google.com/drive)
 
@@ -23,18 +24,25 @@
 
 ### 1. Sovereign Google Drive Storage (Zero Database)
 - Every file lives directly in your personal Google Drive under the `/Netherite` root folder.
-- Raw files are saved in transparent standard formats: `.md` for prose, `.apollon` for UML models, and `.excalidraw` for vector sketches.
+- Raw files are saved in transparent standard formats: `.md` for prose, `.apollon` for UML models, `.mmd` for Mermaid diagrams, and `.excalidraw` for vector sketches.
 - Binary asset attachments (images, diagrams) stream directly from Google Drive.
 - If Netherite disappeared tomorrow, your notes remain completely intact, portable, and readable in Obsidian, VS Code, or any text editor.
 
-### 2. Triple Creative Modalities
+### 2. Quad Creative Modalities
 
 #### A. Markdown & KaTeX Scientific Prose (`.md`)
 - **Real-Time Mathematical Typesetting**: Full support for display math (`$$...$$`, `\[...\]`) and inline math (`$...$`, `\(...\)`) with error-tolerant live KaTeX rendering.
 - **Visual Ergonomics & Typography**: Literata serif, Inter sans, and JetBrains mono fonts with an adjustable **Blue Light Filter** slider (0–100%) that shifts the canvas into warm amber parchment.
 - **Precision Code Blocks**: Syntax highlighting for 100+ languages via `lowlight` with full indentation preservation on copy-paste and <kbd>Tab</kbd> indent shortcuts.
 
-#### B. Apollon Architecture & UML Studio (`.apollon`)
+#### B. Mermaid Code-to-Diagram Studio (`.mmd` / `.mermaid`)
+- **Real-Time Code Preview**: Type Mermaid diagram syntax on the left and see crisp vector diagrams update instantly on the right.
+- **Interactive Canvas**: Drag to pan, <kbd>Ctrl</kbd> + <kbd>Scroll</kbd> wheel zoom (20%–350%), and one-click zoom reset.
+- **Comprehensive Preset Templates**: Flowchart (TD/LR), Sequence Diagrams, Class Diagrams, State Diagrams, Entity Relationship (ER), Git Graphs, Gantt Roadmaps, Pie Distribution, Mindmaps, and User Journeys.
+- **Resilient Error Tolerant Studio**: Live syntax warning banners that pinpoint parse issues without clearing previously valid diagram SVGs.
+- **Universal Exports**: Download high-DPI 2x rasterized PNGs with theme-matched backgrounds, export crisp resolution-independent SVG files, or copy SVG / Mermaid code to clipboard in 1-click.
+
+#### C. Apollon Architecture & UML Studio (`.apollon`)
 Built-in UML modeling engine supporting **all 13 diagram specifications**:
 - **Structural Models**:
   - **Class Diagram**: Classes, abstract classes, interfaces, enumerations, packages, attributes, methods, and inheritances.
@@ -54,7 +62,7 @@ Built-in UML modeling engine supporting **all 13 diagram specifications**:
   - **Syntax Tree**: Hierarchical parse trees with non-terminal and terminal grammar symbols.
 - **Direct Canvas Export**: Export diagrams to **PNG**, **JPEG**, **PDF**, **SVG**, or **JSON** directly from the editor.
 
-#### C. Excalidraw Vector Whiteboard (`.excalidraw`)
+#### D. Excalidraw Vector Whiteboard (`.excalidraw`)
 - Infinite virtual canvas powered by official `@excalidraw/excalidraw`.
 - Dark and light mode synchronization, hand-drawn vector aesthetics, and engineering primitives.
 
@@ -125,7 +133,7 @@ src/
 ├── app/                  # Next.js 15 App Router & API handlers
 ├── apollon/              # Vendored Apollon UML Engine (13 diagram specifications)
 ├── components/
-│   ├── canvas/           # DrawingCanvas (Excalidraw) & UmlCanvas (Apollon)
+│   ├── canvas/           # DrawingCanvas (Excalidraw), UmlCanvas (Apollon), MermaidCanvas (Mermaid)
 │   ├── editor/           # TipTap core, KaTeX MathExtension, lowlight syntax
 │   ├── landing/          # Artisanal sovereign landing page & showcase
 │   ├── ui/               # AppleFullPageLoader, dialogs, badges, theme toggle
