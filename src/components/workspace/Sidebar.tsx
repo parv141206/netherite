@@ -1176,7 +1176,7 @@ export function Sidebar({
             <Settings className="w-4 h-4" />
           </button>
           <button
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-red-500 transition-colors"
             title="Sign Out"
           >

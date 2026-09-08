@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import {
   LogIn,
@@ -31,7 +32,7 @@ import { useTheme } from "~/components/ThemeProvider";
 import katex from "katex";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 
-export function LandingPage() {
+export function LandingPage({ session }: { session?: any } = {}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"math" | "whiteboard" | "code">("math");
@@ -98,6 +99,19 @@ export function LandingPage() {
               <span className="hidden sm:inline">Download</span>
             </a>
 
+            <Link
+              href="/privacy"
+              className="hidden md:inline px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="hidden md:inline px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Terms
+            </Link>
+
             {mounted && (
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -109,13 +123,23 @@ export function LandingPage() {
               </button>
             )}
 
-            <button
-              onClick={() => signIn("google")}
-              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Sign In with Google</span>
-            </button>
+            {session?.user ? (
+              <Link
+                href="/editor"
+                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Open Editor</span>
+              </Link>
+            ) : (
+              <button
+                onClick={() => signIn("google", { callbackUrl: "/editor" })}
+                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In with Google</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -142,13 +166,23 @@ export function LandingPage() {
 
         {/* Hero Actions */}
         <div className="flex flex-col sm:flex-row items-center gap-3 mb-14 sm:mb-16 w-full sm:w-auto">
-          <button
-            onClick={() => signIn("google")}
-            className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3 bg-foreground text-background font-semibold text-sm rounded-xl hover:opacity-90 transition-all shadow-xl hover:shadow-2xl active:scale-95 cursor-pointer group"
-          >
-            <span>Open Studio in Google Drive</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          {session?.user ? (
+            <Link
+              href="/editor"
+              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3 bg-foreground text-background font-semibold text-sm rounded-xl hover:opacity-90 transition-all shadow-xl hover:shadow-2xl active:scale-95 cursor-pointer group"
+            >
+              <span>Launch Studio Workspace</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          ) : (
+            <button
+              onClick={() => signIn("google", { callbackUrl: "/editor" })}
+              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3 bg-foreground text-background font-semibold text-sm rounded-xl hover:opacity-90 transition-all shadow-xl hover:shadow-2xl active:scale-95 cursor-pointer group"
+            >
+              <span>Open Studio in Google Drive</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          )}
           <a
             href="#downloads"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 border border-border/80 bg-card hover:bg-accent text-foreground text-xs font-medium rounded-xl transition-all shadow-sm"
@@ -679,8 +713,23 @@ impl<T: Hypersurface> CauchyState<T> {
             <span>Sovereign Markdown Studio & Vector Whiteboard</span>
           </div>
 
-          <div className="flex items-center gap-4 font-mono text-[11px]">
-            <span>Google Drive Native</span>
+          <div className="flex items-center gap-4 text-xs font-normal">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <span>•</span>
+            <a
+              href="https://github.com/parv141206/netherite"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors inline-flex items-center gap-1"
+            >
+              GitHub <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
       </footer>
