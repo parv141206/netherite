@@ -67,6 +67,9 @@ export const metadata: Metadata = {
       "A sovereign, distraction-free markdown studio backed 100% by your Google Drive with native KaTeX.",
     images: ["/og-image.png"],
   },
+  verification: {
+    google: "pMUgEbPbSSePs2qGhNyOmo2p602NabQvNyhEf8fEPW0",
+  },
 };
 
 const geist = Geist({
@@ -94,6 +97,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta name="google-site-verification" content="pMUgEbPbSSePs2qGhNyOmo2p602NabQvNyhEf8fEPW0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
