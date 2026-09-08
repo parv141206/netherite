@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "netherite": {
+      "command": "bun",
+      "args": [
+        "run",
+        "/home/parv/projects/netherite/src/mcp/cli.ts"
+      ],
+      "env": {}
+    }
+  }
+}

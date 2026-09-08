@@ -11,6 +11,7 @@
     "check": "next lint && tsc --noEmit",
     "dev": "next dev --turbo",
     "mcp": "bun run src/mcp/cli.ts",
+    "mcp:auth": "bun run src/mcp/login.ts",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "lint": "next lint",
