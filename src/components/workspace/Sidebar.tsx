@@ -228,6 +228,7 @@ export function Sidebar({
     return activeNoteId ? new Set([activeNoteId]) : new Set();
   });
   const lastSelectedIdRef = useRef<string | null>(activeNoteId || null);
+  const sidebarContainerRef = useRef<HTMLElement | null>(null);
 
   // Sync activeNoteId into selectedIds when single selection
   useEffect(() => {
@@ -311,13 +312,36 @@ export function Sidebar({
 
   // Global Click & Shortcut Listener
   useEffect(() => {
-    const handleGlobalClick = () => setContextMenu(null);
+    const handleGlobalClick = (e: MouseEvent) => {
+      setContextMenu(null);
+      if (
+        sidebarContainerRef.current &&
+        !sidebarContainerRef.current.contains(e.target as Node)
+      ) {
+        // Clear multi-selection when clicking out into the workspace
+        if (selectedIds.size > 1) {
+          setSelectedIds(new Set());
+        }
+      }
+    };
     window.addEventListener("click", handleGlobalClick);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setSelectedIds(new Set());
         setContextMenu(null);
+        return;
+      }
+
+      // CRITICAL: Ensure the delete/rename key event originated strictly within the sidebar!
+      // If user is working in Apollon UML, Excalidraw, Markdown Editor, or Mermaid preview,
+      // NEVER intercept Delete or Backspace as a file deletion command!
+      const isInsideSidebar =
+        sidebarContainerRef.current &&
+        (sidebarContainerRef.current.contains(e.target as Node) ||
+          sidebarContainerRef.current.contains(document.activeElement));
+
+      if (!isInsideSidebar) {
         return;
       }
 
@@ -328,7 +352,7 @@ export function Sidebar({
         if (current) {
           startInlineEditing(current.id, current.name);
         }
-      } else if (e.key === "Delete" || e.key === "Backspace") {
+      } else if (e.key === "Delete" || ((e.metaKey || e.ctrlKey) && e.key === "Backspace")) {
         const activeElem = document.activeElement;
         if (
           activeElem &&
@@ -676,7 +700,10 @@ export function Sidebar({
 
   if (collapsed) {
     return (
-      <aside className="hidden sm:flex w-14 border-r border-border bg-[var(--sidebar-bg)] flex-col items-center py-2.5 justify-between select-none">
+      <aside
+        ref={sidebarContainerRef}
+        className="hidden sm:flex w-14 border-r border-border bg-[var(--sidebar-bg)] flex-col items-center py-2.5 justify-between select-none"
+      >
         <div className="flex flex-col items-center gap-3 w-full">
           {/* Top Window Drag Area with Traffic Lights */}
           <div className="w-full flex justify-center py-1" data-tauri-drag-region>
@@ -751,6 +778,7 @@ export function Sidebar({
       />
 
       <aside
+        ref={sidebarContainerRef}
         onContextMenu={handleRootContextMenu}
         className="fixed sm:relative inset-y-0 left-0 z-50 w-72 sm:w-64 border-r border-border bg-[var(--sidebar-bg)] flex flex-col h-full select-none shadow-2xl sm:shadow-none animate-in slide-in-from-left duration-200"
       >
