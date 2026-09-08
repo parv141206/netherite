@@ -15,6 +15,8 @@ import { MobileBottomBar } from "./MobileBottomBar";
 import { computeLineDiff, saveChangelogEntry, clearChangelog, type ChangelogEntry } from "./diffUtils";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
+import { CreateDiagramModal } from "./CreateDiagramModal";
+import { type UMLDiagramType } from "@tumaet/apollon";
 import { useTheme } from "~/components/ThemeProvider";
 import { useCapacitorBackButton } from "~/hooks/useCapacitorBackButton";
 import { api } from "~/trpc/react";
@@ -100,6 +102,8 @@ export function WorkspaceLayout({
     return false;
   });
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
+  const [isCreateDiagramModalOpen, setIsCreateDiagramModalOpen] = useState(false);
+  const [createDiagramParentId, setCreateDiagramParentId] = useState<string | undefined>(undefined);
   const [editorFont, setEditorFont] = useState<"sans" | "serif" | "mono">("sans");
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -268,6 +272,10 @@ export function WorkspaceLayout({
       }
       if (isDiffModalOpen) {
         setIsDiffModalOpen(false);
+        return true;
+      }
+      if (isCreateDiagramModalOpen) {
+        setIsCreateDiagramModalOpen(false);
         return true;
       }
       if (isSettingsOpen) {
@@ -790,10 +798,17 @@ export function WorkspaceLayout({
     }
   };
 
-  // 100% INSTANT OPTIMISTIC UML CREATION (Apollon diagram)
-  const handleCreateUml = async (parentId?: string) => {
+  const handleOpenCreateDiagramModal = (parentId?: string) => {
+    setCreateDiagramParentId(parentId);
+    setIsCreateDiagramModalOpen(true);
+  };
+
+  // 100% INSTANT OPTIMISTIC ARCHITECTURE & UML CREATION (All 13 Apollon diagram suites)
+  const handleCreateUml = async (diagramType: UMLDiagramType = "ClassDiagram" as UMLDiagramType, customTitle?: string) => {
+    const parentId = createDiagramParentId;
     const tempId = `temp-uml-${Date.now()}`;
-    const defaultName = `Diagram-${Date.now().toString().slice(-4)}.apollon`;
+    const cleanTitle = customTitle?.trim() || `${diagramType}-${Date.now().toString().slice(-4)}`;
+    const defaultName = cleanTitle.endsWith(".apollon") ? cleanTitle : `${cleanTitle}.apollon`;
     const stableSession = `session-uml-${Date.now()}`;
     tabSessionsRef.current[tempId] = stableSession;
 
@@ -802,7 +817,7 @@ export function WorkspaceLayout({
         id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `model-${Date.now()}`,
         version: "4.2.0",
         title: defaultName.replace(/\.apollon$/i, ""),
-        type: "ClassDiagram",
+        type: diagramType,
         nodes: [],
         edges: [],
         assessments: {},
@@ -1351,7 +1366,7 @@ export function WorkspaceLayout({
         onSelectNote={(id) => openFileInTab(id)}
         onCreateNote={handleCreateFile}
         onCreateDrawing={handleCreateDrawing}
-        onCreateUml={handleCreateUml}
+        onCreateUml={handleOpenCreateDiagramModal}
         onCreateFolder={handleCreateFolder}
         onRenameNote={handleRenameFile}
         onDeleteNote={handleDeleteFile}
@@ -1852,6 +1867,13 @@ export function WorkspaceLayout({
           setIsSyncModalOpen(true);
         }}
         isSyncing={isSyncing}
+      />
+
+      {/* Create Architecture & UML Diagram Modal */}
+      <CreateDiagramModal
+        isOpen={isCreateDiagramModalOpen}
+        onClose={() => setIsCreateDiagramModalOpen(false)}
+        onCreate={(type, name) => handleCreateUml(type, name)}
       />
 
       {/* Sync & Discard Confirmation Modal */}

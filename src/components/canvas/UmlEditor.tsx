@@ -11,6 +11,7 @@ import {
 import { ExternalLink, Download, FileJson, Sparkles } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { UmlExportModal } from "./UmlExportModal";
+import { DIAGRAM_DEFINITIONS } from "~/components/workspace/CreateDiagramModal";
 
 interface UmlEditorProps {
   initialContent?: string;
@@ -83,6 +84,36 @@ export default function UmlEditor({
 
     return createDefaultModel();
   }, [initialContent]);
+
+  const [currentDiagramType, setCurrentDiagramType] = useState<UMLDiagramType>(
+    () => parsedModel.type || UMLDiagramType.ClassDiagram
+  );
+
+  useEffect(() => {
+    if (parsedModel.type && parsedModel.type !== currentDiagramType) {
+      setCurrentDiagramType(parsedModel.type);
+    }
+  }, [parsedModel.type]);
+
+  const handleSwitchDiagramType = (newType: UMLDiagramType) => {
+    setCurrentDiagramType(newType);
+    if (!editorInstance) return;
+    try {
+      const current = editorInstance.model;
+      const updated: UMLModel = {
+        ...current,
+        type: newType,
+      };
+      editorInstance.model = updated;
+      const serialized = JSON.stringify(updated, null, 2);
+      lastSerializedRef.current = serialized;
+      if (onChangeRef.current) {
+        onChangeRef.current(serialized);
+      }
+    } catch (err) {
+      console.error("Failed to switch diagram type:", err);
+    }
+  };
 
   // Handle Ctrl+S / Cmd+S manual save
   useEffect(() => {
@@ -183,6 +214,10 @@ export default function UmlEditor({
 
               lastSerializedRef.current = serialized;
 
+              if (nextModel.type && nextModel.type !== currentDiagramType) {
+                setCurrentDiagramType(nextModel.type);
+              }
+
               if (onChangeRef.current) {
                 onChangeRef.current(serialized);
               }
@@ -205,7 +240,25 @@ export default function UmlEditor({
       />
 
       {/* Floating Netherite Top-Right Quick Actions */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 pointer-events-auto">
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-2 pointer-events-auto">
+        {/* Diagram Type Switcher */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-medium rounded-xl backdrop-blur-md bg-card/85 border border-border/60 text-foreground shadow-sm">
+          <span className="text-[10px] uppercase font-sans text-muted-foreground/70 font-semibold select-none">
+            Type:
+          </span>
+          <select
+            value={currentDiagramType}
+            onChange={(e) => handleSwitchDiagramType(e.target.value as UMLDiagramType)}
+            className="bg-transparent text-foreground text-xs font-semibold cursor-pointer focus:outline-none pr-1"
+          >
+            {DIAGRAM_DEFINITIONS.map((def) => (
+              <option key={def.type} value={def.type} className="bg-card text-foreground py-1">
+                {def.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <button
           onClick={() => setIsExportModalOpen(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-xl backdrop-blur-md bg-card/85 hover:bg-accent/80 border border-border/60 text-muted-foreground hover:text-foreground shadow-sm transition-all cursor-pointer"

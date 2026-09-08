@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 
 const DEV_QUOTES = [
   {
@@ -71,28 +72,24 @@ export function AppleFullPageLoader({
     return () => clearInterval(interval);
   }, []);
 
-  const activeQuote = DEV_QUOTES[quoteIndex] || DEV_QUOTES[0];
+  const activeQuote = DEV_QUOTES[quoteIndex] || DEV_QUOTES[0]!;
 
   return (
     <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-background/80 backdrop-blur-2xl px-6 select-none animate-in fade-in duration-300">
       <div className="w-full max-w-md flex flex-col items-center text-center space-y-7">
-        {/* Minimalist Apple Monogram Emblem */}
-        <div className="w-12 h-12 rounded-2xl bg-foreground/5 border border-foreground/10 flex items-center justify-center shadow-xs">
-          <div className="w-5 h-5 rounded-lg bg-foreground/90 flex items-center justify-center">
-            <span className="text-[10px] font-mono font-black text-background leading-none">
-              N
-            </span>
-          </div>
+        {/* Minimalist Netherite Brand Emblem */}
+        <div className="w-14 h-14 rounded-2xl bg-foreground/5 border border-border/80 flex items-center justify-center shadow-xs">
+          <NetheriteLogo size={28} className="text-foreground" />
         </div>
 
-        {/* Apple System-Update Monochromatic Progress Bar */}
+        {/* Straight Line Progress Bar (Minimal Apple System Style) */}
         <div className="w-56 sm:w-64 flex flex-col items-center gap-2.5">
-          <div className="w-full h-1.5 bg-muted/70 rounded-full overflow-hidden relative">
+          <div className="w-full h-1 bg-muted/70 rounded-full overflow-hidden relative">
             <div
-              className="absolute inset-y-0 rounded-full bg-foreground/80 shadow-xs"
+              className="absolute inset-y-0 rounded-full bg-foreground/90 shadow-2xs"
               style={{
-                width: "45%",
-                animation: "appleProgressPulse 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+                width: "35%",
+                animation: "straightProgressSweep 1.6s ease-in-out infinite",
               }}
             />
           </div>
@@ -106,8 +103,8 @@ export function AppleFullPageLoader({
           )}
         </div>
 
-        {/* Developer Lore / Wisdom Box */}
-        <div className="pt-4 max-w-sm min-h-[5rem] flex flex-col items-center justify-center">
+        {/* Developer Wisdom Box */}
+        <div className="pt-3 max-w-sm min-h-[5rem] flex flex-col items-center justify-center">
           <p
             className={`text-xs sm:text-sm font-sans font-normal text-muted-foreground leading-relaxed italic transition-opacity duration-300 ${
               fade ? "opacity-100" : "opacity-0"
@@ -126,18 +123,12 @@ export function AppleFullPageLoader({
       </div>
 
       <style jsx global>{`
-        @keyframes appleProgressPulse {
+        @keyframes straightProgressSweep {
           0% {
-            left: -40%;
-            width: 30%;
-          }
-          50% {
-            left: 30%;
-            width: 50%;
+            left: -35%;
           }
           100% {
             left: 100%;
-            width: 30%;
           }
         }
       `}</style>
