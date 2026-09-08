@@ -435,8 +435,19 @@ export function WorkspaceLayout({
       }
     }
     if (fetchedContent !== undefined) {
-      setNoteContent(fetchedContent);
-      setLastSavedContent(fetchedContent);
+      let contentToSet = fetchedContent;
+      if (isUml && contentToSet.trim().startsWith("{")) {
+        try {
+          const parsed = JSON.parse(contentToSet);
+          const model = parsed && parsed.model ? parsed.model : parsed;
+          if (model && (model.version === "4.0.0" || !model.version)) {
+            model.version = "4.2.0";
+          }
+          contentToSet = JSON.stringify(model, null, 2);
+        } catch {}
+      }
+      setNoteContent(contentToSet);
+      setLastSavedContent(contentToSet);
     }
   }, [fetchedContent, activeTabId, localNotes]);
 
@@ -788,8 +799,8 @@ export function WorkspaceLayout({
 
     const defaultContent = JSON.stringify(
       {
-        version: "4.0.0",
         id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `model-${Date.now()}`,
+        version: "4.2.0",
         title: defaultName.replace(/\.apollon$/i, ""),
         type: "ClassDiagram",
         nodes: [],

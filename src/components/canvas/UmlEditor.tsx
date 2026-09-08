@@ -19,12 +19,12 @@ interface UmlEditorProps {
   onSave?: () => void;
 }
 
-const DEFAULT_MODEL_VERSION = "4.0.0";
+const DEFAULT_MODEL_VERSION = "4.2.0";
 
 export function createDefaultModel(title = "UML Diagram"): UMLModel {
   return {
-    version: DEFAULT_MODEL_VERSION as any,
     id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `model-${Date.now()}`,
+    version: DEFAULT_MODEL_VERSION as any,
     title,
     type: UMLDiagramType.ClassDiagram,
     nodes: [],
@@ -50,24 +50,12 @@ export default function UmlEditor({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  // Baseline signature to prevent initial mount from dirtying note
-  const initialSignatureRef = useRef<string | null>(null);
-
-  const getModelSignature = (model: UMLModel): string => {
-    const nodeSig = (model.nodes || [])
-      .map((n: any) => `${n.id}:${n.type}:${Math.round(n.bounds?.x ?? 0)}:${Math.round(n.bounds?.y ?? 0)}:${n.name ?? ""}`)
-      .join(";");
-    const edgeSig = (model.edges || [])
-      .map((e: any) => `${e.id}:${e.type}:${e.source?.id ?? ""}:${e.target?.id ?? ""}`)
-      .join(";");
-    return `${model.type || ""}|${nodeSig}|${edgeSig}`;
-  };
+  // Track exact serialized JSON to detect any model mutation (attributes, methods, styles, positions)
+  const lastSerializedRef = useRef<string>("");
 
   const parsedModel = useMemo<UMLModel>(() => {
     if (!initialContent || (typeof initialContent === "string" && initialContent.trim() === "")) {
-      const def = createDefaultModel();
-      initialSignatureRef.current = getModelSignature(def);
-      return def;
+      return createDefaultModel();
     }
 
     try {
@@ -87,16 +75,13 @@ export default function UmlEditor({
           edges: Array.isArray(data.edges) ? data.edges : [],
           assessments: data.assessments || {},
         };
-        initialSignatureRef.current = getModelSignature(validated);
         return validated;
       }
     } catch {
       // Fall through to default model
     }
 
-    const fallback = createDefaultModel();
-    initialSignatureRef.current = getModelSignature(fallback);
-    return fallback;
+    return createDefaultModel();
   }, [initialContent]);
 
   // Handle Ctrl+S / Cmd+S manual save
@@ -181,35 +166,40 @@ export default function UmlEditor({
         onMount={(editor) => {
           setEditorInstance(editor);
 
-          // Subscribe to live model mutations
-          const subId = editor.subscribeToModelChange((nextModel) => {
-            const currentSig = getModelSignature(nextModel);
+          // Establish initial baseline directly from the mounted editor
+          try {
+            lastSerializedRef.current = JSON.stringify(editor.model, null, 2);
+          } catch {
+            lastSerializedRef.current = initialContent || "";
+          }
 
-            // Establish baseline on mount
-            if (initialSignatureRef.current === null) {
-              initialSignatureRef.current = currentSig;
-              return;
-            }
-
-            // Skip if no true structural modification occurred
-            if (currentSig === initialSignatureRef.current) {
-              return;
-            }
-
-            initialSignatureRef.current = currentSig;
-
-            if (onChangeRef.current) {
-              try {
-                const serialized = JSON.stringify(nextModel, null, 2);
-                onChangeRef.current(serialized);
-              } catch (e) {
-                console.error("Failed to serialize Apollon model:", e);
+          const handleUpdate = (nextModel: UMLModel) => {
+            try {
+              const serialized = JSON.stringify(nextModel, null, 2);
+              // Skip if no actual change occurred
+              if (serialized === lastSerializedRef.current) {
+                return;
               }
+
+              lastSerializedRef.current = serialized;
+
+              if (onChangeRef.current) {
+                onChangeRef.current(serialized);
+              }
+            } catch (e) {
+              console.error("Failed to serialize Apollon model:", e);
             }
+          };
+
+          // Subscribe to live model mutations (classes, attributes, methods, edges, positions, styles)
+          const subId = editor.subscribeToModelChange(handleUpdate);
+          const nameSubId = editor.subscribeToDiagramNameChange(() => {
+            handleUpdate(editor.model);
           });
 
           return () => {
             editor.unsubscribe(subId);
+            editor.unsubscribe(nameSubId);
           };
         }}
       />
