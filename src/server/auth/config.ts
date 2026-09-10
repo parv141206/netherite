@@ -84,6 +84,7 @@ export const authConfig = {
     GoogleProvider({
       clientId: googleClientId,
       clientSecret: googleClientSecret,
+      checks: ["pkce", "state"],
       authorization: {
         params: {
           scope: "openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly",
