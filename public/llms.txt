@@ -1,0 +1,32 @@
+# Netherite
+
+> Sovereign, distraction-free markdown studio, whiteboard, and Google Calendar hub backed 100% by Google Drive.
+
+Netherite is a private, web-native productivity suite designed for thinkers, researchers, engineers, and creators. It combines advanced mathematical typesetting (KaTeX), infinite hand-drawn whiteboards (Excalidraw), UML architecture modeling (Apollon), interactive Mermaid diagrams, and deep Google Calendar integration—all stored directly in the user's personal Google Drive with zero proprietary vendor lock-in.
+
+## Core Capabilities
+
+- **100% Sovereign Storage**: All notes, drawings, diagrams, and metadata reside directly in your Google Drive (`/Netherite`). Netherite stores zero user content on intermediate servers.
+- **Google Calendar Studio**: Complete, Apple-aesthetic Google Calendar workspace. View monthly calendars and agenda timelines, create events, and generate 1-click structured markdown meeting notes directly linked to meetings with attendees and agendas.
+- **Advanced Markdown & Mathematics**: Full GitHub Flavored Markdown (GFM) with native KaTeX rendering, syntax-highlighted code blocks, task lists, and interactive tables.
+- **Interactive Mermaid & Zoom Engine**: Diagrams render inline with interactive pan, mouse wheel zoom, reset controls, and seamless transition between visual preview and source edit mode.
+- **Infinite Whiteboard (Excalidraw)**: Vector hand-drawn sketches and system diagrams saved directly as `.excalidraw` files in Google Drive.
+- **UML Architecture Modeling (Apollon)**: Enterprise UML diagramming (Class diagrams, Sequence diagrams, Activity diagrams, Use Case diagrams) saved as `.apollon` / `.uml`.
+- **Full-Fidelity PDF Export**: Multi-format PDF exporter supporting dynamic themes, custom fonts, page sizes (A4, Letter, Legal), margins, and page numbering.
+- **Curated Typography & Themes**: 14 light/dark theme pairings (including Apple Minimal, Pookie Pastel, Obsidian, Cyberpunk, Forest, Sepia) with custom fonts (Crafty Girls / Girly, Excalifont, JetBrains Mono, Inter, Literata).
+- **Split View & Multi-Tab Navigation**: VS Code-inspired tab bar, split panes, directory tree, multi-select file operations, and folder color labeling.
+
+## Key Links
+
+- [Homepage](https://craftnetherite.vercel.app/): Main application interface and workspace
+- [Full Documentation](https://craftnetherite.vercel.app/llms-full.txt): Complete technical and architectural specification
+- [Privacy Policy](https://craftnetherite.vercel.app/privacy): Privacy guidelines and Google API data handling policies
+- [Terms of Service](https://craftnetherite.vercel.app/terms): Terms and service provisions
+
+## Architecture & Technology
+
+- **Framework**: Next.js 15 (App Router, Turbopack), React 19, TypeScript
+- **API Protocol**: End-to-end type-safe tRPC v11
+- **Authentication**: NextAuth.js with Google OAuth 2.0 (Google Drive + Google Calendar scopes)
+- **Editor Engine**: TipTap / ProseMirror with custom extensions
+- **Styling**: Tailwind CSS, Lucide icons, Apple HIG glassmorphism

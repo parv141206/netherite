@@ -18,24 +18,48 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import { Analytics } from "@vercel/analytics/next";
 
+const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "https://craftnetherite.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://craftnetherite.vercel.app"
-  ),
-  title: "Netherite — Sovereign Markdown Studio",
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "Netherite — Sovereign Markdown Studio & Google Productivity Hub",
+    template: "%s | Netherite",
+  },
   description:
-    "A sovereign, distraction-free markdown studio for mathematics, scientific prose, and thought. Stored 100% in your Google Drive.",
+    "A sovereign, distraction-free markdown studio, infinite whiteboard, and Google Calendar hub backed 100% by your Google Drive with native KaTeX, Mermaid, and Apollon UML.",
   keywords: [
-    "markdown",
-    "katex",
-    "latex",
-    "math editor",
+    "markdown studio",
+    "katex math editor",
     "google drive notes",
-    "sovereign notes",
-    "scientific writing",
+    "google calendar meeting notes",
+    "excalidraw whiteboard",
+    "mermaid diagram zoom",
+    "apollon uml modeling",
+    "sovereign private notes",
+    "latex scientific editor",
+    "offline markdown editor",
+    "pdf export with themes",
   ],
+  authors: [{ name: "Netherite Team", url: baseUrl }],
+  creator: "Netherite",
+  publisher: "Netherite",
+  alternates: {
+    canonical: baseUrl,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
@@ -44,17 +68,17 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Netherite — Sovereign Markdown Studio",
+    title: "Netherite — Sovereign Markdown Studio & Google Productivity Hub",
     description:
-      "A sovereign, distraction-free markdown studio for mathematics, scientific prose, and thought. Backed 100% by your Google Drive.",
-    url: "https://craftnetherite.vercel.app",
+      "A sovereign, distraction-free markdown studio, whiteboard, and Google Calendar hub backed 100% by your Google Drive. Live KaTeX, Mermaid, and Apollon UML.",
+    url: baseUrl,
     siteName: "Netherite",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Netherite Studio",
+        alt: "Netherite Studio Workspace",
       },
     ],
     locale: "en_US",
@@ -62,14 +86,53 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Netherite — Sovereign Markdown Studio",
+    title: "Netherite — Sovereign Markdown Studio & Google Hub",
     description:
-      "A sovereign, distraction-free markdown studio backed 100% by your Google Drive with native KaTeX.",
+      "A sovereign markdown studio and Google Calendar hub backed 100% by your personal Google Drive with KaTeX, Excalidraw, and Mermaid.",
     images: ["/og-image.png"],
   },
   verification: {
     google: "pMUgEbPbSSePs2qGhNyOmo2p602NabQvNyhEf8fEPW0",
   },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": `${baseUrl}/#webapp`,
+      name: "Netherite",
+      url: baseUrl,
+      description:
+        "A sovereign, distraction-free markdown studio, whiteboard, and Google Calendar hub backed 100% by personal Google Drive.",
+      applicationCategory: "ProductivityApplication",
+      operatingSystem: "All",
+      browserRequirements: "Requires JavaScript. Requires HTML5.",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      featureList: [
+        "100% Sovereign storage in personal Google Drive",
+        "Google Calendar Studio with 1-click meeting notes",
+        "Live KaTeX formula typesetting",
+        "Interactive Mermaid diagrams with zoom and visual editing",
+        "Full Excalidraw canvas integration",
+        "Apollon UML diagrams",
+        "High-fidelity PDF exporter with typography matching",
+        "14 light/dark theme pairings with curated fonts",
+      ],
+    },
+    {
+      "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
+      name: "Netherite",
+      url: baseUrl,
+      logo: `${baseUrl}/icon.png`,
+    },
+  ],
 };
 
 const geist = Geist({
@@ -98,6 +161,10 @@ export default function RootLayout({
     >
       <head>
         <meta name="google-site-verification" content="pMUgEbPbSSePs2qGhNyOmo2p602NabQvNyhEf8fEPW0" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Girly Font (Crafty Girls) */}

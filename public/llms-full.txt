@@ -1,0 +1,61 @@
+# Netherite Technical Specification & LLM Reference Manual
+
+## 1. Overview & Vision
+Netherite is a sovereign, distraction-free markdown studio, infinite whiteboard, and Google productivity workspace. It eliminates cloud lock-in by using the user's personal Google Drive account as the database, and integrates Google Calendar directly into the workflow for frictionless meeting preparation and note-taking.
+
+## 2. Key Modules & Features
+
+### 2.1 Google Drive Storage Engine
+- All files are saved into an auto-created root folder named `Netherite` in Google Drive.
+- Supported file types:
+  - Markdown Documents (`.md`)
+  - Excalidraw Canvas (`.excalidraw`)
+  - Apollon UML Models (`.apollon`, `.uml`)
+  - Mermaid Diagrams (`.mmd`, `.mermaid`)
+  - Images (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`)
+- File metadata and folder colors are saved in `.netherite.json`.
+- Automatic offline caching and draft persistence in `localStorage` ensures zero data loss during network hiccups.
+
+### 2.2 Google Calendar Studio
+- Seamless synchronization with Google Calendar API v3 using OAuth 2.0 access tokens.
+- Features:
+  - Month Grid View and Agenda Timeline View.
+  - Event Details Drawer showing start/end time, meeting location, Google Meet video link, and attendee lists.
+  - Quick Event Creation modal.
+  - One-Click Meeting Notes Generator: creates a structured Markdown note in `/Netherite` containing meeting metadata, attendee list, agenda checklist, and action item tables, and links directly to the event.
+  - In-app re-authentication banner with 1-click permission elevation if calendar scopes are missing.
+
+### 2.3 Editor & Formatting Capabilities
+- **KaTeX**: Live LaTeX mathematical formula rendering with inline `$...$` and display block `$$...$$` syntax.
+- **Mermaid**: Visual diagrams rendered natively with pan/zoom controls and seamless switching to raw diagram syntax.
+- **Excalidraw**: Full-featured infinite canvas with pressure-sensitive strokes, shapes, and text.
+- **Apollon UML**: Industry-standard software modeling for Class, Sequence, Activity, and Use Case diagrams.
+- **PDF Exporter**: In-browser PDF generation engine with font preservation, page sizing, header/footer numbering, and styling parity.
+
+### 2.4 Design System & Aesthetics
+- 14 Theme Variants:
+  - Apple Minimal (Light / Dark)
+  - Pookie Pastel (Light / Dark, featuring Crafty Girls font and soothing pastel accents)
+  - Obsidian Dark / Clean White
+  - Tokyo Night / Cyberpunk Neon
+  - Forest Sage / Warm Amber
+  - Sepia Vintage / Nordic Frost
+- Curated Fonts: Crafty Girls (Girly), Excalifont (Excalidraw native), Inter, JetBrains Mono, Literata, DM Sans, Plus Jakarta Sans, Outfit.
+
+## 3. Security, Privacy & Google Compliance
+- No user content is stored on Netherite application servers.
+- Netherite uses Google OAuth tokens strictly to interact with the user's Google Drive and Google Calendar directly from the server session or client.
+- Compliant with Google API Services User Data Policy, including Limited Use requirements.
+
+## 4. API & Integration Reference
+- tRPC Router endpoints:
+  - `notes.list`: Fetches drive files and folders
+  - `notes.get`: Retrieves file content
+  - `notes.save`: Commits file content to Google Drive
+  - `notes.create`: Creates new file
+  - `notes.delete`: Removes file or folder
+  - `notes.rename`: Renames drive item
+  - `calendar.listEvents`: Fetches upcoming Google Calendar events
+  - `calendar.createEvent`: Schedules a calendar event
+  - `calendar.deleteEvent`: Cancels/deletes an event
+  - `calendar.createMeetingNote`: Generates structured markdown note for an event

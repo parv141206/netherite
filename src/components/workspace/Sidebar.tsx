@@ -23,6 +23,7 @@ import {
   Palette,
   Network,
   Workflow,
+  Calendar,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
@@ -189,6 +190,8 @@ interface SidebarProps {
   onSetFolderColor?: (folderId: string, color: string | null) => void;
   onManualSync?: () => void;
   isSyncing?: boolean;
+  onOpenCalendar?: () => void;
+  isCalendarActive?: boolean;
 }
 
 export function Sidebar({
@@ -216,6 +219,8 @@ export function Sidebar({
   onSetFolderColor,
   onManualSync,
   isSyncing = false,
+  onOpenCalendar,
+  isCalendarActive = false,
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -726,6 +731,20 @@ export function Sidebar({
             <Plus className="w-4 h-4" />
           </button>
 
+          {onOpenCalendar && (
+            <button
+              onClick={onOpenCalendar}
+              className={`p-2 rounded-lg transition-all ${
+                isCalendarActive
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              }`}
+              title="Google Calendar"
+            >
+              <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+            </button>
+          )}
+
           <div className="w-6 h-[1px] bg-border my-1" />
 
           <div className="flex flex-col gap-1.5">
@@ -822,6 +841,17 @@ export function Sidebar({
               <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
             </button>
           )}
+          {onOpenCalendar && (
+            <button
+              onClick={onOpenCalendar}
+              className={`p-1 hover:bg-accent/60 rounded transition-colors cursor-pointer ${
+                isCalendarActive ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Google Calendar"
+            >
+              <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+            </button>
+          )}
           <button
             onClick={() => onCreateFolder()}
             className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -865,7 +895,7 @@ export function Sidebar({
       </div>
 
       {/* Quick Filter Search */}
-      <div className="p-2 border-b border-border/30" onClick={(e) => e.stopPropagation()}>
+      <div className="p-2 border-b border-border/30 space-y-1.5" onClick={(e) => e.stopPropagation()}>
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-muted-foreground/70" />
           <input
@@ -876,6 +906,26 @@ export function Sidebar({
             className="w-full pl-7 pr-2 py-1 bg-accent/40 hover:bg-accent/60 border border-transparent focus:border-border rounded-md text-xs focus:outline-none text-foreground placeholder:text-muted-foreground/60 font-sans transition-colors"
           />
         </div>
+
+        {/* Apple Pinned Item: Google Calendar Studio */}
+        {onOpenCalendar && (
+          <button
+            onClick={onOpenCalendar}
+            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
+              isCalendarActive
+                ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/30 shadow-2xs"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+            }`}
+          >
+            <div className="flex items-center gap-2 truncate">
+              <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+              <span className="truncate">Google Calendar</span>
+            </div>
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              Studio
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Multi-Select Action Banner */}

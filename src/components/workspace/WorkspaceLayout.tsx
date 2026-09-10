@@ -18,6 +18,7 @@ import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
 import { PdfExportModal } from "./PdfExportModal";
+import { CalendarView } from "~/components/calendar/CalendarView";
 import { type UMLDiagramType } from "@tumaet/apollon";
 import { useTheme } from "~/components/ThemeProvider";
 import { useCapacitorBackButton } from "~/hooks/useCapacitorBackButton";
@@ -37,6 +38,7 @@ import {
   Network,
   Workflow,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { AppleSpinner } from "~/components/ui/AppleSpinner";
@@ -124,6 +126,7 @@ export function WorkspaceLayout({
     return "system";
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<"editor" | "calendar">("editor");
 
   // Local Optimistic Notes State for 0ms Latency
   const [localNotes, setLocalNotes] = useState<DriveItem[]>(() => {
@@ -1270,6 +1273,7 @@ export function WorkspaceLayout({
     setNoteContent(contentToSet);
     setLastSavedContent(contentToSet);
     setActiveTabId(fileId);
+    setActiveView("editor");
   };
 
   const closeTab = (fileId: string, e: React.MouseEvent) => {
@@ -1496,6 +1500,8 @@ export function WorkspaceLayout({
         onSetFolderColor={handleSetFolderColor}
         onManualSync={handleOpenSyncModal}
         isSyncing={isSyncing}
+        onOpenCalendar={() => setActiveView("calendar")}
+        isCalendarActive={activeView === "calendar"}
         isMutating={
           createMutation.isPending ||
           renameMutation.isPending ||
@@ -1508,7 +1514,13 @@ export function WorkspaceLayout({
       {/* Main Workspace Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <HeaderBar
-          noteTitle={activeTabId && currentNote ? currentNote.name : ""}
+          noteTitle={
+            activeView === "calendar"
+              ? "Google Calendar Studio"
+              : activeTabId && currentNote
+              ? currentNote.name
+              : ""
+          }
           isSaving={isSaving}
           isDirty={isDirty}
           diffSummary={liveDiff.summary}
@@ -1537,12 +1549,26 @@ export function WorkspaceLayout({
         />
 
         {/* VS Code / Antigravity Style Tab Management Bar */}
-        {openTabIds.length > 0 && (
+        {(openTabIds.length > 0 || activeView === "calendar") && (
           <div className="h-9 border-b border-border bg-muted/30 flex items-center justify-between px-0 overflow-x-auto select-none shrink-0">
             <div className="flex items-center h-full overflow-x-auto scrollbar-none">
+              {/* Google Calendar Studio Tab */}
+              <button
+                onClick={() => setActiveView(activeView === "calendar" ? "editor" : "calendar")}
+                className={`flex items-center gap-1.5 px-3 h-full text-xs cursor-pointer border-r border-border/70 transition-all ${
+                  activeView === "calendar"
+                    ? "bg-card text-blue-600 dark:text-blue-400 font-medium border-t-2 border-t-blue-500 shadow-2xs"
+                    : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                }`}
+                title="Google Calendar Studio"
+              >
+                <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                <span className="font-medium">Calendar</span>
+              </button>
+
               {openTabIds.map((tabId) => {
                 const note = localNotes.find((n) => n.id === tabId);
-                const isActive = activeTabId === tabId;
+                const isActive = activeView === "editor" && activeTabId === tabId;
                 const hasLocalDiff = isActive ? isDirty : false;
 
                 return (
@@ -1642,9 +1668,23 @@ export function WorkspaceLayout({
           </div>
         )}
 
-        {/* Main Workspace Body (Editor + Right Outline Sidebar) */}
-        <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden pb-22 sm:pb-0">
-          <main
+        {/* Main Workspace Body (Editor + Right Outline Sidebar OR Google Calendar Studio) */}
+        {activeView === "calendar" ? (
+          <div className="flex-1 min-h-0 min-w-0 overflow-hidden pb-22 sm:pb-0 bg-background">
+            <CalendarView
+              onClose={() => setActiveView("editor")}
+              onOpenNote={(noteId) => {
+                openFileInTab(noteId);
+                setActiveView("editor");
+              }}
+              onRefreshNotes={() => {
+                utils.notes.list.invalidate();
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden pb-22 sm:pb-0">
+            <main
             className={`flex-1 overflow-hidden bg-background ${
               isSplitView ? "grid grid-cols-2 divide-x divide-border/60" : "flex flex-col"
             }`}
@@ -1948,13 +1988,14 @@ export function WorkspaceLayout({
             />
           )}
         </div>
+        )}
 
         {/* VS Code / Antigravity IDE Bottom Status Bar (Desktop only) */}
         <footer className="h-6 border-t border-border/60 bg-muted/40 px-3 flex items-center justify-between text-[11px] font-mono text-muted-foreground select-none shrink-0 hidden sm:flex">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>Google Drive</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${activeView === "calendar" ? "bg-blue-500" : "bg-emerald-500"}`} />
+              <span>{activeView === "calendar" ? "Google Calendar Studio" : "Google Drive"}</span>
             </span>
             {isDirty && (
               <span className="text-amber-500 font-medium flex items-center gap-1">

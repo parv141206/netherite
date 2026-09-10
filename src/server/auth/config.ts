@@ -86,7 +86,7 @@ export const authConfig = {
       clientSecret: googleClientSecret,
       authorization: {
         params: {
-          scope: "openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file",
+          scope: "openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly",
           prompt: "consent",
           access_type: "offline",
           response_type: "code",
