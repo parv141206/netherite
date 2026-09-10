@@ -100,9 +100,9 @@ export default function RootLayout({
         <meta name="google-site-verification" content="pMUgEbPbSSePs2qGhNyOmo2p602NabQvNyhEf8fEPW0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Cursive, Script & Handwriting Fonts */}
+        {/* Girly Font (Crafty Girls) */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Crafty+Girls&family=Dancing+Script:wght@400;700&family=Gloria+Hallelujah&family=Great+Vibes&family=Indie+Flower&family=Kalam:wght@400;700&family=Pacifico&family=Patrick+Hand&family=Sacramento&family=Satisfy&family=Schoolbell&family=Shadows+Into+Light&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Crafty+Girls&display=swap"
           rel="stylesheet"
         />
         {/* Modern Sans, Editorial Serif & Developer Monospace */}

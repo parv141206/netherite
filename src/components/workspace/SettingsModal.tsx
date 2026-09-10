@@ -147,9 +147,8 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
                       style={{ backgroundColor: t.previewColor }}
                     />
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold text-foreground truncate flex items-center gap-1.5">
-                        <span>{t.emoji}</span>
-                        <span>{t.name}</span>
+                      <div className="text-xs font-semibold text-foreground truncate">
+                        {t.name}
                       </div>
                       <div className="text-[10px] text-muted-foreground line-clamp-1 leading-tight mt-0.5">
                         {t.tagline}

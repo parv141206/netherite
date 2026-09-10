@@ -17,6 +17,7 @@ import { computeLineDiff, saveChangelogEntry, clearChangelog, type ChangelogEntr
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
+import { PdfExportModal } from "./PdfExportModal";
 import { type UMLDiagramType } from "@tumaet/apollon";
 import { useTheme } from "~/components/ThemeProvider";
 import { useCapacitorBackButton } from "~/hooks/useCapacitorBackButton";
@@ -115,6 +116,7 @@ export function WorkspaceLayout({
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [isCreateDiagramModalOpen, setIsCreateDiagramModalOpen] = useState(false);
   const [createDiagramParentId, setCreateDiagramParentId] = useState<string | undefined>(undefined);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [editorFont, setEditorFont] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("netherite_global_font") || "system";
@@ -580,6 +582,18 @@ export function WorkspaceLayout({
       window.removeEventListener("focus", handleVisibilityOrFocus);
     };
   }, [activeTabId, session?.user, utils]);
+
+  // Global Ctrl+P / Cmd+P shortcut to open PDF export dialog
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setIsPdfModalOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleManualSave = async () => {
     if (!activeTabId || !session?.user || activeTabId.startsWith("temp-") || isLoadingContent) return;
@@ -1511,6 +1525,7 @@ export function WorkspaceLayout({
           }}
           onSave={handleManualSave}
           onExportMarkdown={handleExportMarkdown}
+          onExportPdf={() => setIsPdfModalOpen(true)}
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           sidebarCollapsed={sidebarCollapsed}
           wordCount={wordCount}
@@ -2033,6 +2048,25 @@ export function WorkspaceLayout({
           setIsDeleteModalOpen(false);
           setDeleteTarget(null);
         }}
+      />
+
+      {/* Universal PDF Export & Live Print Dialog */}
+      <PdfExportModal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        fileName={currentNote?.name || "Untitled.md"}
+        fileType={
+          currentNote?.name?.endsWith(".mmd") || currentNote?.name?.endsWith(".mermaid")
+            ? "mermaid"
+            : currentNote?.name?.endsWith(".apollon") || currentNote?.name?.endsWith(".uml")
+            ? "uml"
+            : currentNote?.name?.endsWith(".excalidraw")
+            ? "drawing"
+            : /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNote?.name || "")
+            ? "image"
+            : "markdown"
+        }
+        content={noteContent}
       />
 
       {/* Floating Sync / Status Notification Toast */}

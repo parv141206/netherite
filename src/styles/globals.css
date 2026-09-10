@@ -1017,61 +1017,25 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 }
 
 /* ========================================================= */
-/* GLOBAL GOOGLE FONTS INJECTIONS                            */
+/* LOCAL & GOOGLE FONTS INJECTIONS                           */
 /* ========================================================= */
 
-/* Cursive & Handwriting Fonts */
+@font-face {
+  font-family: 'Excalifont';
+  src: url('/Excalifont-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Cursive & Handwritten Fonts (Girly & Excalifont) */
 [data-global-font="crafty-girls"] .ProseMirror,
 [data-global-font="crafty-girls"] .font-dynamic-editor {
   font-family: 'Crafty Girls', cursive, sans-serif !important;
 }
-[data-global-font="schoolbell"] .ProseMirror,
-[data-global-font="schoolbell"] .font-dynamic-editor {
-  font-family: 'Schoolbell', cursive, sans-serif !important;
-}
-[data-global-font="caveat"] .ProseMirror,
-[data-global-font="caveat"] .font-dynamic-editor {
-  font-family: 'Caveat', cursive !important;
-}
-[data-global-font="dancing-script"] .ProseMirror,
-[data-global-font="dancing-script"] .font-dynamic-editor {
-  font-family: 'Dancing Script', cursive !important;
-}
-[data-global-font="pacifico"] .ProseMirror,
-[data-global-font="pacifico"] .font-dynamic-editor {
-  font-family: 'Pacifico', cursive !important;
-}
-[data-global-font="kalam"] .ProseMirror,
-[data-global-font="kalam"] .font-dynamic-editor {
-  font-family: 'Kalam', cursive !important;
-}
-[data-global-font="sacramento"] .ProseMirror,
-[data-global-font="sacramento"] .font-dynamic-editor {
-  font-family: 'Sacramento', cursive !important;
-}
-[data-global-font="great-vibes"] .ProseMirror,
-[data-global-font="great-vibes"] .font-dynamic-editor {
-  font-family: 'Great Vibes', cursive !important;
-}
-[data-global-font="patrick-hand"] .ProseMirror,
-[data-global-font="patrick-hand"] .font-dynamic-editor {
-  font-family: 'Patrick Hand', cursive !important;
-}
-[data-global-font="indie-flower"] .ProseMirror,
-[data-global-font="indie-flower"] .font-dynamic-editor {
-  font-family: 'Indie Flower', cursive !important;
-}
-[data-global-font="shadows-into-light"] .ProseMirror,
-[data-global-font="shadows-into-light"] .font-dynamic-editor {
-  font-family: 'Shadows Into Light', cursive !important;
-}
-[data-global-font="gloria-hallelujah"] .ProseMirror,
-[data-global-font="gloria-hallelujah"] .font-dynamic-editor {
-  font-family: 'Gloria Hallelujah', cursive !important;
-}
-[data-global-font="satisfy"] .ProseMirror,
-[data-global-font="satisfy"] .font-dynamic-editor {
-  font-family: 'Satisfy', cursive !important;
+[data-global-font="excalifont"] .ProseMirror,
+[data-global-font="excalifont"] .font-dynamic-editor {
+  font-family: 'Excalifont', cursive, sans-serif !important;
 }
 
 /* Modern Sans-Serif Fonts */

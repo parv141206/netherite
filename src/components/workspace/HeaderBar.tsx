@@ -21,6 +21,7 @@ import {
   Network,
   Workflow,
   RefreshCw,
+  Printer,
 } from "lucide-react";
 import {
   useTheme,
@@ -44,6 +45,7 @@ interface HeaderBarProps {
   onManualSync?: () => void;
   isSyncing?: boolean;
   onExportMarkdown?: () => void;
+  onExportPdf?: () => void;
   onToggleSidebar?: () => void;
   sidebarCollapsed?: boolean;
   wordCount?: number;
@@ -66,6 +68,7 @@ export function HeaderBar({
   onManualSync,
   isSyncing = false,
   onExportMarkdown,
+  onExportPdf,
   onToggleSidebar,
   sidebarCollapsed = false,
   wordCount = 0,
@@ -328,23 +331,35 @@ export function HeaderBar({
           </button>
         )}
 
-        {/* Outline Toggle - strictly available for Markdown (.md) documents */}
-        {cleanTitle &&
-          !noteTitle.endsWith(".excalidraw") &&
-          !noteTitle.endsWith(".apollon") &&
-          !noteTitle.endsWith(".uml") &&
-          !noteTitle.endsWith(".mmd") &&
-          !noteTitle.endsWith(".mermaid") &&
-          !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(noteTitle) &&
-          onToggleOutline && (
+          {/* Outline Toggle - strictly available for Markdown (.md) documents */}
+          {cleanTitle &&
+            !noteTitle.endsWith(".excalidraw") &&
+            !noteTitle.endsWith(".apollon") &&
+            !noteTitle.endsWith(".uml") &&
+            !noteTitle.endsWith(".mmd") &&
+            !noteTitle.endsWith(".mermaid") &&
+            !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(noteTitle) &&
+            onToggleOutline && (
+              <button
+                onClick={onToggleOutline}
+                className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors ${
+                  isOutlineOpen ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Toggle Document Outline"
+              >
+                <ListTree className="w-4 h-4" />
+              </button>
+            )}
+
+          {/* Quick PDF Export Button */}
+          {cleanTitle && onExportPdf && (
             <button
-              onClick={onToggleOutline}
-              className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors ${
-                isOutlineOpen ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Toggle Document Outline"
+              onClick={onExportPdf}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer"
+              title="Export as PDF Document (Ctrl+P)"
             >
-              <ListTree className="w-4 h-4" />
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden md:inline text-[11px]">PDF</span>
             </button>
           )}
 
@@ -386,16 +401,15 @@ export function HeaderBar({
                           : "border-border/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      <span className="text-sm shrink-0">{t.emoji}</span>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-border/40"
+                        style={{ backgroundColor: t.previewColor }}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="text-[11px] truncate leading-tight font-medium">
                           {t.name}
                         </div>
                       </div>
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-border/40"
-                        style={{ backgroundColor: t.previewColor }}
-                      />
                     </button>
                   );
                 })}
@@ -422,38 +436,27 @@ export function HeaderBar({
                 }}
                 className="w-full bg-background border border-border/70 rounded-lg px-2.5 py-1.5 text-xs text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
               >
-                <optgroup label="✍️ Cursive, Script & Handwriting">
-                  <option value="crafty-girls">Crafty Girls 🌸 (Pookie Cute)</option>
-                  <option value="schoolbell">Schoolbell ✏️ (Notebook Script)</option>
-                  <option value="caveat">Caveat ✨ (Fluid Cursive)</option>
-                  <option value="dancing-script">Dancing Script 💃 (Lively Bouncy)</option>
-                  <option value="pacifico">Pacifico 🌊 (Vintage Surf Brush)</option>
-                  <option value="kalam">Kalam 🖋️ (Warm Penmanship)</option>
-                  <option value="sacramento">Sacramento 📜 (Delicate Calligraphy)</option>
-                  <option value="great-vibes">Great Vibes 💌 (Formal Cursive)</option>
-                  <option value="patrick-hand">Patrick Hand 📝 (Marker Script)</option>
-                  <option value="indie-flower">Indie Flower 🌼 (Bubbly Handwriting)</option>
-                  <option value="shadows-into-light">Shadows Into Light ☀️ (Clean Cursive)</option>
-                  <option value="gloria-hallelujah">Gloria Hallelujah 🎨 (Comic Script)</option>
-                  <option value="satisfy">Satisfy ✍️ (Brush Cursive)</option>
+                <optgroup label="Cursive & Handwritten">
+                  <option value="crafty-girls">Girly (Crafty Girls)</option>
+                  <option value="excalifont">Excalifont (Handwritten Sketch)</option>
                 </optgroup>
                 <optgroup label="Modern Sans-Serif">
                   <option value="system">Geist / Clean Sans</option>
-                  <option value="inter">Inter (Clean & Universal)</option>
-                  <option value="outfit">Outfit (Modern Editorial)</option>
-                  <option value="jakarta">Plus Jakarta Sans (Sharp)</option>
-                  <option value="dm-sans">DM Sans (Approachable)</option>
+                  <option value="inter">Inter (Clean)</option>
+                  <option value="outfit">Outfit (Editorial)</option>
+                  <option value="jakarta">Plus Jakarta Sans</option>
+                  <option value="dm-sans">DM Sans</option>
                 </optgroup>
                 <optgroup label="Book & Literary Serif">
                   <option value="literata">Literata (Warm Serif)</option>
-                  <option value="playfair">Playfair Display (Elegance)</option>
-                  <option value="lora">Lora (Contemporary)</option>
-                  <option value="merriweather">Merriweather (Stately)</option>
+                  <option value="playfair">Playfair Display (Luxury)</option>
+                  <option value="lora">Lora</option>
+                  <option value="merriweather">Merriweather</option>
                 </optgroup>
                 <optgroup label="Developer Monospace">
                   <option value="jetbrains">JetBrains Mono (Code)</option>
                   <option value="fira">Fira Code (Technical)</option>
-                  <option value="space-mono">Space Mono (Retro-Future)</option>
+                  <option value="space-mono">Space Mono (Retro)</option>
                 </optgroup>
               </select>
             </div>
@@ -539,16 +542,18 @@ export function HeaderBar({
                 </button>
               )}
 
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  setShowMoreMenu(false);
-                }}
-                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors"
-              >
-                <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>Copy Note Link</span>
-              </button>
+              {onExportPdf && (
+                <button
+                  onClick={() => {
+                    onExportPdf();
+                    setShowMoreMenu(false);
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Export PDF Document...</span>
+                </button>
+              )}
 
               <button
                 onClick={() => {

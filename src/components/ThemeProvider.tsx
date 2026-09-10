@@ -17,7 +17,6 @@ export interface MdThemeInfo {
   id: MdThemeId;
   name: string;
   tagline: string;
-  emoji: string;
   previewColor: string;
   previewBg: { light: string; dark: string };
   defaultFont?: GlobalFontId;
@@ -28,7 +27,6 @@ export const MD_THEMES: MdThemeInfo[] = [
     id: "netherite",
     name: "Netherite",
     tagline: "Minimalist Obsidian & Linear focus",
-    emoji: "⚡",
     previewColor: "#3b82f6",
     previewBg: { light: "#fcfcfc", dark: "#09090b" },
     defaultFont: "system",
@@ -37,7 +35,6 @@ export const MD_THEMES: MdThemeInfo[] = [
     id: "pookie",
     name: "Pookie Mode",
     tagline: "Pastel lavender, mint, butter & peach harmony",
-    emoji: "🌸",
     previewColor: "#c4b5fd",
     previewBg: { light: "#faf9fe", dark: "#151322" },
     defaultFont: "crafty-girls",
@@ -46,7 +43,6 @@ export const MD_THEMES: MdThemeInfo[] = [
     id: "nord",
     name: "Nordic Frost",
     tagline: "Arctic polar night & snow storm",
-    emoji: "❄️",
     previewColor: "#88c0d0",
     previewBg: { light: "#eceff4", dark: "#242933" },
     defaultFont: "inter",
@@ -55,7 +51,6 @@ export const MD_THEMES: MdThemeInfo[] = [
     id: "dracula",
     name: "Vampire Gothic",
     tagline: "Neon magenta, royal purple & gothic slate",
-    emoji: "🧛",
     previewColor: "#bd93f9",
     previewBg: { light: "#faf5ff", dark: "#1e1a29" },
     defaultFont: "fira",
@@ -64,7 +59,6 @@ export const MD_THEMES: MdThemeInfo[] = [
     id: "solarized",
     name: "Amber Parchment",
     tagline: "Warm literary library & classical brass",
-    emoji: "📜",
     previewColor: "#b58900",
     previewBg: { light: "#fdf6e3", dark: "#002b36" },
     defaultFont: "literata",
@@ -73,7 +67,6 @@ export const MD_THEMES: MdThemeInfo[] = [
     id: "forest",
     name: "Botanical Sage",
     tagline: "Serene matcha, eucalyptus & evergreen moss",
-    emoji: "🌿",
     previewColor: "#22c55e",
     previewBg: { light: "#f0fdf4", dark: "#0b1f14" },
     defaultFont: "lora",
@@ -82,7 +75,6 @@ export const MD_THEMES: MdThemeInfo[] = [
     id: "cyber",
     name: "Cyber Neon",
     tagline: "High-contrast matrix cyan & hot vaporwave",
-    emoji: "⚡",
     previewColor: "#00f5d4",
     previewBg: { light: "#f0f9ff", dark: "#040914" },
     defaultFont: "jetbrains",
@@ -95,20 +87,9 @@ export type GlobalFontId =
   | "outfit"
   | "jakarta"
   | "dm-sans"
-  // Cursive & Script Fonts
+  // Cursive & Handwritten Fonts (Girly & Excalifont)
   | "crafty-girls"
-  | "schoolbell"
-  | "caveat"
-  | "dancing-script"
-  | "pacifico"
-  | "kalam"
-  | "sacramento"
-  | "great-vibes"
-  | "patrick-hand"
-  | "indie-flower"
-  | "shadows-into-light"
-  | "gloria-hallelujah"
-  | "satisfy"
+  | "excalifont"
   // Serif Fonts
   | "literata"
   | "playfair"
@@ -128,97 +109,20 @@ export interface GlobalFontInfo {
 }
 
 export const GLOBAL_FONTS: GlobalFontInfo[] = [
-  // Cursive & Handwriting Fonts
+  // Cursive & Handwritten Fonts (Girly & Excalifont)
   {
     id: "crafty-girls",
-    name: "Crafty Girls 🌸",
+    name: "Girly",
     category: "cursive",
     fontFamily: "'Crafty Girls', cursive, sans-serif",
-    sampleText: "Playful & cute handwriting",
+    sampleText: "Playful handwritten style",
   },
   {
-    id: "schoolbell",
-    name: "Schoolbell ✏️",
+    id: "excalifont",
+    name: "Excalifont",
     category: "cursive",
-    fontFamily: "'Schoolbell', cursive, sans-serif",
-    sampleText: "Classroom notebook cursive",
-  },
-  {
-    id: "caveat",
-    name: "Caveat ✨",
-    category: "cursive",
-    fontFamily: "'Caveat', cursive",
-    sampleText: "Natural fluid cursive",
-  },
-  {
-    id: "dancing-script",
-    name: "Dancing Script 💃",
-    category: "cursive",
-    fontFamily: "'Dancing Script', cursive",
-    sampleText: "Lively bouncy script",
-  },
-  {
-    id: "pacifico",
-    name: "Pacifico 🌊",
-    category: "cursive",
-    fontFamily: "'Pacifico', cursive",
-    sampleText: "Vintage surf brush script",
-  },
-  {
-    id: "kalam",
-    name: "Kalam 🖋️",
-    category: "cursive",
-    fontFamily: "'Kalam', cursive",
-    sampleText: "Warm ballpoint penmanship",
-  },
-  {
-    id: "sacramento",
-    name: "Sacramento 📜",
-    category: "cursive",
-    fontFamily: "'Sacramento', cursive",
-    sampleText: "Delicate monoline calligraphy",
-  },
-  {
-    id: "great-vibes",
-    name: "Great Vibes 💌",
-    category: "cursive",
-    fontFamily: "'Great Vibes', cursive",
-    sampleText: "Formal flowing calligraphy",
-  },
-  {
-    id: "patrick-hand",
-    name: "Patrick Hand 📝",
-    category: "cursive",
-    fontFamily: "'Patrick Hand', cursive",
-    sampleText: "Neat felt-tip marker script",
-  },
-  {
-    id: "indie-flower",
-    name: "Indie Flower 🌼",
-    category: "cursive",
-    fontFamily: "'Indie Flower', cursive",
-    sampleText: "Carefree bubbly handwriting",
-  },
-  {
-    id: "shadows-into-light",
-    name: "Shadows Into Light ☀️",
-    category: "cursive",
-    fontFamily: "'Shadows Into Light', cursive",
-    sampleText: "Clean rounded handwriting",
-  },
-  {
-    id: "gloria-hallelujah",
-    name: "Gloria Hallelujah 🎨",
-    category: "cursive",
-    fontFamily: "'Gloria Hallelujah', cursive",
-    sampleText: "Chalkboard comic script",
-  },
-  {
-    id: "satisfy",
-    name: "Satisfy ✍️",
-    category: "cursive",
-    fontFamily: "'Satisfy', cursive",
-    sampleText: "Smooth classic brush cursive",
+    fontFamily: "'Excalifont', cursive, sans-serif",
+    sampleText: "Architectural sketch handwriting",
   },
   // Clean Sans-Serif Fonts
   {
