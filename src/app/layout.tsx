@@ -100,8 +100,14 @@ export default function RootLayout({
         <meta name="google-site-verification" content="pMUgEbPbSSePs2qGhNyOmo2p602NabQvNyhEf8fEPW0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Cursive, Script & Handwriting Fonts */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Crafty+Girls&family=Schoolbell&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Crafty+Girls&family=Dancing+Script:wght@400;700&family=Gloria+Hallelujah&family=Great+Vibes&family=Indie+Flower&family=Kalam:wght@400;700&family=Pacifico&family=Patrick+Hand&family=Sacramento&family=Satisfy&family=Schoolbell&family=Shadows+Into+Light&display=swap"
+          rel="stylesheet"
+        />
+        {/* Modern Sans, Editorial Serif & Developer Monospace */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
           rel="stylesheet"
         />
       </head>

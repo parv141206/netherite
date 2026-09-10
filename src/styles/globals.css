@@ -619,11 +619,27 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 }
 
 /* ========================================================= */
-/* 7 MD THEMES IN LIGHT & DARK MODE (14 TOTAL VARIATIONS)    */
+/* 7 FULL-UI THEMES IN LIGHT & DARK MODE (14 TOTAL VARIATIONS) */
+/* Sets entire application variables: background, card,      */
+/* sidebar, border, muted, accent, ring, and md variables    */
 /* ========================================================= */
 
 /* 1. Netherite (Minimalist Linear/Obsidian) */
 :root, [data-md-theme="netherite"] {
+  --background: #fcfcfc;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --sidebar-bg: #f4f4f5;
+  --sidebar-fg: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #e4e4e7;
+  --accent-foreground: #09090b;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #09090b;
+
   --md-accent: #2563eb;
   --md-heading-color: var(--foreground);
   --md-table-header-bg: var(--muted);
@@ -637,6 +653,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   --md-code-border: var(--border);
 }
 .dark, .dark [data-md-theme="netherite"], .dark[data-md-theme="netherite"] {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #121215;
+  --card-foreground: #fafafa;
+  --sidebar-bg: #121215;
+  --sidebar-fg: #e4e4e7;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #fafafa;
+
   --md-accent: #3b82f6;
   --md-heading-color: var(--foreground);
   --md-table-header-bg: #18181b;
@@ -650,36 +680,78 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   --md-code-border: #27272a;
 }
 
-/* 2. Pookie Mode 🎀 (Cute, Elegant Pastel Strawberry & Lavender) */
+/* 2. Pookie Mode 🌸 (Harmonious Pastel Lavender, Mint, Peach & Soft Cream) */
 [data-md-theme="pookie"] {
-  --md-accent: #db2777;
-  --md-heading-color: #be185d;
-  --md-table-header-bg: #fce7f3;
-  --md-table-header-fg: #9d174d;
-  --md-table-border: #fbcfe8;
-  --md-table-row-alt: #fdf2f8;
-  --md-blockquote-border: #f472b6;
-  --md-blockquote-bg: #fdf4f8;
-  --md-code-bg: #fdf2f8;
-  --md-code-fg: #be185d;
-  --md-code-border: #fbcfe8;
+  --background: #faf9fe;
+  --foreground: #2d2847;
+  --card: #ffffff;
+  --card-foreground: #2d2847;
+  --sidebar-bg: #f3f0fb;
+  --sidebar-fg: #3b3558;
+  --muted: #eae6f7;
+  --muted-foreground: #787099;
+  --accent: #e5e0f7;
+  --accent-foreground: #2d2847;
+  --border: #ded7f5;
+  --input: #ded7f5;
+  --ring: #a78bfa;
+
+  --md-accent: #8b7af0;
+  --md-heading-color: #4c3f85;
+  --md-table-header-bg: #eee9fc;
+  --md-table-header-fg: #4c3f85;
+  --md-table-border: #ded7f5;
+  --md-table-row-alt: #f4f8f6; /* soft pastel mint */
+  --md-blockquote-border: #a78bfa;
+  --md-blockquote-bg: #f8f6fe;
+  --md-code-bg: #f1f5fd; /* soft pastel baby blue */
+  --md-code-fg: #4338ca;
+  --md-code-border: #dbe4fa;
 }
 .dark [data-md-theme="pookie"], .dark[data-md-theme="pookie"] {
-  --md-accent: #f472b6;
-  --md-heading-color: #fbcfe8;
-  --md-table-header-bg: #4c0519;
-  --md-table-header-fg: #fce7f3;
-  --md-table-border: #831843;
-  --md-table-row-alt: #1f0c15;
-  --md-blockquote-border: #f472b6;
-  --md-blockquote-bg: #2a0e1c;
-  --md-code-bg: #2e1020;
-  --md-code-fg: #f9a8d4;
-  --md-code-border: #701a45;
+  --background: #151322;
+  --foreground: #f1effa;
+  --card: #1d1a30;
+  --card-foreground: #f1effa;
+  --sidebar-bg: #19162a;
+  --sidebar-fg: #ded9f5;
+  --muted: #26223d;
+  --muted-foreground: #9a92be;
+  --accent: #2c2948;
+  --accent-foreground: #f1effa;
+  --border: #332f54;
+  --input: #332f54;
+  --ring: #a78bfa;
+
+  --md-accent: #a78bfa;
+  --md-heading-color: #c4b5fd;
+  --md-table-header-bg: #292444;
+  --md-table-header-fg: #ddd6fe;
+  --md-table-border: #3c3663;
+  --md-table-row-alt: #1c192d;
+  --md-blockquote-border: #a78bfa;
+  --md-blockquote-bg: #1e1b32;
+  --md-code-bg: #232742;
+  --md-code-fg: #a5b4fc;
+  --md-code-border: #373f67;
 }
 
 /* 3. Nordic Frost ❄️ (Authentic Polar Night & Snow Storm) */
 [data-md-theme="nord"] {
+  --background: #eceff4;
+  --foreground: #2e3440;
+  --card: #ffffff;
+  --card-foreground: #2e3440;
+  --sidebar-bg: #e5e9f0;
+  --sidebar-fg: #2e3440;
+  --muted: #e5e9f0;
+  --muted-foreground: #4c566a;
+  --accent: #d8dee9;
+  --accent-foreground: #2e3440;
+  --border: #d8dee9;
+  --input: #d8dee9;
+  --ring: #5e81ac;
+
   --md-accent: #5e81ac;
   --md-heading-color: #2e3440;
   --md-table-header-bg: #e5e9f0;
@@ -693,6 +765,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   --md-code-border: #d8dee9;
 }
 .dark [data-md-theme="nord"], .dark[data-md-theme="nord"] {
+  --background: #242933;
+  --foreground: #eceff4;
+  --card: #2e3440;
+  --card-foreground: #eceff4;
+  --sidebar-bg: #1e222a;
+  --sidebar-fg: #eceff4;
+  --muted: #2e3440;
+  --muted-foreground: #88c0d0;
+  --accent: #3b4252;
+  --accent-foreground: #eceff4;
+  --border: #3b4252;
+  --input: #3b4252;
+  --ring: #88c0d0;
+
   --md-accent: #88c0d0;
   --md-heading-color: #eceff4;
   --md-table-header-bg: #3b4252;
@@ -708,6 +794,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 
 /* 4. Vampire Gothic 🧛 (Dracula Neon & Royal Plum) */
 [data-md-theme="dracula"] {
+  --background: #f8f7fc;
+  --foreground: #282a36;
+  --card: #ffffff;
+  --card-foreground: #282a36;
+  --sidebar-bg: #f0edf8;
+  --sidebar-fg: #282a36;
+  --muted: #ebe7f5;
+  --muted-foreground: #6272a4;
+  --accent: #e5dff2;
+  --accent-foreground: #282a36;
+  --border: #e0d8ef;
+  --input: #e0d8ef;
+  --ring: #9333ea;
+
   --md-accent: #9333ea;
   --md-heading-color: #581c87;
   --md-table-header-bg: #f3e8ff;
@@ -721,6 +821,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   --md-code-border: #ddd6fe;
 }
 .dark [data-md-theme="dracula"], .dark[data-md-theme="dracula"] {
+  --background: #1e1f29;
+  --foreground: #f8f8f2;
+  --card: #282a36;
+  --card-foreground: #f8f8f2;
+  --sidebar-bg: #21222c;
+  --sidebar-fg: #f8f8f2;
+  --muted: #282a36;
+  --muted-foreground: #9580ff;
+  --accent: #44475a;
+  --accent-foreground: #f8f8f2;
+  --border: #44475a;
+  --input: #44475a;
+  --ring: #bd93f9;
+
   --md-accent: #bd93f9;
   --md-heading-color: #ff79c6;
   --md-table-header-bg: #36304a;
@@ -736,6 +850,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 
 /* 5. Amber Parchment 📜 (Warm Library & Classical Solarized) */
 [data-md-theme="solarized"] {
+  --background: #fdf6e3;
+  --foreground: #073642;
+  --card: #fffef9;
+  --card-foreground: #073642;
+  --sidebar-bg: #eee8d5;
+  --sidebar-fg: #073642;
+  --muted: #eee8d5;
+  --muted-foreground: #657b83;
+  --accent: #e7dfc8;
+  --accent-foreground: #073642;
+  --border: #e0d8c3;
+  --input: #e0d8c3;
+  --ring: #b58900;
+
   --md-accent: #b58900;
   --md-heading-color: #cb4b16;
   --md-table-header-bg: #eee8d5;
@@ -749,6 +877,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   --md-code-border: #e0d8c3;
 }
 .dark [data-md-theme="solarized"], .dark[data-md-theme="solarized"] {
+  --background: #002b36;
+  --foreground: #93a1a1;
+  --card: #073642;
+  --card-foreground: #93a1a1;
+  --sidebar-bg: #00212b;
+  --sidebar-fg: #93a1a1;
+  --muted: #073642;
+  --muted-foreground: #586e75;
+  --accent: #0e4b5c;
+  --accent-foreground: #93a1a1;
+  --border: #0e4b5c;
+  --input: #0e4b5c;
+  --ring: #2aa198;
+
   --md-accent: #2aa198;
   --md-heading-color: #b58900;
   --md-table-header-bg: #073642;
@@ -764,6 +906,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 
 /* 6. Botanical Sage 🌿 (Calming Matcha, Eucalyptus & Forest) */
 [data-md-theme="forest"] {
+  --background: #f4f8f5;
+  --foreground: #143d22;
+  --card: #ffffff;
+  --card-foreground: #143d22;
+  --sidebar-bg: #eaf2ec;
+  --sidebar-fg: #143d22;
+  --muted: #eaf2ec;
+  --muted-foreground: #407352;
+  --accent: #d9ebdf;
+  --accent-foreground: #143d22;
+  --border: #d3e3d7;
+  --input: #d3e3d7;
+  --ring: #166534;
+
   --md-accent: #166534;
   --md-heading-color: #14532d;
   --md-table-header-bg: #dcfce7;
@@ -777,6 +933,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   --md-code-border: #bbf7d0;
 }
 .dark [data-md-theme="forest"], .dark[data-md-theme="forest"] {
+  --background: #0b1710;
+  --foreground: #e2f0e6;
+  --card: #13261b;
+  --card-foreground: #e2f0e6;
+  --sidebar-bg: #0e1d15;
+  --sidebar-fg: #e2f0e6;
+  --muted: #13261b;
+  --muted-foreground: #6ee7b7;
+  --accent: #1d3828;
+  --accent-foreground: #e2f0e6;
+  --border: #1d3828;
+  --input: #1d3828;
+  --ring: #4ade80;
+
   --md-accent: #4ade80;
   --md-heading-color: #86efac;
   --md-table-header-bg: #14532d;
@@ -792,6 +962,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 
 /* 7. Cyber Neon ⚡ (Electric Matrix & Holographic Blue) */
 [data-md-theme="cyber"] {
+  --background: #f0f7ff;
+  --foreground: #0c3247;
+  --card: #ffffff;
+  --card-foreground: #0c3247;
+  --sidebar-bg: #e3f0fc;
+  --sidebar-fg: #0c3247;
+  --muted: #e3f0fc;
+  --muted-foreground: #0284c7;
+  --accent: #d5ecfa;
+  --accent-foreground: #0c3247;
+  --border: #cbe3f7;
+  --input: #cbe3f7;
+  --ring: #0284c7;
+
   --md-accent: #0284c7;
   --md-heading-color: #0369a1;
   --md-table-header-bg: #e0f2fe;
@@ -805,6 +989,20 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   --md-code-border: #7dd3fc;
 }
 .dark [data-md-theme="cyber"], .dark[data-md-theme="cyber"] {
+  --background: #070b12;
+  --foreground: #e0f2fe;
+  --card: #0e1624;
+  --card-foreground: #e0f2fe;
+  --sidebar-bg: #0a101b;
+  --sidebar-fg: #e0f2fe;
+  --muted: #0e1624;
+  --muted-foreground: #38bdf8;
+  --accent: #152942;
+  --accent-foreground: #e0f2fe;
+  --border: #152942;
+  --input: #152942;
+  --ring: #00f5d4;
+
   --md-accent: #00f5d4;
   --md-heading-color: #00f5d4;
   --md-table-header-bg: #082f49;
@@ -821,6 +1019,8 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 /* ========================================================= */
 /* GLOBAL GOOGLE FONTS INJECTIONS                            */
 /* ========================================================= */
+
+/* Cursive & Handwriting Fonts */
 [data-global-font="crafty-girls"] .ProseMirror,
 [data-global-font="crafty-girls"] .font-dynamic-editor {
   font-family: 'Crafty Girls', cursive, sans-serif !important;
@@ -829,6 +1029,52 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 [data-global-font="schoolbell"] .font-dynamic-editor {
   font-family: 'Schoolbell', cursive, sans-serif !important;
 }
+[data-global-font="caveat"] .ProseMirror,
+[data-global-font="caveat"] .font-dynamic-editor {
+  font-family: 'Caveat', cursive !important;
+}
+[data-global-font="dancing-script"] .ProseMirror,
+[data-global-font="dancing-script"] .font-dynamic-editor {
+  font-family: 'Dancing Script', cursive !important;
+}
+[data-global-font="pacifico"] .ProseMirror,
+[data-global-font="pacifico"] .font-dynamic-editor {
+  font-family: 'Pacifico', cursive !important;
+}
+[data-global-font="kalam"] .ProseMirror,
+[data-global-font="kalam"] .font-dynamic-editor {
+  font-family: 'Kalam', cursive !important;
+}
+[data-global-font="sacramento"] .ProseMirror,
+[data-global-font="sacramento"] .font-dynamic-editor {
+  font-family: 'Sacramento', cursive !important;
+}
+[data-global-font="great-vibes"] .ProseMirror,
+[data-global-font="great-vibes"] .font-dynamic-editor {
+  font-family: 'Great Vibes', cursive !important;
+}
+[data-global-font="patrick-hand"] .ProseMirror,
+[data-global-font="patrick-hand"] .font-dynamic-editor {
+  font-family: 'Patrick Hand', cursive !important;
+}
+[data-global-font="indie-flower"] .ProseMirror,
+[data-global-font="indie-flower"] .font-dynamic-editor {
+  font-family: 'Indie Flower', cursive !important;
+}
+[data-global-font="shadows-into-light"] .ProseMirror,
+[data-global-font="shadows-into-light"] .font-dynamic-editor {
+  font-family: 'Shadows Into Light', cursive !important;
+}
+[data-global-font="gloria-hallelujah"] .ProseMirror,
+[data-global-font="gloria-hallelujah"] .font-dynamic-editor {
+  font-family: 'Gloria Hallelujah', cursive !important;
+}
+[data-global-font="satisfy"] .ProseMirror,
+[data-global-font="satisfy"] .font-dynamic-editor {
+  font-family: 'Satisfy', cursive !important;
+}
+
+/* Modern Sans-Serif Fonts */
 [data-global-font="inter"] .ProseMirror,
 [data-global-font="inter"] .font-dynamic-editor {
   font-family: 'Inter', sans-serif !important;
@@ -845,6 +1091,8 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 [data-global-font="dm-sans"] .font-dynamic-editor {
   font-family: 'DM Sans', sans-serif !important;
 }
+
+/* Editorial Serif Fonts */
 [data-global-font="literata"] .ProseMirror,
 [data-global-font="literata"] .font-dynamic-editor {
   font-family: var(--font-literata), 'Literata', Georgia, serif !important;
@@ -861,6 +1109,8 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 [data-global-font="merriweather"] .font-dynamic-editor {
   font-family: 'Merriweather', serif !important;
 }
+
+/* Developer Monospace Fonts */
 [data-global-font="jetbrains"] .ProseMirror,
 [data-global-font="jetbrains"] .font-dynamic-editor {
   font-family: 'JetBrains Mono', monospace !important;

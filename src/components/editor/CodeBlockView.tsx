@@ -226,15 +226,47 @@ export function CodeBlockView({
     setPan({ x: 0, y: 0 });
   };
 
-  // Wheel zoom handler: intercepts wheel when Ctrl/Meta or wheeling on diagram
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) {
-      e.preventDefault();
-      e.stopPropagation();
-      const delta = e.deltaY < 0 ? 0.15 : -0.15;
-      setZoom((z) => Math.min(3.5, Math.max(0.35, parseFloat((z + delta).toFixed(2)))));
-    }
-  };
+  const fullscreenContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Native non-passive wheel listener for Mermaid container to intercept Ctrl+Wheel and prevent Chrome browser zoom
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !isMermaid) return;
+
+    const onNativeWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        setZoom((z) => Math.min(4.0, Math.max(0.3, parseFloat((z + delta).toFixed(2)))));
+      }
+    };
+
+    el.addEventListener("wheel", onNativeWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onNativeWheel);
+    };
+  }, [isMermaid]);
+
+  // Native non-passive wheel listener for Fullscreen modal
+  useEffect(() => {
+    const el = fullscreenContainerRef.current;
+    if (!el || !isFullscreen) return;
+
+    const onNativeWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        setZoom((z) => Math.min(4.0, Math.max(0.3, parseFloat((z + delta).toFixed(2)))));
+      }
+    };
+
+    el.addEventListener("wheel", onNativeWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onNativeWheel);
+    };
+  }, [isFullscreen]);
 
   // Drag-to-pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -516,7 +548,6 @@ export function CodeBlockView({
       {/* ========================================== */}
       {mode === "preview" && (
         <div
-          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -661,7 +692,7 @@ export function CodeBlockView({
 
           {/* Fullscreen Canvas Viewport */}
           <div
-            onWheel={handleWheel}
+            ref={fullscreenContainerRef}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

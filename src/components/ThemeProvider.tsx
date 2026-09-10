@@ -36,10 +36,10 @@ export const MD_THEMES: MdThemeInfo[] = [
   {
     id: "pookie",
     name: "Pookie Mode",
-    tagline: "Pastel strawberry cream & lavender dream",
-    emoji: "🎀",
-    previewColor: "#ec4899",
-    previewBg: { light: "#fdf2f8", dark: "#1f0c15" },
+    tagline: "Pastel lavender, mint, butter & peach harmony",
+    emoji: "🌸",
+    previewColor: "#c4b5fd",
+    previewBg: { light: "#faf9fe", dark: "#151322" },
     defaultFont: "crafty-girls",
   },
   {
@@ -95,12 +95,26 @@ export type GlobalFontId =
   | "outfit"
   | "jakarta"
   | "dm-sans"
+  // Cursive & Script Fonts
   | "crafty-girls"
   | "schoolbell"
+  | "caveat"
+  | "dancing-script"
+  | "pacifico"
+  | "kalam"
+  | "sacramento"
+  | "great-vibes"
+  | "patrick-hand"
+  | "indie-flower"
+  | "shadows-into-light"
+  | "gloria-hallelujah"
+  | "satisfy"
+  // Serif Fonts
   | "literata"
   | "playfair"
   | "lora"
   | "merriweather"
+  // Monospace Fonts
   | "jetbrains"
   | "fira"
   | "space-mono";
@@ -114,6 +128,99 @@ export interface GlobalFontInfo {
 }
 
 export const GLOBAL_FONTS: GlobalFontInfo[] = [
+  // Cursive & Handwriting Fonts
+  {
+    id: "crafty-girls",
+    name: "Crafty Girls 🌸",
+    category: "cursive",
+    fontFamily: "'Crafty Girls', cursive, sans-serif",
+    sampleText: "Playful & cute handwriting",
+  },
+  {
+    id: "schoolbell",
+    name: "Schoolbell ✏️",
+    category: "cursive",
+    fontFamily: "'Schoolbell', cursive, sans-serif",
+    sampleText: "Classroom notebook cursive",
+  },
+  {
+    id: "caveat",
+    name: "Caveat ✨",
+    category: "cursive",
+    fontFamily: "'Caveat', cursive",
+    sampleText: "Natural fluid cursive",
+  },
+  {
+    id: "dancing-script",
+    name: "Dancing Script 💃",
+    category: "cursive",
+    fontFamily: "'Dancing Script', cursive",
+    sampleText: "Lively bouncy script",
+  },
+  {
+    id: "pacifico",
+    name: "Pacifico 🌊",
+    category: "cursive",
+    fontFamily: "'Pacifico', cursive",
+    sampleText: "Vintage surf brush script",
+  },
+  {
+    id: "kalam",
+    name: "Kalam 🖋️",
+    category: "cursive",
+    fontFamily: "'Kalam', cursive",
+    sampleText: "Warm ballpoint penmanship",
+  },
+  {
+    id: "sacramento",
+    name: "Sacramento 📜",
+    category: "cursive",
+    fontFamily: "'Sacramento', cursive",
+    sampleText: "Delicate monoline calligraphy",
+  },
+  {
+    id: "great-vibes",
+    name: "Great Vibes 💌",
+    category: "cursive",
+    fontFamily: "'Great Vibes', cursive",
+    sampleText: "Formal flowing calligraphy",
+  },
+  {
+    id: "patrick-hand",
+    name: "Patrick Hand 📝",
+    category: "cursive",
+    fontFamily: "'Patrick Hand', cursive",
+    sampleText: "Neat felt-tip marker script",
+  },
+  {
+    id: "indie-flower",
+    name: "Indie Flower 🌼",
+    category: "cursive",
+    fontFamily: "'Indie Flower', cursive",
+    sampleText: "Carefree bubbly handwriting",
+  },
+  {
+    id: "shadows-into-light",
+    name: "Shadows Into Light ☀️",
+    category: "cursive",
+    fontFamily: "'Shadows Into Light', cursive",
+    sampleText: "Clean rounded handwriting",
+  },
+  {
+    id: "gloria-hallelujah",
+    name: "Gloria Hallelujah 🎨",
+    category: "cursive",
+    fontFamily: "'Gloria Hallelujah', cursive",
+    sampleText: "Chalkboard comic script",
+  },
+  {
+    id: "satisfy",
+    name: "Satisfy ✍️",
+    category: "cursive",
+    fontFamily: "'Satisfy', cursive",
+    sampleText: "Smooth classic brush cursive",
+  },
+  // Clean Sans-Serif Fonts
   {
     id: "system",
     name: "Geist / Clean Sans",
@@ -144,20 +251,7 @@ export const GLOBAL_FONTS: GlobalFontInfo[] = [
     category: "sans",
     fontFamily: "'DM Sans', sans-serif",
   },
-  {
-    id: "crafty-girls",
-    name: "Crafty Girls 🎀",
-    category: "cursive",
-    fontFamily: "'Crafty Girls', cursive, sans-serif",
-    sampleText: "Cute & Whimsical",
-  },
-  {
-    id: "schoolbell",
-    name: "Schoolbell ✏️",
-    category: "cursive",
-    fontFamily: "'Schoolbell', cursive, sans-serif",
-    sampleText: "Sweet Handwritten",
-  },
+  // Editorial Serif Fonts
   {
     id: "literata",
     name: "Literata Serif",
@@ -182,6 +276,7 @@ export const GLOBAL_FONTS: GlobalFontInfo[] = [
     category: "serif",
     fontFamily: "'Merriweather', serif",
   },
+  // Developer Monospace Fonts
   {
     id: "jetbrains",
     name: "JetBrains Mono",

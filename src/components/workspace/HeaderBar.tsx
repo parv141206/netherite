@@ -422,16 +422,27 @@ export function HeaderBar({
                 }}
                 className="w-full bg-background border border-border/70 rounded-lg px-2.5 py-1.5 text-xs text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
               >
+                <optgroup label="✍️ Cursive, Script & Handwriting">
+                  <option value="crafty-girls">Crafty Girls 🌸 (Pookie Cute)</option>
+                  <option value="schoolbell">Schoolbell ✏️ (Notebook Script)</option>
+                  <option value="caveat">Caveat ✨ (Fluid Cursive)</option>
+                  <option value="dancing-script">Dancing Script 💃 (Lively Bouncy)</option>
+                  <option value="pacifico">Pacifico 🌊 (Vintage Surf Brush)</option>
+                  <option value="kalam">Kalam 🖋️ (Warm Penmanship)</option>
+                  <option value="sacramento">Sacramento 📜 (Delicate Calligraphy)</option>
+                  <option value="great-vibes">Great Vibes 💌 (Formal Cursive)</option>
+                  <option value="patrick-hand">Patrick Hand 📝 (Marker Script)</option>
+                  <option value="indie-flower">Indie Flower 🌼 (Bubbly Handwriting)</option>
+                  <option value="shadows-into-light">Shadows Into Light ☀️ (Clean Cursive)</option>
+                  <option value="gloria-hallelujah">Gloria Hallelujah 🎨 (Comic Script)</option>
+                  <option value="satisfy">Satisfy ✍️ (Brush Cursive)</option>
+                </optgroup>
                 <optgroup label="Modern Sans-Serif">
                   <option value="system">Geist / Clean Sans</option>
                   <option value="inter">Inter (Clean & Universal)</option>
                   <option value="outfit">Outfit (Modern Editorial)</option>
                   <option value="jakarta">Plus Jakarta Sans (Sharp)</option>
                   <option value="dm-sans">DM Sans (Approachable)</option>
-                </optgroup>
-                <optgroup label="🎀 Pookie & Cute Handwriting">
-                  <option value="crafty-girls">Crafty Girls 🎀 (Pookie Cute)</option>
-                  <option value="schoolbell">Schoolbell ✏️ (Handwritten)</option>
                 </optgroup>
                 <optgroup label="Book & Literary Serif">
                   <option value="literata">Literata (Warm Serif)</option>

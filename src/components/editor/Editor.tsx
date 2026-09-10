@@ -348,12 +348,17 @@ export function Editor({
 
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target?.closest?.("[data-mermaid-container]")) {
-        return;
-      }
+      const isMermaid = !!target?.closest?.("[data-mermaid-container]");
 
       if (e.ctrlKey || e.metaKey) {
+        // ALWAYS prevent Chrome's native browser zoom across the entire window/editor
         e.preventDefault();
+
+        if (isMermaid) {
+          // Allow event to reach Mermaid container's listener without adjusting editor font size
+          return;
+        }
+
         e.stopPropagation();
         e.stopImmediatePropagation();
 
