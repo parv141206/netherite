@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   X,
   HardDrive,
@@ -13,7 +13,14 @@ import {
   Bot,
   Copy,
   Terminal,
+  Download,
+  Upload,
+  Archive,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
+import JSZip from "jszip";
+import { api } from "~/trpc/react";
 import {
   useTheme,
   MD_THEMES,
@@ -39,6 +46,184 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
   } = useTheme();
   const [folderPath, setFolderPath] = useState("Netherite");
   const [copiedMcp, setCopiedMcp] = useState<"claude" | "cli" | null>(null);
+
+  // Export & Import states
+  const utils = api.useUtils();
+  const { data: notesData } = api.notes.list.useQuery(undefined, {
+    enabled: isOpen,
+  });
+  const createMutation = api.notes.create.useMutation();
+  const createFolderMutation = api.notes.createFolder.useMutation();
+
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getRelativePath = (file: any, filesMap: Map<string, any>) => {
+    const parts: string[] = [file.name];
+    let currentParentId = file.parents?.[0];
+    let depth = 0;
+    while (currentParentId && depth < 10) {
+      const parent = filesMap.get(currentParentId);
+      if (!parent || parent.mimeType !== "application/vnd.google-apps.folder") break;
+      parts.unshift(parent.name);
+      currentParentId = parent.parents?.[0];
+      depth++;
+    }
+    return parts.join("/");
+  };
+
+  const handleExportWorkspace = async () => {
+    if (!notesData || notesData.length === 0) {
+      alert("No files found in workspace to export.");
+      return;
+    }
+    setIsExporting(true);
+    setExportProgress("Preparing archive...");
+
+    try {
+      const zip = new JSZip();
+      const filesMap = new Map<string, any>();
+      notesData.forEach((f) => filesMap.set(f.id, f));
+
+      const nonFolders = notesData.filter(
+        (f) => f.mimeType !== "application/vnd.google-apps.folder"
+      );
+
+      let completed = 0;
+      for (const file of nonFolders) {
+        setExportProgress(`Backing up (${completed + 1}/${nonFolders.length}): ${file.name}`);
+        try {
+          const content = await utils.notes.get.fetch({ id: file.id });
+          const relativePath = getRelativePath(file, filesMap);
+          zip.file(relativePath, content ?? "");
+        } catch (err) {
+          console.warn(`Failed to export ${file.name}`, err);
+        }
+        completed++;
+      }
+
+      setExportProgress("Packaging ZIP file...");
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const dateStr = new Date().toISOString().split("T")[0];
+      link.download = `Netherite-Workspace-Backup-${dateStr}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      setExportProgress("Export complete!");
+      setTimeout(() => setExportProgress(null), 3000);
+    } catch (err: any) {
+      console.error("Export error:", err);
+      alert(`Export failed: ${err?.message || "Unknown error"}`);
+      setExportProgress(null);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportZip = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportProgress("Opening ZIP archive...");
+
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const entries = Object.values(zip.files).filter(
+        (entry) =>
+          !entry.dir &&
+          !entry.name.startsWith("__MACOSX") &&
+          !entry.name.includes(".DS_Store")
+      );
+
+      if (entries.length === 0) {
+        alert("No valid documents found in this ZIP archive.");
+        setIsImporting(false);
+        setImportProgress(null);
+        return;
+      }
+
+      const folderIdMap = new Map<string, string>();
+
+      let count = 0;
+      for (const entry of entries) {
+        count++;
+        setImportProgress(`Importing (${count}/${entries.length}): ${entry.name}`);
+
+        const parts = entry.name.split("/").filter(Boolean);
+        const fileName = parts.pop()!;
+
+        let parentId: string | undefined = undefined;
+
+        // Ensure folder hierarchy in Google Drive
+        if (parts.length > 0) {
+          let currentPath = "";
+          let currentParent: string | undefined = undefined;
+
+          for (const segment of parts) {
+            currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+
+            if (folderIdMap.has(currentPath)) {
+              currentParent = folderIdMap.get(currentPath);
+            } else {
+              const existingFolder = notesData?.find(
+                (f) =>
+                  f.mimeType === "application/vnd.google-apps.folder" &&
+                  f.name.toLowerCase() === segment.toLowerCase()
+              );
+
+              if (existingFolder) {
+                folderIdMap.set(currentPath, existingFolder.id);
+                currentParent = existingFolder.id;
+              } else {
+                const newFolder = await createFolderMutation.mutateAsync({
+                  name: segment,
+                  parentId: currentParent,
+                });
+                if (newFolder?.id) {
+                  folderIdMap.set(currentPath, newFolder.id);
+                  currentParent = newFolder.id;
+                }
+              }
+            }
+          }
+          parentId = currentParent;
+        }
+
+        let type: "note" | "drawing" | "uml" | "mermaid" = "note";
+        if (fileName.endsWith(".excalidraw")) type = "drawing";
+        else if (fileName.endsWith(".apollon") || fileName.endsWith(".uml")) type = "uml";
+        else if (fileName.endsWith(".mmd") || fileName.endsWith(".mermaid")) type = "mermaid";
+
+        const content = await entry.async("string");
+
+        await createMutation.mutateAsync({
+          name: fileName,
+          content,
+          parentId,
+          type,
+        });
+      }
+
+      await utils.notes.list.invalidate();
+      setImportProgress(`Successfully imported ${entries.length} document(s)!`);
+      setTimeout(() => setImportProgress(null), 4000);
+    } catch (err: any) {
+      console.error("Import error:", err);
+      alert(`Import failed: ${err?.message || "Invalid archive"}`);
+      setImportProgress(null);
+    } finally {
+      setIsImporting(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
 
   if (!isOpen) return null;
 
@@ -266,6 +451,91 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
                 )}
               </button>
             </div>
+          </div>
+
+          {/* Export & Import Section */}
+          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Archive className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-foreground">
+                    Workspace Backup & Migration
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Export your Netherite folder as a .zip or restore into any Google account
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Preserves folder structures, Markdown documents, Excalidraw whiteboards, Apollon UML schemas, and Mermaid charts.
+            </p>
+
+            {/* Hidden file input for zip upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImportZip}
+              accept=".zip,application/zip"
+              className="hidden"
+            />
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleExportWorkspace}
+                disabled={isExporting || isImporting}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                    <span className="text-[11px]">Exporting…</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[11px]">Export Workspace (.zip)</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isExporting || isImporting}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                    <span className="text-[11px]">Importing…</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[11px]">Import Backup (.zip)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {(exportProgress || importProgress) && (
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-background/80 border border-border text-xs text-foreground font-mono animate-in fade-in duration-150">
+                {isExporting || isImporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                )}
+                <span className="text-[11px] truncate">
+                  {exportProgress || importProgress}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Account Details */}

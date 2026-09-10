@@ -249,7 +249,7 @@ export function HeaderBar({
               ) : (
                 <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
               )}
-              <span className="truncate font-medium text-foreground text-xs sm:text-sm max-w-[150px] sm:max-w-xs">
+              <span className="truncate font-medium text-foreground text-xs sm:text-sm max-w-[110px] xs:max-w-[160px] sm:max-w-xs">
                 {cleanTitle}
               </span>
             </div>
@@ -376,7 +376,7 @@ export function HeaderBar({
 
         {/* Notion Sleek Popover Menu */}
         {showMoreMenu && (
-          <div className="absolute right-0 top-9 w-72 sm:w-80 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs max-h-[85vh] overflow-y-auto">
+          <div className="absolute right-0 top-9 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs max-h-[85vh] overflow-y-auto">
             {/* Markdown Themes (7 Themes in both Light & Dark = 14) */}
             <div className="p-1.5 pb-2.5 border-b border-border/40">
               <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">

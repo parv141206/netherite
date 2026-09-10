@@ -783,6 +783,32 @@ export function Sidebar({
           >
             <Settings className="w-4 h-4" />
           </button>
+
+          <div
+            className="p-1 cursor-default"
+            title={userSession?.user?.name || "Account"}
+          >
+            {userSession?.user?.image ? (
+              <img
+                src={userSession.user.image}
+                alt={userSession?.user?.name || "User"}
+                referrerPolicy="no-referrer"
+                className="w-5 h-5 rounded-full object-cover border border-border/80"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = "flex";
+                }}
+              />
+            ) : null}
+            <div
+              className={`w-5 h-5 rounded-full bg-foreground text-background items-center justify-center text-[10px] font-bold uppercase ${
+                userSession?.user?.image ? "hidden" : "flex"
+              }`}
+            >
+              {userSession?.user?.name?.[0] || "U"}
+            </div>
+          </div>
         </div>
       </aside>
     );
@@ -921,9 +947,6 @@ export function Sidebar({
               <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
               <span className="truncate">Google Calendar</span>
             </div>
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              Studio
-            </span>
           </button>
         )}
       </div>
@@ -1313,7 +1336,24 @@ export function Sidebar({
       {/* Footer: User Account & Settings */}
       <div className="p-2 border-t border-border flex items-center justify-between bg-card/40">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-[11px] font-bold uppercase">
+          {userSession?.user?.image ? (
+            <img
+              src={userSession.user.image}
+              alt={userSession?.user?.name || "User"}
+              referrerPolicy="no-referrer"
+              className="w-6 h-6 rounded-full object-cover border border-border/80 shrink-0"
+              onError={(e) => {
+                (e.currentTarget as HTMLElement).style.display = "none";
+                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+          ) : null}
+          <div
+            className={`w-6 h-6 rounded-full bg-foreground text-background items-center justify-center text-[11px] font-bold uppercase shrink-0 ${
+              userSession?.user?.image ? "hidden" : "flex"
+            }`}
+          >
             {userSession?.user?.name?.[0] || "U"}
           </div>
           <div className="truncate text-xs font-medium text-foreground">

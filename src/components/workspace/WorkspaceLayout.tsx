@@ -2004,6 +2004,22 @@ export function WorkspaceLayout({
             )}
             {isSaving && <span className="text-primary animate-pulse">Saving…</span>}
           </div>
+
+          {/* Author Attribution */}
+          <div className="flex items-center gap-1.5 text-[11px]">
+            <span>Made with</span>
+            <span className="text-foreground text-xs leading-none font-bold select-none" title="Monochrome">♥</span>
+            <span>by</span>
+            <a
+              href="https://github.com/parv141206"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground hover:underline font-medium transition-colors"
+            >
+              Parv Shah
+            </a>
+          </div>
+
           <div className="flex items-center gap-4">
             <span>{wordCount} words</span>
             <span>{charCount} chars</span>

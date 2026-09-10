@@ -29,6 +29,21 @@ export function buildExtensions(uploadFn?: (file: File) => void) {
       codeBlock: false,
     }),
     CodeBlockLowlight.extend({
+      addAttributes() {
+        return {
+          ...this.parent?.(),
+          mermaidTheme: {
+            default: "auto",
+            parseHTML: (element) => element.getAttribute("data-mermaid-theme") || "auto",
+            renderHTML: (attributes) => ({ "data-mermaid-theme": attributes.mermaidTheme }),
+          },
+          mermaidBg: {
+            default: "card",
+            parseHTML: (element) => element.getAttribute("data-mermaid-bg") || "card",
+            renderHTML: (attributes) => ({ "data-mermaid-bg": attributes.mermaidBg }),
+          },
+        };
+      },
       addNodeView() {
         return ReactNodeViewRenderer(CodeBlockView);
       },

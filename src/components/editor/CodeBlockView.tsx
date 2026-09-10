@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { NodeViewWrapper, NodeViewContent } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import mermaid from "mermaid";
@@ -20,6 +21,7 @@ import {
   Maximize2,
   X,
   Minimize2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 
@@ -68,6 +70,11 @@ export function CodeBlockView({
   const [parseError, setParseError] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Diagram Customization State
+  const mermaidTheme = node.attrs.mermaidTheme || "auto";
+  const mermaidBg = node.attrs.mermaidBg || "card";
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState<boolean>(false);
 
   // Zoom and Pan states for Mermaid preview
   const [zoom, setZoom] = useState<number>(1);
@@ -120,20 +127,23 @@ export function CodeBlockView({
 
     let isCancelled = false;
     const renderTimer = setTimeout(async () => {
+      const effectiveTheme =
+        mermaidTheme === "auto" ? (isDark ? "dark" : "default") : mermaidTheme;
+
       try {
         mermaid.initialize({
           startOnLoad: false,
-          theme: isDark ? "dark" : "default",
+          theme: effectiveTheme,
           securityLevel: "loose",
           fontFamily: "var(--font-sans, Inter, system-ui, sans-serif)",
           themeVariables: {
-            darkMode: isDark,
-            background: isDark ? "#121212" : "#ffffff",
-            primaryColor: isDark ? "#2563eb" : "#3b82f6",
-            primaryTextColor: isDark ? "#f3f4f6" : "#111827",
-            lineColor: isDark ? "#9ca3af" : "#4b5563",
-            secondaryColor: isDark ? "#1e293b" : "#f1f5f9",
-            tertiaryColor: isDark ? "#0f172a" : "#e2e8f0",
+            darkMode: effectiveTheme === "dark",
+            background: effectiveTheme === "dark" ? "#121212" : "#ffffff",
+            primaryColor: effectiveTheme === "dark" ? "#2563eb" : "#3b82f6",
+            primaryTextColor: effectiveTheme === "dark" ? "#f3f4f6" : "#111827",
+            lineColor: effectiveTheme === "dark" ? "#9ca3af" : "#4b5563",
+            secondaryColor: effectiveTheme === "dark" ? "#1e293b" : "#f1f5f9",
+            tertiaryColor: effectiveTheme === "dark" ? "#0f172a" : "#e2e8f0",
           },
         });
       } catch (err) {
@@ -168,7 +178,7 @@ export function CodeBlockView({
       isCancelled = true;
       clearTimeout(renderTimer);
     };
-  }, [isMermaid, rawCode, isDark]);
+  }, [isMermaid, rawCode, isDark, mermaidTheme]);
 
   // Copy code handler
   const handleCopy = useCallback(() => {
@@ -308,6 +318,28 @@ export function CodeBlockView({
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [isFullscreen]);
 
+  // Click outside listener for customize popover
+  useEffect(() => {
+    if (!isCustomizeOpen) return;
+    const handleClose = () => setIsCustomizeOpen(false);
+    document.addEventListener("click", handleClose);
+    return () => document.removeEventListener("click", handleClose);
+  }, [isCustomizeOpen]);
+
+  const getBgClass = (bg: string) => {
+    switch (bg) {
+      case "transparent":
+        return "bg-transparent";
+      case "contrast":
+        return "bg-zinc-100 dark:bg-zinc-900 border-t border-b border-border/80";
+      case "warm":
+        return "bg-amber-50/60 dark:bg-amber-950/20";
+      case "card":
+      default:
+        return "bg-background/50";
+    }
+  };
+
   // ==========================================
   // CASE 1: Standard Code Block (non-Mermaid)
   // ==========================================
@@ -342,6 +374,111 @@ export function CodeBlockView({
       </NodeViewWrapper>
     );
   }
+
+  // Render Fullscreen Lightbox via Portal so it escapes ProseMirror's stacking context completely
+  const fullscreenModal = isFullscreen && typeof document !== "undefined" ? createPortal(
+    <div
+      className="fixed inset-0 z-[99999] bg-background/95 backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in duration-150"
+      onKeyDown={handleKeyDown}
+    >
+      {/* Fullscreen Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm select-none">
+        <div className="flex items-center gap-2">
+          <Workflow className="w-4 h-4 text-emerald-500" />
+          <span className="font-semibold text-sm text-foreground">
+            Mermaid Studio Inspector
+          </span>
+          <span className="text-xs font-mono text-muted-foreground ml-2">
+            Zoom: {Math.round(zoom * 100)}%
+          </span>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-lg border border-border/50">
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="px-2 py-1 text-xs font-mono hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
+              title="Reset 100%"
+            >
+              100%
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground border-l border-border/40"
+              title="Reset Pan"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDownloadSvg}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors"
+            title="Download SVG"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export SVG</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(false)}
+            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            title="Close (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Fullscreen Canvas Viewport */}
+      <div
+        ref={fullscreenContainerRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        className={`flex-1 w-full h-full overflow-hidden flex items-center justify-center p-8 select-none ${getBgClass(
+          mermaidBg
+        )} ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+      >
+        <div
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: "center center",
+            transition: isDragging ? "none" : "transform 0.1s ease-out",
+          }}
+          className="flex items-center justify-center min-w-fit [&>svg]:min-w-[fit-content] [&>svg]:h-auto"
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
+      </div>
+
+      {/* Fullscreen Footer Hint */}
+      <div className="px-4 py-2 border-t border-border/40 bg-card/40 text-center text-xs font-mono text-muted-foreground select-none">
+        Click & drag to pan • Scroll or use buttons to zoom • Press Esc to close
+      </div>
+    </div>,
+    document.body
+  ) : null;
 
   // ==========================================
   // CASE 2: Mermaid Diagram Block
@@ -417,6 +554,93 @@ export function CodeBlockView({
             <>
               {svgContent && (
                 <>
+                  {/* Style Customizer Dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCustomizeOpen(!isCustomizeOpen);
+                      }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors ${
+                        isCustomizeOpen
+                          ? "bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-background/80"
+                      }`}
+                      title="Customize Theme & Canvas"
+                    >
+                      <SlidersHorizontal className="w-3 h-3" />
+                      <span className="hidden sm:inline">Style</span>
+                    </button>
+
+                    {isCustomizeOpen && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-0 top-full mt-1.5 z-50 w-56 p-2.5 rounded-xl bg-popover/95 backdrop-blur-md border border-border shadow-xl text-xs flex flex-col gap-2.5 animate-in fade-in zoom-in-95 duration-100"
+                      >
+                        <div>
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                            Mermaid Theme
+                          </span>
+                          <div className="grid grid-cols-2 gap-1">
+                            {[
+                              { id: "auto", label: "Auto" },
+                              { id: "default", label: "Light" },
+                              { id: "dark", label: "Dark" },
+                              { id: "neutral", label: "Neutral" },
+                              { id: "forest", label: "Forest" },
+                              { id: "base", label: "Base" },
+                            ].map((t) => (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => {
+                                  updateAttributes({ mermaidTheme: t.id });
+                                }}
+                                className={`px-2 py-1 rounded text-left text-[11px] font-medium transition-colors ${
+                                  mermaidTheme === t.id
+                                    ? "bg-primary text-primary-foreground font-semibold"
+                                    : "hover:bg-accent text-foreground"
+                                }`}
+                              >
+                                {t.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border/50 pt-2">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                            Canvas Background
+                          </span>
+                          <div className="grid grid-cols-2 gap-1">
+                            {[
+                              { id: "card", label: "Card" },
+                              { id: "transparent", label: "Transparent" },
+                              { id: "contrast", label: "Contrast" },
+                              { id: "warm", label: "Warm" },
+                            ].map((b) => (
+                              <button
+                                key={b.id}
+                                type="button"
+                                onClick={() => {
+                                  updateAttributes({ mermaidBg: b.id });
+                                }}
+                                className={`px-2 py-1 rounded text-left text-[11px] font-medium transition-colors ${
+                                  mermaidBg === b.id
+                                    ? "bg-primary text-primary-foreground font-semibold"
+                                    : "hover:bg-accent text-foreground"
+                                }`}
+                              >
+                                {b.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setIsFullscreen(true)}
@@ -552,7 +776,9 @@ export function CodeBlockView({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           title="Click diagram to edit • Drag to pan • Ctrl + Wheel to zoom"
-          className="w-full relative overflow-hidden bg-background/50 select-none min-h-[160px] max-h-[580px] flex flex-col justify-center"
+          className={`w-full relative overflow-hidden select-none min-h-[160px] max-h-[580px] flex flex-col justify-center ${getBgClass(
+            mermaidBg
+          )}`}
         >
           {svgContent ? (
             <div
@@ -612,111 +838,8 @@ export function CodeBlockView({
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* 3. FULLSCREEN / LIGHTBOX INSPECT MODAL     */}
-      {/* ========================================== */}
-      {isFullscreen && (
-        <div
-          className="fixed inset-0 z-[9999] bg-background/95 backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in duration-150"
-          onKeyDown={handleKeyDown}
-        >
-          {/* Fullscreen Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/60 select-none">
-            <div className="flex items-center gap-2">
-              <Workflow className="w-4 h-4 text-emerald-500" />
-              <span className="font-semibold text-sm text-foreground">
-                Mermaid Studio Inspector
-              </span>
-              <span className="text-xs font-mono text-muted-foreground ml-2">
-                Zoom: {Math.round(zoom * 100)}%
-              </span>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-lg border border-border/50">
-                <button
-                  type="button"
-                  onClick={handleZoomOut}
-                  className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetZoom}
-                  className="px-2 py-1 text-xs font-mono hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
-                  title="Reset 100%"
-                >
-                  100%
-                </button>
-                <button
-                  type="button"
-                  onClick={handleZoomIn}
-                  className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetZoom}
-                  className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground border-l border-border/40"
-                  title="Reset Pan"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleDownloadSvg}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors"
-                title="Download SVG"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export SVG</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsFullscreen(false)}
-                className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                title="Close (Esc)"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Fullscreen Canvas Viewport */}
-          <div
-            ref={fullscreenContainerRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            className={`flex-1 w-full h-full overflow-hidden flex items-center justify-center p-8 select-none ${
-              isDragging ? "cursor-grabbing" : "cursor-grab"
-            }`}
-          >
-            <div
-              style={{
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                transformOrigin: "center center",
-                transition: isDragging ? "none" : "transform 0.1s ease-out",
-              }}
-              className="flex items-center justify-center min-w-fit [&>svg]:min-w-[fit-content] [&>svg]:h-auto"
-              dangerouslySetInnerHTML={{ __html: svgContent }}
-            />
-          </div>
-
-          {/* Fullscreen Footer Hint */}
-          <div className="px-4 py-2 border-t border-border/40 bg-card/40 text-center text-xs font-mono text-muted-foreground select-none">
-            Click & drag to pan • Scroll or use buttons to zoom • Press Esc to close
-          </div>
-        </div>
-      )}
+      {/* Render Fullscreen Modal via Portal */}
+      {fullscreenModal}
     </NodeViewWrapper>
   );
 }

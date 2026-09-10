@@ -77,7 +77,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
   })();
 
   return (
-    <div className="min-h-screen h-screen flex flex-col justify-between bg-background text-foreground transition-colors duration-300 selection:bg-foreground selection:text-background relative overflow-x-hidden overflow-y-auto">
+    <div className="min-h-dvh flex flex-col justify-between bg-background text-foreground transition-colors duration-300 selection:bg-foreground selection:text-background relative overflow-x-hidden overflow-y-auto">
       {isNavigating && (
         <AppleFullPageLoader
           message="Opening sovereign workspace..."
@@ -89,20 +89,20 @@ export function LandingPage({ session }: { session?: any } = {}) {
       <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-t from-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* Navigation Header */}
-      <header className="px-4 sm:px-6 py-4 border-b border-border/40 backdrop-blur-md sticky top-0 z-50 bg-background/80">
+      <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-border/40 backdrop-blur-md sticky top-0 z-50 bg-background/80">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <NetheriteLogo className="h-8 w-auto text-foreground shrink-0 transition-transform duration-200 hover:scale-105" />
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <NetheriteLogo className="h-7 sm:h-8 w-auto text-foreground shrink-0 transition-transform duration-200 hover:scale-105" />
             <div className="flex flex-col">
-              <span className="font-extrabold tracking-widest text-xs">NETHERITE</span>
-              <span className="text-[10px] text-muted-foreground font-mono tracking-tight">studio</span>
+              <span className="font-extrabold tracking-widest text-[11px] sm:text-xs">NETHERITE</span>
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono tracking-tight">studio</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <a
               href="#downloads"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 hover:bg-accent text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-border/60 hover:bg-accent text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Download</span>
@@ -124,11 +124,11 @@ export function LandingPage({ session }: { session?: any } = {}) {
             {mounted && (
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2 rounded-lg border border-border/50 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-lg border border-border/50 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
                 aria-label="Toggle theme"
               >
-                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {theme === "dark" ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </button>
             )}
 
@@ -136,7 +136,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
               <Link
                 href="/editor"
                 onClick={() => setIsNavigating(true)}
-                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
                 <span>Open Editor</span>
@@ -147,10 +147,11 @@ export function LandingPage({ session }: { session?: any } = {}) {
                   setIsNavigating(true);
                   signIn("google", { callbackUrl: "/editor" });
                 }}
-                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In with Google</span>
+                <span className="hidden sm:inline">Sign In with Google</span>
+                <span className="sm:hidden">Sign In</span>
               </button>
             )}
           </div>

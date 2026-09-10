@@ -298,11 +298,15 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
           </button>
 
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setSelectedEvent(null);
+              setIsCreateModalOpen(true);
+            }}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-sm cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New Event</span>
+            <span className="hidden sm:inline">New Event</span>
+            <span className="sm:hidden">New</span>
           </button>
 
           {onClose && (
@@ -336,11 +340,11 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
       )}
 
       {/* Calendar Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Main View: Month Grid or Agenda List */}
         <div className="flex-1 flex flex-col overflow-y-auto">
           {viewMode === "month" ? (
-            <div className="flex-1 flex flex-col min-h-[600px]">
+            <div className="flex-1 flex flex-col min-h-[500px]">
               {/* Day Headers (Sun - Sat) */}
               <div className="grid grid-cols-7 border-b border-border/70 bg-muted/20 text-center py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -357,11 +361,10 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                       key={idx}
                       onClick={() => {
                         setNewEventDate(day.dateString);
-                        if (dayEvents.length === 0) {
-                          setIsCreateModalOpen(true);
-                        }
+                        setSelectedEvent(null);
+                        setIsCreateModalOpen(true);
                       }}
-                      className={`min-h-[90px] sm:min-h-[110px] p-1.5 flex flex-col transition-colors cursor-pointer ${
+                      className={`min-h-[75px] sm:min-h-[105px] p-1 sm:p-1.5 flex flex-col transition-colors cursor-pointer ${
                         day.isCurrentMonth
                           ? "bg-background hover:bg-accent/20"
                           : "bg-muted/15 text-muted-foreground/50"
@@ -370,7 +373,7 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                       {/* Day Number Badge */}
                       <div className="flex justify-between items-center mb-1">
                         <span
-                          className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${
+                          className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[11px] sm:text-xs font-semibold ${
                             day.isToday
                               ? "bg-primary text-primary-foreground shadow-sm"
                               : day.isCurrentMonth
@@ -391,15 +394,16 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                       {/* Event Chips */}
                       <div className="flex-1 space-y-1 overflow-y-auto max-h-[80px] scrollbar-none">
                         {dayEvents.slice(0, 3).map((event) => {
-                          const isSelected = selectedEvent?.id === event.id;
+                          const isSelected = selectedEvent?.id === event.id && !isCreateModalOpen;
                           return (
                             <div
                               key={event.id}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setIsCreateModalOpen(false);
                                 setSelectedEvent(event);
                               }}
-                              className={`px-2 py-1 rounded-md text-[11px] font-medium truncate flex items-center gap-1.5 transition-all ${
+                              className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-medium truncate flex items-center gap-1 sm:gap-1.5 transition-all ${
                                 isSelected
                                   ? "bg-primary text-primary-foreground shadow-xs"
                                   : "bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20"
@@ -423,6 +427,7 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                 })}
               </div>
             </div>
+
           ) : (
             /* Agenda List View */
             <div className="p-4 sm:p-6 max-w-4xl mx-auto w-full space-y-6">
@@ -529,8 +534,8 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
         </div>
 
         {/* Event Detail Slide-Over / Inspector (Right Column) */}
-        {selectedEvent && (
-          <aside className="w-80 border-l border-border bg-card/60 backdrop-blur-xl p-4 flex flex-col justify-between shrink-0 animate-in slide-in-from-right-4 duration-200">
+        {selectedEvent && !isCreateModalOpen && (
+          <aside className="w-full sm:w-80 md:w-96 border-l border-border bg-card/95 backdrop-blur-xl p-4 flex flex-col justify-between shrink-0 animate-in slide-in-from-right duration-200 absolute sm:relative inset-y-0 right-0 z-30 shadow-xl sm:shadow-none">
             <div className="space-y-4 overflow-y-auto">
               {/* Header */}
               <div className="flex items-start justify-between gap-2">
@@ -539,7 +544,7 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                 </h3>
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="p-1 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -661,15 +666,13 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
             </div>
           </aside>
         )}
-      </div>
 
-      {/* Quick Event Creation Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <form onSubmit={handleCreateEventSubmit}>
-              {/* Modal Header */}
-              <div className="p-4 border-b border-border flex items-center justify-between">
+        {/* Quick Event Creation Slide-Over Panel (Right Column) */}
+        {isCreateModalOpen && (
+          <aside className="w-full sm:w-80 md:w-96 border-l border-border bg-card/95 backdrop-blur-xl flex flex-col justify-between shrink-0 animate-in slide-in-from-right duration-200 shadow-xl sm:shadow-none absolute sm:relative inset-y-0 right-0 z-30 overflow-hidden">
+            <form onSubmit={handleCreateEventSubmit} className="flex flex-col h-full">
+              {/* Panel Header */}
+              <div className="p-4 border-b border-border flex items-center justify-between shrink-0 bg-muted/20">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-primary" />
                   <h3 className="font-bold text-sm text-foreground">New Google Calendar Event</h3>
@@ -677,27 +680,27 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground"
+                  className="p-1.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Modal Inputs */}
-              <div className="p-5 space-y-3.5 text-xs">
+              {/* Panel Body */}
+              <div className="p-4 space-y-3.5 text-xs overflow-y-auto flex-1">
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">Event Title *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. System Softwares Lecture / Sprint Planning"
+                    placeholder="e.g. System Architecture / Sync"
                     value={newEventTitle}
                     onChange={(e) => setNewEventTitle(e.target.value)}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-2">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">Date</label>
                     <input
@@ -707,28 +710,30 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                       className="w-full px-2.5 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="font-semibold text-muted-foreground block mb-1">Start Time</label>
-                    <input
-                      type="time"
-                      value={newEventStartTime}
-                      onChange={(e) => setNewEventStartTime(e.target.value)}
-                      className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold text-muted-foreground block mb-1">End Time</label>
-                    <input
-                      type="time"
-                      value={newEventEndTime}
-                      onChange={(e) => setNewEventEndTime(e.target.value)}
-                      className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="font-semibold text-muted-foreground block mb-1">Start Time</label>
+                      <input
+                        type="time"
+                        value={newEventStartTime}
+                        onChange={(e) => setNewEventStartTime(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold text-muted-foreground block mb-1">End Time</label>
+                      <input
+                        type="time"
+                        value={newEventEndTime}
+                        onChange={(e) => setNewEventEndTime(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Location or Link</label>
+                  <label className="font-semibold text-muted-foreground block mb-1">Location or Meeting Link</label>
                   <input
                     type="text"
                     placeholder="Google Meet, Zoom, or Room 402"
@@ -739,10 +744,10 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                 </div>
 
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Attendees (comma separated emails)</label>
+                  <label className="font-semibold text-muted-foreground block mb-1">Attendees (comma separated)</label>
                   <input
                     type="text"
-                    placeholder="teammate@example.com, prof@college.edu"
+                    placeholder="team@example.com, prof@college.edu"
                     value={newEventAttendees}
                     onChange={(e) => setNewEventAttendees(e.target.value)}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
@@ -752,8 +757,8 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">Description / Notes</label>
                   <textarea
-                    rows={3}
-                    placeholder="Agenda topics, preparation notes, or references..."
+                    rows={4}
+                    placeholder="Agenda topics, notes, or references..."
                     value={newEventDescription}
                     onChange={(e) => setNewEventDescription(e.target.value)}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none resize-none"
@@ -761,8 +766,8 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                 </div>
               </div>
 
-              {/* Modal Footer */}
-              <div className="p-4 border-t border-border flex justify-end gap-2 bg-muted/20">
+              {/* Panel Footer */}
+              <div className="p-4 border-t border-border flex justify-end gap-2 bg-muted/20 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
@@ -779,9 +784,9 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </aside>
+        )}
+      </div>
     </div>
   );
 }
