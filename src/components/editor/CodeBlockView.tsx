@@ -14,6 +14,12 @@ import {
   AlertCircle,
   Sparkles,
   Download,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize2,
+  X,
+  Minimize2,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 
@@ -62,6 +68,15 @@ export function CodeBlockView({
   const [parseError, setParseError] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Zoom and Pan states for Mermaid preview
+  const [zoom, setZoom] = useState<number>(1);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragMovedRef = useRef<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [fitMode, setFitMode] = useState<"readable" | "contain">("readable");
 
   // Focus helper to transition into edit mode
   const enterEditMode = useCallback(() => {
@@ -172,22 +187,94 @@ export function CodeBlockView({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `diagram-${Date.now()}.svg`;
+    link.download = `mermaid-diagram-${Date.now()}.svg`;
     link.click();
     URL.revokeObjectURL(url);
   }, [svgContent]);
 
-  // Intercept Esc & Ctrl+Enter in edit mode
+  // Intercept Esc & Ctrl+Enter in edit mode & fullscreen modal
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (isFullscreen && e.key === "Escape") {
+        e.preventDefault();
+        setIsFullscreen(false);
+        return;
+      }
       if (!isMermaid) return;
       if (e.key === "Escape" || ((e.ctrlKey || e.metaKey) && e.key === "Enter")) {
         e.preventDefault();
         setMode("preview");
       }
     },
-    [isMermaid]
+    [isFullscreen, isMermaid]
   );
+
+  // Zoom in / out / reset helpers
+  const handleZoomIn = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setZoom((z) => Math.min(3.5, parseFloat((z + 0.2).toFixed(2))));
+  };
+
+  const handleZoomOut = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setZoom((z) => Math.max(0.35, parseFloat((z - 0.2).toFixed(2))));
+  };
+
+  const handleResetZoom = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  // Wheel zoom handler: intercepts wheel when Ctrl/Meta or wheeling on diagram
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      setZoom((z) => Math.min(3.5, Math.max(0.35, parseFloat((z + delta).toFixed(2)))));
+    }
+  };
+
+  // Drag-to-pan handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // only left mouse button
+    setIsDragging(true);
+    dragMovedRef.current = false;
+    dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    if (Math.hypot(dx - pan.x, dy - pan.y) > 4) {
+      dragMovedRef.current = true;
+    }
+    setPan({ x: dx, y: dy });
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (isDragging) {
+      setIsDragging(false);
+      // If user simply clicked without panning, enter edit mode!
+      if (!dragMovedRef.current && mode === "preview" && !isFullscreen) {
+        enterEditMode();
+      }
+    }
+  };
+
+  // Close fullscreen on Esc
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isFullscreen]);
 
   // ==========================================
   // CASE 1: Standard Code Block (non-Mermaid)
@@ -231,24 +318,63 @@ export function CodeBlockView({
     <NodeViewWrapper
       ref={containerRef}
       onKeyDown={handleKeyDown}
+      data-mermaid-container="true"
       className="relative group/mermaid my-5 rounded-xl border border-border/80 bg-card/60 dark:bg-card/30 shadow-xs overflow-hidden transition-all focus-within:ring-1 focus-within:ring-primary/40"
     >
       {/* Header Bar */}
-      <div className="flex items-center justify-between px-3.5 py-2 bg-muted/50 dark:bg-muted/30 border-b border-border/60 text-xs select-none">
-        {/* Left: Mode Badge */}
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-3.5 py-2 bg-muted/50 dark:bg-muted/30 border-b border-border/60 text-xs select-none gap-2">
+        {/* Left: Mode Badge & Zoom Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
           {mode === "preview" ? (
-            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
               <Workflow className="w-3.5 h-3.5" />
-              <span>Mermaid Diagram</span>
+              <span>Mermaid</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
               <Code2 className="w-3.5 h-3.5 animate-pulse" />
               <span>Editing Mermaid</span>
               <span className="text-[10px] font-mono text-muted-foreground hidden sm:inline">
-                (Press Esc or Ctrl+Enter to preview)
+                (Esc to preview)
               </span>
+            </div>
+          )}
+
+          {/* Dedicated Zoom Controls in Preview Mode */}
+          {mode === "preview" && svgContent && (
+            <div className="flex items-center gap-0.5 ml-2 p-0.5 bg-background/80 dark:bg-background/60 border border-border/60 rounded-lg text-muted-foreground">
+              <button
+                type="button"
+                onClick={handleZoomOut}
+                className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors"
+                title="Zoom Out (or Ctrl + Wheel down)"
+              >
+                <ZoomOut className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={handleResetZoom}
+                className="px-1.5 py-0.5 text-[10px] font-mono hover:text-foreground hover:bg-muted rounded transition-colors"
+                title="Reset Zoom to 100%"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <button
+                type="button"
+                onClick={handleZoomIn}
+                className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors"
+                title="Zoom In (or Ctrl + Wheel up)"
+              >
+                <ZoomIn className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={handleResetZoom}
+                className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors ml-0.5 border-l border-border/40"
+                title="Reset Pan & Zoom"
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+              </button>
             </div>
           )}
         </div>
@@ -258,15 +384,26 @@ export function CodeBlockView({
           {mode === "preview" ? (
             <>
               {svgContent && (
-                <button
-                  type="button"
-                  onClick={handleDownloadSvg}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-                  title="Download SVG Diagram"
-                >
-                  <Download className="w-3 h-3" />
-                  <span className="hidden sm:inline">SVG</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreen(true)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
+                    title="Fullscreen Inspect & Pan"
+                  >
+                    <Maximize2 className="w-3 h-3" />
+                    <span className="hidden sm:inline">Expand</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadSvg}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
+                    title="Download SVG Diagram"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span className="hidden sm:inline">SVG</span>
+                  </button>
+                </>
               )}
               <button
                 type="button"
@@ -379,23 +516,37 @@ export function CodeBlockView({
       {/* ========================================== */}
       {mode === "preview" && (
         <div
-          onClick={enterEditMode}
-          title="Click diagram to edit Mermaid code"
-          className="w-full p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/15 transition-all overflow-x-auto min-h-[120px] select-none rounded-b-xl group/preview"
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          title="Click diagram to edit • Drag to pan • Ctrl + Wheel to zoom"
+          className="w-full relative overflow-hidden bg-background/50 select-none min-h-[160px] max-h-[580px] flex flex-col justify-center"
         >
           {svgContent ? (
-            <div className="relative w-full flex justify-center">
+            <div
+              className={`w-full h-full overflow-auto p-6 flex items-center justify-center ${
+                isDragging ? "cursor-grabbing" : "cursor-grab"
+              }`}
+              style={{
+                userSelect: "none",
+              }}
+            >
               <div
-                className="mermaid-svg-display max-w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto transition-transform group-hover/preview:scale-[1.008]"
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transformOrigin: "center center",
+                  transition: isDragging ? "none" : "transform 0.12s ease-out",
+                }}
+                className="mermaid-viewport flex justify-center items-center min-w-fit [&>svg]:min-w-[fit-content] [&>svg]:h-auto [&>svg]:overflow-visible"
                 dangerouslySetInnerHTML={{ __html: svgContent }}
               />
-              {/* Subtle hover prompt */}
-              <div className="absolute bottom-0 right-0 opacity-0 group-hover/preview:opacity-100 transition-opacity bg-background/90 dark:bg-background/90 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-mono text-muted-foreground border border-border/50 shadow-xs pointer-events-none">
-                Click to edit
-              </div>
             </div>
           ) : parseError ? (
-            <div className="p-4 flex flex-col items-center justify-center gap-2 text-center text-red-500 dark:text-red-400">
+            <div
+              onClick={enterEditMode}
+              className="p-6 flex flex-col items-center justify-center gap-2 text-center text-red-500 dark:text-red-400 cursor-pointer"
+            >
               <AlertCircle className="w-5 h-5 text-red-500" />
               <span className="text-xs font-mono font-medium max-w-md break-all">
                 {parseError}
@@ -405,7 +556,10 @@ export function CodeBlockView({
               </span>
             </div>
           ) : (
-            <div className="p-6 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+            <div
+              onClick={enterEditMode}
+              className="p-8 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground cursor-pointer hover:bg-muted/10 transition-colors"
+            >
               <Workflow className="w-6 h-6 opacity-40" />
               <span className="text-xs font-medium">Empty Mermaid Diagram</span>
               <span className="text-[11px] opacity-70">
@@ -413,6 +567,123 @@ export function CodeBlockView({
               </span>
             </div>
           )}
+
+          {/* Floating Pan & Zoom Hint Bar */}
+          {svgContent && (
+            <div className="absolute bottom-2 right-2 opacity-0 group-hover/mermaid:opacity-100 transition-opacity bg-background/90 dark:bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-mono text-muted-foreground border border-border/60 shadow-xs pointer-events-none flex items-center gap-2">
+              <span>Drag to pan</span>
+              <span>•</span>
+              <span>Ctrl + Wheel to zoom</span>
+              <span>•</span>
+              <span className="text-primary font-medium">Click to edit</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* 3. FULLSCREEN / LIGHTBOX INSPECT MODAL     */}
+      {/* ========================================== */}
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 z-[9999] bg-background/95 backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in duration-150"
+          onKeyDown={handleKeyDown}
+        >
+          {/* Fullscreen Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/60 select-none">
+            <div className="flex items-center gap-2">
+              <Workflow className="w-4 h-4 text-emerald-500" />
+              <span className="font-semibold text-sm text-foreground">
+                Mermaid Studio Inspector
+              </span>
+              <span className="text-xs font-mono text-muted-foreground ml-2">
+                Zoom: {Math.round(zoom * 100)}%
+              </span>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-lg border border-border/50">
+                <button
+                  type="button"
+                  onClick={handleZoomOut}
+                  className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="px-2 py-1 text-xs font-mono hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
+                  title="Reset 100%"
+                >
+                  100%
+                </button>
+                <button
+                  type="button"
+                  onClick={handleZoomIn}
+                  className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="p-1.5 hover:text-foreground hover:bg-background rounded transition-colors text-muted-foreground border-l border-border/40"
+                  title="Reset Pan"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDownloadSvg}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                title="Download SVG"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export SVG</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(false)}
+                className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                title="Close (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Fullscreen Canvas Viewport */}
+          <div
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            className={`flex-1 w-full h-full overflow-hidden flex items-center justify-center p-8 select-none ${
+              isDragging ? "cursor-grabbing" : "cursor-grab"
+            }`}
+          >
+            <div
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transformOrigin: "center center",
+                transition: isDragging ? "none" : "transform 0.1s ease-out",
+              }}
+              className="flex items-center justify-center min-w-fit [&>svg]:min-w-[fit-content] [&>svg]:h-auto"
+              dangerouslySetInnerHTML={{ __html: svgContent }}
+            />
+          </div>
+
+          {/* Fullscreen Footer Hint */}
+          <div className="px-4 py-2 border-t border-border/40 bg-card/40 text-center text-xs font-mono text-muted-foreground select-none">
+            Click & drag to pan • Scroll or use buttons to zoom • Press Esc to close
+          </div>
         </div>
       )}
     </NodeViewWrapper>

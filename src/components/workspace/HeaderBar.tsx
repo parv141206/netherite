@@ -22,7 +22,13 @@ import {
   Workflow,
   RefreshCw,
 } from "lucide-react";
-import { useTheme } from "~/components/ThemeProvider";
+import {
+  useTheme,
+  MD_THEMES,
+  GLOBAL_FONTS,
+  type MdThemeId,
+  type GlobalFontId,
+} from "~/components/ThemeProvider";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 import { WindowControls } from "./WindowControls";
 
@@ -42,8 +48,8 @@ interface HeaderBarProps {
   sidebarCollapsed?: boolean;
   wordCount?: number;
   charCount?: number;
-  editorFont?: "sans" | "serif" | "mono";
-  onEditorFontChange?: (font: "sans" | "serif" | "mono") => void;
+  editorFont?: string;
+  onEditorFontChange?: (font: string) => void;
   isOutlineOpen?: boolean;
   onToggleOutline?: () => void;
 }
@@ -69,7 +75,14 @@ export function HeaderBar({
   isOutlineOpen = false,
   onToggleOutline,
 }: HeaderBarProps) {
-  const { theme, setTheme } = useTheme();
+  const {
+    theme,
+    setTheme,
+    mdTheme,
+    setMdTheme,
+    globalFont,
+    setGlobalFont,
+  } = useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [warmth, setWarmth] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -348,50 +361,91 @@ export function HeaderBar({
 
         {/* Notion Sleek Popover Menu */}
         {showMoreMenu && (
-          <div className="absolute right-0 top-9 w-64 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
-            {/* Font Style Options (Notion Style) */}
-            {onEditorFontChange && (
-              <div className="p-1.5 pb-2.5 border-b border-border/40">
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Typography Style
+          <div className="absolute right-0 top-9 w-72 sm:w-80 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs max-h-[85vh] overflow-y-auto">
+            {/* Markdown Themes (7 Themes in both Light & Dark = 14) */}
+            <div className="p-1.5 pb-2.5 border-b border-border/40">
+              <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-primary" />
+                  <span>Theme & Palette (14 Styles)</span>
                 </div>
-                <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted/60 rounded-lg border border-border/30">
-                  <button
-                    onClick={() => onEditorFontChange("sans")}
-                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-md transition-all cursor-pointer ${
-                      editorFont === "sans"
-                        ? "bg-background text-foreground shadow-xs font-semibold ring-1 ring-border/50"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                    }`}
-                  >
-                    <span className="text-base font-sans font-medium mb-0.5">Ag</span>
-                    <span className="text-[10px] leading-none">Default</span>
-                  </button>
-                  <button
-                    onClick={() => onEditorFontChange("serif")}
-                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-md transition-all cursor-pointer ${
-                      editorFont === "serif"
-                        ? "bg-background text-foreground shadow-xs font-semibold ring-1 ring-border/50"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                    }`}
-                  >
-                    <span className="text-base font-serif font-medium mb-0.5">Ag</span>
-                    <span className="text-[10px] leading-none">Literata</span>
-                  </button>
-                  <button
-                    onClick={() => onEditorFontChange("mono")}
-                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-md transition-all cursor-pointer ${
-                      editorFont === "mono"
-                        ? "bg-background text-foreground shadow-xs font-semibold ring-1 ring-border/50"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                    }`}
-                  >
-                    <span className="text-base font-mono font-medium mb-0.5">Ag</span>
-                    <span className="text-[10px] leading-none">Mono</span>
-                  </button>
-                </div>
+                <span className="text-[10px] font-mono text-primary font-medium capitalize">
+                  {mdTheme}
+                </span>
               </div>
-            )}
+              <div className="grid grid-cols-2 gap-1.5">
+                {MD_THEMES.map((t) => {
+                  const active = mdTheme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setMdTheme(t.id)}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        active
+                          ? "border-primary bg-primary/10 text-primary font-semibold shadow-2xs ring-1 ring-primary/30"
+                          : "border-border/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className="text-sm shrink-0">{t.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] truncate leading-tight font-medium">
+                          {t.name}
+                        </div>
+                      </div>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-border/40"
+                        style={{ backgroundColor: t.previewColor }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Global Google Fonts Selection */}
+            <div className="p-1.5 py-2.5 border-b border-border/40 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-1.5">
+                  <Type className="w-3.5 h-3.5 text-primary" />
+                  <span>Global Google Font</span>
+                </div>
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  {GLOBAL_FONTS.find((f) => f.id === globalFont)?.name?.split(" ")[0]}
+                </span>
+              </div>
+              <select
+                value={globalFont}
+                onChange={(e) => {
+                  const f = e.target.value as GlobalFontId;
+                  setGlobalFont(f);
+                  onEditorFontChange?.(f);
+                }}
+                className="w-full bg-background border border-border/70 rounded-lg px-2.5 py-1.5 text-xs text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+              >
+                <optgroup label="Modern Sans-Serif">
+                  <option value="system">Geist / Clean Sans</option>
+                  <option value="inter">Inter (Clean & Universal)</option>
+                  <option value="outfit">Outfit (Modern Editorial)</option>
+                  <option value="jakarta">Plus Jakarta Sans (Sharp)</option>
+                  <option value="dm-sans">DM Sans (Approachable)</option>
+                </optgroup>
+                <optgroup label="🎀 Pookie & Cute Handwriting">
+                  <option value="crafty-girls">Crafty Girls 🎀 (Pookie Cute)</option>
+                  <option value="schoolbell">Schoolbell ✏️ (Handwritten)</option>
+                </optgroup>
+                <optgroup label="Book & Literary Serif">
+                  <option value="literata">Literata (Warm Serif)</option>
+                  <option value="playfair">Playfair Display (Elegance)</option>
+                  <option value="lora">Lora (Contemporary)</option>
+                  <option value="merriweather">Merriweather (Stately)</option>
+                </optgroup>
+                <optgroup label="Developer Monospace">
+                  <option value="jetbrains">JetBrains Mono (Code)</option>
+                  <option value="fira">Fira Code (Technical)</option>
+                  <option value="space-mono">Space Mono (Retro-Future)</option>
+                </optgroup>
+              </select>
+            </div>
 
             {/* Blue Light / Warm Reading Mode Slider */}
             <div className="p-2 border-b border-border/40 space-y-2">

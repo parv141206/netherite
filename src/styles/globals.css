@@ -153,6 +153,7 @@
   margin-top: 2.25rem;
   margin-bottom: 1rem;
   line-height: 1.25;
+  color: var(--md-heading-color, var(--foreground));
 }
 
 .ProseMirror h2 {
@@ -162,6 +163,7 @@
   margin-top: 1.85rem;
   margin-bottom: 0.75rem;
   line-height: 1.3;
+  color: var(--md-heading-color, var(--foreground));
 }
 
 .ProseMirror h3 {
@@ -171,6 +173,7 @@
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
   line-height: 1.35;
+  color: var(--md-heading-color, var(--foreground));
 }
 
 .ProseMirror h4 {
@@ -289,9 +292,9 @@
 
 /* Inline Code Snippets */
 .ProseMirror code:not(pre code) {
-  background-color: var(--muted);
-  border: 1px solid var(--border);
-  color: var(--foreground);
+  background-color: var(--md-code-bg, var(--muted));
+  border: 1px solid var(--md-code-border, var(--border));
+  color: var(--md-code-fg, var(--foreground));
   font-family: var(--font-mono);
   font-size: 0.875em;
   padding: 0.15rem 0.35rem;
@@ -420,8 +423,10 @@
 
 /* Blockquote Callout */
 .ProseMirror blockquote {
-  border-left: 3px solid var(--foreground);
-  padding-left: 1rem;
+  border-left: 3.5px solid var(--md-blockquote-border, var(--foreground));
+  background-color: var(--md-blockquote-bg, transparent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 0.6rem 1.1rem;
   margin: 1.25rem 0;
   font-style: italic;
   color: var(--muted-foreground);
@@ -498,13 +503,13 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   margin: 1.5rem 0;
   overflow: hidden;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+  border: 1px solid var(--md-table-border, var(--border));
 }
 
 .ProseMirror td,
 .ProseMirror th {
   min-width: 1em;
-  border: 1px solid var(--border);
+  border: 1px solid var(--md-table-border, var(--border));
   padding: 0.5rem 0.75rem;
   vertical-align: top;
   box-sizing: border-box;
@@ -514,7 +519,12 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 .ProseMirror th {
   font-weight: 600;
   text-align: left;
-  background-color: var(--muted);
+  background-color: var(--md-table-header-bg, var(--muted));
+  color: var(--md-table-header-fg, var(--foreground));
+}
+
+.ProseMirror tr:nth-child(even) td {
+  background-color: var(--md-table-row-alt, transparent);
 }
 
 /* KaTeX Display Math (NotebookLM Style: Clean, Centered, No Clunky Borders) */
@@ -607,3 +617,260 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
     transform: translateX(100%);
   }
 }
+
+/* ========================================================= */
+/* 7 MD THEMES IN LIGHT & DARK MODE (14 TOTAL VARIATIONS)    */
+/* ========================================================= */
+
+/* 1. Netherite (Minimalist Linear/Obsidian) */
+:root, [data-md-theme="netherite"] {
+  --md-accent: #2563eb;
+  --md-heading-color: var(--foreground);
+  --md-table-header-bg: var(--muted);
+  --md-table-header-fg: var(--foreground);
+  --md-table-border: var(--border);
+  --md-table-row-alt: rgba(0, 0, 0, 0.02);
+  --md-blockquote-border: var(--foreground);
+  --md-blockquote-bg: transparent;
+  --md-code-bg: var(--muted);
+  --md-code-fg: var(--foreground);
+  --md-code-border: var(--border);
+}
+.dark, .dark [data-md-theme="netherite"], .dark[data-md-theme="netherite"] {
+  --md-accent: #3b82f6;
+  --md-heading-color: var(--foreground);
+  --md-table-header-bg: #18181b;
+  --md-table-header-fg: #fafafa;
+  --md-table-border: #27272a;
+  --md-table-row-alt: rgba(255, 255, 255, 0.02);
+  --md-blockquote-border: #52525b;
+  --md-blockquote-bg: rgba(24, 24, 27, 0.3);
+  --md-code-bg: #18181b;
+  --md-code-fg: #fafafa;
+  --md-code-border: #27272a;
+}
+
+/* 2. Pookie Mode 🎀 (Cute, Elegant Pastel Strawberry & Lavender) */
+[data-md-theme="pookie"] {
+  --md-accent: #db2777;
+  --md-heading-color: #be185d;
+  --md-table-header-bg: #fce7f3;
+  --md-table-header-fg: #9d174d;
+  --md-table-border: #fbcfe8;
+  --md-table-row-alt: #fdf2f8;
+  --md-blockquote-border: #f472b6;
+  --md-blockquote-bg: #fdf4f8;
+  --md-code-bg: #fdf2f8;
+  --md-code-fg: #be185d;
+  --md-code-border: #fbcfe8;
+}
+.dark [data-md-theme="pookie"], .dark[data-md-theme="pookie"] {
+  --md-accent: #f472b6;
+  --md-heading-color: #fbcfe8;
+  --md-table-header-bg: #4c0519;
+  --md-table-header-fg: #fce7f3;
+  --md-table-border: #831843;
+  --md-table-row-alt: #1f0c15;
+  --md-blockquote-border: #f472b6;
+  --md-blockquote-bg: #2a0e1c;
+  --md-code-bg: #2e1020;
+  --md-code-fg: #f9a8d4;
+  --md-code-border: #701a45;
+}
+
+/* 3. Nordic Frost ❄️ (Authentic Polar Night & Snow Storm) */
+[data-md-theme="nord"] {
+  --md-accent: #5e81ac;
+  --md-heading-color: #2e3440;
+  --md-table-header-bg: #e5e9f0;
+  --md-table-header-fg: #2e3440;
+  --md-table-border: #d8dee9;
+  --md-table-row-alt: #f0f4f8;
+  --md-blockquote-border: #88c0d0;
+  --md-blockquote-bg: #eceff4;
+  --md-code-bg: #e5e9f0;
+  --md-code-fg: #4c566a;
+  --md-code-border: #d8dee9;
+}
+.dark [data-md-theme="nord"], .dark[data-md-theme="nord"] {
+  --md-accent: #88c0d0;
+  --md-heading-color: #eceff4;
+  --md-table-header-bg: #3b4252;
+  --md-table-header-fg: #88c0d0;
+  --md-table-border: #434c5e;
+  --md-table-row-alt: #242933;
+  --md-blockquote-border: #81a1c1;
+  --md-blockquote-bg: #2e3440;
+  --md-code-bg: #3b4252;
+  --md-code-fg: #88c0d0;
+  --md-code-border: #4c566a;
+}
+
+/* 4. Vampire Gothic 🧛 (Dracula Neon & Royal Plum) */
+[data-md-theme="dracula"] {
+  --md-accent: #9333ea;
+  --md-heading-color: #581c87;
+  --md-table-header-bg: #f3e8ff;
+  --md-table-header-fg: #581c87;
+  --md-table-border: #e9d5ff;
+  --md-table-row-alt: #faf5ff;
+  --md-blockquote-border: #a855f7;
+  --md-blockquote-bg: #faf5ff;
+  --md-code-bg: #f5f3ff;
+  --md-code-fg: #7e22ce;
+  --md-code-border: #ddd6fe;
+}
+.dark [data-md-theme="dracula"], .dark[data-md-theme="dracula"] {
+  --md-accent: #bd93f9;
+  --md-heading-color: #ff79c6;
+  --md-table-header-bg: #36304a;
+  --md-table-header-fg: #50fa7b;
+  --md-table-border: #6272a4;
+  --md-table-row-alt: #1e1a29;
+  --md-blockquote-border: #bd93f9;
+  --md-blockquote-bg: #282a36;
+  --md-code-bg: #383a59;
+  --md-code-fg: #f1fa8c;
+  --md-code-border: #6272a4;
+}
+
+/* 5. Amber Parchment 📜 (Warm Library & Classical Solarized) */
+[data-md-theme="solarized"] {
+  --md-accent: #b58900;
+  --md-heading-color: #cb4b16;
+  --md-table-header-bg: #eee8d5;
+  --md-table-header-fg: #586e75;
+  --md-table-border: #e0d8c3;
+  --md-table-row-alt: #fdf6e3;
+  --md-blockquote-border: #cb4b16;
+  --md-blockquote-bg: #fdf6e3;
+  --md-code-bg: #eee8d5;
+  --md-code-fg: #cb4b16;
+  --md-code-border: #e0d8c3;
+}
+.dark [data-md-theme="solarized"], .dark[data-md-theme="solarized"] {
+  --md-accent: #2aa198;
+  --md-heading-color: #b58900;
+  --md-table-header-bg: #073642;
+  --md-table-header-fg: #93a1a1;
+  --md-table-border: #0e4b5c;
+  --md-table-row-alt: #00252e;
+  --md-blockquote-border: #b58900;
+  --md-blockquote-bg: #002b36;
+  --md-code-bg: #073642;
+  --md-code-fg: #2aa198;
+  --md-code-border: #0e4b5c;
+}
+
+/* 6. Botanical Sage 🌿 (Calming Matcha, Eucalyptus & Forest) */
+[data-md-theme="forest"] {
+  --md-accent: #166534;
+  --md-heading-color: #14532d;
+  --md-table-header-bg: #dcfce7;
+  --md-table-header-fg: #14532d;
+  --md-table-border: #bbf7d0;
+  --md-table-row-alt: #f0fdf4;
+  --md-blockquote-border: #22c55e;
+  --md-blockquote-bg: #f0fdf4;
+  --md-code-bg: #dcfce7;
+  --md-code-fg: #15803d;
+  --md-code-border: #bbf7d0;
+}
+.dark [data-md-theme="forest"], .dark[data-md-theme="forest"] {
+  --md-accent: #4ade80;
+  --md-heading-color: #86efac;
+  --md-table-header-bg: #14532d;
+  --md-table-header-fg: #86efac;
+  --md-table-border: #166534;
+  --md-table-row-alt: #092314;
+  --md-blockquote-border: #22c55e;
+  --md-blockquote-bg: #0b2e1a;
+  --md-code-bg: #133821;
+  --md-code-fg: #86efac;
+  --md-code-border: #1b4d2e;
+}
+
+/* 7. Cyber Neon ⚡ (Electric Matrix & Holographic Blue) */
+[data-md-theme="cyber"] {
+  --md-accent: #0284c7;
+  --md-heading-color: #0369a1;
+  --md-table-header-bg: #e0f2fe;
+  --md-table-header-fg: #0369a1;
+  --md-table-border: #bae6fd;
+  --md-table-row-alt: #f0f9ff;
+  --md-blockquote-border: #0ea5e9;
+  --md-blockquote-bg: #f0f9ff;
+  --md-code-bg: #e0f2fe;
+  --md-code-fg: #0284c7;
+  --md-code-border: #7dd3fc;
+}
+.dark [data-md-theme="cyber"], .dark[data-md-theme="cyber"] {
+  --md-accent: #00f5d4;
+  --md-heading-color: #00f5d4;
+  --md-table-header-bg: #082f49;
+  --md-table-header-fg: #38bdf8;
+  --md-table-border: #0c4a6e;
+  --md-table-row-alt: #041724;
+  --md-blockquote-border: #00f5d4;
+  --md-blockquote-bg: #031926;
+  --md-code-bg: #082f49;
+  --md-code-fg: #00f5d4;
+  --md-code-border: #0ea5e9;
+}
+
+/* ========================================================= */
+/* GLOBAL GOOGLE FONTS INJECTIONS                            */
+/* ========================================================= */
+[data-global-font="crafty-girls"] .ProseMirror,
+[data-global-font="crafty-girls"] .font-dynamic-editor {
+  font-family: 'Crafty Girls', cursive, sans-serif !important;
+}
+[data-global-font="schoolbell"] .ProseMirror,
+[data-global-font="schoolbell"] .font-dynamic-editor {
+  font-family: 'Schoolbell', cursive, sans-serif !important;
+}
+[data-global-font="inter"] .ProseMirror,
+[data-global-font="inter"] .font-dynamic-editor {
+  font-family: 'Inter', sans-serif !important;
+}
+[data-global-font="outfit"] .ProseMirror,
+[data-global-font="outfit"] .font-dynamic-editor {
+  font-family: 'Outfit', sans-serif !important;
+}
+[data-global-font="jakarta"] .ProseMirror,
+[data-global-font="jakarta"] .font-dynamic-editor {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+[data-global-font="dm-sans"] .ProseMirror,
+[data-global-font="dm-sans"] .font-dynamic-editor {
+  font-family: 'DM Sans', sans-serif !important;
+}
+[data-global-font="literata"] .ProseMirror,
+[data-global-font="literata"] .font-dynamic-editor {
+  font-family: var(--font-literata), 'Literata', Georgia, serif !important;
+}
+[data-global-font="playfair"] .ProseMirror,
+[data-global-font="playfair"] .font-dynamic-editor {
+  font-family: 'Playfair Display', Georgia, serif !important;
+}
+[data-global-font="lora"] .ProseMirror,
+[data-global-font="lora"] .font-dynamic-editor {
+  font-family: 'Lora', serif !important;
+}
+[data-global-font="merriweather"] .ProseMirror,
+[data-global-font="merriweather"] .font-dynamic-editor {
+  font-family: 'Merriweather', serif !important;
+}
+[data-global-font="jetbrains"] .ProseMirror,
+[data-global-font="jetbrains"] .font-dynamic-editor {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+[data-global-font="fira"] .ProseMirror,
+[data-global-font="fira"] .font-dynamic-editor {
+  font-family: 'Fira Code', monospace !important;
+}
+[data-global-font="space-mono"] .ProseMirror,
+[data-global-font="space-mono"] .font-dynamic-editor {
+  font-family: 'Space Mono', monospace !important;
+}
+

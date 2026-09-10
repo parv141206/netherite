@@ -43,7 +43,7 @@ interface Props {
   onEditorReady?: (editor: any) => void;
   onStatsChange?: (stats: { words: number; chars: number }) => void;
   isLoading?: boolean;
-  editorFont?: "sans" | "serif" | "mono";
+  editorFont?: string;
 }
 
 function DocumentTitleInput({
@@ -76,12 +76,11 @@ function DocumentTitleInput({
       onBlur={handleCommit}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
-          e.preventDefault();
-          handleCommit();
+          e.currentTarget.blur();
         }
       }}
       placeholder="Untitled"
-      className="w-full text-3xl sm:text-4xl font-bold tracking-tight bg-transparent text-foreground placeholder:text-muted-foreground/30 focus:outline-none border-none pb-2 transition-all font-sans"
+      className="w-full text-3xl sm:text-4xl font-bold tracking-tight bg-transparent text-foreground placeholder:text-muted-foreground/30 focus:outline-none border-none pb-2 transition-all font-dynamic-editor"
     />
   );
 }
@@ -117,12 +116,13 @@ export function Editor({
   const [showZoomBadge, setShowZoomBadge] = useState(false);
   const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fontClass =
+  const fontClass = `font-dynamic-editor ${
     editorFont === "serif"
       ? "font-serif"
       : editorFont === "mono"
       ? "font-mono"
-      : "font-sans";
+      : "font-sans"
+  }`;
 
   const isInternalUpdateRef = useRef(false);
   const lastLoadedContentRef = useRef<string>(initialContent);
@@ -347,6 +347,11 @@ export function Editor({
     };
 
     const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.("[data-mermaid-container]")) {
+        return;
+      }
+
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         e.stopPropagation();
@@ -370,6 +375,11 @@ export function Editor({
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.("[data-mermaid-container]")) {
+        return;
+      }
+
       if (e.touches.length === 2 && e.touches[0] && e.touches[1]) {
         initialDist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
@@ -380,6 +390,10 @@ export function Editor({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.("[data-mermaid-container]")) {
+        return;
+      }
       if (e.touches.length === 2 && initialDist > 0 && e.touches[0] && e.touches[1]) {
         e.preventDefault();
         e.stopPropagation();

@@ -115,7 +115,12 @@ export function WorkspaceLayout({
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [isCreateDiagramModalOpen, setIsCreateDiagramModalOpen] = useState(false);
   const [createDiagramParentId, setCreateDiagramParentId] = useState<string | undefined>(undefined);
-  const [editorFont, setEditorFont] = useState<"sans" | "serif" | "mono">("sans");
+  const [editorFont, setEditorFont] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_global_font") || "system";
+    }
+    return "system";
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Local Optimistic Notes State for 0ms Latency
