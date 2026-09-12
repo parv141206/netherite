@@ -77,3 +77,4 @@ yarn-error.log*
 # Legacy Flutter
 .dart_tool/
 flutter_archive/
+.env*
