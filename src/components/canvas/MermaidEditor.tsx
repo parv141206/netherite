@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useId,
 } from "react";
-import mermaid from "mermaid";
+import { renderMermaidQueued, postProcessSvg } from "~/components/editor/mermaidQueue";
 import {
   Download,
   Sparkles,
@@ -229,30 +229,51 @@ export default function MermaidEditor({
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
 
-  // Initialize Mermaid configuration
+  // Touch pinch-to-zoom for canvas preview
+  const lastTouchDistRef = useRef<number>(0);
   useEffect(() => {
-    try {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: isDark ? "dark" : "default",
-        securityLevel: "loose",
-        fontFamily: "var(--font-sans, Inter, system-ui, sans-serif)",
-        themeVariables: {
-          darkMode: isDark,
-          background: isDark ? "#121212" : "#ffffff",
-          primaryColor: isDark ? "#2563eb" : "#3b82f6",
-          primaryTextColor: isDark ? "#f3f4f6" : "#111827",
-          lineColor: isDark ? "#9ca3af" : "#4b5563",
-          secondaryColor: isDark ? "#1e293b" : "#f1f5f9",
-          tertiaryColor: isDark ? "#0f172a" : "#e2e8f0",
-        },
-      });
-    } catch (e) {
-      console.warn("Mermaid initialize warning:", e);
-    }
-  }, [isDark]);
+    const el = previewContainerRef.current;
+    if (!el) return;
 
-  // Debounced rendering
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDistRef.current = Math.hypot(dx, dy);
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        if (lastTouchDistRef.current > 0) {
+          const scale = dist / lastTouchDistRef.current;
+          setZoom((z) =>
+            Math.min(3.5, Math.max(0.2, parseFloat((z * scale).toFixed(2))))
+          );
+        }
+        lastTouchDistRef.current = dist;
+      }
+    };
+
+    const onTouchEnd = () => {
+      lastTouchDistRef.current = 0;
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, []);
+
+  // Debounced rendering using shared serial queue
   useEffect(() => {
     let isCancelled = false;
     const renderTimer = setTimeout(async () => {
@@ -263,12 +284,12 @@ export default function MermaidEditor({
       }
 
       setIsRendering(true);
-      const uniqueId = `mermaid-render-${Math.random().toString(36).substring(2, 9)}`;
+      const uniqueId = `mermaid-studio-${Math.random().toString(36).substring(2, 9)}`;
 
       try {
-        const { svg } = await mermaid.render(uniqueId, code);
+        const { svg } = await renderMermaidQueued(uniqueId, code, isDark);
         if (!isCancelled) {
-          setSvgContent(svg);
+          setSvgContent(postProcessSvg(svg, isDark));
           setParseError(null);
         }
       } catch (err: any) {
@@ -281,13 +302,8 @@ export default function MermaidEditor({
         if (!isCancelled) {
           setIsRendering(false);
         }
-        // Cleanup any phantom containers created by mermaid render error
-        const phantom = document.getElementById(uniqueId);
-        if (phantom) phantom.remove();
-        const errorEl = document.getElementById(`d${uniqueId}`);
-        if (errorEl) errorEl.remove();
       }
-    }, 250);
+    }, 200);
 
     return () => {
       isCancelled = true;

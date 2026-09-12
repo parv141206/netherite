@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { NodeViewWrapper, NodeViewContent } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
-import mermaid from "mermaid";
 import {
   Workflow,
   Code2,
@@ -24,100 +23,6 @@ import {
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { renderMermaidQueued, postProcessSvg } from "./mermaidQueue";
-
-/* ─── Helpers ─── */
-
-/** Initializes Mermaid with correct theme variables */
-function initMermaidTheme(isDark: boolean, mermaidTheme: string) {
-  const effectiveTheme =
-    mermaidTheme === "auto" ? (isDark ? "dark" : "neutral") : mermaidTheme;
-
-  try {
-    mermaid.initialize({
-      startOnLoad: false,
-      suppressErrorRendering: true,
-      theme: effectiveTheme as any,
-      securityLevel: "loose",
-      fontFamily:
-        "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      flowchart: {
-        htmlLabels: true,
-        useMaxWidth: false,
-        padding: 24,
-        nodeSpacing: 50,
-        rankSpacing: 50,
-        curve: "basis",
-      },
-      sequence: {
-        useMaxWidth: false,
-        showSequenceNumbers: true,
-      },
-      themeVariables: isDark
-        ? {
-            darkMode: true,
-            background: "transparent",
-            primaryColor: "#1e293b",
-            primaryTextColor: "#f1f5f9",
-            primaryBorderColor: "#475569",
-            lineColor: "#94a3b8",
-            secondaryColor: "#0f172a",
-            tertiaryColor: "#1e293b",
-            nodeBorder: "#475569",
-            mainBkg: "#1e293b",
-            nodeTextColor: "#f8fafc",
-            clusterBkg: "#1e293b",
-            clusterBorder: "#475569",
-            titleColor: "#f8fafc",
-            edgeLabelBackground: "#0f172a",
-            actorBkg: "#1e293b",
-            actorBorder: "#475569",
-            actorTextColor: "#f8fafc",
-            actorLineColor: "#64748b",
-            signalColor: "#e2e8f0",
-            signalTextColor: "#f1f5f9",
-            labelBoxBkgColor: "#1e293b",
-            labelBoxBorderColor: "#475569",
-            labelTextColor: "#f1f5f9",
-            loopTextColor: "#e2e8f0",
-            activationBorderColor: "#64748b",
-            activationBkgColor: "#334155",
-            sequenceNumberColor: "#f8fafc",
-          }
-        : {
-            darkMode: false,
-            background: "transparent",
-            primaryColor: "#ffffff",
-            primaryTextColor: "#0f172a",
-            primaryBorderColor: "#cbd5e1",
-            lineColor: "#64748b",
-            secondaryColor: "#f8fafc",
-            tertiaryColor: "#f1f5f9",
-            nodeBorder: "#cbd5e1",
-            mainBkg: "#ffffff",
-            nodeTextColor: "#0f172a",
-            clusterBkg: "#f8fafc",
-            clusterBorder: "#cbd5e1",
-            titleColor: "#0f172a",
-            edgeLabelBackground: "#ffffff",
-            actorBkg: "#f1f5f9",
-            actorBorder: "#cbd5e1",
-            actorTextColor: "#0f172a",
-            actorLineColor: "#94a3b8",
-            signalColor: "#334155",
-            signalTextColor: "#0f172a",
-            labelBoxBkgColor: "#f1f5f9",
-            labelBoxBorderColor: "#cbd5e1",
-            labelTextColor: "#0f172a",
-            loopTextColor: "#334155",
-            activationBorderColor: "#94a3b8",
-            activationBkgColor: "#e2e8f0",
-            sequenceNumberColor: "#ffffff",
-          },
-    });
-  } catch (err) {
-    console.warn("Mermaid init warning:", err);
-  }
-}
 
 /* ─── Component ─── */
 
@@ -221,13 +126,10 @@ export function CodeBlockView({
 
     let isCancelled = false;
     const renderTimer = setTimeout(async () => {
-      // Initialize theme before rendering
-      initMermaidTheme(isDark, mermaidTheme);
-
       const uniqueId = `mermaid-md-${Math.random().toString(36).substring(2, 9)}`;
 
       try {
-        const { svg: rawSvg } = await renderMermaidQueued(uniqueId, rawCode);
+        const { svg: rawSvg } = await renderMermaidQueued(uniqueId, rawCode, isDark);
         if (!isCancelled) {
           const processedSvg = postProcessSvg(rawSvg, isDark);
           setSvgContent(processedSvg);

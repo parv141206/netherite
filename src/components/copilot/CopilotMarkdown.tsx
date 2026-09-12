@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Copy, Check, ArrowDownToLine, Workflow, Code2, AlertCircle } from "lucide-react";
-import mermaid from "mermaid";
 import { useTheme } from "~/components/ThemeProvider";
 import { renderMermaidQueued, postProcessSvg } from "~/components/editor/mermaidQueue";
 
@@ -30,50 +29,7 @@ function CopilotMermaidBlock({
     const renderDiagram = async () => {
       const id = `copilot-mmd-${Math.random().toString(36).substring(2, 9)}`;
       try {
-        mermaid.initialize({
-          startOnLoad: false,
-          suppressErrorRendering: true,
-          theme: isDark ? "dark" : "neutral",
-          securityLevel: "loose",
-          fontFamily: "Inter, system-ui, sans-serif",
-          flowchart: { useMaxWidth: false },
-          sequence: { useMaxWidth: false },
-          themeVariables: isDark
-            ? {
-                darkMode: true,
-                background: "transparent",
-                primaryColor: "#1e293b",
-                primaryTextColor: "#f1f5f9",
-                primaryBorderColor: "#475569",
-                lineColor: "#64748b",
-                nodeTextColor: "#f8fafc",
-                clusterBkg: "#1e293b",
-                actorBkg: "#1e293b",
-                actorBorder: "#475569",
-                actorTextColor: "#f8fafc",
-                signalColor: "#e2e8f0",
-                signalTextColor: "#f1f5f9",
-                activationBkgColor: "#334155",
-              }
-            : {
-                darkMode: false,
-                background: "transparent",
-                primaryColor: "#ffffff",
-                primaryTextColor: "#0f172a",
-                primaryBorderColor: "#cbd5e1",
-                lineColor: "#64748b",
-                nodeTextColor: "#0f172a",
-                clusterBkg: "#f8fafc",
-                actorBkg: "#f1f5f9",
-                actorBorder: "#cbd5e1",
-                actorTextColor: "#0f172a",
-                signalColor: "#334155",
-                signalTextColor: "#0f172a",
-                activationBkgColor: "#e2e8f0",
-              },
-        });
-
-        const { svg: renderedSvg } = await renderMermaidQueued(id, code.trim());
+        const { svg: renderedSvg } = await renderMermaidQueued(id, code.trim(), isDark);
         if (!cancelled) {
           const cleanSvg = postProcessSvg(renderedSvg, isDark);
           setSvg(cleanSvg);
