@@ -155,7 +155,13 @@ export function CodeBlockView({
       try {
         const { svg } = await mermaid.render(uniqueId, rawCode);
         if (!isCancelled) {
-          setSvgContent(svg);
+          // Process SVG to ensure responsive scaling without width-clipping
+          let processedSvg = svg;
+          processedSvg = processedSvg.replace(/style="max-width:[^"]*"/i, 'style="max-width: 100%; height: auto;"');
+          if (!processedSvg.includes("style=")) {
+            processedSvg = processedSvg.replace(/<svg\s/i, '<svg style="max-width: 100%; height: auto;" ');
+          }
+          setSvgContent(processedSvg);
           setParseError(null);
         }
       } catch (err: any) {
@@ -296,13 +302,9 @@ export function CodeBlockView({
     setPan({ x: dx, y: dy });
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = () => {
     if (isDragging) {
       setIsDragging(false);
-      // If user simply clicked without panning, enter edit mode!
-      if (!dragMovedRef.current && mode === "preview" && !isFullscreen) {
-        enterEditMode();
-      }
     }
   };
 
@@ -775,14 +777,15 @@ export function CodeBlockView({
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          title="Click diagram to edit • Drag to pan • Ctrl + Wheel to zoom"
-          className={`w-full relative overflow-hidden select-none min-h-[160px] max-h-[580px] flex flex-col justify-center ${getBgClass(
+          onDoubleClick={enterEditMode}
+          title="Drag to pan • Ctrl + Wheel to zoom • Double-click to edit"
+          className={`w-full relative overflow-hidden select-none min-h-[180px] max-h-[640px] flex flex-col justify-center ${getBgClass(
             mermaidBg
           )}`}
         >
           {svgContent ? (
             <div
-              className={`w-full h-full overflow-auto p-6 flex items-center justify-center ${
+              className={`w-full h-full overflow-auto p-4 sm:p-6 flex items-center justify-center ${
                 isDragging ? "cursor-grabbing" : "cursor-grab"
               }`}
               style={{
@@ -795,7 +798,7 @@ export function CodeBlockView({
                   transformOrigin: "center center",
                   transition: isDragging ? "none" : "transform 0.12s ease-out",
                 }}
-                className="mermaid-viewport flex justify-center items-center min-w-fit [&>svg]:min-w-[fit-content] [&>svg]:h-auto [&>svg]:overflow-visible"
+                className="mermaid-viewport flex justify-center items-center w-full max-w-full [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto"
                 dangerouslySetInnerHTML={{ __html: svgContent }}
               />
             </div>
@@ -832,7 +835,7 @@ export function CodeBlockView({
               <span>•</span>
               <span>Ctrl + Wheel to zoom</span>
               <span>•</span>
-              <span className="text-primary font-medium">Click to edit</span>
+              <span className="text-primary font-medium">Double-click to edit</span>
             </div>
           )}
         </div>

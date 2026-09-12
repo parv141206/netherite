@@ -17,9 +17,10 @@ import { computeLineDiff, saveChangelogEntry, clearChangelog, type ChangelogEntr
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
-import { PdfExportModal } from "./PdfExportModal";
 import { CalendarView } from "~/components/calendar/CalendarView";
 import { type UMLDiagramType } from "@tumaet/apollon";
+import { GlobalSearchModal } from "./GlobalSearchModal";
+import { GeminiCopilotSidebar } from "~/components/copilot/GeminiCopilotSidebar";
 import { useTheme } from "~/components/ThemeProvider";
 import { useCapacitorBackButton } from "~/hooks/useCapacitorBackButton";
 import { api } from "~/trpc/react";
@@ -127,6 +128,24 @@ export function WorkspaceLayout({
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<"editor" | "calendar">("editor");
+
+  // Global Search Dialog & Gemini AI Copilot Panel States
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsGlobalSearchOpen((prev) => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        setIsCopilotOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalShortcuts);
+    return () => window.removeEventListener("keydown", handleGlobalShortcuts);
+  }, []);
 
   // Local Optimistic Notes State for 0ms Latency
   const [localNotes, setLocalNotes] = useState<DriveItem[]>(() => {
@@ -1509,6 +1528,7 @@ export function WorkspaceLayout({
           createFolderMutation.isPending ||
           moveMutation.isPending
         }
+        onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
       />
 
       {/* Main Workspace Container */}
@@ -1546,6 +1566,9 @@ export function WorkspaceLayout({
           onEditorFontChange={(font) => setEditorFont(font)}
           isOutlineOpen={isOutlineOpen}
           onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
+          isCopilotOpen={isCopilotOpen}
+          onToggleCopilot={() => setIsCopilotOpen((prev) => !prev)}
+          onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
         />
 
         {/* VS Code / Antigravity Style Tab Management Bar */}
@@ -1987,6 +2010,24 @@ export function WorkspaceLayout({
               }}
             />
           )}
+
+          {/* Gemini AI Copilot Right Sidebar */}
+          <GeminiCopilotSidebar
+            isOpen={isCopilotOpen}
+            onClose={() => setIsCopilotOpen(false)}
+            currentNoteTitle={currentNote?.name || noteTitle}
+            currentNoteContent={noteContent}
+            onInsertContent={(content) => {
+              setNoteContent((prev) => (prev ? `${prev}\n\n${content}` : content));
+              setIsDirty(true);
+            }}
+            onCreateNoteWithContent={async (title, content) => {
+              await handleCreateFile(undefined);
+              setNoteTitle(title.endsWith(".md") ? title : `${title}.md`);
+              setNoteContent(content);
+              setIsDirty(true);
+            }}
+          />
         </div>
         )}
 
@@ -2124,6 +2165,17 @@ export function WorkspaceLayout({
             : "markdown"
         }
         content={noteContent}
+      />
+
+      {/* Global Search Dialog Modal (Ctrl+K / Cmd+K) */}
+      <GlobalSearchModal
+        isOpen={isGlobalSearchOpen}
+        onClose={() => setIsGlobalSearchOpen(false)}
+        notes={localNotes}
+        activeNoteId={activeTabId}
+        onSelectNote={(id) => openFileInTab(id)}
+        onCreateNote={() => handleCreateFile()}
+        onOpenCalendar={() => setActiveView("calendar")}
       />
 
       {/* Floating Sync / Status Notification Toast */}

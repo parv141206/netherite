@@ -20,8 +20,9 @@ import {
   Palette,
   Network,
   Workflow,
-  RefreshCw,
   Printer,
+  Sparkles,
+  Search,
 } from "lucide-react";
 import {
   useTheme,
@@ -54,6 +55,9 @@ interface HeaderBarProps {
   onEditorFontChange?: (font: string) => void;
   isOutlineOpen?: boolean;
   onToggleOutline?: () => void;
+  isCopilotOpen?: boolean;
+  onToggleCopilot?: () => void;
+  onOpenGlobalSearch?: () => void;
 }
 
 export function HeaderBar({
@@ -77,6 +81,9 @@ export function HeaderBar({
   onEditorFontChange,
   isOutlineOpen = false,
   onToggleOutline,
+  isCopilotOpen = false,
+  onToggleCopilot,
+  onOpenGlobalSearch,
 }: HeaderBarProps) {
   const {
     theme,
@@ -328,6 +335,37 @@ export function HeaderBar({
             title="Toggle Split View"
           >
             <Columns className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Global Search Button */}
+        {onOpenGlobalSearch && (
+          <button
+            onClick={onOpenGlobalSearch}
+            className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer"
+            title="Global Search (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="text-[11px] hidden md:inline">Search</span>
+            <kbd className="hidden lg:inline text-[9px] font-mono px-1 py-0.2 bg-muted/60 border border-border/40 rounded">
+              ⌘K
+            </kbd>
+          </button>
+        )}
+
+        {/* Gemini Copilot Toggle Button */}
+        {onToggleCopilot && (
+          <button
+            onClick={onToggleCopilot}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+              isCopilotOpen
+                ? "bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 shadow-2xs font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+            }`}
+            title="Toggle Gemini AI Copilot (Ctrl+J)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+            <span className="hidden sm:inline text-[11px]">Copilot</span>
           </button>
         )}
 

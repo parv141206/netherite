@@ -18,6 +18,9 @@ import {
   Archive,
   Loader2,
   CheckCircle2,
+  Sparkles,
+  Key,
+  ExternalLink,
 } from "lucide-react";
 import JSZip from "jszip";
 import { api } from "~/trpc/react";
@@ -46,6 +49,21 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
   } = useTheme();
   const [folderPath, setFolderPath] = useState("Netherite");
   const [copiedMcp, setCopiedMcp] = useState<"claude" | "cli" | null>(null);
+
+  // Gemini AI Copilot Settings
+  const [geminiKey, setGeminiKey] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_gemini_api_key") || "";
+    }
+    return "";
+  });
+  const [geminiModel, setGeminiModel] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_gemini_model") || "gemini-2.5-flash";
+    }
+    return "gemini-2.5-flash";
+  });
+  const [geminiSaved, setGeminiSaved] = useState(false);
 
   // Export & Import states
   const utils = api.useUtils();
@@ -536,6 +554,94 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
                 </span>
               </div>
             )}
+          </div>
+
+          {/* Google Gemini AI Copilot Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                <span>Google Gemini AI Copilot</span>
+              </label>
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
+              >
+                <span>Get official key</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            <div className="p-3.5 bg-muted/40 border border-border/80 rounded-xl space-y-3">
+              <div>
+                <label className="text-[11px] text-muted-foreground font-medium block mb-1">
+                  Official Gemini API Key
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Key className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+                    <input
+                      type="password"
+                      placeholder="AIzaSy..."
+                      value={geminiKey}
+                      onChange={(e) => setGeminiKey(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("netherite_gemini_api_key", geminiKey.trim());
+                        localStorage.setItem("netherite_gemini_model", geminiModel);
+                        setGeminiSaved(true);
+                        setTimeout(() => setGeminiSaved(false), 2000);
+                      }
+                    }}
+                    className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
+                  >
+                    {geminiSaved ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Saved</span>
+                      </>
+                    ) : (
+                      <span>Save Key</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                {[
+                  { id: "gemini-2.5-flash", name: "2.5 Flash" },
+                  { id: "gemini-1.5-flash", name: "1.5 Flash" },
+                  { id: "gemini-1.5-pro", name: "1.5 Pro" },
+                ].map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setGeminiModel(m.id);
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("netherite_gemini_model", m.id);
+                      }
+                    }}
+                    className={`py-1.5 px-2 rounded-lg border text-xs font-medium transition-all ${
+                      geminiModel === m.id
+                        ? "border-purple-500 bg-purple-500/15 text-purple-600 dark:text-purple-300 font-semibold"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                Client-side encrypted in localStorage. Direct connection to Google Gemini endpoints. 100% legal, no risk of account ban.
+              </p>
+            </div>
           </div>
 
           {/* Account Details */}

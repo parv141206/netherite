@@ -192,6 +192,7 @@ interface SidebarProps {
   isSyncing?: boolean;
   onOpenCalendar?: () => void;
   isCalendarActive?: boolean;
+  onOpenGlobalSearch?: () => void;
 }
 
 export function Sidebar({
@@ -221,12 +222,45 @@ export function Sidebar({
   isSyncing = false,
   onOpenCalendar,
   isCalendarActive = false,
+  onOpenGlobalSearch,
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
     root: true,
   });
+
+  // Resizable Sidebar Width (saved in localStorage)
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_sidebar_width");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 180 && parsed <= 520) return parsed;
+      }
+    }
+    return 260;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+
+  useEffect(() => {
+    if (!isResizing) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
+      const newWidth = Math.min(520, Math.max(180, e.clientX));
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      localStorage.setItem("netherite_sidebar_width", String(sidebarWidth));
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, sidebarWidth]);
 
   // Multi-Selection State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
@@ -825,7 +859,10 @@ export function Sidebar({
       <aside
         ref={sidebarContainerRef}
         onContextMenu={handleRootContextMenu}
-        className="fixed sm:relative inset-y-0 left-0 z-50 w-72 sm:w-64 border-r border-border bg-[var(--sidebar-bg)] flex flex-col h-full select-none shadow-2xl sm:shadow-none animate-in slide-in-from-left duration-200"
+        style={{ width: `${sidebarWidth}px` }}
+        className={`fixed sm:relative inset-y-0 left-0 z-50 border-r border-border bg-[var(--sidebar-bg)] flex flex-col h-full select-none shadow-2xl sm:shadow-none animate-in slide-in-from-left duration-200 shrink-0 ${
+          isResizing ? "transition-none select-none" : ""
+        }`}
       >
       {/* Line 1: Top Bar with Mac Traffic Lights on Left & Workspace Action Icons on Right */}
       <div className="px-3 pt-3 pb-1.5 flex items-center justify-between" data-tauri-drag-region>
@@ -922,15 +959,24 @@ export function Sidebar({
 
       {/* Quick Filter Search */}
       <div className="p-2 border-b border-border/30 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-        <div className="relative">
+        <div
+          className="relative cursor-pointer"
+          onClick={() => {
+            if (onOpenGlobalSearch) onOpenGlobalSearch();
+          }}
+        >
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-muted-foreground/70" />
           <input
             type="text"
-            placeholder="Search pages..."
+            placeholder="Search notes (Ctrl+K)..."
             value={searchQuery}
+            readOnly={!!onOpenGlobalSearch}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-7 pr-2 py-1 bg-accent/40 hover:bg-accent/60 border border-transparent focus:border-border rounded-md text-xs focus:outline-none text-foreground placeholder:text-muted-foreground/60 font-sans transition-colors"
+            className="w-full pl-7 pr-8 py-1 bg-accent/40 hover:bg-accent/60 border border-transparent focus:border-border rounded-md text-xs focus:outline-none text-foreground placeholder:text-muted-foreground/60 font-sans transition-colors cursor-pointer"
           />
+          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground/80 bg-muted/60 border border-border/40 rounded absolute right-2 top-1.5 pointer-events-none">
+            ⌘K
+          </kbd>
         </div>
 
         {/* Apple Pinned Item: Google Calendar Studio */}
@@ -1384,6 +1430,22 @@ export function Sidebar({
             <LogOut className="w-4 h-4" />
           </button>
         </div>
+      </div>
+
+      {/* Draggable Resize Handle */}
+      <div
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setIsResizing(true);
+        }}
+        onDoubleClick={() => {
+          setSidebarWidth(260);
+          localStorage.setItem("netherite_sidebar_width", "260");
+        }}
+        title="Drag to resize sidebar • Double-click to reset"
+        className="hidden sm:block absolute top-0 right-[-3px] w-2 h-full cursor-col-resize hover:bg-primary/50 transition-colors z-50 group/resizer"
+      >
+        <div className="w-[1px] h-full mx-auto group-hover/resizer:bg-primary/80" />
       </div>
     </aside>
   </>
