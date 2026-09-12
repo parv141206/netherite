@@ -21,6 +21,7 @@ import { CalendarView } from "~/components/calendar/CalendarView";
 import { type UMLDiagramType } from "@tumaet/apollon";
 import { GlobalSearchModal } from "./GlobalSearchModal";
 import { GeminiCopilotSidebar } from "~/components/copilot/GeminiCopilotSidebar";
+import { PdfExportModal } from "./PdfExportModal";
 import { useTheme } from "~/components/ThemeProvider";
 import { useCapacitorBackButton } from "~/hooks/useCapacitorBackButton";
 import { api } from "~/trpc/react";
@@ -2019,13 +2020,11 @@ export function WorkspaceLayout({
             currentNoteContent={noteContent}
             onInsertContent={(content) => {
               setNoteContent((prev) => (prev ? `${prev}\n\n${content}` : content));
-              setIsDirty(true);
             }}
             onCreateNoteWithContent={async (title, content) => {
               await handleCreateFile(undefined);
               setNoteTitle(title.endsWith(".md") ? title : `${title}.md`);
               setNoteContent(content);
-              setIsDirty(true);
             }}
           />
         </div>

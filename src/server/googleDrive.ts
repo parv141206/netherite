@@ -272,7 +272,7 @@ export async function listNotes(session: any) {
       let pageToken: string | undefined = undefined;
 
       do {
-        const filesRes = await drive.files.list({
+        const filesRes: any = await drive.files.list({
           q: `trashed=false and (${parentClause}) and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/vnd.apollon+json' or mimeType='text/vnd.mermaid' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.apollon' or name contains '.mmd' or name contains '.mermaid' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')`,
           fields: "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
           orderBy: "modifiedTime desc",
@@ -339,7 +339,7 @@ export async function listNotes(session: any) {
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
 
       // STRICT CHECK: Only include files that are inside Netherite or its subfolders
-      const isInsideNetherite = f.parents?.some((p) => netheriteFolderIds.has(p));
+      const isInsideNetherite = f.parents?.some((p: string) => netheriteFolderIds.has(p));
       if (!isInsideNetherite) continue;
 
       const isImage =

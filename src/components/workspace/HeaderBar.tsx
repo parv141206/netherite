@@ -23,6 +23,7 @@ import {
   Printer,
   Sparkles,
   Search,
+  RefreshCw,
 } from "lucide-react";
 import {
   useTheme,
