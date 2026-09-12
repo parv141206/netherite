@@ -24,6 +24,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
+import { renderMermaidQueued } from "./mermaidQueue";
 
 export function CodeBlockView({
   node,
@@ -198,20 +199,20 @@ export function CodeBlockView({
       const uniqueId = `mermaid-md-${Math.random().toString(36).substring(2, 9)}`;
 
       try {
-        const { svg } = await mermaid.render(uniqueId, codeToRender);
+        const { svg } = await renderMermaidQueued(uniqueId, codeToRender);
         if (!isCancelled) {
           // Process SVG to ensure responsive scaling without width-clipping
           let processedSvg = svg;
-          processedSvg = processedSvg.replace(/style="max-width:[^"]*"/i, 'style="max-width: 100%; height: auto; overflow: visible;"');
+          processedSvg = processedSvg.replace(/style="max-width:[^"]*"/i, 'style="max-width: 100%; height: auto;"');
           if (!processedSvg.includes("style=")) {
-            processedSvg = processedSvg.replace(/<svg\s/i, '<svg style="max-width: 100%; height: auto; overflow: visible;" ');
+            processedSvg = processedSvg.replace(/<svg\s/i, '<svg style="max-width: 100%; height: auto;" ');
           }
 
           // Inject custom CSS inside SVG to guarantee elegant cluster backgrounds and clear text
           const customStyle = `<style>
             .cluster rect { fill: ${isDark ? "#1e293b" : "#f8fafc"} !important; stroke: ${isDark ? "#475569" : "#cbd5e1"} !important; rx: 8px !important; }
             .node rect, .node circle, .node ellipse, .node polygon, .node path { rx: 6px; }
-            .node .label, .nodeLabel { font-family: Inter, system-ui, sans-serif !important; overflow: visible !important; }
+            .node .label, .nodeLabel { font-family: Inter, system-ui, sans-serif !important; }
             text { font-family: Inter, system-ui, sans-serif !important; }
           </style>`;
 
@@ -226,18 +227,6 @@ export function CodeBlockView({
         if (!isCancelled) {
           const msg = err?.message || err?.str || String(err);
           setParseError(msg.replace(/^Error:\s*/i, ""));
-        }
-      } finally {
-        // Defensively remove any phantom error DOM nodes injected by mermaid into body
-        if (typeof document !== "undefined") {
-          const phantom = document.getElementById(uniqueId);
-          if (phantom) phantom.remove();
-          const errorEl = document.getElementById(`d${uniqueId}`);
-          if (errorEl) errorEl.remove();
-
-          document.querySelectorAll('body > svg[id^="dmermaid"], body > div[id^="dmermaid"], body > .error-icon, body > svg[aria-roledescription="error"]').forEach((el) => {
-            el.remove();
-          });
         }
       }
     }, 200);
@@ -654,12 +643,9 @@ export function CodeBlockView({
       {/* ========================================== */}
       {mode === "preview" && (
         <div
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
           onDoubleClick={enterEditMode}
-          title="Drag to pan • Ctrl + Wheel to zoom • Double-click to edit"
-          className={`w-full relative overflow-hidden select-none min-h-[180px] max-h-[640px] flex flex-col justify-center ${getBgClass(
+          title="Double-click to edit Mermaid code"
+          className={`w-full relative overflow-hidden select-none min-h-[140px] flex flex-col justify-center ${getBgClass(
             mermaidBg
           )}`}
         >
@@ -669,45 +655,18 @@ export function CodeBlockView({
               onClick={(e) => e.stopPropagation()}
               className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover/mermaid:opacity-100 transition-opacity duration-150 flex items-center gap-1 p-1 rounded-lg bg-background/90 dark:bg-card/90 backdrop-blur-md border border-border/70 shadow-md text-xs select-none"
             >
-              {/* Zoom Controls */}
-              <div className="flex items-center gap-0.5 px-1 py-0.5 bg-muted/50 rounded-md border border-border/40 text-muted-foreground">
-                <button
-                  type="button"
-                  onClick={handleZoomOut}
-                  className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-3 h-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetZoom}
-                  className="px-1 text-[10px] font-mono hover:text-foreground transition-colors cursor-pointer"
-                  title="Reset Zoom"
-                >
-                  {Math.round(zoom * 100)}%
-                </button>
-                <button
-                  type="button"
-                  onClick={handleZoomIn}
-                  className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-3 h-3" />
-                </button>
-              </div>
-
-              <div className="w-[1px] h-3.5 bg-border/60 mx-0.5" />
-
-              {/* Fullscreen Expand */}
+              {/* Fullscreen Expand Inspector */}
               <button
                 type="button"
                 onClick={() => setIsFullscreen(true)}
-                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title="Expand Fullscreen"
+                className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[11px] font-medium"
+                title="Expand Interactive Inspector (Pan & Zoom)"
               >
-                <Maximize2 className="w-3 h-3" />
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Inspect</span>
               </button>
+
+              <div className="w-[1px] h-3.5 bg-border/60 mx-0.5" />
 
               {/* Download SVG */}
               <button
@@ -716,7 +675,7 @@ export function CodeBlockView({
                 className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Download SVG"
               >
-                <Download className="w-3 h-3" />
+                <Download className="w-3.5 h-3.5" />
               </button>
 
               {/* Copy Code */}
@@ -726,14 +685,14 @@ export function CodeBlockView({
                 className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Copy Mermaid Code"
               >
-                {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
 
               {/* Edit Code */}
               <button
                 type="button"
                 onClick={enterEditMode}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer ml-0.5"
                 title="Edit Diagram Code (or Double-Click)"
               >
                 <Pencil className="w-3 h-3" />
@@ -743,21 +702,9 @@ export function CodeBlockView({
           )}
 
           {svgContent ? (
-            <div
-              className={`w-full h-full overflow-auto p-4 sm:p-6 flex items-center justify-center ${
-                isDragging ? "cursor-grabbing" : "cursor-grab"
-              }`}
-              style={{
-                userSelect: "none",
-              }}
-            >
+            <div className="w-full overflow-x-auto p-4 sm:p-6 flex items-center justify-center">
               <div
-                style={{
-                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                  transformOrigin: "center center",
-                  transition: isDragging ? "none" : "transform 0.12s ease-out",
-                }}
-                className="mermaid-viewport flex justify-center items-center w-full max-w-full [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto"
+                className="mermaid-viewport flex justify-center items-center max-w-full [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto select-none"
                 dangerouslySetInnerHTML={{ __html: svgContent }}
               />
             </div>
@@ -787,12 +734,10 @@ export function CodeBlockView({
             </div>
           )}
 
-          {/* Floating Pan & Zoom Hint Bar */}
+          {/* Floating Double-Click Hint Bar */}
           {svgContent && (
             <div className="absolute bottom-2 right-2 opacity-0 group-hover/mermaid:opacity-100 transition-opacity bg-background/90 dark:bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-mono text-muted-foreground border border-border/60 shadow-xs pointer-events-none flex items-center gap-2">
-              <span>Drag to pan</span>
-              <span>•</span>
-              <span>Ctrl + Wheel to zoom</span>
+              <span>Click Inspect to zoom</span>
               <span>•</span>
               <span className="text-primary font-medium">Double-click to edit</span>
             </div>

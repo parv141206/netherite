@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Copy, Check, ArrowDownToLine, Workflow, Code2, AlertCircle } from "lucide-react";
 import mermaid from "mermaid";
 import { useTheme } from "~/components/ThemeProvider";
+import { renderMermaidQueued } from "~/components/editor/mermaidQueue";
 
 interface CopilotMarkdownProps {
   content: string;
@@ -58,7 +59,7 @@ function CopilotMermaidBlock({
               },
         });
 
-        const { svg: renderedSvg } = await mermaid.render(id, code.trim());
+        const { svg: renderedSvg } = await renderMermaidQueued(id, code.trim());
         if (!cancelled) {
           let cleanSvg = renderedSvg.replace(
             /style="max-width:[^"]*"/i,

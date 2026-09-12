@@ -21,6 +21,8 @@ import {
   FilePlus,
   BrainCircuit,
   ChevronRight,
+  Square,
+  RotateCcw,
 } from "lucide-react";
 import { GeminiSettingsModal, GEMINI_MODELS } from "./GeminiSettingsModal";
 import { CopilotMarkdown } from "./CopilotMarkdown";
@@ -31,6 +33,8 @@ interface ToolCallItem {
   args: any;
   status: "executing" | "completed" | "failed";
   summary?: string;
+  previousContent?: string;
+  reverted?: boolean;
 }
 
 interface Message {
@@ -78,6 +82,8 @@ export function GeminiCopilotSidebar({
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [collapsedThinking, setCollapsedThinking] = useState<Record<string, boolean>>({});
+
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Draggable Width State (persistent in localStorage)
   const [copilotWidth, setCopilotWidth] = useState<number>(() => {
@@ -165,12 +171,51 @@ export function GeminiCopilotSidebar({
     return () => window.removeEventListener("click", handleClickOutside);
   }, [showModelMenu]);
 
+  // Global Escape key listener to stop generation
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isLoading) {
+        handleStopGeneration();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isLoading]);
+
   if (!isOpen) return null;
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsLoading(false);
+  };
+
+  const handleRevertTool = (toolId: string, previousContent: string) => {
+    if (onReplaceContent) {
+      onReplaceContent(previousContent);
+      setMessages((prev) =>
+        prev.map((m) => ({
+          ...m,
+          toolCalls: m.toolCalls?.map((t) =>
+            t.id === toolId
+              ? {
+                  ...t,
+                  reverted: true,
+                  summary: `Reverted document to previous content`,
+                }
+              : t
+          ),
+        }))
+      );
+    }
   };
 
   const activeModelMeta =
@@ -180,15 +225,18 @@ export function GeminiCopilotSidebar({
       tag: "Active",
     };
 
-  // Handle message submission with Tool Calling and Streaming
-  const handleSendMessage = async () => {
-    const promptToSend = input.trim();
+  // Core send message handler with SSE Streaming, Tools, and AbortController
+  const handleSendMessage = async (customPrompt?: string) => {
+    const promptToSend = (customPrompt ?? input).trim();
     if (!promptToSend || isLoading) return;
 
     if (!apiKey) {
       setIsSettingsOpen(true);
       return;
     }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const userMsg: Message = {
       id: `u-${Date.now()}`,
@@ -207,9 +255,15 @@ export function GeminiCopilotSidebar({
       toolCalls: [],
     };
 
-    setMessages((prev) => [...prev, userMsg, initialAiMsg]);
-    setInput("");
+    if (!customPrompt) {
+      setMessages((prev) => [...prev, userMsg, initialAiMsg]);
+      setInput("");
+    } else {
+      setMessages((prev) => [...prev, initialAiMsg]);
+    }
     setIsLoading(true);
+
+    const prevDocContent = currentNoteContent || "";
 
     try {
       const activeDocName = currentNoteTitle || "Untitled";
@@ -302,6 +356,7 @@ ${contextSnippet}`;
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           contents: conversationContents,
           tools,
@@ -364,6 +419,7 @@ ${contextSnippet}`;
                       args: fc.args,
                       status: "executing",
                       summary: fc.args?.summary || `Executed ${fc.name}`,
+                      previousContent: prevDocContent,
                     });
                   }
                 }
@@ -442,6 +498,21 @@ ${contextSnippet}`;
         )
       );
     } catch (err: any) {
+      if (err?.name === "AbortError") {
+        // Stopped by user
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === aiMsgId
+              ? {
+                  ...m,
+                  content: m.content ? `${m.content}\n\n*(Generation stopped by user)*` : "*(Generation stopped)*",
+                }
+              : m
+          )
+        );
+        return;
+      }
+
       const errorMsg: Message = {
         id: `err-${Date.now()}`,
         role: "assistant",
@@ -453,6 +524,19 @@ ${contextSnippet}`;
       );
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleRegenerate = (aiMsgId: string) => {
+    const aiIndex = messages.findIndex((m) => m.id === aiMsgId);
+    if (aiIndex > 0) {
+      const prevUserMsg = messages[aiIndex - 1];
+      if (prevUserMsg && prevUserMsg.role === "user") {
+        // Remove the existing AI response and re-run
+        setMessages((prev) => prev.filter((m) => m.id !== aiMsgId));
+        handleSendMessage(prevUserMsg.content);
+      }
     }
   };
 
@@ -500,7 +584,7 @@ ${contextSnippet}`;
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               title="Configure API Key & Defaults"
             >
               <Settings className="w-3.5 h-3.5" />
@@ -516,14 +600,14 @@ ${contextSnippet}`;
                   },
                 ])
               }
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               title="Clear Chat History"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               title="Close Copilot"
             >
               <X className="w-4 h-4" />
@@ -584,7 +668,7 @@ ${contextSnippet}`;
                           [msg.id]: !isThinkingCollapsed,
                         }))
                       }
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono text-muted-foreground hover:text-foreground bg-muted/40 rounded-lg border border-border/40 transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono text-muted-foreground hover:text-foreground bg-muted/40 rounded-lg border border-border/40 transition-colors cursor-pointer"
                     >
                       <BrainCircuit className="w-3.5 h-3.5 text-primary" />
                       <span>Thinking Process</span>
@@ -602,7 +686,7 @@ ${contextSnippet}`;
                   </div>
                 )}
 
-                {/* Tool Execution Cards (if any tools called) */}
+                {/* Tool Execution Cards (if any tools called) with REVERT BUTTON */}
                 {!isUser && msg.toolCalls && msg.toolCalls.length > 0 && (
                   <div className="w-full max-w-[95%] mb-2 space-y-1.5">
                     {msg.toolCalls.map((tc) => (
@@ -628,10 +712,28 @@ ${contextSnippet}`;
                                 ? `Tool: Create Note "${tc.args?.title || "Note"}"`
                                 : `Tool: ${tc.name}`}
                             </span>
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                              <Check className="w-3 h-3" />
-                              Executed
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {/* Revert Button for Document Edits */}
+                              {tc.name === "edit_active_note" && tc.previousContent !== undefined && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevertTool(tc.id, tc.previousContent!)}
+                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                                    tc.reverted
+                                      ? "bg-muted text-muted-foreground cursor-default"
+                                      : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 cursor-pointer"
+                                  }`}
+                                  title={tc.reverted ? "Changes reverted" : "Revert note to previous state"}
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span>{tc.reverted ? "Reverted" : "Revert"}</span>
+                                </button>
+                              )}
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                <Check className="w-3 h-3" />
+                                Done
+                              </span>
+                            </div>
                           </div>
                           {tc.summary && (
                             <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
@@ -672,7 +774,7 @@ ${contextSnippet}`;
                   <div className="flex items-center gap-1 mt-1.5 px-1">
                     <button
                       onClick={() => handleCopy(msg.id, msg.content)}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                       title="Copy response text"
                     >
                       {copiedId === msg.id ? (
@@ -691,7 +793,7 @@ ${contextSnippet}`;
                     {onInsertContent && (
                       <button
                         onClick={() => onInsertContent(msg.content)}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                         title="Append to active note"
                       >
                         <ArrowDownToLine className="w-3 h-3 text-primary" />
@@ -705,13 +807,23 @@ ${contextSnippet}`;
                           const suggestedTitle = `AI Note - ${currentNoteTitle || "New"}`;
                           onCreateNoteWithContent(suggestedTitle, msg.content);
                         }}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                         title="Save as new note"
                       >
                         <Plus className="w-3 h-3 text-emerald-500" />
                         <span>Save as Note</span>
                       </button>
                     )}
+
+                    {/* Regenerate Button */}
+                    <button
+                      onClick={() => handleRegenerate(msg.id)}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Regenerate this response"
+                    >
+                      <RotateCcw className="w-3 h-3 text-muted-foreground" />
+                      <span>Retry</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -729,7 +841,7 @@ ${contextSnippet}`;
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Elegant Card-Style Input Box with Inline Model Dropdown */}
+        {/* Elegant Card-Style Input Box with Inline Model Dropdown & Instant Stop Button */}
         <div className="p-3 border-t border-border/60 bg-muted/10">
           <div className="relative flex flex-col rounded-2xl bg-background border border-border/80 shadow-xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all p-2.5">
             {/* Textarea */}
@@ -747,14 +859,14 @@ ${contextSnippet}`;
               className="w-full bg-transparent resize-none text-xs text-foreground placeholder:text-muted-foreground/60 outline-none leading-relaxed min-h-[44px] max-h-32 px-1"
             />
 
-            {/* Bottom Toolbar: Model Dropdown + Send Button */}
+            {/* Bottom Toolbar: Model Dropdown + Send/Stop Button */}
             <div className="flex items-center justify-between pt-2 border-t border-border/40 mt-1.5">
               {/* Left: Model Selector Dropdown Button */}
               <div className="relative" onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   onClick={() => setShowModelMenu((v) => !v)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/50 hover:bg-muted text-[11px] font-medium text-foreground transition-colors border border-border/40"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/50 hover:bg-muted text-[11px] font-medium text-foreground transition-colors border border-border/40 cursor-pointer"
                   title="Switch Gemini Model"
                 >
                   <Sparkles className="w-3 h-3 text-primary shrink-0" />
@@ -777,7 +889,7 @@ ${contextSnippet}`;
                           key={m.id}
                           type="button"
                           onClick={() => handleSelectModel(m.id)}
-                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex flex-col ${
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex flex-col cursor-pointer ${
                             isSelected
                               ? "bg-primary/10 text-primary font-semibold"
                               : "text-foreground hover:bg-muted/60"
@@ -797,20 +909,27 @@ ${contextSnippet}`;
                 )}
               </div>
 
-              {/* Right: Send Button */}
+              {/* Right: Instant Stop Button OR Send Button */}
               <div className="flex items-center gap-1.5">
-                <button
-                  onClick={handleSendMessage}
-                  disabled={isLoading || !input.trim()}
-                  className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 transition-all cursor-pointer shadow-xs"
-                  title="Send (Enter)"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
+                {isLoading ? (
+                  <button
+                    type="button"
+                    onClick={handleStopGeneration}
+                    className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-500/15 text-red-500 hover:bg-red-500/25 transition-all cursor-pointer shadow-xs animate-pulse"
+                    title="Stop Generating (Esc)"
+                  >
+                    <Square className="w-3 h-3 fill-current" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSendMessage()}
+                    disabled={!input.trim()}
+                    className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 transition-all cursor-pointer shadow-xs"
+                    title="Send (Enter)"
+                  >
                     <Send className="w-3.5 h-3.5" />
-                  )}
-                </button>
+                  </button>
+                )}
               </div>
             </div>
           </div>
