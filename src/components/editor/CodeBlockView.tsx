@@ -133,9 +133,18 @@ export function CodeBlockView({
       try {
         mermaid.initialize({
           startOnLoad: false,
+          suppressErrorRendering: true,
           theme: effectiveTheme,
           securityLevel: "loose",
           fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          flowchart: {
+            htmlLabels: true,
+            useMaxWidth: true,
+            padding: 24,
+            nodeSpacing: 50,
+            rankSpacing: 50,
+            curve: "basis",
+          },
           themeVariables: effectiveTheme === "dark" ? {
             darkMode: true,
             background: "transparent",
@@ -148,35 +157,68 @@ export function CodeBlockView({
             nodeBorder: "#475569",
             mainBkg: "#1e293b",
             nodeTextColor: "#f8fafc",
+            clusterBkg: "#1e293b",
+            clusterBorder: "#475569",
+            titleColor: "#f8fafc",
+            edgeLabelBackground: "#0f172a",
           } : {
             darkMode: false,
             background: "transparent",
-            primaryColor: "#f8fafc",
+            primaryColor: "#ffffff",
             primaryTextColor: "#0f172a",
             primaryBorderColor: "#cbd5e1",
             lineColor: "#64748b",
-            secondaryColor: "#f1f5f9",
-            tertiaryColor: "#ffffff",
+            secondaryColor: "#f8fafc",
+            tertiaryColor: "#f1f5f9",
             nodeBorder: "#cbd5e1",
             mainBkg: "#ffffff",
             nodeTextColor: "#0f172a",
+            clusterBkg: "#f8fafc",
+            clusterBorder: "#cbd5e1",
+            titleColor: "#0f172a",
+            edgeLabelBackground: "#ffffff",
           },
         });
       } catch (err) {
         console.warn("Mermaid init warning:", err);
       }
 
+      // If in light mode, dynamically sanitize hardcoded dark fills from legacy notes
+      let codeToRender = rawCode;
+      if (!isDark) {
+        codeToRender = codeToRender
+          .replace(/fill:#1e293b/gi, "fill:#f8fafc")
+          .replace(/fill:#0f172a/gi, "fill:#f8fafc")
+          .replace(/fill:#020617/gi, "fill:#f8fafc")
+          .replace(/fill:#18181b/gi, "fill:#f8fafc")
+          .replace(/fill:#111827/gi, "fill:#f8fafc")
+          .replace(/color:#fff(fff)?\b/gi, "color:#0f172a");
+      }
+
       const uniqueId = `mermaid-md-${Math.random().toString(36).substring(2, 9)}`;
 
       try {
-        const { svg } = await mermaid.render(uniqueId, rawCode);
+        const { svg } = await mermaid.render(uniqueId, codeToRender);
         if (!isCancelled) {
           // Process SVG to ensure responsive scaling without width-clipping
           let processedSvg = svg;
-          processedSvg = processedSvg.replace(/style="max-width:[^"]*"/i, 'style="max-width: 100%; height: auto;"');
+          processedSvg = processedSvg.replace(/style="max-width:[^"]*"/i, 'style="max-width: 100%; height: auto; overflow: visible;"');
           if (!processedSvg.includes("style=")) {
-            processedSvg = processedSvg.replace(/<svg\s/i, '<svg style="max-width: 100%; height: auto;" ');
+            processedSvg = processedSvg.replace(/<svg\s/i, '<svg style="max-width: 100%; height: auto; overflow: visible;" ');
           }
+
+          // Inject custom CSS inside SVG to guarantee elegant cluster backgrounds and clear text
+          const customStyle = `<style>
+            .cluster rect { fill: ${isDark ? "#1e293b" : "#f8fafc"} !important; stroke: ${isDark ? "#475569" : "#cbd5e1"} !important; rx: 8px !important; }
+            .node rect, .node circle, .node ellipse, .node polygon, .node path { rx: 6px; }
+            .node .label, .nodeLabel { font-family: Inter, system-ui, sans-serif !important; overflow: visible !important; }
+            text { font-family: Inter, system-ui, sans-serif !important; }
+          </style>`;
+
+          if (processedSvg.includes("</svg>")) {
+            processedSvg = processedSvg.replace("</svg>", `${customStyle}</svg>`);
+          }
+
           setSvgContent(processedSvg);
           setParseError(null);
         }
@@ -186,12 +228,16 @@ export function CodeBlockView({
           setParseError(msg.replace(/^Error:\s*/i, ""));
         }
       } finally {
-        // Clean up phantom DOM nodes created by mermaid error handler
+        // Defensively remove any phantom error DOM nodes injected by mermaid into body
         if (typeof document !== "undefined") {
           const phantom = document.getElementById(uniqueId);
           if (phantom) phantom.remove();
           const errorEl = document.getElementById(`d${uniqueId}`);
           if (errorEl) errorEl.remove();
+
+          document.querySelectorAll('body > svg[id^="dmermaid"], body > div[id^="dmermaid"], body > .error-icon, body > svg[aria-roledescription="error"]').forEach((el) => {
+            el.remove();
+          });
         }
       }
     }, 200);

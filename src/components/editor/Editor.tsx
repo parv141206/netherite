@@ -312,6 +312,86 @@ export function Editor({
     }
   }, [editor, onEditorReady]);
 
+  // Jump, scroll, and luminous flash-highlight search term if opened from Global Search
+  useEffect(() => {
+    if (!editor || isLoading) return;
+
+    const checkSearchJump = () => {
+      try {
+        const jumpTerm = sessionStorage.getItem("netherite_search_jump");
+        if (!jumpTerm) return;
+        sessionStorage.removeItem("netherite_search_jump");
+
+        const term = jumpTerm.trim().toLowerCase();
+        if (!term) return;
+
+        // 1. Traverse ProseMirror document to select the matched text
+        let targetPos: number | null = null;
+        let matchLength = jumpTerm.length;
+
+        editor.state.doc.descendants((node, pos) => {
+          if (targetPos !== null) return false;
+          if (node.isText && node.text) {
+            const idx = node.text.toLowerCase().indexOf(term);
+            if (idx !== -1) {
+              targetPos = pos + idx;
+              matchLength = term.length;
+              return false;
+            }
+          }
+        });
+
+        if (targetPos !== null) {
+          editor.commands.setTextSelection({
+            from: targetPos,
+            to: targetPos + matchLength,
+          });
+          editor.commands.scrollIntoView();
+        }
+
+        // 2. Locate DOM element for glowing visual flash
+        setTimeout(() => {
+          const editorDom = editor.view.dom;
+          const walker = document.createTreeWalker(editorDom, NodeFilter.SHOW_TEXT);
+          let targetDomNode: Node | null = null;
+          while (walker.nextNode()) {
+            if (walker.currentNode.nodeValue?.toLowerCase().includes(term)) {
+              targetDomNode = walker.currentNode;
+              break;
+            }
+          }
+
+          if (targetDomNode && targetDomNode.parentElement) {
+            const el = targetDomNode.parentElement;
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.classList.add(
+              "ring-2",
+              "ring-yellow-400",
+              "bg-yellow-200/40",
+              "dark:bg-yellow-900/40",
+              "rounded-md",
+              "transition-all",
+              "duration-500"
+            );
+            setTimeout(() => {
+              el.classList.remove(
+                "ring-2",
+                "ring-yellow-400",
+                "bg-yellow-200/40",
+                "dark:bg-yellow-900/40"
+              );
+            }, 3000);
+          }
+        }, 150);
+      } catch (err) {
+        console.warn("Search jump error:", err);
+      }
+    };
+
+    const timer = setTimeout(checkSearchJump, 250);
+    return () => clearTimeout(timer);
+  }, [editor, initialContent, isLoading]);
+
   // Keyboard shortcut Ctrl+S / Cmd+S for save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

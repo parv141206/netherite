@@ -219,6 +219,15 @@ export function GlobalSearchModal({
     return items.slice(0, 30);
   }, [notes, query, folderMap, serverSearchResults]);
 
+  // Selection handler with jump target persistence
+  const handleCommitSelection = (item: SearchResultItem) => {
+    if (query.trim()) {
+      sessionStorage.setItem("netherite_search_jump", query.trim());
+    }
+    onSelectNote(item.id);
+    onClose();
+  };
+
   // Handle arrow keys and enter
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
@@ -231,8 +240,7 @@ export function GlobalSearchModal({
       e.preventDefault();
       if (results.length > 0 && selectedIndex < results.length) {
         const item = results[selectedIndex];
-        onSelectNote(item.id);
-        onClose();
+        handleCommitSelection(item);
       }
     }
   };
@@ -279,7 +287,7 @@ export function GlobalSearchModal({
           part.toLowerCase() === term.toLowerCase() ? (
             <mark
               key={i}
-              className="bg-primary/20 text-primary font-semibold rounded-xs px-0.5"
+              className="bg-yellow-300/60 dark:bg-yellow-500/30 text-foreground font-semibold rounded-xs px-1 py-0.2"
             >
               {part}
             </mark>
@@ -336,6 +344,17 @@ export function GlobalSearchModal({
           </kbd>
         </div>
 
+        {/* Full-Text Drive Search Loader Status */}
+        {query.trim().length >= 2 && (isServerSearching || query.trim() !== debouncedQuery) && (
+          <div className="flex items-center justify-between px-4 py-2 bg-primary/5 border-b border-border/40 text-xs text-primary select-none animate-in fade-in duration-100">
+            <div className="flex items-center gap-2 font-medium">
+              <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0 text-primary" />
+              <span>Searching full note contents across Google Drive…</span>
+            </div>
+            <span className="text-[10px] font-mono text-muted-foreground">Deep Scan</span>
+          </div>
+        )}
+
         {/* Results List */}
         <div
           ref={listRef}
@@ -358,10 +377,7 @@ export function GlobalSearchModal({
               return (
                 <div
                   key={item.id}
-                  onClick={() => {
-                    onSelectNote(item.id);
-                    onClose();
-                  }}
+                  onClick={() => handleCommitSelection(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`flex flex-col px-3.5 py-2.5 rounded-xl cursor-pointer transition-colors text-sm ${
                     isSelected

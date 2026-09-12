@@ -2021,6 +2021,9 @@ export function WorkspaceLayout({
             onInsertContent={(content) => {
               setNoteContent((prev) => (prev ? `${prev}\n\n${content}` : content));
             }}
+            onReplaceContent={(content) => {
+              setNoteContent(content);
+            }}
             onCreateNoteWithContent={async (title, content) => {
               await handleCreateFile(undefined);
               setNoteTitle(title.endsWith(".md") ? title : `${title}.md`);

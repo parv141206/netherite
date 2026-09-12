@@ -27,9 +27,11 @@ function CopilotMermaidBlock({
   useEffect(() => {
     let cancelled = false;
     const renderDiagram = async () => {
+      const id = `copilot-mmd-${Math.random().toString(36).substring(2, 9)}`;
       try {
         mermaid.initialize({
           startOnLoad: false,
+          suppressErrorRendering: true,
           theme: isDark ? "dark" : "neutral",
           securityLevel: "loose",
           fontFamily: "Inter, system-ui, sans-serif",
@@ -42,19 +44,20 @@ function CopilotMermaidBlock({
                 primaryBorderColor: "#475569",
                 lineColor: "#64748b",
                 nodeTextColor: "#f8fafc",
+                clusterBkg: "#1e293b",
               }
             : {
                 darkMode: false,
                 background: "transparent",
-                primaryColor: "#f8fafc",
+                primaryColor: "#ffffff",
                 primaryTextColor: "#0f172a",
                 primaryBorderColor: "#cbd5e1",
                 lineColor: "#64748b",
                 nodeTextColor: "#0f172a",
+                clusterBkg: "#f8fafc",
               },
         });
 
-        const id = `copilot-mmd-${Math.random().toString(36).substring(2, 9)}`;
         const { svg: renderedSvg } = await mermaid.render(id, code.trim());
         if (!cancelled) {
           let cleanSvg = renderedSvg.replace(
@@ -70,6 +73,17 @@ function CopilotMermaidBlock({
       } catch (err: any) {
         if (!cancelled) {
           setError(err?.message || "Invalid Mermaid syntax");
+        }
+      } finally {
+        if (typeof document !== "undefined") {
+          const phantom = document.getElementById(id);
+          if (phantom) phantom.remove();
+          const errorEl = document.getElementById(`d${id}`);
+          if (errorEl) errorEl.remove();
+
+          document.querySelectorAll('body > svg[id^="dmermaid"], body > div[id^="dmermaid"], body > .error-icon, body > svg[aria-roledescription="error"]').forEach((el) => {
+            el.remove();
+          });
         }
       }
     };

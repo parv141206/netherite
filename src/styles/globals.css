@@ -1088,3 +1088,34 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
   font-family: 'Space Mono', monospace !important;
 }
 
+/* ========================================================= */
+/* MERMAID ERROR SUPPRESSION & TEXT OVERFLOW GUARDS          */
+/* ========================================================= */
+
+body > svg[id^="dmermaid"],
+body > div[id^="dmermaid"],
+body > .error-icon,
+body > svg[aria-roledescription="error"],
+svg[id^="dmermaid"],
+div[id^="dmermaid"],
+.error-icon {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
+
+/* Guard against text overflow inside Mermaid SVG nodes */
+.mermaid-viewport svg {
+  overflow: visible !important;
+}
+.mermaid-viewport text,
+.mermaid-viewport span.nodeLabel {
+  overflow: visible !important;
+  font-feature-settings: normal !important;
+}
+
