@@ -74,6 +74,10 @@ yarn-error.log*
 /public/downloads/*.exe
 !/public/downloads/.gitkeep
 
+# Large raw SVG source (compressed raster version icarus.png is committed instead)
+/public/images/icarus.svg
+
+
 # Legacy Flutter
 .dart_tool/
 flutter_archive/

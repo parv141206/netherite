@@ -1119,3 +1119,28 @@ svg .nodeLabel {
   overflow: visible !important;
 }
 
+/* Home Page Theme Isolation: Ensures editor themes (pookie, nord, solarized, etc.) never affect the landing page */
+[data-landing-page] {
+  background-color: #ffffff !important;
+  color: #09090b !important;
+  --background: #ffffff !important;
+  --foreground: #09090b !important;
+  --card: #ffffff !important;
+  --card-foreground: #09090b !important;
+  --muted: #f4f4f5 !important;
+  --muted-foreground: #71717a !important;
+}
+
+.dark [data-landing-page],
+[data-landing-page].dark,
+html.dark [data-landing-page] {
+  background-color: #000000 !important;
+  color: #fafafa !important;
+  --background: #000000 !important;
+  --foreground: #fafafa !important;
+  --card: #0a0a0a !important;
+  --card-foreground: #fafafa !important;
+  --muted: #141417 !important;
+  --muted-foreground: #a1a1aa !important;
+}
+
