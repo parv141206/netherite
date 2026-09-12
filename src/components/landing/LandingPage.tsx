@@ -50,24 +50,17 @@ export function LandingPage({ session }: { session?: any } = {}) {
     setMounted(true);
 
     const lenis = new Lenis({
+      autoRaf: true,
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1,
+      wheelMultiplier: 1.0,
       touchMultiplier: 1.5,
     });
 
-    let rafId: number;
-    function raf(time: number) {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    }
-    rafId = requestAnimationFrame(raf);
-
     return () => {
-      cancelAnimationFrame(rafId);
       lenis.destroy();
     };
   }, []);
@@ -106,7 +99,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
   return (
     <div
       data-landing-page="true"
-      className="min-h-dvh flex flex-col justify-between bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 selection:bg-foreground selection:text-background relative overflow-x-hidden overflow-y-auto"
+      className="min-h-dvh flex flex-col justify-between bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 selection:bg-foreground selection:text-background relative overflow-x-clip"
     >
       {isNavigating && (
         <AppleFullPageLoader
@@ -256,7 +249,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
                   href="#features"
                   className="px-4 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Architecture Codex ↓
+                  Core Architecture ↓
                 </a>
               </div>
 
@@ -1037,7 +1030,7 @@ impl<T: Hypersurface> CauchyState<T> {
         </section>
 
         {/* ========================================================================= */}
-        {/* ARCHITECTURAL CODEX SECTION (Framed in Grid) */}
+        {/* ARCHITECTURE SECTION (Framed in Grid) */}
         {/* ========================================================================= */}
         <section id="features" className="w-full border-b border-dotted border-blue-500/40 dark:border-blue-400/35 relative bg-white dark:bg-black">
           <div className="max-w-[1440px] mx-auto border-x border-dotted border-blue-500/40 dark:border-blue-400/35 grid grid-cols-1 lg:grid-cols-[minmax(48px,1fr)_minmax(320px,580px)_minmax(320px,580px)_minmax(48px,1fr)] relative">
@@ -1045,16 +1038,16 @@ impl<T: Hypersurface> CauchyState<T> {
             <div className="hidden lg:flex flex-col items-center justify-between py-12 px-2 border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative select-none bg-white dark:bg-black">
               <GridCrosshair className="absolute -top-2 -right-2 z-20" />
               <span className="font-mono text-[9px] text-blue-500/50 uppercase tracking-widest rotate-90 my-auto">
-                CODEX // PILLARS
+                PILLARS // 01
               </span>
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20" />
             </div>
 
-            {/* Middle 2 Columns for Codex Cards */}
+            {/* Middle 2 Columns for Architecture Cards */}
             <div className="lg:col-span-2 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative bg-white dark:bg-black">
               <div className="text-center mb-12">
                 <span className="text-xs uppercase tracking-widest text-blue-600 dark:text-blue-400 font-mono block mb-2">
-                  ARCHITECTURAL CODEX // CANON
+                  FOUNDATIONS // ARCHITECTURE
                 </span>
                 <h2 className="font-serif italic font-normal text-3xl sm:text-4xl lg:text-5xl text-[#0600ff] dark:text-[#3b82f6] mb-3 leading-tight">
                   The Pillars of Intellectual Custody
@@ -1066,12 +1059,9 @@ impl<T: Hypersurface> CauchyState<T> {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
                 {/* 1. Google Drive Core */}
-                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors group">
+                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-foreground mb-4 border border-border/50 group-hover:scale-105 transition-transform">
-                      <HardDrive className="w-4 h-4 text-blue-500" />
-                    </div>
-                    <h3 className="font-serif italic text-base text-foreground mb-1.5">Sovereign Cloud Custody</h3>
+                    <h3 className="font-serif italic text-base sm:text-lg text-foreground mb-1.5">Sovereign Cloud Custody</h3>
                     <p className="text-xs text-muted-foreground font-serif leading-relaxed">
                       Zero black-box vaults. Every manuscript and diagram commits as pure, open <code className="font-mono text-[10px]">.md</code> or <code className="font-mono text-[10px]">.excalidraw</code> artifacts directly into your personal Drive.
                     </p>
@@ -1079,12 +1069,9 @@ impl<T: Hypersurface> CauchyState<T> {
                 </div>
 
                 {/* 2. Whiteboard Suite */}
-                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors group">
+                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-purple-400 mb-4 border border-border/50 group-hover:scale-105 transition-transform">
-                      <Palette className="w-4 h-4" />
-                    </div>
-                    <h3 className="font-serif italic text-base text-foreground mb-1.5">Boundless Vector Canvas</h3>
+                    <h3 className="font-serif italic text-base sm:text-lg text-foreground mb-1.5">Boundless Vector Canvas</h3>
                     <p className="text-xs text-muted-foreground font-serif leading-relaxed">
                       An unconstrained Excalidraw studio engineered for spatial cognition: chart distributed topologies, conceptual hierarchies, and transformer architectures where intuition leads.
                     </p>
@@ -1092,12 +1079,9 @@ impl<T: Hypersurface> CauchyState<T> {
                 </div>
 
                 {/* 3. KaTeX Typesetting */}
-                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors group">
+                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-foreground mb-4 border border-border/50 group-hover:scale-105 transition-transform">
-                      <span className="font-serif font-bold text-blue-500">Σ</span>
-                    </div>
-                    <h3 className="font-serif italic text-base text-foreground mb-1.5">Typographic Rigor</h3>
+                    <h3 className="font-serif italic text-base sm:text-lg text-foreground mb-1.5">Typographic Rigor</h3>
                     <p className="text-xs text-muted-foreground font-serif leading-relaxed">
                       Instantaneous KaTeX typesetting that honors the formal beauty of proof. Seamlessly resolves differential manifolds and contour integrals with unblemished aesthetic precision.
                     </p>
@@ -1105,12 +1089,9 @@ impl<T: Hypersurface> CauchyState<T> {
                 </div>
 
                 {/* 4. Split Studio */}
-                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors group">
+                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-foreground mb-4 border border-border/50 group-hover:scale-105 transition-transform">
-                      <span className="font-mono text-blue-500 font-bold">||</span>
-                    </div>
-                    <h3 className="font-serif italic text-base text-foreground mb-1.5">Symbiotic Dual-Pane Workspace</h3>
+                    <h3 className="font-serif italic text-base sm:text-lg text-foreground mb-1.5">Symbiotic Dual-Pane Workspace</h3>
                     <p className="text-xs text-muted-foreground font-serif leading-relaxed">
                       Synthesize literature and spatial schematics in parallel harmony. Write comprehensive dissertations while simultaneously manipulating visual models without losing mental focus.
                     </p>
@@ -1118,12 +1099,9 @@ impl<T: Hypersurface> CauchyState<T> {
                 </div>
 
                 {/* 5. Blue Light Warmth */}
-                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors group">
+                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-foreground mb-4 border border-border/50 group-hover:scale-105 transition-transform">
-                      <span className="font-mono text-amber-500 font-bold">◉</span>
-                    </div>
-                    <h3 className="font-serif italic text-base text-foreground mb-1.5">Circadian Nocturnal Glow</h3>
+                    <h3 className="font-serif italic text-base sm:text-lg text-foreground mb-1.5">Circadian Nocturnal Glow</h3>
                     <p className="text-xs text-muted-foreground font-serif leading-relaxed">
                       Hardware-accelerated warmth control dynamically transitions your workspace into soothing nocturnal parchment at dusk, protecting vision across solitary late-night hours.
                     </p>
@@ -1131,12 +1109,9 @@ impl<T: Hypersurface> CauchyState<T> {
                 </div>
 
                 {/* 6. Zero Lock-in */}
-                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors group">
+                <div className="p-6 rounded-2xl border border-blue-500/30 bg-card/60 backdrop-blur-xs flex flex-col justify-between hover:border-blue-500/60 transition-colors">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-foreground mb-4 border border-border/50 group-hover:scale-105 transition-transform">
-                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                    </div>
-                    <h3 className="font-serif italic text-base text-foreground mb-1.5">Eternal Autonomy</h3>
+                    <h3 className="font-serif italic text-base sm:text-lg text-foreground mb-1.5">Eternal Autonomy</h3>
                     <p className="text-xs text-muted-foreground font-serif leading-relaxed">
                       Your life&apos;s work remains unconditionally yours. Instantly open and modify every document in Obsidian, VS Code, or standard Unix terminal pipelines whenever you desire.
                     </p>
@@ -1148,7 +1123,7 @@ impl<T: Hypersurface> CauchyState<T> {
             {/* Right Gutter */}
             <div className="hidden lg:flex flex-col items-center justify-between py-12 px-2 relative select-none bg-white dark:bg-black">
               <span className="font-mono text-[9px] text-blue-500/50 uppercase tracking-widest -rotate-90 my-auto">
-                CODEX // LATERAL_R
+                LATERAL // PILLARS
               </span>
             </div>
           </div>

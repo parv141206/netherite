@@ -1,6 +1,14 @@
 @import "tailwindcss";
 @import "lenis/dist/lenis.css";
 
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+html {
+  scroll-behavior: initial !important;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
