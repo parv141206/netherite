@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Sparkles,
   Send,
@@ -15,13 +15,9 @@ import {
   Trash2,
   Key,
   Loader2,
-  Workflow,
-  GraduationCap,
-  ListPlus,
-  HelpCircle,
-  Calculator,
 } from "lucide-react";
 import { GeminiSettingsModal, GEMINI_MODELS } from "./GeminiSettingsModal";
+import { CopilotMarkdown } from "./CopilotMarkdown";
 
 interface Message {
   id: string;
@@ -55,13 +51,63 @@ export function GeminiCopilotSidebar({
       id: "welcome",
       role: "assistant",
       content:
-        "👋 Hello! I am your **Gemini AI Copilot** in Netherite.\n\nI can help you:\n- 📖 Explain complex concepts from your notes for GTU exams\n- 📊 Generate custom **Mermaid diagrams**\n- 🧮 Solve step-by-step engineering numericals (CRC, Hamming code, VLSM, Shannon Capacity)\n- ✍️ Expand, structure, or summarize any topic\n\nAsk me anything or pick a quick prompt below!",
+        "Hello! I am your **Gemini AI Copilot** in Netherite.\n\nI have real-time context of your active document. Ask me to:\n- Explain engineering concepts or GTU exam topics\n- Solve numericals (CRC, Hamming code, VLSM, Shannon Capacity)\n- Generate architectural **Mermaid diagrams**\n- Review, structure, or expand your study notes",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Draggable Width State (persistent in localStorage)
+  const [copilotWidth, setCopilotWidth] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_copilot_width");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 320 && parsed <= 800) return parsed;
+      }
+    }
+    return 420;
+  });
+
+  const [isResizing, setIsResizing] = useState(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(420);
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    startXRef.current = e.clientX;
+    startWidthRef.current = copilotWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      // Dragging left increases width; dragging right decreases width
+      const delta = startXRef.current - e.clientX;
+      const newWidth = Math.min(800, Math.max(320, startWidthRef.current + delta));
+      setCopilotWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      localStorage.setItem("netherite_copilot_width", copilotWidth.toString());
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, copilotWidth]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -92,8 +138,8 @@ export function GeminiCopilotSidebar({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSendMessage = async (customPrompt?: string) => {
-    const promptToSend = customPrompt || input.trim();
+  const handleSendMessage = async () => {
+    const promptToSend = input.trim();
     if (!promptToSend) return;
 
     if (!apiKey) {
@@ -109,20 +155,19 @@ export function GeminiCopilotSidebar({
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    if (!customPrompt) setInput("");
+    setInput("");
     setIsLoading(true);
 
     try {
-      // Build conversation history & context
       const contextSnippet = currentNoteContent
-        ? `\n\n--- ACTIVE NOTE CONTEXT ---\nDocument Title: ${currentNoteTitle || "Untitled"}\nContent:\n${currentNoteContent.slice(
+        ? `\n\n--- ACTIVE NOTE CONTEXT ---\nDocument: ${currentNoteTitle || "Untitled"}\n${currentNoteContent.slice(
             0,
             12000
           )}\n--- END CONTEXT ---\n`
         : "";
 
-      const systemInstruction = `You are Gemini Copilot, an expert academic pair-programmer and computer engineering professor built into Netherite sovereign Markdown studio.
-You assist university students (specifically B.E. Computer Engineering, Sem 5 GTU) in mastering Computer Networks, systems architecture, and engineering principles.
+      const systemInstruction = `You are Gemini Copilot, an expert academic pair-programmer and computer engineering assistant built into Netherite sovereign Markdown studio.
+You assist university students (Course: BE Computer Engineering, Sem 5 GTU) in mastering Computer Networks, systems architecture, and engineering principles.
 Guidelines:
 1. Always format responses in clean GitHub Flavored Markdown with bolding, lists, and tables.
 2. Use LaTeX for formulas: inline as $E = mc^2$ and block as $$...$$.
@@ -130,10 +175,9 @@ Guidelines:
 \`\`\`mermaid
 ...
 \`\`\`
-4. When explaining topics, follow GTU marking patterns: clear definitions, core working principle, neat ASCII or Mermaid diagrams, step-by-step mathematical derivations or numerical traces, and comparative tables.
+4. When explaining topics, follow GTU marking patterns: clear definitions, core working principle, neat diagrams, step-by-step mathematical derivations or numerical traces, and comparative tables.
 ${contextSnippet}`;
 
-      // Format for Google Gemini generateContent REST API
       const contents = [
         {
           role: "user",
@@ -141,50 +185,42 @@ ${contextSnippet}`;
         },
       ];
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-      const res = await fetch(url, {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 4096,
-          },
-        }),
+        body: JSON.stringify({ contents }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          data?.error?.message || `Google API error (Status ${res.status})`
+          errorData?.error?.message ||
+            `API Error ${response.status}: Failed to generate content from Google Gemini.`
         );
       }
 
-      const replyText =
+      const data = await response.json();
+      const generatedText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "I couldn't generate a response. Please check your prompt or API key.";
+        "I received an empty response from Gemini. Please try rephrasing your request.";
 
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
         role: "assistant",
-        content: replyText,
+        content: generatedText,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err: any) {
-      const errMsg: Message = {
+      const errorMsg: Message = {
         id: `err-${Date.now()}`,
         role: "assistant",
-        content: `⚠️ **Error communicating with Gemini API**:\n\n${
-          err?.message || err
-        }\n\n*Click the Settings gear at the top to verify your official Google Gemini API key.*`,
+        content: `**Request Failed**: ${err?.message || "Unknown error occurred."}\n\nPlease check your official API key in settings.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
-      setMessages((prev) => [...prev, errMsg]);
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
@@ -197,58 +233,45 @@ ${contextSnippet}`;
     }
   };
 
-  const quickPrompts = [
-    {
-      icon: GraduationCap,
-      label: "Explain Note for Exam",
-      prompt: `Please explain the key concepts in this note ("${currentNoteTitle || "this topic"}") thoroughly as expected in a 7-mark GTU examination answer, including core definitions, flow, and key points to remember.`,
-    },
-    {
-      icon: Workflow,
-      label: "Create Mermaid Diagram",
-      prompt: `Generate a detailed Mermaid diagram that visualizes the core architecture or protocol flow described in this note ("${currentNoteTitle || "this topic"}"). Output only clean markdown with the mermaid block.`,
-    },
-    {
-      icon: ListPlus,
-      label: "Find Gaps & Expand",
-      prompt: `Analyze this note ("${currentNoteTitle || "this topic"}") and identify any missing sub-topics, trade-offs, standard RFC specifications, or exam questions that should be added to make it completely exhaustive.`,
-    },
-    {
-      icon: Calculator,
-      label: "Worked Numerical",
-      prompt: `Provide a realistic, step-by-step worked numerical problem based on this topic ("${currentNoteTitle || "this topic"}") with full formulas, calculation steps, and final answer.`,
-    },
-  ];
-
   return (
     <>
       <aside
-        className="fixed sm:relative inset-y-0 right-0 z-40 w-80 sm:w-96 border-l border-border bg-[var(--sidebar-bg)] flex flex-col h-full select-none shadow-2xl sm:shadow-none animate-in slide-in-from-right duration-200 shrink-0"
+        style={{ width: `${copilotWidth}px` }}
+        className="relative h-full flex flex-col bg-card border-l border-border/70 z-30 transition-none select-none shrink-0"
       >
-        {/* Header Bar */}
-        <div className="px-3.5 py-3 border-b border-border/60 bg-muted/20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
-              <Sparkles className="w-4 h-4" />
+        {/* Draggable Left Resize Handle */}
+        <div
+          onMouseDown={handleResizeStart}
+          className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/50 transition-colors z-40 group"
+          title="Drag to resize Copilot panel"
+        >
+          <div className="w-0.5 h-8 bg-border group-hover:bg-primary rounded-full absolute left-0.5 top-1/2 -translate-y-1/2 transition-colors" />
+        </div>
+
+        {/* Minimalist, Clean Header */}
+        <div className="h-12 px-3.5 border-b border-border/60 flex items-center justify-between bg-muted/20">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1 rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="w-3.5 h-3.5" />
             </div>
-            <div>
-              <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                <span>Gemini Copilot</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-xs text-foreground tracking-tight">Gemini Copilot</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground border border-border/40">
                   {model.replace("gemini-", "")}
                 </span>
               </div>
-              <div className="text-[10px] text-muted-foreground/80 truncate max-w-[170px]">
-                {currentNoteTitle ? `Context: ${currentNoteTitle}` : "Ready"}
+              <div className="text-[10px] text-muted-foreground/70 truncate max-w-[200px]">
+                {currentNoteTitle ? currentNoteTitle : "Ready"}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => setIsSettingsOpen(true)}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Configure Gemini API Key & Model"
+              title="Configure API Key & Model"
             >
               <Settings className="w-3.5 h-3.5" />
             </button>
@@ -258,13 +281,13 @@ ${contextSnippet}`;
                   {
                     id: "reset",
                     role: "assistant",
-                    content: "Chat cleared. How can I assist you with your notes?",
+                    content: "Chat cleared. How can I assist you?",
                     timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                   },
                 ])
               }
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Clear Chat History"
+              title="Clear Chat"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -278,27 +301,22 @@ ${contextSnippet}`;
           </div>
         </div>
 
-        {/* API Key Missing Alert */}
+        {/* Minimal Setup Notification (If Key Missing) */}
         {!apiKey && (
           <div
             onClick={() => setIsSettingsOpen(true)}
-            className="m-2.5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs text-purple-700 dark:text-purple-300 cursor-pointer hover:bg-purple-500/15 transition-colors flex items-center justify-between gap-2"
+            className="m-2.5 px-3 py-2 rounded-lg bg-muted/60 border border-border/60 text-xs text-muted-foreground cursor-pointer hover:bg-muted hover:text-foreground transition-colors flex items-center justify-between gap-2"
           >
             <div className="flex items-center gap-2">
-              <Key className="w-4 h-4 shrink-0 text-purple-500" />
-              <div>
-                <div className="font-semibold">Connect Gemini API Key</div>
-                <div className="text-[10px] opacity-80">
-                  Click to enter your official free API key
-                </div>
-              </div>
+              <Key className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[11px] font-medium">Connect Gemini API Key to chat</span>
             </div>
-            <span className="text-[11px] underline font-semibold shrink-0">Setup</span>
+            <span className="text-[11px] font-semibold text-primary">Configure</span>
           </div>
         )}
 
         {/* Messages Feed */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3.5 text-xs">
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-4 text-xs">
           {messages.map((msg) => {
             const isUser = msg.role === "user";
             return (
@@ -306,7 +324,7 @@ ${contextSnippet}`;
                 key={msg.id}
                 className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
               >
-                <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-muted-foreground/70">
+                <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-muted-foreground/60 font-mono">
                   {isUser ? (
                     <>
                       <span>You</span>
@@ -314,7 +332,7 @@ ${contextSnippet}`;
                     </>
                   ) : (
                     <>
-                      <Bot className="w-3 h-3 text-purple-500" />
+                      <Bot className="w-3 h-3 text-primary" />
                       <span>Gemini</span>
                     </>
                   )}
@@ -323,13 +341,20 @@ ${contextSnippet}`;
                 </div>
 
                 <div
-                  className={`p-3 rounded-2xl max-w-[95%] leading-relaxed select-text ${
+                  className={`p-3.5 rounded-2xl max-w-[95%] select-text transition-all ${
                     isUser
-                      ? "bg-purple-600 text-white rounded-tr-xs"
-                      : "bg-card border border-border/80 text-foreground rounded-tl-xs shadow-2xs whitespace-pre-wrap font-sans"
+                      ? "bg-primary text-primary-foreground rounded-tr-xs"
+                      : "bg-muted/30 dark:bg-card border border-border/60 text-foreground rounded-tl-xs shadow-2xs"
                   }`}
                 >
-                  {msg.content}
+                  {isUser ? (
+                    <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                  ) : (
+                    <CopilotMarkdown
+                      content={msg.content}
+                      onInsertContent={onInsertContent}
+                    />
+                  )}
                 </div>
 
                 {/* AI Message Action Buttons */}
@@ -343,7 +368,7 @@ ${contextSnippet}`;
                       {copiedId === msg.id ? (
                         <>
                           <Check className="w-3 h-3 text-emerald-500" />
-                          <span className="text-emerald-500">Copied</span>
+                          <span className="text-emerald-500 font-medium">Copied</span>
                         </>
                       ) : (
                         <>
@@ -357,9 +382,9 @@ ${contextSnippet}`;
                       <button
                         onClick={() => onInsertContent(msg.content)}
                         className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                        title="Append into active note"
+                        title="Append to active note"
                       >
-                        <ArrowDownToLine className="w-3 h-3 text-blue-500" />
+                        <ArrowDownToLine className="w-3 h-3 text-primary" />
                         <span>Insert</span>
                       </button>
                     )}
@@ -371,7 +396,7 @@ ${contextSnippet}`;
                           onCreateNoteWithContent(suggestedTitle, msg.content);
                         }}
                         className="flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                        title="Create new note from response"
+                        title="Save as new note"
                       >
                         <Plus className="w-3 h-3 text-emerald-500" />
                         <span>Save as Note</span>
@@ -384,41 +409,18 @@ ${contextSnippet}`;
           })}
 
           {isLoading && (
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-card border border-border/60 text-muted-foreground text-xs animate-pulse max-w-[80%]">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-500" />
-              <span>Gemini is thinking & formulating answer...</span>
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-muted/30 border border-border/50 text-muted-foreground text-xs animate-pulse max-w-[80%]">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+              <span>Thinking…</span>
             </div>
           )}
 
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Suggestion Chips */}
-        <div className="p-2 border-t border-border/40 bg-muted/10 space-y-1">
-          <div className="text-[10px] font-semibold text-muted-foreground uppercase px-1 tracking-wider">
-            Quick Prompts
-          </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {quickPrompts.map((qp, idx) => {
-              const Icon = qp.icon;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => handleSendMessage(qp.prompt)}
-                  disabled={isLoading}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-card hover:bg-accent border border-border/60 text-[11px] text-muted-foreground hover:text-foreground whitespace-nowrap shrink-0 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
-                >
-                  <Icon className="w-3 h-3 text-purple-500" />
-                  <span>{qp.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Bottom Input Area */}
-        <div className="p-2.5 border-t border-border/60 bg-muted/20">
-          <div className="relative flex items-end rounded-xl bg-background border border-border/80 focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500/40 transition-all p-1.5">
+        <div className="p-3 border-t border-border/60 bg-muted/10">
+          <div className="relative flex items-end rounded-xl bg-background border border-border/80 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 transition-all p-1.5">
             <textarea
               ref={textareaRef}
               rows={2}
@@ -427,16 +429,16 @@ ${contextSnippet}`;
               onKeyDown={handleKeyDown}
               placeholder={
                 apiKey
-                  ? "Ask Gemini Copilot... (Shift+Enter for new line)"
-                  : "Connect API key to chat..."
+                  ? "Ask Copilot... (Shift+Enter for newline)"
+                  : "Connect API key in settings..."
               }
               className="w-full bg-transparent resize-none text-xs text-foreground placeholder:text-muted-foreground/60 outline-none p-1 max-h-28"
             />
             <button
-              onClick={() => handleSendMessage()}
+              onClick={handleSendMessage}
               disabled={isLoading || !input.trim()}
-              className="p-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-40 transition-all cursor-pointer shrink-0 ml-1 mb-0.5"
-              title="Send message"
+              className="p-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 transition-all cursor-pointer shrink-0 ml-1 mb-0.5"
+              title="Send (Enter)"
             >
               {isLoading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

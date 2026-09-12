@@ -740,3 +740,53 @@ export async function getImageAsset(session: any, fileId: string) {
     };
   });
 }
+
+export async function searchNotesContent(session: any, query: string) {
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    const rootFolderId = await ensureNetheriteFolder(session);
+
+    // 1. Fetch folders belonging to Netherite
+    const foldersRes = await drive.files.list({
+      q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
+      fields: "files(id, name, parents)",
+      pageSize: 1000,
+      spaces: "drive",
+    });
+
+    const allFolders = foldersRes.data.files ?? [];
+    const netheriteFolderIds = new Set<string>([rootFolderId]);
+
+    let added = true;
+    while (added) {
+      added = false;
+      for (const f of allFolders) {
+        if (!f.id || netheriteFolderIds.has(f.id)) continue;
+        if (f.parents?.some((p: string) => netheriteFolderIds.has(p))) {
+          netheriteFolderIds.add(f.id);
+          added = true;
+        }
+      }
+    }
+
+    const parentIds = Array.from(netheriteFolderIds);
+    const parentClause = parentIds.slice(0, 30).map((id) => `'${id}' in parents`).join(" or ");
+    const sanitized = query.replace(/'/g, "\\'");
+
+    // Search full-text content in files within Netherite
+    const searchRes = await drive.files.list({
+      q: `trashed=false and (${parentClause}) and mimeType!='application/vnd.google-apps.folder' and (name contains '${sanitized}' or fullText contains '${sanitized}')`,
+      fields: "files(id, name, mimeType, modifiedTime, parents)",
+      pageSize: 30,
+      spaces: "drive",
+    });
+
+    return (searchRes.data.files ?? []).map((f) => ({
+      id: f.id ?? "",
+      name: f.name ?? "",
+      mimeType: f.mimeType ?? "text/markdown",
+      modifiedTime: f.modifiedTime ?? new Date().toISOString(),
+      parents: f.parents ?? [],
+    }));
+  });
+}

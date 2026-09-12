@@ -8,13 +8,15 @@ import {
   Palette,
   Network,
   Folder,
-  ArrowRight,
   CornerDownLeft,
   X,
-  Sparkles,
   Calendar,
+  Sparkles,
+  Loader2,
+  FileSearch,
 } from "lucide-react";
 import type { DriveItem } from "~/components/workspace/Sidebar";
+import { api } from "~/trpc/react";
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -24,6 +26,15 @@ interface GlobalSearchModalProps {
   onSelectNote: (id: string) => void;
   onCreateNote?: () => void;
   onOpenCalendar?: () => void;
+}
+
+interface SearchResultItem {
+  id: string;
+  name: string;
+  mimeType?: string;
+  parents?: string[] | null;
+  matchType: "title" | "content" | "folder";
+  snippet?: string;
 }
 
 export function GlobalSearchModal({
@@ -36,14 +47,24 @@ export function GlobalSearchModal({
   onOpenCalendar,
 }: GlobalSearchModalProps) {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Focus input when opened
+  // Debounce query for server-side full text content search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Focus input on open
   useEffect(() => {
     if (isOpen) {
       setQuery("");
+      setDebouncedQuery("");
       setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -67,6 +88,16 @@ export function GlobalSearchModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Server-side deep Google Drive full-text search
+  const { data: serverSearchResults, isLoading: isServerSearching } =
+    api.notes.searchContent.useQuery(
+      { query: debouncedQuery },
+      {
+        enabled: isOpen && debouncedQuery.length >= 2,
+        staleTime: 30000,
+      }
+    );
+
   // Folder map to resolve breadcrumbs
   const folderMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -78,47 +109,128 @@ export function GlobalSearchModal({
     return map;
   }, [notes]);
 
-  const getBreadcrumb = (item: DriveItem): string => {
-    if (!item.parents || item.parents.length === 0) return "";
-    const parentId = item.parents[0];
+  const getBreadcrumb = (parents?: string[] | null): string => {
+    if (!parents || parents.length === 0) return "";
+    const parentId = parents[0];
     return folderMap.get(parentId) || "";
   };
 
-  // Filter notes by search query
-  const filteredItems = useMemo(() => {
+  // Helper: Find text snippet in local storage drafts
+  const getLocalDraftSnippet = (id: string, searchTerm: string): string | null => {
+    if (typeof window === "undefined" || !searchTerm) return null;
+    try {
+      const draft = localStorage.getItem(`netherite_draft_${id}`);
+      if (!draft) return null;
+      const lower = draft.toLowerCase();
+      const idx = lower.indexOf(searchTerm.toLowerCase());
+      if (idx === -1) return null;
+
+      const start = Math.max(0, idx - 45);
+      const end = Math.min(draft.length, idx + searchTerm.length + 65);
+      const prefix = start > 0 ? "…" : "";
+      const suffix = end < draft.length ? "…" : "";
+      return `${prefix}${draft.substring(start, end).replace(/\n+/g, " ")}${suffix}`;
+    } catch {
+      return null;
+    }
+  };
+
+  // Unified Filter & Rank results (Title matches + Content matches)
+  const results: SearchResultItem[] = useMemo(() => {
     const cleanQuery = query.trim().toLowerCase();
     if (!cleanQuery) {
-      // Show most recently modified files and non-folders
+      // Default: recent non-dotfile items
       return notes
         .filter((n) => !n.name?.startsWith(".") && n.name !== "assets")
-        .slice(0, 15);
+        .slice(0, 15)
+        .map((n) => ({
+          id: n.id,
+          name: n.name,
+          mimeType: n.mimeType,
+          parents: n.parents,
+          matchType:
+            n.mimeType === "application/vnd.google-apps.folder" ? "folder" : "title",
+        }));
     }
 
-    return notes
-      .filter((n) => {
-        if (n.name?.startsWith(".") || n.name === "assets") return false;
-        const nameMatch = n.name.toLowerCase().includes(cleanQuery);
-        const parentMatch = n.parents?.some((p) => {
-          const pName = folderMap.get(p);
-          return pName && pName.toLowerCase().includes(cleanQuery);
-        });
-        return nameMatch || parentMatch;
-      })
-      .slice(0, 25);
-  }, [notes, query, folderMap]);
+    const items: SearchResultItem[] = [];
+    const seenIds = new Set<string>();
 
-  // Handle arrow key navigation and Enter
+    // 1. Direct Title & Folder Matches (High priority)
+    for (const n of notes) {
+      if (n.name?.startsWith(".") || n.name === "assets") continue;
+      const isFolder = n.mimeType === "application/vnd.google-apps.folder";
+      const nameMatch = n.name.toLowerCase().includes(cleanQuery);
+      const parentName = n.parents?.[0] ? folderMap.get(n.parents[0]) : "";
+      const parentMatch = parentName ? parentName.toLowerCase().includes(cleanQuery) : false;
+
+      if (nameMatch || parentMatch) {
+        items.push({
+          id: n.id,
+          name: n.name,
+          mimeType: n.mimeType,
+          parents: n.parents,
+          matchType: isFolder ? "folder" : "title",
+          snippet: getLocalDraftSnippet(n.id, cleanQuery) || undefined,
+        });
+        seenIds.add(n.id);
+      }
+    }
+
+    // 2. Client Local Storage Content Matches (0ms instant)
+    for (const n of notes) {
+      if (seenIds.has(n.id) || n.mimeType === "application/vnd.google-apps.folder") continue;
+      const snippet = getLocalDraftSnippet(n.id, cleanQuery);
+      if (snippet) {
+        items.push({
+          id: n.id,
+          name: n.name,
+          mimeType: n.mimeType,
+          parents: n.parents,
+          matchType: "content",
+          snippet,
+        });
+        seenIds.add(n.id);
+      }
+    }
+
+    // 3. Server Google Drive Full-Text Search Matches
+    if (serverSearchResults && serverSearchResults.length > 0) {
+      for (const serverItem of serverSearchResults) {
+        if (!serverItem.id || seenIds.has(serverItem.id)) continue;
+        if (serverItem.name?.startsWith(".") || serverItem.name === "assets") continue;
+
+        // Check if note exists in client note list to preserve parents
+        const existing = notes.find((n) => n.id === serverItem.id);
+        const snippet = getLocalDraftSnippet(serverItem.id, cleanQuery) || undefined;
+
+        items.push({
+          id: serverItem.id,
+          name: serverItem.name,
+          mimeType: serverItem.mimeType,
+          parents: existing?.parents || serverItem.parents,
+          matchType: "content",
+          snippet,
+        });
+        seenIds.add(serverItem.id);
+      }
+    }
+
+    return items.slice(0, 30);
+  }, [notes, query, folderMap, serverSearchResults]);
+
+  // Handle arrow keys and enter
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1 < filteredItems.length ? prev + 1 : 0));
+      setSelectedIndex((prev) => (prev + 1 < results.length ? prev + 1 : 0));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 >= 0 ? prev - 1 : filteredItems.length - 1));
+      setSelectedIndex((prev) => (prev - 1 >= 0 ? prev - 1 : results.length - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (filteredItems.length > 0 && selectedIndex < filteredItems.length) {
-        const item = filteredItems[selectedIndex];
+      if (results.length > 0 && selectedIndex < results.length) {
+        const item = results[selectedIndex];
         onSelectNote(item.id);
         onClose();
       }
@@ -137,9 +249,10 @@ export function GlobalSearchModal({
 
   if (!isOpen) return null;
 
-  const getItemIcon = (item: DriveItem) => {
-    const isFolder = item.mimeType === "application/vnd.google-apps.folder";
-    if (isFolder) return <Folder className="w-4 h-4 text-amber-500 shrink-0" />;
+  const getItemIcon = (item: SearchResultItem) => {
+    if (item.matchType === "folder" || item.mimeType === "application/vnd.google-apps.folder") {
+      return <Folder className="w-4 h-4 text-amber-500 shrink-0" />;
+    }
     if (item.name.endsWith(".mmd") || item.name.endsWith(".mermaid")) {
       return <Workflow className="w-4 h-4 text-emerald-500 shrink-0" />;
     }
@@ -149,19 +262,33 @@ export function GlobalSearchModal({
     if (item.name.endsWith(".apollon") || item.name.endsWith(".uml")) {
       return <Network className="w-4 h-4 text-purple-500 shrink-0" />;
     }
-    return <FileText className="w-4 h-4 text-blue-500 shrink-0" />;
-  };
-
-  const getItemTypeBadge = (item: DriveItem) => {
-    if (item.mimeType === "application/vnd.google-apps.folder") return "Folder";
-    if (item.name.endsWith(".mmd") || item.name.endsWith(".mermaid")) return "Mermaid";
-    if (item.name.endsWith(".excalidraw")) return "Whiteboard";
-    if (item.name.endsWith(".apollon") || item.name.endsWith(".uml")) return "UML";
-    return "Note";
+    return <FileText className="w-4 h-4 text-primary shrink-0" />;
   };
 
   const getCleanName = (name: string) => {
     return name.replace(/\.(md|mmd|mermaid|excalidraw|apollon|uml)$/i, "");
+  };
+
+  // Highlight query term in text
+  const highlightMatch = (text: string, term: string) => {
+    if (!term.trim()) return text;
+    const parts = text.split(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === term.toLowerCase() ? (
+            <mark
+              key={i}
+              className="bg-primary/20 text-primary font-semibold rounded-xs px-0.5"
+            >
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
   };
 
   return (
@@ -174,13 +301,13 @@ export function GlobalSearchModal({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        {/* Top Search Input Bar */}
+        {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3.5 border-b border-border/60 gap-3 bg-muted/20">
           <Search className="w-5 h-5 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search all notes, diagrams & folders... (Type to filter)"
+            placeholder="Search titles, full note content, formulas & diagrams..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -188,11 +315,15 @@ export function GlobalSearchModal({
             }}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none font-medium"
           />
+          {isServerSearching && (
+            <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+          )}
           {query && (
             <button
               type="button"
               onClick={() => {
                 setQuery("");
+                setDebouncedQuery("");
                 inputRef.current?.focus();
               }}
               className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
@@ -210,18 +341,18 @@ export function GlobalSearchModal({
           ref={listRef}
           className="flex-1 overflow-y-auto p-2 space-y-1 divide-y divide-transparent"
         >
-          {filteredItems.length === 0 ? (
+          {results.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
-              <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <FileSearch className="w-8 h-8 mx-auto mb-2 opacity-30" />
               <p className="text-sm font-medium">No results found for &ldquo;{query}&rdquo;</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Try searching for chapter names, protocols, or diagrams
+                Searched note titles and full text across all documents
               </p>
             </div>
           ) : (
-            filteredItems.map((item, index) => {
+            results.map((item, index) => {
               const isSelected = index === selectedIndex;
-              const breadcrumb = getBreadcrumb(item);
+              const breadcrumb = getBreadcrumb(item.parents);
               const cleanName = getCleanName(item.name);
 
               return (
@@ -232,47 +363,62 @@ export function GlobalSearchModal({
                     onClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors text-sm ${
+                  className={`flex flex-col px-3.5 py-2.5 rounded-xl cursor-pointer transition-colors text-sm ${
                     isSelected
-                      ? "bg-accent text-accent-foreground font-medium shadow-xs"
+                      ? "bg-accent text-accent-foreground shadow-2xs"
                       : "text-foreground hover:bg-accent/50"
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {getItemIcon(item)}
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium text-foreground flex items-center gap-2">
-                        <span>{cleanName}</span>
-                        {item.id === activeNoteId && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-mono">
-                            Current
-                          </span>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {getItemIcon(item)}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium text-foreground flex items-center gap-2">
+                          <span>{highlightMatch(cleanName, query)}</span>
+                          {item.id === activeNoteId && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-mono">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        {breadcrumb && (
+                          <div className="text-[11px] text-muted-foreground/70 truncate flex items-center gap-1 mt-0.5">
+                            <span>in</span>
+                            <span className="font-medium text-muted-foreground">{breadcrumb}</span>
+                          </div>
                         )}
                       </div>
-                      {breadcrumb && (
-                        <div className="text-[11px] text-muted-foreground/70 truncate flex items-center gap-1 mt-0.5">
-                          <span>in</span>
-                          <span className="font-medium text-muted-foreground">{breadcrumb}</span>
-                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <span
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-md border ${
+                          item.matchType === "content"
+                            ? "bg-primary/10 text-primary border-primary/30 font-semibold"
+                            : "bg-muted/60 text-muted-foreground border-border/40"
+                        }`}
+                      >
+                        {item.matchType === "content" ? "Content Match" : item.matchType === "folder" ? "Folder" : "Title Match"}
+                      </span>
+                      {isSelected && (
+                        <CornerDownLeft className="w-3.5 h-3.5 text-muted-foreground" />
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 ml-3">
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground border border-border/40">
-                      {getItemTypeBadge(item)}
-                    </span>
-                    {isSelected && (
-                      <CornerDownLeft className="w-3.5 h-3.5 text-muted-foreground animate-pulse" />
-                    )}
-                  </div>
+                  {/* Contextual Content Snippet Preview */}
+                  {item.snippet && (
+                    <div className="mt-1.5 pl-7 text-[11px] text-muted-foreground/90 font-mono leading-relaxed truncate">
+                      {highlightMatch(item.snippet, query)}
+                    </div>
+                  )}
                 </div>
               );
             })
           )}
         </div>
 
-        {/* Footer Quick Shortcuts */}
+        {/* Footer */}
         <div className="px-4 py-2.5 border-t border-border/50 bg-muted/30 flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
@@ -300,7 +446,7 @@ export function GlobalSearchModal({
                   onCreateNote();
                   onClose();
                 }}
-                className="text-[11px] hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer"
+                className="text-[11px] hover:text-foreground transition-colors cursor-pointer"
               >
                 <span>New Note</span>
               </button>
@@ -314,7 +460,7 @@ export function GlobalSearchModal({
                 }}
                 className="text-[11px] hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer ml-2"
               >
-                <Calendar className="w-3 h-3 text-blue-500" />
+                <Calendar className="w-3 h-3 text-primary" />
                 <span>Calendar</span>
               </button>
             )}

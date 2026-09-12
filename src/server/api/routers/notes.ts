@@ -14,12 +14,20 @@ import {
   saveWorkspaceMetadata,
   checkDriveScope,
   getImageAsset,
+  searchNotesContent,
 } from "~/server/googleDrive";
 
 export const notesRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     return await listNotes(ctx.session);
   }),
+
+  searchContent: protectedProcedure
+    .input(z.object({ query: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      if (!input.query || input.query.trim().length < 2) return [];
+      return await searchNotesContent(ctx.session, input.query.trim());
+    }),
 
   get: protectedProcedure
     .input(z.object({ id: z.string() }))

@@ -128,22 +128,38 @@ export function CodeBlockView({
     let isCancelled = false;
     const renderTimer = setTimeout(async () => {
       const effectiveTheme =
-        mermaidTheme === "auto" ? (isDark ? "dark" : "default") : mermaidTheme;
+        mermaidTheme === "auto" ? (isDark ? "dark" : "neutral") : mermaidTheme;
 
       try {
         mermaid.initialize({
           startOnLoad: false,
           theme: effectiveTheme,
           securityLevel: "loose",
-          fontFamily: "var(--font-sans, Inter, system-ui, sans-serif)",
-          themeVariables: {
-            darkMode: effectiveTheme === "dark",
-            background: effectiveTheme === "dark" ? "#121212" : "#ffffff",
-            primaryColor: effectiveTheme === "dark" ? "#2563eb" : "#3b82f6",
-            primaryTextColor: effectiveTheme === "dark" ? "#f3f4f6" : "#111827",
-            lineColor: effectiveTheme === "dark" ? "#9ca3af" : "#4b5563",
-            secondaryColor: effectiveTheme === "dark" ? "#1e293b" : "#f1f5f9",
-            tertiaryColor: effectiveTheme === "dark" ? "#0f172a" : "#e2e8f0",
+          fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          themeVariables: effectiveTheme === "dark" ? {
+            darkMode: true,
+            background: "transparent",
+            primaryColor: "#1e293b",
+            primaryTextColor: "#f1f5f9",
+            primaryBorderColor: "#475569",
+            lineColor: "#94a3b8",
+            secondaryColor: "#0f172a",
+            tertiaryColor: "#1e293b",
+            nodeBorder: "#475569",
+            mainBkg: "#1e293b",
+            nodeTextColor: "#f8fafc",
+          } : {
+            darkMode: false,
+            background: "transparent",
+            primaryColor: "#f8fafc",
+            primaryTextColor: "#0f172a",
+            primaryBorderColor: "#cbd5e1",
+            lineColor: "#64748b",
+            secondaryColor: "#f1f5f9",
+            tertiaryColor: "#ffffff",
+            nodeBorder: "#cbd5e1",
+            mainBkg: "#ffffff",
+            nodeTextColor: "#0f172a",
           },
         });
       } catch (err) {
@@ -490,18 +506,12 @@ export function CodeBlockView({
       ref={containerRef}
       onKeyDown={handleKeyDown}
       data-mermaid-container="true"
-      className="relative group/mermaid my-5 rounded-xl border border-border/80 bg-card/60 dark:bg-card/30 shadow-xs overflow-hidden transition-all focus-within:ring-1 focus-within:ring-primary/40"
+      className="relative group/mermaid my-3 rounded-lg border border-border/40 hover:border-border/70 transition-all overflow-hidden bg-card/20"
     >
-      {/* Header Bar */}
-      <div className="flex items-center justify-between px-3.5 py-2 bg-muted/50 dark:bg-muted/30 border-b border-border/60 text-xs select-none gap-2">
-        {/* Left: Mode Badge & Zoom Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {mode === "preview" ? (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <Workflow className="w-3.5 h-3.5" />
-              <span>Mermaid</span>
-            </div>
-          ) : (
+      {/* Edit Mode Header Bar (Only shown when editing) */}
+      {mode === "edit" && (
+        <div className="flex items-center justify-between px-3 py-1.5 bg-muted/40 border-b border-border/60 text-xs select-none gap-2">
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
               <Code2 className="w-3.5 h-3.5 animate-pulse" />
               <span>Editing Mermaid</span>
@@ -509,215 +519,39 @@ export function CodeBlockView({
                 (Esc to preview)
               </span>
             </div>
-          )}
+          </div>
 
-          {/* Dedicated Zoom Controls in Preview Mode */}
-          {mode === "preview" && svgContent && (
-            <div className="flex items-center gap-0.5 ml-2 p-0.5 bg-background/80 dark:bg-background/60 border border-border/60 rounded-lg text-muted-foreground">
-              <button
-                type="button"
-                onClick={handleZoomOut}
-                className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors"
-                title="Zoom Out (or Ctrl + Wheel down)"
-              >
-                <ZoomOut className="w-3 h-3" />
-              </button>
-              <button
-                type="button"
-                onClick={handleResetZoom}
-                className="px-1.5 py-0.5 text-[10px] font-mono hover:text-foreground hover:bg-muted rounded transition-colors"
-                title="Reset Zoom to 100%"
-              >
-                {Math.round(zoom * 100)}%
-              </button>
-              <button
-                type="button"
-                onClick={handleZoomIn}
-                className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors"
-                title="Zoom In (or Ctrl + Wheel up)"
-              >
-                <ZoomIn className="w-3 h-3" />
-              </button>
-              <button
-                type="button"
-                onClick={handleResetZoom}
-                className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors ml-0.5 border-l border-border/40"
-                title="Reset Pan & Zoom"
-              >
-                <RotateCcw className="w-2.5 h-2.5" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1">
-          {mode === "preview" ? (
-            <>
-              {svgContent && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
+              title="Copy Mermaid Code"
+            >
+              {copied ? (
                 <>
-                  {/* Style Customizer Dropdown */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsCustomizeOpen(!isCustomizeOpen);
-                      }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors ${
-                        isCustomizeOpen
-                          ? "bg-primary/15 text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-background/80"
-                      }`}
-                      title="Customize Theme & Canvas"
-                    >
-                      <SlidersHorizontal className="w-3 h-3" />
-                      <span className="hidden sm:inline">Style</span>
-                    </button>
-
-                    {isCustomizeOpen && (
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        className="absolute right-0 top-full mt-1.5 z-50 w-56 p-2.5 rounded-xl bg-popover/95 backdrop-blur-md border border-border shadow-xl text-xs flex flex-col gap-2.5 animate-in fade-in zoom-in-95 duration-100"
-                      >
-                        <div>
-                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                            Mermaid Theme
-                          </span>
-                          <div className="grid grid-cols-2 gap-1">
-                            {[
-                              { id: "auto", label: "Auto" },
-                              { id: "default", label: "Light" },
-                              { id: "dark", label: "Dark" },
-                              { id: "neutral", label: "Neutral" },
-                              { id: "forest", label: "Forest" },
-                              { id: "base", label: "Base" },
-                            ].map((t) => (
-                              <button
-                                key={t.id}
-                                type="button"
-                                onClick={() => {
-                                  updateAttributes({ mermaidTheme: t.id });
-                                }}
-                                className={`px-2 py-1 rounded text-left text-[11px] font-medium transition-colors ${
-                                  mermaidTheme === t.id
-                                    ? "bg-primary text-primary-foreground font-semibold"
-                                    : "hover:bg-accent text-foreground"
-                                }`}
-                              >
-                                {t.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="border-t border-border/50 pt-2">
-                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                            Canvas Background
-                          </span>
-                          <div className="grid grid-cols-2 gap-1">
-                            {[
-                              { id: "card", label: "Card" },
-                              { id: "transparent", label: "Transparent" },
-                              { id: "contrast", label: "Contrast" },
-                              { id: "warm", label: "Warm" },
-                            ].map((b) => (
-                              <button
-                                key={b.id}
-                                type="button"
-                                onClick={() => {
-                                  updateAttributes({ mermaidBg: b.id });
-                                }}
-                                className={`px-2 py-1 rounded text-left text-[11px] font-medium transition-colors ${
-                                  mermaidBg === b.id
-                                    ? "bg-primary text-primary-foreground font-semibold"
-                                    : "hover:bg-accent text-foreground"
-                                }`}
-                              >
-                                {b.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsFullscreen(true)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-                    title="Fullscreen Inspect & Pan"
-                  >
-                    <Maximize2 className="w-3 h-3" />
-                    <span className="hidden sm:inline">Expand</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadSvg}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-                    title="Download SVG Diagram"
-                  >
-                    <Download className="w-3 h-3" />
-                    <span className="hidden sm:inline">SVG</span>
-                  </button>
+                  <Check className="w-3 h-3 text-emerald-500" />
+                  <span className="text-emerald-500">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span>Copy</span>
                 </>
               )}
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-                title="Copy Mermaid Code"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-500" />
-                    <span className="text-emerald-500">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span className="hidden sm:inline">Copy</span>
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={enterEditMode}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
-                title="Edit Diagram Code"
-              >
-                <Pencil className="w-3 h-3" />
-                <span>Edit</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-                title="Copy Mermaid Code"
-              >
-                {copied ? (
-                  <Check className="w-3 h-3 text-emerald-500" />
-                ) : (
-                  <Copy className="w-3 h-3" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("preview")}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 transition-colors cursor-pointer"
-                title="Done editing (Switch to Preview)"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>Done</span>
-              </button>
-            </>
-          )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("preview")}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
+              title="Exit edit mode (Esc)"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Done</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ========================================== */}
       {/* 1. CODE AREA (NodeViewContent)             */}
@@ -783,6 +617,85 @@ export function CodeBlockView({
             mermaidBg
           )}`}
         >
+          {/* Floating Hover Controls Bar */}
+          {svgContent && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover/mermaid:opacity-100 transition-opacity duration-150 flex items-center gap-1 p-1 rounded-lg bg-background/90 dark:bg-card/90 backdrop-blur-md border border-border/70 shadow-md text-xs select-none"
+            >
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-0.5 px-1 py-0.5 bg-muted/50 rounded-md border border-border/40 text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={handleZoomOut}
+                  className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="px-1 text-[10px] font-mono hover:text-foreground transition-colors cursor-pointer"
+                  title="Reset Zoom"
+                >
+                  {Math.round(zoom * 100)}%
+                </button>
+                <button
+                  type="button"
+                  onClick={handleZoomIn}
+                  className="p-1 hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-3 h-3" />
+                </button>
+              </div>
+
+              <div className="w-[1px] h-3.5 bg-border/60 mx-0.5" />
+
+              {/* Fullscreen Expand */}
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(true)}
+                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                title="Expand Fullscreen"
+              >
+                <Maximize2 className="w-3 h-3" />
+              </button>
+
+              {/* Download SVG */}
+              <button
+                type="button"
+                onClick={handleDownloadSvg}
+                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                title="Download SVG"
+              >
+                <Download className="w-3 h-3" />
+              </button>
+
+              {/* Copy Code */}
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                title="Copy Mermaid Code"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+              </button>
+
+              {/* Edit Code */}
+              <button
+                type="button"
+                onClick={enterEditMode}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                title="Edit Diagram Code (or Double-Click)"
+              >
+                <Pencil className="w-3 h-3" />
+                <span>Edit</span>
+              </button>
+            </div>
+          )}
+
           {svgContent ? (
             <div
               className={`w-full h-full overflow-auto p-4 sm:p-6 flex items-center justify-center ${
