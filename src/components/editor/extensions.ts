@@ -42,6 +42,17 @@ export function buildExtensions(uploadFn?: (file: File) => void) {
             parseHTML: (element) => element.getAttribute("data-mermaid-bg") || "card",
             renderHTML: (attributes) => ({ "data-mermaid-bg": attributes.mermaidBg }),
           },
+          mermaidHeight: {
+            default: null,
+            parseHTML: (element) => {
+              const h = element.getAttribute("data-mermaid-height");
+              return h ? parseInt(h, 10) : null;
+            },
+            renderHTML: (attributes) => {
+              if (!attributes.mermaidHeight) return {};
+              return { "data-mermaid-height": attributes.mermaidHeight };
+            },
+          },
         };
       },
       addNodeView() {

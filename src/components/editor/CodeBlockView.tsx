@@ -75,6 +75,110 @@ export function CodeBlockView({
   const mermaidTheme = node.attrs.mermaidTheme || "auto";
   const mermaidBg = node.attrs.mermaidBg || "card";
 
+  // Height Resizing & Persistence State
+  const parseHeight = useCallback((code: string): number | null => {
+    const match = code.match(/%%\s*height:\s*(\d+)px?\s*%%/i);
+    if (match) return parseInt(match[1], 10);
+    if (typeof node.attrs.mermaidHeight === "number" && node.attrs.mermaidHeight > 0) {
+      return node.attrs.mermaidHeight;
+    }
+    return null;
+  }, [node.attrs.mermaidHeight]);
+
+  const [customHeight, setCustomHeight] = useState<number | null>(() => parseHeight(rawCode));
+  const [isResizing, setIsResizing] = useState<boolean>(false);
+  const resizeStartYRef = useRef<number>(0);
+  const resizeStartHeightRef = useRef<number>(0);
+  const previewBoxRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const h = parseHeight(rawCode);
+    if (h !== null && h !== customHeight) {
+      setCustomHeight(h);
+    }
+  }, [rawCode, parseHeight]);
+
+  const saveHeight = useCallback(
+    (newHeight: number | null) => {
+      updateAttributes({ mermaidHeight: newHeight });
+
+      let newCode = rawCode;
+      const heightRegex = /%%\s*height:\s*\d+px?\s*%%\n?/i;
+      if (newHeight) {
+        const heightComment = `%% height: ${Math.round(newHeight)}px %%\n`;
+        if (heightRegex.test(newCode)) {
+          newCode = newCode.replace(heightRegex, heightComment);
+        } else {
+          newCode = heightComment + newCode;
+        }
+      } else {
+        newCode = newCode.replace(heightRegex, "");
+      }
+
+      if (newCode !== rawCode && typeof getPos === "function") {
+        const pos = getPos();
+        if (typeof pos === "number" && editor) {
+          const nodeSize = node.nodeSize;
+          editor
+            .chain()
+            .focus()
+            .command(({ tr }) => {
+              tr.replaceWith(
+                pos,
+                pos + nodeSize,
+                editor.schema.nodes.codeBlock.create(
+                  {
+                    ...node.attrs,
+                    mermaidHeight: newHeight,
+                  },
+                  editor.schema.text(newCode)
+                )
+              );
+              return true;
+            })
+            .run();
+        }
+      }
+    },
+    [editor, getPos, node.attrs, node.nodeSize, rawCode, updateAttributes]
+  );
+
+  const startResize = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsResizing(true);
+      resizeStartYRef.current = e.clientY;
+
+      const currentH =
+        previewBoxRef.current?.getBoundingClientRect().height ||
+        customHeight ||
+        280;
+      resizeStartHeightRef.current = currentH;
+
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        const deltaY = moveEvent.clientY - resizeStartYRef.current;
+        const newH = Math.max(120, Math.min(1200, Math.round(resizeStartHeightRef.current + deltaY)));
+        setCustomHeight(newH);
+      };
+
+      const onMouseUp = (upEvent: MouseEvent) => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        setIsResizing(false);
+
+        const deltaY = upEvent.clientY - resizeStartYRef.current;
+        const finalH = Math.max(120, Math.min(1200, Math.round(resizeStartHeightRef.current + deltaY)));
+        setCustomHeight(finalH);
+        saveHeight(finalH);
+      };
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [customHeight, saveHeight]
+  );
+
   // Fullscreen inspector state
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [zoom, setZoom] = useState<number>(1);
@@ -635,6 +739,21 @@ export function CodeBlockView({
                 </button>
               )}
 
+              {/* Reset Height button if custom height is active */}
+              {customHeight && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomHeight(null);
+                    saveHeight(null);
+                  }}
+                  className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  title="Reset height to auto"
+                >
+                  <span>Auto H</span>
+                </button>
+              )}
+
               {/* Fullscreen Expand Inspector */}
               <button
                 type="button"
@@ -686,19 +805,74 @@ export function CodeBlockView({
           )}
 
           {svgContent ? (
-            <div className="w-full overflow-x-auto p-4 sm:p-6 flex items-center justify-center">
+            <div
+              ref={previewBoxRef}
+              className="w-full overflow-x-auto p-4 sm:p-6 flex items-center justify-center relative group/box"
+              style={{
+                height: customHeight ? `${customHeight}px` : "auto",
+                minHeight: "120px",
+                maxHeight: "1200px",
+              }}
+            >
               <div
                 className="mermaid-viewport flex justify-center items-center select-none"
                 style={{
                   maxWidth: "100%",
+                  maxHeight: customHeight ? "100%" : "none",
                   overflow: "visible",
                   transform: `scale(${zoom})`,
                   transformOrigin: "center center",
-                  transition: "transform 0.05s ease-out",
+                  transition: isResizing ? "none" : "transform 0.05s ease-out",
                   willChange: "transform",
                 }}
                 dangerouslySetInnerHTML={{ __html: svgContent }}
               />
+
+              {/* Bottom Drag Handle Bar */}
+              <div
+                onMouseDown={startResize}
+                className="absolute bottom-0 left-10 right-10 h-3 cursor-ns-resize flex items-center justify-center z-10 group/handle opacity-0 group-hover/mermaid:opacity-100 transition-opacity select-none"
+                title="Drag to resize height (Double-click to reset)"
+                onDoubleClick={() => {
+                  setCustomHeight(null);
+                  saveHeight(null);
+                }}
+              >
+                <div className="w-12 h-1 rounded-full bg-border/80 group-hover/handle:bg-primary transition-colors" />
+              </div>
+
+              {/* Bottom-Right Corner Handle */}
+              <div
+                onMouseDown={startResize}
+                className="absolute bottom-1 right-1 w-5 h-5 cursor-se-resize flex items-center justify-center text-muted-foreground/40 hover:text-primary opacity-0 group-hover/mermaid:opacity-100 transition-all z-20 select-none"
+                title="Drag corner to resize height"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" className="fill-current">
+                  <circle cx="8" cy="8" r="1.3" />
+                  <circle cx="8" cy="4" r="1.3" />
+                  <circle cx="4" cy="8" r="1.3" />
+                </svg>
+              </div>
+
+              {/* Bottom-Left Corner Handle */}
+              <div
+                onMouseDown={startResize}
+                className="absolute bottom-1 left-1 w-5 h-5 cursor-sw-resize flex items-center justify-center text-muted-foreground/40 hover:text-primary opacity-0 group-hover/mermaid:opacity-100 transition-all z-20 select-none"
+                title="Drag corner to resize height"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" className="fill-current">
+                  <circle cx="2" cy="8" r="1.3" />
+                  <circle cx="2" cy="4" r="1.3" />
+                  <circle cx="6" cy="8" r="1.3" />
+                </svg>
+              </div>
+
+              {/* Height Indicator Tooltip when Resizing */}
+              {isResizing && customHeight && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-foreground text-background text-[11px] font-mono font-medium shadow-md z-30 pointer-events-none animate-in fade-in select-none">
+                  Height: {Math.round(customHeight)}px
+                </div>
+              )}
             </div>
           ) : parseError ? (
             <div
