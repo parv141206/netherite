@@ -1092,6 +1092,16 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 /* MERMAID ERROR SUPPRESSION & TEXT OVERFLOW GUARDS          */
 /* ========================================================= */
 
+/* Hide Mermaid's rendering sandbox */
+#mermaid-render-sandbox {
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  z-index: -1 !important;
+}
+
 body > svg[id^="dmermaid"],
 body > div[id^="dmermaid"],
 body > .error-icon,
@@ -1112,10 +1122,17 @@ div[id^="dmermaid"],
 /* Guard against text overflow inside Mermaid SVG nodes */
 .mermaid-viewport svg {
   overflow: visible !important;
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
 }
 .mermaid-viewport text,
 .mermaid-viewport span.nodeLabel {
   overflow: visible !important;
   font-feature-settings: normal !important;
+}
+/* Ensure mermaid containers in the editor don't clip content */
+[data-mermaid-container="true"] .mermaid-viewport {
+  overflow: visible !important;
 }
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Copy, Check, ArrowDownToLine, Workflow, Code2, AlertCircle } from "lucide-react";
 import mermaid from "mermaid";
 import { useTheme } from "~/components/ThemeProvider";
-import { renderMermaidQueued } from "~/components/editor/mermaidQueue";
+import { renderMermaidQueued, postProcessSvg } from "~/components/editor/mermaidQueue";
 
 interface CopilotMarkdownProps {
   content: string;
@@ -36,6 +36,8 @@ function CopilotMermaidBlock({
           theme: isDark ? "dark" : "neutral",
           securityLevel: "loose",
           fontFamily: "Inter, system-ui, sans-serif",
+          flowchart: { useMaxWidth: false },
+          sequence: { useMaxWidth: false },
           themeVariables: isDark
             ? {
                 darkMode: true,
@@ -46,6 +48,12 @@ function CopilotMermaidBlock({
                 lineColor: "#64748b",
                 nodeTextColor: "#f8fafc",
                 clusterBkg: "#1e293b",
+                actorBkg: "#1e293b",
+                actorBorder: "#475569",
+                actorTextColor: "#f8fafc",
+                signalColor: "#e2e8f0",
+                signalTextColor: "#f1f5f9",
+                activationBkgColor: "#334155",
               }
             : {
                 darkMode: false,
@@ -56,35 +64,24 @@ function CopilotMermaidBlock({
                 lineColor: "#64748b",
                 nodeTextColor: "#0f172a",
                 clusterBkg: "#f8fafc",
+                actorBkg: "#f1f5f9",
+                actorBorder: "#cbd5e1",
+                actorTextColor: "#0f172a",
+                signalColor: "#334155",
+                signalTextColor: "#0f172a",
+                activationBkgColor: "#e2e8f0",
               },
         });
 
         const { svg: renderedSvg } = await renderMermaidQueued(id, code.trim());
         if (!cancelled) {
-          let cleanSvg = renderedSvg.replace(
-            /style="max-width:[^"]*"/i,
-            'style="max-width: 100%; height: auto; display: block;"'
-          );
-          if (!cleanSvg.includes("style=")) {
-            cleanSvg = cleanSvg.replace(/<svg\s/i, '<svg style="max-width: 100%; height: auto; display: block;" ');
-          }
+          const cleanSvg = postProcessSvg(renderedSvg, isDark);
           setSvg(cleanSvg);
           setError(null);
         }
       } catch (err: any) {
         if (!cancelled) {
           setError(err?.message || "Invalid Mermaid syntax");
-        }
-      } finally {
-        if (typeof document !== "undefined") {
-          const phantom = document.getElementById(id);
-          if (phantom) phantom.remove();
-          const errorEl = document.getElementById(`d${id}`);
-          if (errorEl) errorEl.remove();
-
-          document.querySelectorAll('body > svg[id^="dmermaid"], body > div[id^="dmermaid"], body > .error-icon, body > svg[aria-roledescription="error"]').forEach((el) => {
-            el.remove();
-          });
         }
       }
     };
@@ -150,7 +147,7 @@ function CopilotMermaidBlock({
         </div>
       ) : svg ? (
         <div
-          className="p-4 flex items-center justify-center overflow-x-auto [&>svg]:max-w-full [&>svg]:h-auto"
+          className="p-4 flex items-center justify-center overflow-x-auto"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       ) : (
