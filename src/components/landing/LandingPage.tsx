@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import katex from "katex";
+import Lenis from "lenis";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 import { AppleFullPageLoader } from "~/components/ui/AppleFullPageLoader";
 
@@ -47,6 +48,28 @@ export function LandingPage({ session }: { session?: any } = {}) {
 
   useEffect(() => {
     setMounted(true);
+
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+      gestureOrientation: "vertical",
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.5,
+    });
+
+    let rafId: number;
+    function raf(time: number) {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    }
+    rafId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
   }, []);
 
   const handleCopyCmd = () => {
@@ -564,14 +587,14 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             {/* Middle Left: Image (Takes the whole square, pure white in light, pure black in dark) */}
-            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-4 sm:p-6 lg:p-8 bg-white dark:bg-black overflow-hidden">
+            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
                 src="/images/1_notes.svg"
                 alt="The Sanctuary of Unbroken Thought — Sovereign Notes"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 transition-transform duration-500 hover:scale-[1.01]"
+                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 block m-0 p-0 pointer-events-none"
               />
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
             </div>
@@ -632,14 +655,14 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             {/* Middle Right: Image (Takes the whole square, pure white in light, pure black in dark) */}
-            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-4 sm:p-6 lg:p-8 bg-white dark:bg-black overflow-hidden">
+            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
                 src="/images/2_math.svg"
                 alt="The Geometry of Pure Reason — Mathematical Typesetting"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 transition-transform duration-500 hover:scale-[1.01]"
+                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 block m-0 p-0 pointer-events-none"
               />
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
             </div>
@@ -668,14 +691,14 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             {/* Middle Left: Image (Takes the whole square, pure white in light, pure black in dark) */}
-            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-4 sm:p-6 lg:p-8 bg-white dark:bg-black overflow-hidden">
+            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
                 src="/images/3_literature.svg"
                 alt="Manuscripts Woven for Centuries — Literature & Prose"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 transition-transform duration-500 hover:scale-[1.01]"
+                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 block m-0 p-0 pointer-events-none"
               />
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
             </div>
@@ -736,14 +759,14 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             {/* Middle Right: Image (Takes the whole square, pure white in light, pure black in dark) */}
-            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-4 sm:p-6 lg:p-8 bg-white dark:bg-black overflow-hidden">
+            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
                 src="/images/4_excalidraw.svg"
                 alt="Cartography of the Unseen — Vector Whiteboard"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 transition-transform duration-500 hover:scale-[1.01]"
+                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 block m-0 p-0 pointer-events-none"
               />
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
             </div>
@@ -772,14 +795,14 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             {/* Middle Left: Image (Takes the whole square, pure white in light, pure black in dark) */}
-            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-4 sm:p-6 lg:p-8 bg-white dark:bg-black overflow-hidden">
+            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
                 src="/images/5_uml.svg"
                 alt="The Architectonic Blueprint — Apollon UML Suite"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 transition-transform duration-500 hover:scale-[1.01]"
+                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 block m-0 p-0 pointer-events-none"
               />
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
             </div>
@@ -840,14 +863,14 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             {/* Middle Right: Image (Takes the whole square, pure white in light, pure black in dark) */}
-            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-4 sm:p-6 lg:p-8 bg-white dark:bg-black overflow-hidden">
+            <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
                 src="/images/6_mermaid.svg"
                 alt="Choreographies of State and Time — Mermaid Diagrams"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 transition-transform duration-500 hover:scale-[1.01]"
+                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 block m-0 p-0 pointer-events-none"
               />
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
             </div>
@@ -1146,17 +1169,15 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             {/* Middle Left: Vertical Icarus Engraving */}
-            <div className="w-full flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-6 sm:p-8 lg:p-12 bg-white dark:bg-black overflow-hidden">
+            <div className="w-full aspect-square lg:aspect-auto flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
-              <div className="relative w-full max-w-[440px] flex items-center justify-center">
-                <img
-                  src="/images/icarus.png"
-                  alt="Icarus Ascendant — To Inscribe is to Defy Oblivion"
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-auto max-h-[640px] object-contain select-none dark:invert dark:hue-rotate-180 border border-blue-500/20 shadow-2xl transition-transform duration-700 hover:scale-[1.01]"
-                />
-              </div>
+              <img
+                src="/images/icarus.png"
+                alt="Icarus Ascendant — To Inscribe is to Defy Oblivion"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-contain select-none dark:invert dark:hue-rotate-180 block m-0 p-0 pointer-events-none"
+              />
               <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
             </div>
 

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
