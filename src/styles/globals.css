@@ -1093,16 +1093,26 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 /* ========================================================= */
 
 /* Guard against text overflow inside Mermaid SVG nodes */
-.mermaid-viewport svg {
+.mermaid-viewport svg,
+svg.mermaid,
+svg[id^="mmd"] {
   overflow: visible !important;
-  max-width: 100% !important;
-  height: auto !important;
-  display: block !important;
+}
+.mermaid-viewport svg foreignObject,
+svg foreignObject {
+  overflow: visible !important;
+}
+.mermaid-viewport svg foreignObject > div,
+svg foreignObject > div {
+  overflow: visible !important;
+  white-space: nowrap !important;
 }
 .mermaid-viewport text,
-.mermaid-viewport span.nodeLabel {
+.mermaid-viewport span.nodeLabel,
+svg .nodeLabel {
   overflow: visible !important;
   font-feature-settings: normal !important;
+  white-space: nowrap !important;
 }
 /* Ensure mermaid containers in the editor don't clip content */
 [data-mermaid-container="true"] .mermaid-viewport {

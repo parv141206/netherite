@@ -221,9 +221,9 @@ export function CodeBlockView({
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         e.stopPropagation();
-        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        const factor = 1 - e.deltaY * 0.005;
         setZoom((z) =>
-          Math.min(5, Math.max(0.2, parseFloat((z + delta).toFixed(2))))
+          Math.min(4, Math.max(0.25, parseFloat((z * factor).toFixed(2))))
         );
       }
     };
@@ -622,6 +622,19 @@ export function CodeBlockView({
               onClick={(e) => e.stopPropagation()}
               className="absolute top-2 right-2 z-20 opacity-0 group-hover/mermaid:opacity-100 transition-opacity duration-150 flex items-center gap-1 p-1 rounded-lg bg-background/90 dark:bg-card/90 backdrop-blur-md border border-border/70 shadow-md text-xs select-none"
             >
+              {/* Reset Zoom indicator/button if zoomed */}
+              {zoom !== 1 && (
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-mono bg-muted text-emerald-600 dark:text-emerald-400 hover:bg-accent transition-colors cursor-pointer font-medium"
+                  title="Reset Zoom to 100%"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{Math.round(zoom * 100)}%</span>
+                </button>
+              )}
+
               {/* Fullscreen Expand Inspector */}
               <button
                 type="button"
@@ -679,6 +692,10 @@ export function CodeBlockView({
                 style={{
                   maxWidth: "100%",
                   overflow: "visible",
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "center center",
+                  transition: "transform 0.05s ease-out",
+                  willChange: "transform",
                 }}
                 dangerouslySetInnerHTML={{ __html: svgContent }}
               />

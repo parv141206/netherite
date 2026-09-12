@@ -353,14 +353,23 @@ export default function MermaidEditor({
     setIsDragging(false);
   };
 
-  // Mouse wheel zoom on preview
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setZoom((prev) => Math.max(0.2, Math.min(prev + delta, 3.5)));
-    }
-  };
+  // Native non-passive wheel listener for smooth trackpad pinch-to-zoom
+  useEffect(() => {
+    const el = previewContainerRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        const factor = 1 - e.deltaY * 0.005;
+        setZoom((prev) => Math.max(0.2, Math.min(parseFloat((prev * factor).toFixed(2)), 4)));
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
 
   const resetTransform = () => {
     setZoom(1);
@@ -496,7 +505,6 @@ export default function MermaidEditor({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onWheel={handleWheel}
             className={`h-full flex-1 flex flex-col relative overflow-hidden bg-background select-none cursor-${
               isDragging ? "grabbing" : "grab"
             }`}

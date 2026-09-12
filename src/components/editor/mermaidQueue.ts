@@ -19,6 +19,9 @@ function ensureInitialized(isDark: boolean) {
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
+        padding: 32,
+        nodeSpacing: 50,
+        rankSpacing: 50,
       },
       sequence: {
         useMaxWidth: true,
@@ -68,7 +71,8 @@ export function renderMermaidQueued(
 }
 
 /**
- * Standard responsive SVG sizing: ensures SVG fits within its container smoothly.
+ * Standard responsive SVG sizing: ensures SVG fits within its container smoothly,
+ * and guarantees text words never get cut off by foreignObject overflow bounds.
  */
 export function postProcessSvg(rawSvg: string, _isDark: boolean): string {
   if (!rawSvg) return "";
@@ -81,6 +85,17 @@ export function postProcessSvg(rawSvg: string, _isDark: boolean): string {
 
   if (!svg.includes("max-width: 100%")) {
     svg = svg.replace(/<svg\b/i, '<svg style="max-width: 100%; height: auto;" ');
+  }
+
+  // Inject anti-clipping styles so foreignObject text is NEVER cut off
+  const antiClipStyle = `<style>
+    foreignObject { overflow: visible !important; }
+    foreignObject > div { overflow: visible !important; white-space: nowrap !important; }
+    .nodeLabel, .label { overflow: visible !important; white-space: nowrap !important; }
+  </style>`;
+
+  if (svg.includes("</svg>")) {
+    svg = svg.replace("</svg>", `${antiClipStyle}</svg>`);
   }
 
   return svg;
