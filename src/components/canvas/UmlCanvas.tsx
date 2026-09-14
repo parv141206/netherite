@@ -1,18 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Loader2 } from "lucide-react";
+import { MacFileLoader } from "~/components/ui/MacFileLoader";
 
 const UmlEditor = dynamic(() => import("./UmlEditor"), {
   ssr: false,
   loading: () => (
-    <div
-      className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-2 select-none"
-      role="status"
-    >
-      <Loader2 className="w-5 h-5 animate-spin text-foreground/70" />
-      <span className="text-xs font-mono">Loading Apollon UML Studio…</span>
-    </div>
+    <MacFileLoader
+      fileType="uml"
+      fileName="UML Diagram"
+      message="Opening UML diagram from Google Drive…"
+    />
   ),
 });
 

@@ -58,24 +58,20 @@ export function MacFileLoader({
         }
       `}</style>
 
-      {/* Centered Cupertino Document Card */}
-      <div className="flex flex-col items-center gap-3.5 p-6 rounded-2xl bg-card/60 border border-border/50 shadow-sm backdrop-blur-md max-w-sm text-center">
-        <div className="relative flex items-center justify-center">
-          <div className="p-3 rounded-2xl bg-muted/60 border border-border/40 shadow-2xs">
-            {getIcon()}
-          </div>
-          <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-background border border-border shadow-xs">
-            <AppleSpinner size="xs" className="text-foreground" />
-          </div>
+      {/* Centered Cupertino Document Loading Card */}
+      <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-card/40 border border-border/40 shadow-sm backdrop-blur-md max-w-sm text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-center p-3.5 rounded-2xl bg-muted/60 border border-border/40 shadow-2xs">
+          {getIcon()}
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0">
-          <span className="font-semibold text-sm text-foreground truncate max-w-[240px]">
+        <div className="flex flex-col items-center gap-2 min-w-0">
+          <span className="font-semibold text-sm text-foreground truncate max-w-[260px]">
             {cleanName || "Untitled"}
           </span>
-          <span className="text-[11px] text-muted-foreground font-mono">
-            {message}
-          </span>
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-mono">
+            <AppleSpinner size="xs" className="text-foreground shrink-0" />
+            <span>{message}</span>
+          </div>
         </div>
       </div>
     </div>

@@ -1948,11 +1948,7 @@ export function WorkspaceLayout({
                       initialContent={noteContent}
                       title={currentNote?.name || "Untitled.md"}
                       editorFont={editorFont}
-                      isLoading={
-                        isLoadingContent &&
-                        !activeTabId?.startsWith("temp-") &&
-                        (!noteContent || noteContent === "")
-                      }
+                      isLoading={false}
                       onTitleChange={(newTitle) => {
                         if (activeTabId) {
                           handleRenameFile(activeTabId, newTitle);

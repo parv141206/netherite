@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "~/trpc/react";
+import { MacFileLoader } from "~/components/ui/MacFileLoader";
 
 interface ImageViewerProps {
   fileId: string;
@@ -181,10 +182,11 @@ export function ImageViewer({ fileId, fileName, mimeType }: ImageViewerProps) {
         }}
       >
         {isLoading && (
-          <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="text-xs font-mono">Loading image from Google Drive…</span>
-          </div>
+          <MacFileLoader
+            fileName={fileName}
+            fileType="image"
+            message="Opening image from Google Drive…"
+          />
         )}
 
         {isError && (
