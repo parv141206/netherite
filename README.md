@@ -20,6 +20,10 @@
 
 [Explore Features](https://craftnetherite.vercel.app/features) • [Launch Studio](https://craftnetherite.vercel.app/editor) • [Privacy Policy](https://craftnetherite.vercel.app/privacy) • [Terms](https://craftnetherite.vercel.app/terms)
 
+<br />
+
+<img src="public/images/main-light.png" alt="Netherite Sovereign Workspace with Gaussian Mixture Models KaTeX Math Notes" width="100%" />
+
 </div>
 
 ---

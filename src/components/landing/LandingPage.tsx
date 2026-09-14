@@ -253,8 +253,8 @@ export function LandingPage({ session }: { session?: any } = {}) {
               </div>
 
               {/* Flagship Studio Workspace Screenshot Showcase in Hero */}
-              <div className="w-full rounded-2xl sm:rounded-3xl border border-blue-500/40 bg-zinc-950 shadow-2xl overflow-hidden relative group">
-                <div className="w-full overflow-x-auto bg-zinc-950 flex justify-center items-center relative">
+              <div className="w-full rounded-2xl sm:rounded-3xl border border-zinc-200/90 bg-white shadow-2xl overflow-hidden relative group">
+                <div className="w-full overflow-x-auto bg-white flex justify-center items-center relative">
                   <div className="min-w-[680px] sm:min-w-[860px] md:min-w-full w-full">
                     <img
                       src="/images/main-light.png"
@@ -265,14 +265,14 @@ export function LandingPage({ session }: { session?: any } = {}) {
 
                   {/* Floating Action Strip */}
                   <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
-                    <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/15 text-white font-mono text-[11px] shadow-lg">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 backdrop-blur-md border border-zinc-200 text-zinc-800 font-mono text-[11px] shadow-md">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       <span>100% Google Drive Sovereign Storage</span>
                     </div>
 
                     <Link
                       href="/features"
-                      className="pointer-events-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg transition-all active:scale-95 ml-auto"
+                      className="pointer-events-auto inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold shadow-lg transition-all active:scale-95 ml-auto"
                     >
                       <span>Explore All Features</span>
                       <ArrowRight className="w-3.5 h-3.5" />
