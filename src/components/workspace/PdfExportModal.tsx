@@ -18,7 +18,7 @@ interface PdfExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   fileName: string;
-  fileType?: "markdown" | "mermaid" | "uml" | "drawing" | "image";
+  fileType?: "markdown" | "mermaid" | "uml" | "drawing" | "image" | "tikz";
   content?: string;
   svgContent?: string;
 }
@@ -40,7 +40,7 @@ export function PdfExportModal({
   const [baseFontSize, setBaseFontSize] = useState<"13px" | "15px" | "17px">("15px");
   const [pageSize, setPageSize] = useState<"a4" | "letter" | "legal">("a4");
   const [orientation, setOrientation] = useState<"portrait" | "landscape">(
-    fileType === "mermaid" || fileType === "uml" || fileType === "drawing" ? "landscape" : "portrait"
+    fileType === "mermaid" || fileType === "uml" || fileType === "drawing" || fileType === "tikz" ? "landscape" : "portrait"
   );
   const [margin, setMargin] = useState<"normal" | "compact" | "wide" | "none">("normal");
 

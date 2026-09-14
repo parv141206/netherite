@@ -20,9 +20,11 @@ import {
   Maximize2,
   X,
   Minimize2,
+  Activity,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { renderMermaidQueued, postProcessSvg } from "./mermaidQueue";
+import { renderTikzQueued } from "./tikzQueue";
 
 /* ─── Component ─── */
 
@@ -34,6 +36,8 @@ export function CodeBlockView({
 }: NodeViewProps) {
   const language = (node.attrs.language || "").toLowerCase().trim();
   const isMermaid = language === "mermaid";
+  const isTikz = language === "tikz" || language === "latex-tikz" || language === "pgf";
+  const isDiagram = isMermaid || isTikz;
   const rawCode = node.textContent;
 
   const { isDark: globalDark } = useTheme();
@@ -118,29 +122,11 @@ export function CodeBlockView({
       if (newCode !== rawCode && typeof getPos === "function") {
         const pos = getPos();
         if (typeof pos === "number" && editor) {
-          const nodeSize = node.nodeSize;
-          editor
-            .chain()
-            .focus()
-            .command(({ tr }) => {
-              tr.replaceWith(
-                pos,
-                pos + nodeSize,
-                editor.schema.nodes.codeBlock.create(
-                  {
-                    ...node.attrs,
-                    mermaidHeight: newHeight,
-                  },
-                  editor.schema.text(newCode)
-                )
-              );
-              return true;
-            })
-            .run();
+          editor.commands.focus(pos + 1);
         }
       }
     },
-    [editor, getPos, node.attrs, node.nodeSize, rawCode, updateAttributes]
+    [editor, getPos, rawCode, updateAttributes]
   );
 
   const startResize = useCallback(
@@ -179,20 +165,19 @@ export function CodeBlockView({
     [customHeight, saveHeight]
   );
 
-  // Fullscreen inspector state
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  // Zoom and Pan State
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const dragMovedRef = useRef<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const fullscreenContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Focus helper to transition into edit mode
   const enterEditMode = useCallback(() => {
     setMode("edit");
     setTimeout(() => {
-      if (typeof getPos === "function") {
+      if (typeof getPos === "function" && editor) {
         const pos = getPos();
         if (typeof pos === "number") {
           editor.commands.focus(pos + 1);
@@ -203,7 +188,7 @@ export function CodeBlockView({
 
   // Click outside listener to exit edit mode
   useEffect(() => {
-    if (!isMermaid || mode !== "edit") return;
+    if (!isDiagram || mode !== "edit") return;
     const handleClickOutside = (e: MouseEvent) => {
       if (
         containerRef.current &&
@@ -214,13 +199,13 @@ export function CodeBlockView({
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isMermaid, mode]);
+  }, [isDiagram, mode]);
 
   // ────────────────────────────────────
-  // Mermaid Rendering Effect
+  // Diagram Rendering Effect (Mermaid + TikZ)
   // ────────────────────────────────────
   useEffect(() => {
-    if (!isMermaid) return;
+    if (!isDiagram) return;
 
     if (!rawCode || rawCode.trim() === "") {
       setSvgContent("");
@@ -230,14 +215,21 @@ export function CodeBlockView({
 
     let isCancelled = false;
     const renderTimer = setTimeout(async () => {
-      const uniqueId = `mermaid-md-${Math.random().toString(36).substring(2, 9)}`;
-
       try {
-        const { svg: rawSvg } = await renderMermaidQueued(uniqueId, rawCode, isDark);
-        if (!isCancelled) {
-          const processedSvg = postProcessSvg(rawSvg, isDark);
-          setSvgContent(processedSvg);
-          setParseError(null);
+        if (isTikz) {
+          const { svg } = await renderTikzQueued(rawCode, isDark);
+          if (!isCancelled) {
+            setSvgContent(svg);
+            setParseError(null);
+          }
+        } else if (isMermaid) {
+          const uniqueId = `mermaid-md-${Math.random().toString(36).substring(2, 9)}`;
+          const { svg: rawSvg } = await renderMermaidQueued(uniqueId, rawCode, isDark);
+          if (!isCancelled) {
+            const processedSvg = postProcessSvg(rawSvg, isDark);
+            setSvgContent(processedSvg);
+            setParseError(null);
+          }
         }
       } catch (err: any) {
         if (!isCancelled) {
@@ -251,7 +243,7 @@ export function CodeBlockView({
       isCancelled = true;
       clearTimeout(renderTimer);
     };
-  }, [isMermaid, rawCode, isDark, mermaidTheme]);
+  }, [isDiagram, isMermaid, isTikz, rawCode, isDark, mermaidTheme]);
 
   // ────────────────────────────────────
   // Actions
@@ -273,10 +265,10 @@ export function CodeBlockView({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `mermaid-diagram-${Date.now()}.svg`;
+    link.download = `${isTikz ? "tikz" : "mermaid"}-diagram-${Date.now()}.svg`;
     link.click();
     URL.revokeObjectURL(url);
-  }, [svgContent]);
+  }, [svgContent, isTikz]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -285,7 +277,7 @@ export function CodeBlockView({
         setIsFullscreen(false);
         return;
       }
-      if (!isMermaid) return;
+      if (!isDiagram) return;
       if (
         e.key === "Escape" ||
         ((e.ctrlKey || e.metaKey) && e.key === "Enter")
@@ -294,7 +286,7 @@ export function CodeBlockView({
         setMode("preview");
       }
     },
-    [isFullscreen, isMermaid]
+    [isFullscreen, isDiagram]
   );
 
   // ────────────────────────────────────
@@ -319,7 +311,7 @@ export function CodeBlockView({
   // Non-passive wheel for Ctrl+Scroll zoom in both inline and fullscreen
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || !isMermaid) return;
+    if (!el || !isDiagram) return;
 
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
@@ -334,7 +326,7 @@ export function CodeBlockView({
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [isMermaid]);
+  }, [isDiagram]);
 
   useEffect(() => {
     const el = fullscreenContainerRef.current;
@@ -463,9 +455,9 @@ export function CodeBlockView({
   };
 
   // ==========================================
-  // CASE 1: Standard Code Block (non-Mermaid)
+  // CASE 1: Standard Code Block (non-diagram)
   // ==========================================
-  if (!isMermaid) {
+  if (!isDiagram) {
     return (
       <NodeViewWrapper className="relative group/code my-4 rounded-xl border border-border/70 bg-muted/20 dark:bg-muted/10 overflow-hidden shadow-xs">
         <div className="flex items-center justify-between px-3 py-1.5 bg-muted/60 dark:bg-muted/40 border-b border-border/50 text-xs font-mono text-muted-foreground select-none">
@@ -510,9 +502,13 @@ export function CodeBlockView({
             {/* Fullscreen Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm select-none">
               <div className="flex items-center gap-2">
-                <Workflow className="w-4 h-4 text-emerald-500" />
+                {isTikz ? (
+                  <Activity className="w-4 h-4 text-primary" />
+                ) : (
+                  <Workflow className="w-4 h-4 text-emerald-500" />
+                )}
                 <span className="font-semibold text-sm text-foreground">
-                  Diagram Inspector
+                  {isTikz ? "TikZ LaTeX Inspector" : "Diagram Inspector"}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground ml-2 bg-muted/60 px-2 py-0.5 rounded-md">
                   {Math.round(zoom * 100)}%
@@ -602,8 +598,10 @@ export function CodeBlockView({
       : null;
 
   // ==========================================
-  // CASE 2: Mermaid Diagram Block
+  // CASE 2: Diagram Block (Mermaid or TikZ)
   // ==========================================
+  const diagramTitle = isTikz ? "TikZ LaTeX" : "Mermaid";
+
   return (
     <NodeViewWrapper
       ref={containerRef}
@@ -617,7 +615,7 @@ export function CodeBlockView({
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
               <Code2 className="w-3.5 h-3.5 animate-pulse" />
-              <span>Editing Mermaid</span>
+              <span>Editing {diagramTitle}</span>
               <span className="text-[10px] font-mono text-muted-foreground hidden sm:inline">
                 (Esc to preview)
               </span>
@@ -629,7 +627,7 @@ export function CodeBlockView({
               type="button"
               onClick={handleCopy}
               className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-              title="Copy Mermaid Code"
+              title={`Copy ${diagramTitle} Code`}
             >
               {copied ? (
                 <>
@@ -703,7 +701,7 @@ export function CodeBlockView({
             />
           ) : (
             <div className="text-xs font-mono text-muted-foreground/60 text-center py-4">
-              Type valid Mermaid diagram code above…
+              Type valid {diagramTitle} diagram code above…
             </div>
           )}
         </div>
@@ -715,7 +713,7 @@ export function CodeBlockView({
       {mode === "preview" && (
         <div
           onDoubleClick={enterEditMode}
-          title="Double-click to edit Mermaid code"
+          title={`Double-click to edit ${diagramTitle} code`}
           className={`w-full relative select-none min-h-[100px] flex flex-col justify-center ${getBgClass(
             mermaidBg
           )}`}
@@ -782,7 +780,7 @@ export function CodeBlockView({
                 type="button"
                 onClick={handleCopy}
                 className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title="Copy Mermaid Code"
+                title={`Copy ${diagramTitle} Code`}
               >
                 {copied ? (
                   <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -892,13 +890,18 @@ export function CodeBlockView({
               onClick={enterEditMode}
               className="p-8 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground cursor-pointer hover:bg-muted/10 transition-colors"
             >
-              <Workflow className="w-6 h-6 opacity-40" />
+              {isTikz ? (
+                <Activity className="w-6 h-6 opacity-40" />
+              ) : (
+                <Workflow className="w-6 h-6 opacity-40" />
+              )}
               <span className="text-xs font-medium">
-                Empty Mermaid Diagram
+                Empty {diagramTitle} Diagram
               </span>
               <span className="text-[11px] opacity-70">
-                Click to write Mermaid code (e.g. flowchart TD,
-                sequenceDiagram)
+                {isTikz
+                  ? "Click to write TikZ LaTeX code (e.g. \\begin{tikzpicture}...\\end{tikzpicture})"
+                  : "Click to write Mermaid code (e.g. flowchart TD, sequenceDiagram)"}
               </span>
             </div>
           )}

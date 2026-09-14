@@ -617,7 +617,7 @@ export async function createNote(
   name: string,
   content: string = "",
   parentId?: string,
-  type: "note" | "drawing" | "uml" | "mermaid" = "note"
+  type: "note" | "drawing" | "uml" | "mermaid" | "tikz" = "note"
 ) {
   const drive = await getDriveClient(session);
   const folderId = parentId || (await ensureNetheriteFolder(session));
@@ -625,6 +625,7 @@ export async function createNote(
   const isDrawing = type === "drawing" || name.endsWith(".excalidraw");
   const isUml = type === "uml" || name.endsWith(".apollon") || name.endsWith(".uml");
   const isMermaid = type === "mermaid" || name.endsWith(".mmd") || name.endsWith(".mermaid");
+  const isTikz = type === "tikz" || name.endsWith(".tikz") || name.endsWith(".tex");
 
   let cleanName = name;
   let finalName = name;
@@ -642,6 +643,10 @@ export async function createNote(
     cleanName = name.replace(/\.(mmd|mermaid)$/i, "");
     finalName = `${cleanName}.mmd`;
     mimeType = "text/vnd.mermaid";
+  } else if (isTikz) {
+    cleanName = name.replace(/\.(tikz|tex)$/i, "");
+    finalName = `${cleanName}.tikz`;
+    mimeType = "text/vnd.tikz";
   } else {
     cleanName = name.replace(/\.md$/i, "");
     finalName = `${cleanName}.md`;
@@ -674,6 +679,8 @@ export async function createNote(
         )
       : isMermaid && !content
       ? `flowchart TD\n  Start([Start]) --> Process[Process Request]\n  Process --> Decision{Is Valid?}\n  Decision -- Yes --> Success[Operation Complete]\n  Decision -- No --> Error[Handle Error]\n  Success --> End([Finish])\n  Error --> End`
+      : isTikz && !content
+      ? `\\begin{tikzpicture}[node distance=2cm, auto, >=stealth]\n  \\node [circle, draw=blue!80, fill=blue!10, thick] (A) {Input};\n  \\node [rectangle, draw=purple!80, fill=purple!10, thick, right of=A, node distance=3cm] (B) {Processing};\n  \\node [circle, draw=green!80, fill=green!10, thick, right of=B, node distance=3cm] (C) {Output};\n  \\path [->, thick] (A) edge node {x} (B);\n  \\path [->, thick] (B) edge node {f(x)} (C);\n\\end{tikzpicture}`
       : content;
 
   const res = await drive.files.create({

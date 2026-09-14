@@ -26,6 +26,7 @@ import {
   Calendar,
   GitCompare,
   RotateCw,
+  Activity,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
@@ -176,6 +177,7 @@ interface SidebarProps {
   onCreateDrawing?: (parentId?: string) => void;
   onCreateUml?: (parentId?: string) => void;
   onCreateMermaid?: (parentId?: string) => void;
+  onCreateTikz?: (parentId?: string) => void;
   onCreateFolder: (parentId?: string) => void;
   onRenameNote: (id: string, newName: string) => void;
   onDeleteNote: (id: string) => void;
@@ -211,6 +213,7 @@ export function Sidebar({
   onCreateDrawing,
   onCreateUml,
   onCreateMermaid,
+  onCreateTikz,
   onCreateFolder,
   onRenameNote,
   onDeleteNote,
@@ -438,7 +441,7 @@ export function Sidebar({
 
   const startInlineEditing = (id: string, name: string) => {
     if (setEditingId) setEditingId(id);
-    setEditingName(name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, ""));
+    setEditingName(name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, ""));
     setContextMenu(null);
   };
 
@@ -590,6 +593,9 @@ export function Sidebar({
     if (name.endsWith(".mmd") || name.endsWith(".mermaid") || mimeType === "text/vnd.mermaid") {
       return <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />;
     }
+    if (name.endsWith(".tikz") || name.endsWith(".tex") || mimeType === "text/vnd.tikz") {
+      return <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />;
+    }
     return <FileText className="w-3.5 h-3.5 text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-colors" />;
   };
 
@@ -693,12 +699,13 @@ export function Sidebar({
       const isDrawing = item.name.endsWith(".excalidraw");
       const isUml = item.name.endsWith(".apollon") || item.name.endsWith(".uml");
       const isMermaid = item.name.endsWith(".mmd") || item.name.endsWith(".mermaid");
+      const isTikz = item.name.endsWith(".tikz") || item.name.endsWith(".tex");
       const isImage =
         item.mimeType?.startsWith("image/") ||
         /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(item.name);
       const displayName = isImage
         ? item.name
-        : item.name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+        : item.name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
 
       return (
         <div
@@ -724,13 +731,15 @@ export function Sidebar({
                   if (isImage) {
                     onRenameNote(item.id, newName);
                   } else {
-                    const clean = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+                    const clean = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
                     const finalName = isDrawing
                       ? `${clean}.excalidraw`
                       : isUml
                       ? `${clean}.apollon`
                       : isMermaid
                       ? `${clean}.mmd`
+                      : isTikz
+                      ? `${clean}.tikz`
                       : `${clean}.md`;
                     onRenameNote(item.id, finalName);
                   }
@@ -921,6 +930,16 @@ export function Sidebar({
               title="New Mermaid Diagram"
             >
               <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+            </button>
+          )}
+          {onCreateTikz && (
+            <button
+              onClick={() => onCreateTikz()}
+              disabled={isMutating}
+              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+              title="New TikZ LaTeX Diagram"
+            >
+              <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
             </button>
           )}
           <button
@@ -1161,6 +1180,17 @@ export function Sidebar({
                   <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> New Mermaid Diagram
                 </button>
               )}
+              {onCreateTikz && (
+                <button
+                  onClick={() => {
+                    onCreateTikz();
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                >
+                  <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" /> New TikZ LaTeX Diagram
+                </button>
+              )}
               <button
                 onClick={() => {
                   onCreateFolder();
@@ -1345,6 +1375,17 @@ export function Sidebar({
                   className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
                 >
                   <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> New Mermaid in Folder
+                </button>
+              )}
+              {onCreateTikz && (
+                <button
+                  onClick={() => {
+                    onCreateTikz(contextMenu.itemId);
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                >
+                  <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" /> New TikZ in Folder
                 </button>
               )}
               <button

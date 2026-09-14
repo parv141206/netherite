@@ -2,11 +2,11 @@
 
 import React from "react";
 import { AppleSpinner } from "./AppleSpinner";
-import { FileText, Palette, Network, Workflow, Image as ImageIcon } from "lucide-react";
+import { FileText, Palette, Network, Workflow, Image as ImageIcon, Activity } from "lucide-react";
 
 interface MacFileLoaderProps {
   fileName?: string;
-  fileType?: "note" | "drawing" | "uml" | "mermaid" | "image";
+  fileType?: "note" | "drawing" | "uml" | "mermaid" | "image" | "tikz";
   message?: string;
 }
 
@@ -23,6 +23,8 @@ export function MacFileLoader({
         return <Network className="w-5 h-5 text-purple-500 dark:text-purple-400" />;
       case "mermaid":
         return <Workflow className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />;
+      case "tikz":
+        return <Activity className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
       case "image":
         return <ImageIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
       default:
@@ -30,7 +32,7 @@ export function MacFileLoader({
     }
   };
 
-  const cleanName = fileName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|png|jpg|jpeg|gif|webp|svg)$/i, "");
+  const cleanName = fileName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex|png|jpg|jpeg|gif|webp|svg)$/i, "");
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-background text-foreground relative select-none animate-in fade-in duration-150 overflow-hidden">

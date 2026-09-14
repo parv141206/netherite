@@ -31,6 +31,7 @@ import {
   Highlighter,
   Minus,
   Workflow,
+  Activity,
 } from "lucide-react";
 
 interface Props {
@@ -766,6 +767,26 @@ export function Editor({
               {
                 type: "text",
                 text: "graph TD\n    Start([Start]) --> Process[Process Data]\n    Process --> Done([Done])",
+              },
+            ],
+          })
+          .run(),
+    },
+    {
+      title: "TikZ LaTeX Diagram",
+      sub: "Vector LaTeX TikZ diagram (neural nets, FSM, trees, geometry)",
+      icon: Activity,
+      action: () =>
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "codeBlock",
+            attrs: { language: "tikz" },
+            content: [
+              {
+                type: "text",
+                text: "\\begin{tikzpicture}[node distance=2cm, auto, >=stealth]\n  \\node [circle, draw=blue!80, fill=blue!10, thick] (A) {Input};\n  \\node [rectangle, draw=purple!80, fill=purple!10, thick, right of=A, node distance=3cm] (B) {Processing};\n  \\node [circle, draw=green!80, fill=green!10, thick, right of=B, node distance=3cm] (C) {Output};\n  \\path [->, thick] (A) edge node {x} (B);\n  \\path [->, thick] (B) edge node {f(x)} (C);\n\\end{tikzpicture}",
               },
             ],
           })

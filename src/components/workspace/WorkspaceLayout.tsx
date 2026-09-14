@@ -7,6 +7,7 @@ import { Editor } from "~/components/editor/Editor";
 import { DrawingCanvas } from "~/components/canvas/DrawingCanvas";
 import { UmlCanvas } from "~/components/canvas/UmlCanvas";
 import { MermaidCanvas } from "~/components/canvas/MermaidCanvas";
+import { TikzCanvas } from "~/components/canvas/TikzCanvas";
 import { ImageViewer } from "./ImageViewer";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
@@ -40,6 +41,7 @@ import {
   Palette,
   Network,
   Workflow,
+  Activity,
   Loader2,
   Calendar,
 } from "lucide-react";
@@ -48,12 +50,15 @@ import { AppleSpinner } from "~/components/ui/AppleSpinner";
 import { MacFileLoader } from "~/components/ui/MacFileLoader";
 
 interface WorkspaceLayoutProps {
-  session: any;
+  session?: any;
   initialNotes?: DriveItem[];
   initialNoteId?: string;
   initialContent?: string;
   initialMetadata?: {
-    version?: number;
+    name?: string;
+    mimeType?: string;
+    modifiedTime?: string;
+    parents?: string[];
     folderColors?: Record<string, string>;
     [key: string]: any;
   };
@@ -85,6 +90,16 @@ const isMermaidFile = (item?: DriveItem | null): boolean => {
     item.name.endsWith(".mmd") ||
     item.name.endsWith(".mermaid") ||
     item.mimeType === "text/vnd.mermaid"
+  );
+};
+
+const isTikzFile = (item?: DriveItem | null): boolean => {
+  if (!item) return false;
+  return (
+    item.name.endsWith(".tikz") ||
+    item.name.endsWith(".tex") ||
+    item.mimeType === "text/vnd.tikz" ||
+    item.mimeType === "application/x-tex"
   );
 };
 
@@ -1071,6 +1086,80 @@ export function WorkspaceLayout({
     }
   };
 
+  // 100% INSTANT OPTIMISTIC TIKZ CREATION
+  const handleCreateTikz = async (parentId?: string) => {
+    const tempId = `temp-tikz-${Date.now()}`;
+    const defaultName = `Diagram-${Date.now().toString().slice(-4)}.tikz`;
+    const stableSession = `session-tikz-${Date.now()}`;
+    tabSessionsRef.current[tempId] = stableSession;
+
+    const defaultContent = `\\begin{tikzpicture}[node distance=2cm, auto, >=stealth]
+  \\node [circle, draw=blue!80, fill=blue!10, thick] (A) {Input};
+  \\node [rectangle, draw=purple!80, fill=purple!10, thick, right of=A, node distance=3cm] (B) {Processing};
+  \\node [circle, draw=green!80, fill=green!10, thick, right of=B, node distance=3cm] (C) {Output};
+  \\path [->, thick] (A) edge node {x} (B);
+  \\path [->, thick] (B) edge node {f(x)} (C);
+\\end{tikzpicture}`;
+
+    const newItem: DriveItem = {
+      id: tempId,
+      name: defaultName,
+      mimeType: "text/vnd.tikz",
+      modifiedTime: new Date().toISOString(),
+      parents: parentId ? [parentId] : undefined,
+    };
+
+    setLocalNotes((prev) => [newItem, ...prev]);
+    openFileInTab(tempId);
+    setNoteContent(defaultContent);
+    setLastSavedContent(defaultContent);
+    setEditingId(tempId);
+
+    try {
+      const realNote = await createMutation.mutateAsync({
+        name: defaultName,
+        content: defaultContent,
+        parentId,
+        type: "tikz",
+      });
+      if (realNote?.id) {
+        tabSessionsRef.current[realNote.id] = stableSession;
+        utils.notes.get.setData({ id: realNote.id }, defaultContent);
+
+        if (typeof window !== "undefined") {
+          const draft = localStorage.getItem(`netherite_draft_${tempId}`);
+          if (draft) {
+            localStorage.setItem(`netherite_draft_${realNote.id}`, draft);
+            localStorage.removeItem(`netherite_draft_${tempId}`);
+          }
+        }
+
+        utils.notes.list.setData(undefined, (old: any) => {
+          const items = old ? [...old] : [];
+          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          return [realNote, ...filtered];
+        });
+        setLocalNotes((prev) =>
+          prev.map((item) =>
+            item.id === tempId
+              ? {
+                  ...item,
+                  id: realNote.id!,
+                  parents: realNote.parents,
+                  mimeType: "text/vnd.tikz",
+                }
+              : item
+          )
+        );
+        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
+        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setEditingId(realNote.id!);
+      }
+    } catch (err) {
+      console.error("Background TikZ creation failed:", err);
+    }
+  };
+
   // 100% INSTANT OPTIMISTIC FOLDER CREATION
   const handleCreateFolder = async (parentId?: string) => {
     const tempId = `temp-folder-${Date.now()}`;
@@ -1136,21 +1225,30 @@ export function WorkspaceLayout({
       !isDrawing &&
       !isUml &&
       isMermaidFile(targetItem);
+    const isTikz =
+      !isImage &&
+      !isDrawing &&
+      !isUml &&
+      !isMermaid &&
+      isTikzFile(targetItem);
 
     let finalName = newName;
     if (isFolder || isImage) {
       finalName = newName;
     } else if (isDrawing) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
       finalName = `${cleanName}.excalidraw`;
     } else if (isUml) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
       finalName = `${cleanName}.apollon`;
     } else if (isMermaid) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
       finalName = `${cleanName}.mmd`;
+    } else if (isTikz) {
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+      finalName = `${cleanName}.tikz`;
     } else {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
       finalName = `${cleanName}.md`;
     }
 
@@ -1453,8 +1551,14 @@ export function WorkspaceLayout({
     currentNote?.mimeType === "application/vnd.excalidraw+json";
   const isCurrentUml = isUmlFile(currentNote);
   const isCurrentMermaid = isMermaidFile(currentNote);
+  const isCurrentTikz = isTikzFile(currentNote);
   const isCurrentMarkdown =
-    Boolean(currentNote) && !isCurrentDrawing && !isCurrentUml && !isCurrentMermaid && !isCurrentImage;
+    Boolean(currentNote) &&
+    !isCurrentDrawing &&
+    !isCurrentUml &&
+    !isCurrentMermaid &&
+    !isCurrentTikz &&
+    !isCurrentImage;
 
   const liveDiff = computeLineDiff(lastSavedContent, noteContent);
   const isDirty = !isCurrentImage && liveDiff.hasChanges;
@@ -1564,6 +1668,7 @@ export function WorkspaceLayout({
         onCreateDrawing={handleCreateDrawing}
         onCreateUml={handleOpenCreateDiagramModal}
         onCreateMermaid={handleCreateMermaid}
+        onCreateTikz={handleCreateTikz}
         onCreateFolder={handleCreateFolder}
         onRenameNote={handleRenameFile}
         onDeleteNote={handleDeleteFile}
@@ -1683,11 +1788,13 @@ export function WorkspaceLayout({
                       <Network className={`w-3.5 h-3.5 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
                     ) : isMermaidFile(note) ? (
                       <Workflow className={`w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                    ) : isTikzFile(note) ? (
+                      <Activity className={`w-3.5 h-3.5 text-blue-500 dark:text-blue-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
                     ) : (
                       <FileText className={`w-3.5 h-3.5 ${isActive ? "text-foreground" : "opacity-60"}`} />
                     )}
                     <span className="truncate max-w-[130px]">
-                      {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "")}
+                      {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "")}
                     </span>
                     <div className="flex items-center ml-1">
                       {hasLocalDiff ? (
@@ -1914,6 +2021,28 @@ export function WorkspaceLayout({
                         onSave={handleManualSave}
                       />
                     )
+                  ) : isTikzFile(currentNote) ? (
+                    isDocumentLoading && (!noteContent || noteContent.trim() === "") ? (
+                      <MacFileLoader
+                        fileName={currentNote?.name}
+                        fileType="tikz"
+                        message="Opening TikZ LaTeX diagram from Google Drive…"
+                      />
+                    ) : (
+                      <TikzCanvas
+                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                        initialContent={noteContent}
+                        theme={isDark ? "dark" : "light"}
+                        title={currentNote?.name}
+                        onChange={(updatedContent) => {
+                          setNoteContent(updatedContent);
+                          if (activeTabId && typeof window !== "undefined") {
+                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
+                          }
+                        }}
+                        onSave={handleManualSave}
+                      />
+                    )
                   ) : currentNote?.name?.endsWith(".excalidraw") ||
                   currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
                     isDocumentLoading && isEmptyExcalidraw(noteContent) ? (
@@ -2019,6 +2148,27 @@ export function WorkspaceLayout({
                       ) : (
                         <MermaidCanvas
                           key={splitTabId || "split-mermaid"}
+                          initialContent={splitNoteContent}
+                          theme={isDark ? "dark" : "light"}
+                          title={currentSplitNote?.name}
+                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                          onSave={() => {
+                            if (splitTabId && !splitTabId.startsWith("temp-")) {
+                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                            }
+                          }}
+                        />
+                      )
+                    ) : isTikzFile(currentSplitNote) ? (
+                      isSplitDocumentLoading && (!splitNoteContent || splitNoteContent.trim() === "") ? (
+                        <MacFileLoader
+                          fileName={currentSplitNote?.name}
+                          fileType="tikz"
+                          message="Opening TikZ LaTeX diagram in split pane…"
+                        />
+                      ) : (
+                        <TikzCanvas
+                          key={splitTabId || "split-tikz"}
                           initialContent={splitNoteContent}
                           theme={isDark ? "dark" : "light"}
                           title={currentSplitNote?.name}
