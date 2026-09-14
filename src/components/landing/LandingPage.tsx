@@ -74,6 +74,9 @@ export function LandingPage({ session }: { session?: any } = {}) {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.remove("dark");
+    }
 
     const lenis = new Lenis({
       autoRaf: true,
@@ -127,6 +130,13 @@ export function LandingPage({ session }: { session?: any } = {}) {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
+            <Link
+              href="/features"
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-blue-500/30 bg-blue-50/50 hover:bg-blue-100/50 text-blue-700 text-xs font-semibold transition-colors"
+            >
+              Features
+            </Link>
+
             <a
               href="#downloads"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-border/60 hover:bg-accent text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
@@ -147,17 +157,6 @@ export function LandingPage({ session }: { session?: any } = {}) {
             >
               Terms
             </Link>
-
-            {mounted && (
-              <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-1.5 sm:p-2 rounded-lg border border-border/50 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                aria-label="Toggle theme"
-              >
-                {theme === "dark" ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-              </button>
-            )}
 
             {session?.user ? (
               <Link
@@ -1226,6 +1225,10 @@ impl<T: Hypersurface> CauchyState<T> {
             </div>
 
             <div className="flex items-center gap-4 text-xs font-normal">
+              <Link href="/features" className="hover:text-foreground transition-colors font-medium">
+                Features
+              </Link>
+              <span>•</span>
               <Link href="/privacy" className="hover:text-foreground transition-colors">
                 Privacy Policy
               </Link>

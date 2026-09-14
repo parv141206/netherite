@@ -1,32 +1,39 @@
-import React from "react";
+"use client";
+
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, FileText, CheckCircle2, Shield, Scale, ExternalLink } from "lucide-react";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Terms of Service — Netherite",
-  description: "Terms of Service and Usage Agreement for Netherite Sovereign Markdown Studio.",
-};
 
 export default function TermsPage() {
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-foreground selection:text-background">
+    <div className="min-h-screen bg-white text-zinc-900 flex flex-col selection:bg-blue-500 selection:text-white font-sans">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md px-4 sm:px-8 py-3.5">
+      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 backdrop-blur-md px-4 sm:px-8 py-3.5">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors font-medium group"
+            className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-900 transition-colors font-medium group"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
             <span>Back to Netherite</span>
           </Link>
 
-          <Link href="/" className="flex items-center gap-2">
-            <NetheriteLogo className="w-4 h-4 text-foreground" />
-            <span className="font-bold text-sm tracking-tight">Netherite</span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/features" className="text-xs text-zinc-600 hover:text-zinc-900 transition-colors font-medium">
+              Features
+            </Link>
+            <Link href="/" className="flex items-center gap-2">
+              <NetheriteLogo className="w-4 h-4 text-zinc-900" />
+              <span className="font-bold text-sm tracking-tight">Netherite</span>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -144,16 +151,17 @@ export default function TermsPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-6 px-4 sm:px-8 text-xs text-muted-foreground">
+      <footer className="border-t border-zinc-200 py-6 px-4 sm:px-8 text-xs text-zinc-500 bg-white">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-foreground">Netherite</span>
+            <span className="font-semibold text-zinc-900">Netherite</span>
             <span>•</span>
             <span>Terms of Service</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <Link href="/" className="hover:text-zinc-900 transition-colors">Home</Link>
+            <Link href="/features" className="hover:text-zinc-900 transition-colors font-medium">Features</Link>
+            <Link href="/privacy" className="hover:text-zinc-900 transition-colors">Privacy Policy</Link>
           </div>
         </div>
       </footer>

@@ -156,7 +156,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${geistMono.variable} ${literata.variable} antialiased selection:bg-foreground selection:text-background dark`}
+      className={`${geist.variable} ${geistMono.variable} ${literata.variable} antialiased selection:bg-blue-500 selection:text-white`}
       suppressHydrationWarning
     >
       <head>
