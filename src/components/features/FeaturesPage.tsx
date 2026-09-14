@@ -22,6 +22,14 @@ import {
   CheckCircle2,
   Boxes,
   Zap,
+  Moon,
+  Sun,
+  X,
+  Compass,
+  FileCode2,
+  Activity,
+  Workflow,
+  Search,
 } from "lucide-react";
 import { NetheriteLogo } from "~/components/icons/NetheriteLogo";
 import { AppleFullPageLoader } from "~/components/ui/AppleFullPageLoader";
@@ -37,61 +45,80 @@ function GridCrosshair({ className = "" }: { className?: string }) {
   );
 }
 
-interface FeatureSection {
+interface FeatureItem {
   id: string;
+  num: string;
   badge: string;
   title: string;
   subtitle: string;
   wittyTagline: string;
   description: string;
   highlights: string[];
+  specs: { label: string; value: string }[];
   imageSrc: string;
   secondaryImageSrc?: string;
   secondaryImageLabel?: string;
+  primaryImageLabel?: string;
   imageAlt: string;
 }
 
-const FEATURE_LIST: FeatureSection[] = [
+const FEATURES: FeatureItem[] = [
+  {
+    id: "workspace",
+    num: "01",
+    badge: "FLAGSHIP WORKSPACE // SOVEREIGN CLOUD",
+    title: "Dual-Pane Sovereign Markdown Studio",
+    subtitle: "100% Google Drive zero-knowledge storage with live KaTeX mathematical typesetting",
+    wittyTagline: "Your research notes live in your own Google Drive, not in a proprietary cloud database selling your study guides.",
+    description:
+      "Write math-heavy lecture notes, research documentation, and technical specs with instant KaTeX formula rendering. With a seamless folder hierarchy mapped directly to your Google Drive, floating highlight palettes, live word & character statistics, and an interactive Table of Contents outline, Netherite is the ultimate distraction-free writing sanctuary.",
+    highlights: [
+      "100% Sovereign Storage: Reads & writes open standard .md files straight to Google Drive",
+      "Instant KaTeX math formula rendering for inline ($...$) and display block ($$...$$) equations",
+      "Floating formatting bar with multi-color highlight markers and heading levels",
+      "Real-time Table of Contents outline sidebar for rapid document navigation",
+      "14 curated theme pairings (Netherite Obsidian, Nordic Frost, Amber Parchment, Cyber Neon)",
+    ],
+    specs: [
+      { label: "Storage Engine", value: "Google Drive API (Zero DB)" },
+      { label: "Math Engine", value: "KaTeX 0.16.x (Sub-millisecond)" },
+      { label: "File Format", value: "Transparent .md (CommonMark)" },
+      { label: "Themes", value: "14 Light / Dark Curated Pairs" },
+    ],
+    imageSrc: "/images/main-light.png",
+    secondaryImageSrc: "/images/main-dark.png",
+    primaryImageLabel: "Light Mode",
+    secondaryImageLabel: "Dark Mode",
+    imageAlt: "Dual-pane markdown workspace with Gaussian Mixture Models KaTeX math notes",
+  },
   {
     id: "tikz",
-    badge: "ENGINEERING & LATEX // TIKZ STUDIO",
+    num: "02",
+    badge: "VECTOR GRAPHICS // TIKZ STUDIO",
     title: "TikZ LaTeX Vector Graphics Studio",
     subtitle: "Real standalone TeXLive compilation & sandboxed WASM vector graphics in your browser",
-    wittyTagline: "Stop wrestling with Overleaf just to draw a finite state machine for your professor.",
+    wittyTagline: "Stop wrestling with Overleaf just to draw a finite state machine for your CS professor.",
     description:
-      "Netherite comes equipped with a first-class TikZ LaTeX Studio. Write standard LaTeX TikZ code with standalone documents, custom macros, patterns, and 3D coordinate geometry (tikz-3dplot). Powered by an ultra-fast TeXLive cloud engine backed by an offline client-side WASM engine, you get vector-crisp SVGs, dark/light adaptive previews, interactive 300% zoom, and one-click SVG export.",
+      "Netherite comes equipped with a first-class TikZ LaTeX Studio. Write standard LaTeX TikZ code with standalone documents, custom macros, patterns, and 3D coordinate geometry (tikz-3dplot). Powered by an ultra-fast TeXLive cloud engine backed by an offline client-side WASM engine, you get vector-crisp SVGs, dark/light adaptive previews, interactive 500% zoom, and one-click SVG export.",
     highlights: [
-      "Dual-Engine Compiler: TeXLive + sandboxed client WASM fallback",
-      "Full standalone document support with custom packages & TikZ libraries",
-      "Interactive zoom & pan up to 500% with zero pixelation",
+      "Dual-Engine Compiler: Instant TeXLive cloud execution + sandboxed client-side WASM fallback",
+      "Full standalone document support with custom packages, macros, and TikZ libraries",
+      "Interactive zoom & pan up to 500% with infinite vector resolution",
       "1-Click Copy SVG and instant vector file downloads",
-      "Adaptive dark & light diagram preview modes",
+      "Adaptive dark & light diagram preview modes matching your document theme",
+    ],
+    specs: [
+      { label: "Dual Compiler", value: "TeXLive 2026 + WASM Fallback" },
+      { label: "Supported Libraries", value: "arrows.meta, positioning, 3dplot, calc" },
+      { label: "Export Formats", value: "SVG Vector & Raw LaTeX .tikz" },
+      { label: "Zoom Range", value: "20% to 500% Vector Scaling" },
     ],
     imageSrc: "/images/TikZ.png",
     imageAlt: "TikZ LaTeX Studio rendering a compiler pipeline state machine in Netherite",
   },
   {
-    id: "markdown",
-    badge: "CORE WORKSPACE // DUAL-PANE MARKDOWN",
-    title: "Sovereign Markdown & KaTeX Math Studio",
-    subtitle: "Zero-knowledge Google Drive storage with live KaTeX mathematical typesetting",
-    wittyTagline: "Your research notes live in your Google Drive, not in a proprietary cloud database selling your study guides.",
-    description:
-      "Write math-heavy lecture notes, research documentation, and technical specs with instant KaTeX formula rendering. With a seamless folder hierarchy mapped 100% to your personal Google Drive, floating highlight palettes, live word & character statistics, and an interactive Table of Contents outline, Netherite delivers the ultimate distraction-free writing environment.",
-    highlights: [
-      "100% Sovereign Storage: Directly reads & writes open .md files in your Google Drive",
-      "Instant KaTeX math formula rendering with inline ($...$) and display block ($$...$$)",
-      "Floating formatting bar with multi-color highlight markers & heading styles",
-      "Real-time Table of Contents outline sidebar for rapid document navigation",
-      "14 curated light and dark theme pairings (Obsidian, Nordic, Solarized, Pookie, Cyber)",
-    ],
-    imageSrc: "/images/main-light.png",
-    secondaryImageSrc: "/images/main-dark.png",
-    secondaryImageLabel: "Switch to Dark Mode View",
-    imageAlt: "Dual-pane markdown workspace with Gaussian Mixture Models KaTeX math notes",
-  },
-  {
     id: "mermaid",
+    num: "03",
     badge: "ARCHITECTURE // SYSTEM FLOWS",
     title: "Interactive Mermaid Flowcharts & Pipelines",
     subtitle: "Turn ASCII text into interactive, scalable vector architecture diagrams",
@@ -105,11 +132,18 @@ const FEATURE_LIST: FeatureSection[] = [
       "Direct embedding into your markdown notes or standalone .mmd file storage",
       "High-contrast color themes for maximum presentation readability",
     ],
+    specs: [
+      { label: "Syntax Engine", value: "Mermaid.js v11 Core" },
+      { label: "Validation", value: "Live Error Pinpointing" },
+      { label: "Canvas Engine", value: "Interactive Pan & Pinch Zoom" },
+      { label: "Storage", value: "Native .mmd Files in Drive" },
+    ],
     imageSrc: "/images/mermaid.png",
     imageAlt: "Mermaid flowchart editor with CI/CD deployment pipeline diagram in Netherite",
   },
   {
     id: "uml",
+    num: "04",
     badge: "SOFTWARE DESIGN // APOLLON MODELER",
     title: "Apollon UML Modeling & Class Design",
     subtitle: "Interactive visual UML diagramming with real-time structural inspectors",
@@ -123,11 +157,18 @@ const FEATURE_LIST: FeatureSection[] = [
       "Stored as open JSON/SVG files directly in your Google Drive workspace",
       "High-fidelity export for engineering design documents and technical specs",
     ],
+    specs: [
+      { label: "UML Engine", value: "Apollon Structural Modeling" },
+      { label: "Elements", value: "Class, Interface, Abstract, Enum, Package" },
+      { label: "Relationships", value: "Inheritance, Realization, Aggregation" },
+      { label: "Export", value: "High-DPI PNG, SVG, JSON" },
+    ],
     imageSrc: "/images/uml.png",
     imageAlt: "Apollon UML class diagram designer with interface and property inspector in Netherite",
   },
   {
     id: "diagrams-suite",
+    num: "05",
     badge: "UNIVERSAL DIAGRAMMING // 13+ SUITES",
     title: "Comprehensive Architecture & UML Suite",
     subtitle: "13 structural, behavioral, and formal systems diagram engines in one click",
@@ -141,11 +182,18 @@ const FEATURE_LIST: FeatureSection[] = [
       "Instant template bootstrapping with sensible software engineering defaults",
       "Unified project tree alongside your markdown lecture notes and sketches",
     ],
+    specs: [
+      { label: "Supported Suites", value: "13 Unified Diagram Specifications" },
+      { label: "Standards", value: "OMG UML 2.5 & BPMN 2.0 Compliant" },
+      { label: "Templates", value: "One-Click Instant Starters" },
+      { label: "Sync Mode", value: "Direct Cloud Google Drive Sync" },
+    ],
     imageSrc: "/images/diagraming.png",
     imageAlt: "Diagram creation modal featuring 13 structural and behavioral diagram types",
   },
   {
     id: "excalidraw",
+    num: "06",
     badge: "CREATIVE BRAINSTORM // WHITEBOARD",
     title: "Excalidraw Infinite Whiteboard",
     subtitle: "Hand-drawn sketch canvas embedded natively inside your note hierarchy",
@@ -159,11 +207,18 @@ const FEATURE_LIST: FeatureSection[] = [
       "Saved directly as .excalidraw files inside your personal Google Drive",
       "Zero latency offline sketching with automatic cloud synchronization",
     ],
+    specs: [
+      { label: "Canvas Engine", value: "Official Excalidraw Core" },
+      { label: "Sketch Fonts", value: "Excalifont & Crafty Girls" },
+      { label: "File Format", value: "Native .excalidraw Vector Data" },
+      { label: "Latency", value: "0ms Local Canvas Speed" },
+    ],
     imageSrc: "/images/excalidraw.png",
     imageAlt: "Excalidraw whiteboard canvas with hand-drawn shapes and arrows in Netherite",
   },
   {
     id: "diff",
+    num: "07",
     badge: "CHANGE MANAGEMENT // SOVEREIGN VCS",
     title: "Git-Style Diff Inspector & Version Control",
     subtitle: "Line-by-line visual delta tracking against your Google Drive cloud baseline",
@@ -177,13 +232,21 @@ const FEATURE_LIST: FeatureSection[] = [
       "One-click 'Save Changes to Drive (Ctrl+S)' or 'Discard Local Draft & Revert'",
       "Complete changelog audit trail for peace of mind while editing offline",
     ],
+    specs: [
+      { label: "Diff Algorithm", value: "Trimmed LCS (Sub-millisecond)" },
+      { label: "View Modes", value: "Unified & Side-by-Side Split" },
+      { label: "Safety Controls", value: "1-Click Discard Local Draft & Revert" },
+      { label: "Shortcuts", value: "Ctrl+S Instant Cloud Commit" },
+    ],
     imageSrc: "/images/diff.png",
     secondaryImageSrc: "/images/change-management-diff.png",
-    secondaryImageLabel: "View Modal Diff View",
+    primaryImageLabel: "Inline Diff Inspector",
+    secondaryImageLabel: "Modal Diff View",
     imageAlt: "Git-style diff inspector showing line additions and modifications in Netherite",
   },
   {
     id: "google-calendar",
+    num: "08",
     badge: "TIME & SCHEDULE // GOOGLE CALENDAR",
     title: "Integrated Google Calendar Studio",
     subtitle: "View monthly schedule, organize agendas, and launch 1-click meeting notes",
@@ -197,11 +260,18 @@ const FEATURE_LIST: FeatureSection[] = [
       "Instant meeting notes generation attached to specific calendar events",
       "Syncs bi-directionally across your phone, tablet, and desktop",
     ],
+    specs: [
+      { label: "Integration", value: "Google Calendar v3 Direct API" },
+      { label: "Views", value: "Month Grid & Chronological Agenda" },
+      { label: "Automation", value: "1-Click Meeting Notes Generator" },
+      { label: "Security", value: "OAuth 2.0 TLS 1.3 Direct Token" },
+    ],
     imageSrc: "/images/google_cal.png",
     imageAlt: "Integrated Google Calendar studio with month view and event creation dialog",
   },
   {
     id: "icarus",
+    num: "09",
     badge: "DEEP FOCUS // LECTURE & LITERATURE",
     title: "Icarus Focus & Literature Mode",
     subtitle: "Distraction-free, centered editorial typography for deep study and paper reading",
@@ -215,6 +285,12 @@ const FEATURE_LIST: FeatureSection[] = [
       "Seamless keyboard navigation and reading progress indicator",
       "Perfect for reviewing research papers, literature notes, and thesis chapters",
     ],
+    specs: [
+      { label: "Typography", value: "Literata Serif & Lora Editorial" },
+      { label: "Layout Mode", value: "Full-Bleed Centered Column" },
+      { label: "Eye Comfort", value: "Warm Blue-Light Filter Slider" },
+      { label: "Distraction", value: "0% Workspace Clutter" },
+    ],
     imageSrc: "/images/icarus.png",
     imageAlt: "Icarus deep focus reading mode with classical editorial serif typography",
   },
@@ -222,6 +298,7 @@ const FEATURE_LIST: FeatureSection[] = [
 
 export function FeaturesPage({ session }: { session?: any } = {}) {
   const [activeImageTab, setActiveImageTab] = useState<Record<string, "primary" | "secondary">>({});
+  const [lightboxImage, setLightboxImage] = useState<{ src: string; alt: string; title: string } | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
@@ -230,10 +307,10 @@ export function FeaturesPage({ session }: { session?: any } = {}) {
     }
   }, []);
 
-  const toggleImage = (featureId: string) => {
+  const toggleImage = (featureId: string, mode: "primary" | "secondary") => {
     setActiveImageTab((prev) => ({
       ...prev,
-      [featureId]: prev[featureId] === "secondary" ? "primary" : "secondary",
+      [featureId]: mode,
     }));
   };
 
@@ -249,12 +326,43 @@ export function FeaturesPage({ session }: { session?: any } = {}) {
         />
       )}
 
+      {/* Lightbox Modal for Full-Resolution Image Inspection */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200"
+        >
+          <div className="max-w-6xl w-full flex items-center justify-between text-white mb-3 select-none">
+            <span className="font-semibold text-sm sm:text-base">{lightboxImage.title}</span>
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-6xl max-h-[85vh] overflow-auto rounded-xl shadow-2xl border border-zinc-700 bg-zinc-950"
+          >
+            <img
+              src={lightboxImage.src}
+              alt={lightboxImage.alt}
+              className="w-full h-auto object-contain block"
+            />
+          </div>
+          <p className="text-zinc-400 text-xs mt-3 select-none font-mono">
+            Press ESC or click anywhere outside to close • 1896×980 Native High-DPI Resolution
+          </p>
+        </div>
+      )}
+
       {/* Atmospheric Ambient Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-blue-500/10 via-blue-600/5 to-transparent blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-t from-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-blue-500/10 via-blue-600/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-0 right-0 w-[600px] h-[350px] bg-gradient-to-t from-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* Navigation Header */}
-      <header className="border-b border-dotted border-blue-500/40 backdrop-blur-md sticky top-0 z-50 bg-white/95">
+      <header className="border-b border-dotted border-blue-500/40 backdrop-blur-md sticky top-0 z-40 bg-white/95">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between border-x border-dotted border-blue-500/40 relative">
           <GridCrosshair className="absolute -bottom-2 -left-2 z-20 hidden lg:block" />
           <GridCrosshair className="absolute -bottom-2 -right-2 z-20 hidden lg:block" />
@@ -351,15 +459,16 @@ export function FeaturesPage({ session }: { session?: any } = {}) {
                 Everything in Netherite is engineered to eliminate friction. Zero proprietary formats, zero mysterious cloud servers, and 100% sovereign Google Drive storage. Explore each native feature in action below.
               </p>
 
-              {/* Quick Jump Pills */}
-              <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl">
-                {FEATURE_LIST.map((feat) => (
+              {/* Quick Jump Navigation Strip */}
+              <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl p-2 rounded-2xl bg-zinc-100/70 border border-zinc-200">
+                {FEATURES.map((feat) => (
                   <a
                     key={feat.id}
                     href={`#${feat.id}`}
-                    className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-blue-50 hover:border-blue-300 text-[11px] font-medium text-zinc-700 hover:text-blue-700 transition-all shadow-xs"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-zinc-200 hover:border-blue-300 text-xs font-medium text-zinc-700 hover:text-blue-700 transition-all shadow-xs flex items-center gap-1.5"
                   >
-                    {feat.title.split(" ")[0]} {feat.title.split(" ")[1]}
+                    <span className="font-mono text-[10px] text-blue-600 font-bold">{feat.num}</span>
+                    <span>{feat.title.split(" ")[0]} {feat.title.split(" ")[1]}</span>
                   </a>
                 ))}
               </div>
@@ -374,12 +483,13 @@ export function FeaturesPage({ session }: { session?: any } = {}) {
         </section>
 
         {/* ========================================================================= */}
-        {/* DETAILED FEATURE SHOWCASE CARDS */}
+        {/* CREATIVE FEATURE SHOWCASE CARDS (Reordered: Main Workspace First) */}
         {/* ========================================================================= */}
         <div className="w-full">
-          {FEATURE_LIST.map((feat, index) => {
+          {FEATURES.map((feat, index) => {
+            const isDarkSelected = activeImageTab[feat.id] === "secondary";
             const currentImg =
-              feat.secondaryImageSrc && activeImageTab[feat.id] === "secondary"
+              feat.secondaryImageSrc && isDarkSelected
                 ? feat.secondaryImageSrc
                 : feat.imageSrc;
 
@@ -387,80 +497,99 @@ export function FeaturesPage({ session }: { session?: any } = {}) {
               <section
                 key={feat.id}
                 id={feat.id}
-                className="w-full border-b border-dotted border-blue-500/40 relative bg-white py-12 sm:py-16 scroll-mt-20"
+                className="w-full border-b border-dotted border-blue-500/40 relative bg-white py-14 sm:py-20 scroll-mt-16"
               >
                 <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-                  {/* Card Container */}
-                  <div className="border border-zinc-200/90 rounded-2xl bg-zinc-50/40 p-5 sm:p-8 lg:p-10 shadow-xs relative overflow-hidden">
-                    {/* Top Meta Bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-200/80">
-                      <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md border border-blue-500/30 bg-blue-50 text-[11px] font-mono text-blue-700 font-semibold uppercase tracking-wider">
-                        <Zap className="w-3 h-3 text-blue-600" />
-                        <span>{feat.badge}</span>
+                  {/* Outer Bento Container */}
+                  <div className="border border-zinc-200 rounded-3xl bg-gradient-to-b from-zinc-50/80 to-white p-5 sm:p-8 lg:p-10 shadow-xs relative overflow-hidden">
+                    {/* Header Strip: Number + Badge + Interactive Switch */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-200">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs font-extrabold px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-xs">
+                          {feat.num}
+                        </span>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-blue-500/30 bg-blue-50 text-[11px] font-mono text-blue-700 font-bold tracking-wide">
+                          <Zap className="w-3 h-3 text-blue-600" />
+                          <span>{feat.badge}</span>
+                        </div>
                       </div>
 
+                      {/* Interactive View Switcher (for Workspace and Diff) */}
                       {feat.secondaryImageSrc && (
-                        <button
-                          onClick={() => toggleImage(feat.id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-100 text-xs font-medium text-zinc-800 transition-colors shadow-xs cursor-pointer"
-                        >
-                          <Layers className="w-3.5 h-3.5 text-blue-600" />
-                          <span>
-                            {activeImageTab[feat.id] === "secondary"
-                              ? "Show Default Light View"
-                              : feat.secondaryImageLabel || "Toggle Alternative View"}
-                          </span>
-                        </button>
+                        <div className="flex items-center gap-1 p-1 bg-zinc-200/60 rounded-xl border border-zinc-300/80">
+                          <button
+                            onClick={() => toggleImage(feat.id, "primary")}
+                            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                              !isDarkSelected
+                                ? "bg-white text-zinc-900 shadow-xs"
+                                : "text-zinc-600 hover:text-zinc-900"
+                            }`}
+                          >
+                            <Sun className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{feat.primaryImageLabel || "Light View"}</span>
+                          </button>
+                          <button
+                            onClick={() => toggleImage(feat.id, "secondary")}
+                            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                              isDarkSelected
+                                ? "bg-zinc-900 text-white shadow-xs"
+                                : "text-zinc-600 hover:text-zinc-900"
+                            }`}
+                          >
+                            <Moon className="w-3.5 h-3.5 text-blue-400" />
+                            <span>{feat.secondaryImageLabel || "Dark View"}</span>
+                          </button>
+                        </div>
                       )}
                     </div>
 
-                    {/* Title & Witty Tagline */}
-                    <div className="max-w-3xl mb-6">
-                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-zinc-900 mb-2">
-                        {feat.title}
-                      </h2>
-                      <p className="text-sm sm:text-base font-serif italic text-blue-700 mb-3">
-                        &ldquo;{feat.wittyTagline}&rdquo;
-                      </p>
-                      <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
-                        {feat.description}
-                      </p>
+                    {/* Feature Title, Witty Quote, & Summary */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8 items-start">
+                      <div className="lg:col-span-8">
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-zinc-900 mb-2">
+                          {feat.title}
+                        </h2>
+                        <p className="text-base sm:text-lg font-serif italic text-blue-700 mb-3 leading-snug">
+                          &ldquo;{feat.wittyTagline}&rdquo;
+                        </p>
+                        <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed max-w-3xl">
+                          {feat.description}
+                        </p>
+                      </div>
+
+                      {/* Engineering Specs Micro-Table */}
+                      <div className="lg:col-span-4 p-4 rounded-2xl bg-white border border-zinc-200 shadow-xs space-y-2">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold border-b border-zinc-100 pb-1.5">
+                          TECHNICAL SPECIFICATIONS
+                        </div>
+                        {feat.specs.map((spec, sIdx) => (
+                          <div key={sIdx} className="flex items-center justify-between text-xs py-0.5">
+                            <span className="text-zinc-500 font-medium">{spec.label}</span>
+                            <span className="font-mono text-zinc-800 font-semibold text-[11px] text-right truncate ml-2">
+                              {spec.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Key Highlights Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-8">
+                    {/* Bullet Highlights Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
                       {feat.highlights.map((highlight, hIdx) => (
                         <div
                           key={hIdx}
-                          className="flex items-start gap-2 p-2.5 rounded-lg border border-zinc-200/70 bg-white text-xs text-zinc-700 shadow-xs"
+                          className="flex items-start gap-2.5 p-3 rounded-xl border border-zinc-200/80 bg-white text-xs text-zinc-700 shadow-xs"
                         >
                           <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                          <span className="leading-snug">{highlight}</span>
+                          <span className="leading-relaxed font-medium">{highlight}</span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Full-Resolution Landscape Screenshot Container */}
-                    <div className="relative rounded-xl border border-zinc-300/80 bg-zinc-900 shadow-xl overflow-hidden group">
-                      {/* Browser Mockup Chrome Bar */}
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 select-none">
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
-                          <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-                          <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
-                          <span className="ml-2 font-mono text-[11px] text-zinc-400 hidden sm:inline">
-                            craftnetherite.vercel.app/editor
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] text-zinc-400 uppercase tracking-wider">
-                            1896 × 980 NATIVE LANDSCAPE
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Image Viewer Area - Responsive Landscape without Downsizing */}
-                      <div className="w-full overflow-x-auto bg-zinc-950 flex justify-center items-center">
+                    {/* Full-Resolution Screenshot View (NO Fake Outer Mac Chrome Bar) */}
+                    <div className="relative rounded-2xl border border-zinc-300 shadow-2xl overflow-hidden group bg-zinc-950">
+                      {/* Image Viewer Area - Native Crisp 1896x980 Screenshot with Inset Zoom Button */}
+                      <div className="w-full overflow-x-auto bg-zinc-950 flex justify-center items-center relative">
                         <div className="min-w-[680px] sm:min-w-[860px] md:min-w-full w-full">
                           <img
                             src={currentImg}
@@ -469,6 +598,21 @@ export function FeaturesPage({ session }: { session?: any } = {}) {
                             className="w-full h-auto object-contain block select-none"
                           />
                         </div>
+
+                        {/* Floating Inspect Full Res Action Pill */}
+                        <button
+                          onClick={() =>
+                            setLightboxImage({
+                              src: currentImg,
+                              alt: feat.imageAlt,
+                              title: `${feat.title} (${isDarkSelected ? "Dark Mode" : "Light Mode"})`,
+                            })
+                          }
+                          className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/75 hover:bg-black text-white text-xs font-medium backdrop-blur-md border border-white/20 shadow-lg transition-all active:scale-95 cursor-pointer opacity-90 hover:opacity-100"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                          <span>Inspect Full Resolution</span>
+                        </button>
                       </div>
                     </div>
                   </div>
