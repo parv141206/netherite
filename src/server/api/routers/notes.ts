@@ -15,11 +15,16 @@ import {
   checkDriveScope,
   getImageAsset,
   searchNotesContent,
+  deepSyncAndRepairWorkspace,
 } from "~/server/googleDrive";
 
 export const notesRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     return await listNotes(ctx.session);
+  }),
+
+  deepSync: protectedProcedure.mutation(async ({ ctx }) => {
+    return await deepSyncAndRepairWorkspace(ctx.session);
   }),
 
   searchContent: protectedProcedure

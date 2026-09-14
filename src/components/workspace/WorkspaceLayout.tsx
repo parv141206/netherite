@@ -11,6 +11,7 @@ import { ImageViewer } from "./ImageViewer";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
+import { DiffSidebar } from "./DiffSidebar";
 import { SyncModal } from "./SyncModal";
 import { MobileBottomBar } from "./MobileBottomBar";
 import { computeLineDiff, saveChangelogEntry, clearChangelog, type ChangelogEntry } from "./diffUtils";
@@ -133,6 +134,22 @@ export function WorkspaceLayout({
   // Global Search Dialog & Gemini AI Copilot Panel States
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isDiffSidebarOpen, setIsDiffSidebarOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_diff_sidebar_open") === "true";
+    }
+    return false;
+  });
+
+  const toggleDiffSidebar = () => {
+    setIsDiffSidebarOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("netherite_diff_sidebar_open", String(next));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
@@ -142,6 +159,9 @@ export function WorkspaceLayout({
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
         setIsCopilotOpen((prev) => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        toggleDiffSidebar();
       }
     };
     window.addEventListener("keydown", handleGlobalShortcuts);
@@ -452,6 +472,25 @@ export function WorkspaceLayout({
     },
   });
   const uploadAssetMutation = api.notes.uploadAsset.useMutation();
+
+  const deepSyncMutation = api.notes.deepSync.useMutation({
+    onSuccess: (res) => {
+      utils.notes.list.invalidate();
+      utils.notes.getMetadata.invalidate();
+      showToast(res.message || "Deep sync and repair complete.");
+    },
+    onError: (err) => {
+      showToast(`Deep sync failed: ${err.message}`);
+    },
+  });
+
+  const handleDeepSync = async () => {
+    if (deepSyncMutation.isPending || isSyncing) return;
+    try {
+      showToast("Scanning Google Drive and repairing workspace...");
+      await deepSyncMutation.mutateAsync();
+    } catch {}
+  };
 
   useEffect(() => {
     if (!activeTabId) {
@@ -1520,6 +1559,10 @@ export function WorkspaceLayout({
         onSetFolderColor={handleSetFolderColor}
         onManualSync={handleOpenSyncModal}
         isSyncing={isSyncing}
+        onDeepSync={handleDeepSync}
+        isDeepSyncing={deepSyncMutation.isPending}
+        onToggleDiff={toggleDiffSidebar}
+        isDiffOpen={isDiffSidebarOpen}
         onOpenCalendar={() => setActiveView("calendar")}
         isCalendarActive={activeView === "calendar"}
         isMutating={
@@ -1548,6 +1591,8 @@ export function WorkspaceLayout({
           onOpenDiff={() => setIsDiffModalOpen(true)}
           onManualSync={handleOpenSyncModal}
           isSyncing={isSyncing}
+          isDiffOpen={isDiffSidebarOpen}
+          onToggleDiff={toggleDiffSidebar}
           isSplitView={isSplitView}
           onToggleSplitView={() => {
             setIsSplitView(!isSplitView);
@@ -2029,6 +2074,22 @@ export function WorkspaceLayout({
               setNoteTitle(title.endsWith(".md") ? title : `${title}.md`);
               setNoteContent(content);
             }}
+          />
+
+          {/* Toggleable Git Diff Right Sidebar */}
+          <DiffSidebar
+            isOpen={isDiffSidebarOpen}
+            onClose={() => setIsDiffSidebarOpen(false)}
+            noteTitle={currentNote?.name || noteTitle || "Untitled.md"}
+            noteId={activeTabId || ""}
+            baselineContent={lastSavedContent}
+            currentContent={noteContent}
+            onSaveToDrive={handleManualSave}
+            isSaving={saveMutation.isPending || isSaving}
+            onDiscardAndSync={() => {
+              void executeSync(false);
+            }}
+            isSyncing={isSyncing}
           />
         </div>
         )}

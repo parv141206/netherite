@@ -129,7 +129,7 @@ export interface FileMetadata {
   id: string;
   name: string;
   mimeType?: string;
-  type: "note" | "drawing" | "folder" | "image";
+  type: "note" | "drawing" | "folder" | "image" | "uml" | "mermaid";
   parentId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -248,31 +248,54 @@ export async function checkDriveScope(session: any): Promise<{ hasFullDriveScope
   }
 }
 
+/**
+ * Robust paginated file fetcher across Google Drive API
+ */
+async function fetchAllDriveFiles(
+  drive: any,
+  query: string,
+  fields = "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)"
+): Promise<any[]> {
+  const all: any[] = [];
+  let pageToken: string | undefined = undefined;
+  do {
+    const res: any = await drive.files.list({
+      q: query,
+      fields,
+      pageSize: 1000,
+      spaces: "drive",
+      pageToken,
+    });
+    if (res.data.files && res.data.files.length > 0) {
+      all.push(...res.data.files);
+    }
+    pageToken = res.data.nextPageToken || undefined;
+  } while (pageToken);
+  return all;
+}
+
 export async function listNotes(session: any) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
     const rootFolderId = await ensureNetheriteFolder(session);
 
-    // 1. Fetch folders, files, and workspace metadata concurrently
-    const [foldersRes, filesRes, existingMeta] = await Promise.all([
-      drive.files.list({
-        q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
-        fields: "files(id, name, mimeType, modifiedTime, parents)",
-        pageSize: 1000,
-        spaces: "drive",
-      }),
-      drive.files.list({
-        q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/vnd.apollon+json' or mimeType='text/vnd.mermaid' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.apollon' or name contains '.mmd' or name contains '.mermaid' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
-        fields: "files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
-        orderBy: "folder, modifiedTime desc",
-        pageSize: 1000,
-        spaces: "drive",
-      }),
+    // 1. Fetch all folders with complete pagination so no subfolder is ever missed
+    const [allFolders, existingMeta] = await Promise.all([
+      fetchAllDriveFiles(
+        drive,
+        "trashed=false and mimeType='application/vnd.google-apps.folder'",
+        "nextPageToken, files(id, name, mimeType, modifiedTime, parents)"
+      ),
       getWorkspaceMetadata(session).catch(() => ({ version: 1, folderColors: {}, files: {} })),
     ]);
 
-    const allFolders = foldersRes.data.files ?? [];
+    // Discover all Netherite root folders (handles multiple user-created roots seamlessly)
     const netheriteFolderIds = new Set<string>([rootFolderId]);
+    for (const f of allFolders) {
+      if (f.name?.toLowerCase() === "netherite" && f.id) {
+        netheriteFolderIds.add(f.id);
+      }
+    }
 
     // Recursively collect all descendant folders strictly inside Netherite
     let addedNew = true;
@@ -281,7 +304,7 @@ export async function listNotes(session: any) {
       for (const folder of allFolders) {
         if (!folder.id || netheriteFolderIds.has(folder.id)) continue;
         if (folder.name?.toLowerCase() === "assets") continue;
-        const isChild = folder.parents?.some((p) => netheriteFolderIds.has(p));
+        const isChild = folder.parents?.some((p: string) => netheriteFolderIds.has(p));
         if (isChild) {
           netheriteFolderIds.add(folder.id);
           addedNew = true;
@@ -289,7 +312,23 @@ export async function listNotes(session: any) {
       }
     }
 
-    const rawFiles = filesRes.data.files ?? [];
+    // 2. Fetch all files inside all Netherite folders with chunked parent queries + pagination
+    const parentIds = Array.from(netheriteFolderIds);
+    const rawFiles: any[] = [];
+    const CHUNK_SIZE = 30;
+
+    for (let i = 0; i < parentIds.length; i += CHUNK_SIZE) {
+      const chunk = parentIds.slice(i, i + CHUNK_SIZE);
+      const parentClause = chunk.map((id) => `'${id}' in parents`).join(" or ");
+      // Unconstrained file query: NEVER drop a file based on mimeType/extension!
+      const chunkFiles = await fetchAllDriveFiles(
+        drive,
+        `trashed=false and (${parentClause}) and mimeType!='application/vnd.google-apps.folder'`,
+        "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)"
+      );
+      rawFiles.push(...chunkFiles);
+    }
+
     const updatedFilesMeta: Record<string, FileMetadata> = { ...(existingMeta.files ?? {}) };
     let metadataNeedsSave = false;
     const backgroundUpdates: Array<Promise<any>> = [];
@@ -307,7 +346,7 @@ export async function listNotes(session: any) {
     for (const f of allFolders) {
       if (!f.id || !f.name) continue;
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
-      if (f.id === rootFolderId || f.name === "Netherite") continue;
+      if (f.id === rootFolderId || f.name.toLowerCase() === "netherite") continue;
       if (!netheriteFolderIds.has(f.id)) continue;
 
       const folderMime = f.mimeType ?? "application/vnd.google-apps.folder";
@@ -339,13 +378,13 @@ export async function listNotes(session: any) {
       if (f.mimeType === "application/vnd.google-apps.folder") continue;
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
 
-      // STRICT CHECK: Only include files that are inside Netherite or its subfolders
+      // Ensure file parent belongs to Netherite
       const isInsideNetherite = f.parents?.some((p: string) => netheriteFolderIds.has(p));
       if (!isInsideNetherite) continue;
 
       const isImage =
         f.mimeType?.startsWith("image/") ||
-        /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(f.name);
+        /\.(png|jpg|jpeg|gif|webp|svg|bmp|ico)$/i.test(f.name);
 
       const isDrawing =
         !isImage &&
@@ -375,29 +414,34 @@ export async function listNotes(session: any) {
       if (isImage) {
         displayName = f.name;
       } else if (!isDrawing && !isUml && !isMermaid && !displayName.endsWith(".md")) {
-        const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
-        const normalizedName = `${cleanBase}.md`;
-        displayName = normalizedName;
-        // Non-blocking background sync for property tags
-        backgroundUpdates.push(
-          drive.files.update({
-            fileId: f.id,
-            requestBody: {
-              name: normalizedName,
-              properties: {
-                netheriteType: "note",
-                netheriteManaged: "true",
+        // Auto-normalize text documents while preserving other code formats
+        if (/\.(txt|markdown|text)$/i.test(displayName)) {
+          const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
+          const normalizedName = `${cleanBase}.md`;
+          displayName = normalizedName;
+          backgroundUpdates.push(
+            drive.files.update({
+              fileId: f.id,
+              requestBody: {
+                name: normalizedName,
+                properties: {
+                  netheriteType: "note",
+                  netheriteManaged: "true",
+                },
               },
-            },
-          }).catch(() => {})
-        );
+            }).catch(() => {})
+          );
+        } else if (!displayName.includes(".")) {
+          // If no extension was provided in Drive, treat as .md note
+          displayName = `${displayName}.md`;
+        }
       } else if (!f.properties?.netheriteManaged) {
         backgroundUpdates.push(
           drive.files.update({
             fileId: f.id,
             requestBody: {
               properties: {
-                netheriteType: isDrawing ? "drawing" : isUml ? "uml" : isImage ? "image" : "note",
+                netheriteType: isDrawing ? "drawing" : isUml ? "uml" : isMermaid ? "mermaid" : isImage ? "image" : "note",
                 netheriteManaged: "true",
               },
             },
@@ -411,6 +455,8 @@ export async function listNotes(session: any) {
         ? "application/vnd.excalidraw+json"
         : isUml
         ? "application/vnd.apollon+json"
+        : isMermaid
+        ? "text/vnd.mermaid"
         : "text/markdown";
 
       itemsToReturn.push({
@@ -426,7 +472,7 @@ export async function listNotes(session: any) {
           id: f.id,
           name: displayName,
           mimeType: effectiveMimeType,
-          type: isImage ? "image" : isDrawing ? "drawing" : "note",
+          type: isImage ? "image" : isDrawing ? "drawing" : isUml ? "uml" : isMermaid ? "mermaid" : "note",
           parentId: f.parents?.[0] ?? rootFolderId,
           createdAt: f.createdTime ?? f.modifiedTime ?? new Date().toISOString(),
           updatedAt: f.modifiedTime ?? new Date().toISOString(),
@@ -448,6 +494,28 @@ export async function listNotes(session: any) {
 
     return itemsToReturn;
   });
+}
+
+/**
+ * Deep scan and repair Google Drive workspace:
+ * Clears caches, discovers all folders/files, fixes metadata tags, and repairs missing files
+ */
+export async function deepSyncAndRepairWorkspace(session: any) {
+  folderIdCache.clear();
+  const rootFolderId = await ensureNetheriteFolder(session);
+  await ensureAssetsFolder(session);
+  const notes = await listNotes(session);
+  const totalFolders = notes.filter((n) => n.mimeType === "application/vnd.google-apps.folder").length;
+  const totalFiles = notes.length - totalFolders;
+
+  return {
+    success: true,
+    rootFolderId,
+    totalFolders,
+    totalFiles,
+    totalItems: notes.length,
+    message: `Deep sync complete: Reconciled ${totalFolders} folders and ${totalFiles} files across Google Drive.`,
+  };
 }
 
 export async function createSubfolder(session: any, name: string, parentId?: string) {

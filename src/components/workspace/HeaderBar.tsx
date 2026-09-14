@@ -24,6 +24,7 @@ import {
   Sparkles,
   Search,
   RefreshCw,
+  GitCompare,
 } from "lucide-react";
 import {
   useTheme,
@@ -56,6 +57,8 @@ interface HeaderBarProps {
   onEditorFontChange?: (font: string) => void;
   isOutlineOpen?: boolean;
   onToggleOutline?: () => void;
+  isDiffOpen?: boolean;
+  onToggleDiff?: () => void;
   isCopilotOpen?: boolean;
   onToggleCopilot?: () => void;
   onOpenGlobalSearch?: () => void;
@@ -82,6 +85,8 @@ export function HeaderBar({
   onEditorFontChange,
   isOutlineOpen = false,
   onToggleOutline,
+  isDiffOpen = false,
+  onToggleDiff,
   isCopilotOpen = false,
   onToggleCopilot,
   onOpenGlobalSearch,
@@ -336,6 +341,27 @@ export function HeaderBar({
             title="Toggle Split View"
           >
             <Columns className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Git Diff Sidebar Toggle */}
+        {cleanTitle && onToggleDiff && (
+          <button
+            onClick={onToggleDiff}
+            className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+              isDiffOpen
+                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 shadow-2xs font-semibold"
+                : isDirty
+                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+            }`}
+            title="Toggle Git Diff Inspector (Ctrl+Shift+D)"
+          >
+            <GitCompare className="w-3.5 h-3.5" />
+            <span className="hidden md:inline text-[11px]">Diff</span>
+            {isDirty && (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />
+            )}
           </button>
         )}
 

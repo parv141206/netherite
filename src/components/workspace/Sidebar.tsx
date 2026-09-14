@@ -24,6 +24,8 @@ import {
   Network,
   Workflow,
   Calendar,
+  GitCompare,
+  RotateCw,
 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
@@ -190,6 +192,10 @@ interface SidebarProps {
   onSetFolderColor?: (folderId: string, color: string | null) => void;
   onManualSync?: () => void;
   isSyncing?: boolean;
+  onDeepSync?: () => void;
+  isDeepSyncing?: boolean;
+  onToggleDiff?: () => void;
+  isDiffOpen?: boolean;
   onOpenCalendar?: () => void;
   isCalendarActive?: boolean;
   onOpenGlobalSearch?: () => void;
@@ -220,6 +226,10 @@ export function Sidebar({
   onSetFolderColor,
   onManualSync,
   isSyncing = false,
+  onDeepSync,
+  isDeepSyncing = false,
+  onToggleDiff,
+  isDiffOpen = false,
   onOpenCalendar,
   isCalendarActive = false,
   onOpenGlobalSearch,
@@ -922,19 +932,32 @@ export function Sidebar({
           >
             <FolderPlus className="w-3.5 h-3.5" />
           </button>
+          {onToggleDiff && (
+            <button
+              onClick={onToggleDiff}
+              className={`p-1 hover:bg-accent/60 rounded transition-colors cursor-pointer ${
+                isDiffOpen ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Git Diff Inspector (Ctrl+Shift+D)"
+            >
+              <GitCompare className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button
             onClick={() => {
-              if (onManualSync) {
+              if (onDeepSync) {
+                onDeepSync();
+              } else if (onManualSync) {
                 onManualSync();
               } else {
                 utils.notes.list.invalidate();
               }
             }}
-            disabled={isSyncing}
+            disabled={isSyncing || isDeepSyncing}
             className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-            title="Sync with Google Drive"
+            title="Deep Sync & Repair Drive Workspace"
           >
-            <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-foreground" : ""}`} />
+            <RotateCw className={`w-3.5 h-3.5 ${isSyncing || isDeepSyncing ? "animate-spin text-foreground" : ""}`} />
           </button>
           <button
             onClick={onToggleCollapse}

@@ -657,14 +657,35 @@ export function Editor({
 
   if (!mounted || !editor || isLoading) {
     return (
-      <div className="w-full h-full flex flex-col p-8 sm:p-12 space-y-6 bg-card border border-border rounded-xl animate-pulse">
-        <div className="h-10 bg-muted rounded-xl w-1/3" />
-        <div className="space-y-3">
-          <div className="h-4 bg-muted/60 rounded w-full" />
-          <div className="h-4 bg-muted/60 rounded w-5/6" />
-          <div className="h-4 bg-muted/60 rounded w-4/6" />
+      <div
+        data-editor-container="true"
+        style={{ "--editor-font-size": `${fontSize}px` } as React.CSSProperties}
+        className="w-full h-full flex flex-col bg-background text-foreground overflow-hidden relative select-none"
+      >
+        {/* Placeholder toolbar to prevent layout shift */}
+        <div className="hidden sm:flex px-4 py-1.5 border-b border-border/40 bg-background/80 items-center gap-1 text-xs shrink-0 opacity-40">
+          <div className="h-6 w-24 bg-muted/50 rounded" />
+          <div className="h-4 w-[1px] bg-border mx-1" />
+          <div className="h-6 w-32 bg-muted/40 rounded" />
         </div>
-        <div className="h-28 bg-muted/40 rounded-xl w-full border border-border/50" />
+
+        {/* Seamless Document Skeleton */}
+        <div className="flex-1 w-full overflow-y-auto px-4 sm:px-12 py-8 sm:py-12 max-w-4xl mx-auto flex flex-col gap-6">
+          <div className="w-full">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground/80 font-dynamic-editor pb-2">
+              {title.replace(/\.md$/i, "") || "Untitled"}
+            </h1>
+          </div>
+          <div className="space-y-3.5 pt-2 animate-pulse opacity-60">
+            <div className="h-4 bg-muted/70 rounded-md w-11/12" />
+            <div className="h-4 bg-muted/60 rounded-md w-full" />
+            <div className="h-4 bg-muted/60 rounded-md w-4/5" />
+            <div className="h-4 bg-muted/50 rounded-md w-9/12" />
+            <div className="h-8 bg-muted/30 rounded-lg w-full mt-4" />
+            <div className="h-4 bg-muted/60 rounded-md w-5/6" />
+            <div className="h-4 bg-muted/50 rounded-md w-2/3" />
+          </div>
+        </div>
       </div>
     );
   }
