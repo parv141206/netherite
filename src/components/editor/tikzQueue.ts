@@ -2,74 +2,132 @@
 
 // Global cache for compiled TikZ SVGs
 const tikzSvgCache = new Map<string, string>();
-let tikzjaxLoaded = false;
-let tikzjaxLoadPromise: Promise<void> | null = null;
+let tikzIframe: HTMLIFrameElement | null = null;
+let tikzIframeReadyPromise: Promise<HTMLIFrameElement> | null = null;
 
 /**
- * Load TikZJax script and style dynamically on demand
+ * Load TikZJax inside an isolated sandboxed iframe to prevent global ReadableStream pollution
  */
-export function ensureTikzjaxLoaded(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (tikzjaxLoaded && (window as any).tikzjax) return Promise.resolve();
-  if (tikzjaxLoadPromise) return tikzjaxLoadPromise;
+export function ensureTikzjaxLoaded(): Promise<HTMLIFrameElement> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Window is undefined"));
+  }
 
-  tikzjaxLoadPromise = new Promise((resolve, reject) => {
-    // 1. Check if already injected
-    if (document.getElementById("netherite-tikzjax-script")) {
-      tikzjaxLoaded = true;
-      resolve();
-      return;
+  // Clean up any legacy script from main document head to restore native streams
+  const legacyScript = document.getElementById("netherite-tikzjax-script");
+  if (legacyScript) {
+    try {
+      legacyScript.remove();
+    } catch {}
+  }
+
+  if (tikzIframe && tikzIframe.contentDocument) {
+    return Promise.resolve(tikzIframe);
+  }
+  if (tikzIframeReadyPromise) return tikzIframeReadyPromise;
+
+  tikzIframeReadyPromise = new Promise<HTMLIFrameElement>((resolve, reject) => {
+    try {
+      const iframe = document.createElement("iframe");
+      iframe.id = "netherite-tikz-sandbox-frame";
+      iframe.style.position = "fixed";
+      iframe.style.left = "-99999px";
+      iframe.style.top = "-99999px";
+      iframe.style.width = "1px";
+      iframe.style.height = "1px";
+      iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
+      iframe.style.visibility = "hidden";
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) {
+        reject(new Error("Unable to create sandboxed iframe for TikZ"));
+        return;
+      }
+
+      doc.open();
+      doc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="https://tikzjax.com/v1/fonts.css" />
+  <script src="https://tikzjax.com/v1/tikzjax.js"></script>
+</head>
+<body>
+</body>
+</html>`);
+      doc.close();
+
+      const script = doc.querySelector("script");
+      if (script) {
+        script.onload = () => {
+          tikzIframe = iframe;
+          resolve(iframe);
+        };
+        script.onerror = () => {
+          tikzIframeReadyPromise = null;
+          reject(
+            new Error(
+              "Failed to load TikZ WebAssembly in sandbox. Check your network."
+            )
+          );
+        };
+      } else {
+        tikzIframe = iframe;
+        resolve(iframe);
+      }
+    } catch (err: any) {
+      tikzIframeReadyPromise = null;
+      reject(err);
     }
-
-    // 2. Inject CSS for Computer Modern TeX font glyphs
-    if (!document.getElementById("netherite-tikzjax-css")) {
-      const link = document.createElement("link");
-      link.id = "netherite-tikzjax-css";
-      link.rel = "stylesheet";
-      link.href = "https://tikzjax.com/v1/fonts.css";
-      document.head.appendChild(link);
-    }
-
-    // 3. Inject JS WebAssembly TeX compiler
-    const script = document.createElement("script");
-    script.id = "netherite-tikzjax-script";
-    script.src = "https://tikzjax.com/v1/tikzjax.js";
-    script.async = true;
-    script.onload = () => {
-      tikzjaxLoaded = true;
-      resolve();
-    };
-    script.onerror = (err) => {
-      tikzjaxLoadPromise = null;
-      reject(new Error("Failed to load TikZ WebAssembly engine"));
-    };
-    document.head.appendChild(script);
   });
 
-  return tikzjaxLoadPromise;
+  return tikzIframeReadyPromise;
 }
 
-// Global serial queue to prevent concurrent TeX WebAssembly collisions
+// Global serial queue to prevent concurrent TeX WebAssembly memory collisions
 let tikzQueue = Promise.resolve<any>(null);
 
 /**
- * Normalize raw user TikZ code ensuring valid LaTeX environment
+ * Normalize raw user TikZ code ensuring valid LaTeX environment & color aliases
  */
 export function normalizeTikzCode(code: string): string {
   let trimmed = code.trim();
   if (!trimmed) return "";
 
-  // Extract any libraries or packages if provided outside
+  // Strip markdown code fences if present (e.g. ```tikz ... ```)
+  trimmed = trimmed.replace(/^```(?:tikz|latex-tikz|pgf|latex|tex)?\s*/i, "");
+  trimmed = trimmed.replace(/```\s*$/i, "").trim();
+
+  // If user didn't include \begin{tikzpicture}, wrap it
   const hasBegin = /\\begin\{tikzpicture\}/.test(trimmed);
   const hasEnd = /\\end\{tikzpicture\}/.test(trimmed);
 
+  let tikzBody = trimmed;
   if (!hasBegin && !hasEnd) {
-    trimmed = `\\begin{tikzpicture}\n${trimmed}\n\\end{tikzpicture}`;
+    tikzBody = `\\begin{tikzpicture}\n${trimmed}\n\\end{tikzpicture}`;
   } else if (hasBegin && !hasEnd) {
-    trimmed = `${trimmed}\n\\end{tikzpicture}`;
+    tikzBody = `${trimmed}\n\\end{tikzpicture}`;
   }
 
-  return trimmed;
+  // Prepend standard color definitions and libraries if not already declared
+  const standardPreamble = `\\usetikzlibrary{arrows.meta, positioning, automata, backgrounds, shapes, calc, fit, matrix, trees}
+\\definecolor{indigo}{RGB}{99,102,241}
+\\definecolor{emerald}{RGB}{16,185,129}
+\\definecolor{rose}{RGB}{244,63,94}
+\\definecolor{amber}{RGB}{245,158,11}
+\\definecolor{sky}{RGB}{14,165,233}
+\\definecolor{violet}{RGB}{139,92,246}
+\\definecolor{fuchsia}{RGB}{217,70,239}
+\\definecolor{slate}{RGB}{100,116,139}
+`;
+
+  if (!tikzBody.includes("\\definecolor{indigo}")) {
+    tikzBody = `${standardPreamble}\n${tikzBody}`;
+  }
+
+  return tikzBody.trim();
 }
 
 /**
@@ -90,82 +148,86 @@ export function renderTikzQueued(
     tikzQueue = tikzQueue
       .then(async () => {
         try {
-          await ensureTikzjaxLoaded();
+          const iframe = await ensureTikzjaxLoaded();
+          const doc = iframe.contentDocument;
+          const win = iframe.contentWindow as any;
+
+          if (!doc || !win) {
+            throw new Error("TikZ sandbox iframe not ready");
+          }
 
           if (!normalized) {
             resolve({ svg: "" });
             return { svg: "" };
           }
 
-          // Create an off-screen sandbox container
-          const sandbox = document.createElement("div");
-          sandbox.style.position = "absolute";
-          sandbox.style.left = "-99999px";
-          sandbox.style.top = "-99999px";
-          sandbox.style.opacity = "0";
-          sandbox.style.pointerEvents = "none";
-          document.body.appendChild(sandbox);
+          // Clear previous scripts/svgs in iframe body
+          doc.body.innerHTML = "";
 
-          const scriptEl = document.createElement("script");
-          scriptEl.type = "text/tikz";
-          scriptEl.textContent = normalized;
-          sandbox.appendChild(scriptEl);
+          const scriptEl = doc.createElement("script");
+          scriptEl.setAttribute("type", "text/tikz");
+          scriptEl.appendChild(doc.createTextNode(normalized));
+          doc.body.appendChild(scriptEl);
 
-          // Wait for TikZJax Mutation Observer to compile and replace with SVG
-          const compiledSvg = await new Promise<string>((res, rej) => {
-            let timeoutId: any;
+          // Trigger TikZJax processing inside the isolated iframe realm
+          const processFn = win.__tikzjax_process || win.onload;
+          if (typeof processFn === "function") {
+            try {
+              await processFn();
+            } catch (err: any) {
+              doc.body.innerHTML = "";
+              const msg = err?.message || String(err);
+              throw new Error(`LaTeX Error: ${msg}`);
+            }
+          } else {
+            win.dispatchEvent(new Event("load"));
+          }
 
-            const checkSvg = () => {
-              const svgEl = sandbox.querySelector("svg");
+          // Wait for SVG generation with polling fallback
+          const finalSvgHtml = await new Promise<string>((res, rej) => {
+            const check = () => {
+              const svgEl = doc.body.querySelector("svg");
               if (svgEl && svgEl.innerHTML.trim().length > 0) {
-                clearTimeout(timeoutId);
-                observer.disconnect();
                 res(svgEl.outerHTML);
                 return true;
               }
               return false;
             };
 
+            if (check()) return;
+
             const observer = new MutationObserver(() => {
-              checkSvg();
+              if (check()) observer.disconnect();
             });
+            observer.observe(doc.body, { childList: true, subtree: true });
 
-            observer.observe(sandbox, {
-              childList: true,
-              subtree: true,
-              attributes: true,
-            });
-
-            // Trigger TikZJax processing if available
-            if ((window as any).tikzjax && typeof (window as any).tikzjax.process === "function") {
-              try {
-                (window as any).tikzjax.process(sandbox);
-              } catch {}
-            }
-
-            // Polling fallback every 60ms
             const interval = setInterval(() => {
-              if (checkSvg()) clearInterval(interval);
+              if (check()) {
+                clearInterval(interval);
+                observer.disconnect();
+              }
             }, 60);
 
-            timeoutId = setTimeout(() => {
+            setTimeout(() => {
               clearInterval(interval);
               observer.disconnect();
-              const svgEl = sandbox.querySelector("svg");
+              const svgEl = doc.body.querySelector("svg");
               if (svgEl) {
                 res(svgEl.outerHTML);
               } else {
-                rej(new Error("TikZ compilation timed out. Verify your LaTeX TikZ syntax."));
+                rej(
+                  new Error(
+                    "TikZ compilation timed out. Please verify your LaTeX TikZ syntax."
+                  )
+                );
               }
-            }, 8000);
+            }, 12000);
           });
 
-          // Cleanup sandbox
-          try {
-            document.body.removeChild(sandbox);
-          } catch {}
+          // Cleanup iframe body
+          doc.body.innerHTML = "";
 
-          const processed = postProcessTikzSvg(compiledSvg, isDark);
+          const processed = postProcessTikzSvg(finalSvgHtml, isDark);
           tikzSvgCache.set(cacheKey, processed);
           resolve({ svg: processed });
           return { svg: processed };
@@ -191,11 +253,16 @@ export function postProcessTikzSvg(rawSvg: string, isDark: boolean): string {
 
   // Ensure responsive sizing
   if (!svg.includes('style="')) {
-    svg = svg.replace("<svg", '<svg style="max-width: 100%; height: auto; display: block; margin: auto;"');
+    svg = svg.replace(
+      "<svg",
+      '<svg style="max-width: 100%; height: auto; display: block; margin: auto;"'
+    );
   } else {
     svg = svg.replace(/style="([^"]*)"/i, (_full, style: string) => {
       const cleaned = style.replace(/max-width:\s*[^;]+;?/gi, "").trim();
-      return `style="${cleaned}${cleaned && !cleaned.endsWith(";") ? ";" : ""} max-width: 100%; height: auto; display: block; margin: auto;"`;
+      return `style="${cleaned}${
+        cleaned && !cleaned.endsWith(";") ? ";" : ""
+      } max-width: 100%; height: auto; display: block; margin: auto;"`;
     });
   }
 

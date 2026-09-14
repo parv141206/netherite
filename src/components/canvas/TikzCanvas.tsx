@@ -41,190 +41,132 @@ export const TIKZ_TEMPLATES: TikzTemplate[] = [
     description: "Deep MLP with input, hidden, and output layers with weight connections",
     category: "Machine Learning",
     code: `\\begin{tikzpicture}[
-  plain/.style={
-    draw=none,
-    fill=none,
-  },
-  netnode/.style={
-    circle,
-    draw=indigo!80,
-    fill=indigo!15,
-    minimum size=8mm,
-    inner sep=0pt,
-    thick
-  },
-  hiddennode/.style={
-    circle,
-    draw=purple!80,
-    fill=purple!15,
-    minimum size=8mm,
-    inner sep=0pt,
-    thick
-  },
-  outnode/.style={
-    circle,
-    draw=emerald!80,
-    fill=emerald!15,
-    minimum size=8mm,
-    inner sep=0pt,
-    thick
-  }
+  node distance=1.5cm,
+  every node/.style={circle, draw=black!70, thick, minimum size=7mm},
+  invis/.style={draw=none, fill=none}
 ]
+  % Input Nodes
+  \\node[draw=blue!80, fill=blue!15] (x1) at (0, 1.5) {$x_1$};
+  \\node[draw=blue!80, fill=blue!15] (x2) at (0, 0.5) {$x_2$};
+  \\node[draw=blue!80, fill=blue!15] (x3) at (0, -0.5) {$x_3$};
+  \\node[draw=blue!80, fill=blue!15] (x4) at (0, -1.5) {$x_4$};
 
-  % Input Layer
-  \\foreach \\y [count=\\i] in {1.5, 0.5, -0.5, -1.5}
-    \\node[netnode] (I-\\i) at (0,\\y) {$x_\\i$};
+  % Hidden Nodes
+  \\node[draw=purple!80, fill=purple!15] (h1) at (2.5, 1.5) {$h_1$};
+  \\node[draw=purple!80, fill=purple!15] (h2) at (2.5, 0.5) {$h_2$};
+  \\node[draw=purple!80, fill=purple!15] (h3) at (2.5, -0.5) {$h_3$};
+  \\node[draw=purple!80, fill=purple!15] (h4) at (2.5, -1.5) {$h_4$};
 
-  % Hidden Layer 1
-  \\foreach \\y [count=\\i] in {2, 1, 0, -1, -2}
-    \\node[hiddennode] (H1-\\i) at (2.5,\\y) {$h_\\i^{(1)}$};
+  % Output Nodes
+  \\node[draw=emerald!80, fill=emerald!15] (y1) at (5, 0.5) {$y_1$};
+  \\node[draw=emerald!80, fill=emerald!15] (y2) at (5, -0.5) {$y_2$};
 
-  % Hidden Layer 2
-  \\foreach \\y [count=\\i] in {1.5, 0.5, -0.5, -1.5}
-    \\node[hiddennode] (H2-\\i) at (5,\\y) {$h_\\i^{(2)}$};
+  % Connections
+  \\foreach \\i in {1,2,3,4}
+    \\foreach \\j in {1,2,3,4}
+      \\draw[->, gray!60] (x\\i) -- (h\\j);
 
-  % Output Layer
-  \\foreach \\y [count=\\i] in {0.8, -0.8}
-    \\node[outnode] (O-\\i) at (7.5,\\y) {$\\hat{y}_\\i$};
+  \\foreach \\i in {1,2,3,4}
+    \\foreach \\j in {1,2}
+      \\draw[->, thick, purple!70] (h\\i) -- (y\\j);
 
-  % Connect Input to Hidden 1
-  \\foreach \\i in {1,...,4}
-    \\foreach \\j in {1,...,5}
-      \\draw[->, draw=gray!40] (I-\\i) -- (H1-\\j);
-
-  % Connect Hidden 1 to Hidden 2
-  \\foreach \\i in {1,...,5}
-    \\foreach \\j in {1,...,4}
-      \\draw[->, draw=gray!40] (H1-\\i) -- (H2-\\j);
-
-  % Connect Hidden 2 to Output
-  \\foreach \\i in {1,...,4}
-    \\foreach \\j in {1,...,2}
-      \\draw[->, draw=gray!50, thick] (H2-\\i) -- (O-\\j);
-
-  % Layer Labels
-  \\node[above=0.3cm of I-1, font=\\bfseries\\small] {Input Layer};
-  \\node[above=0.3cm of H1-1, font=\\bfseries\\small] {Hidden Layer 1};
-  \\node[above=0.3cm of H2-1, font=\\bfseries\\small] {Hidden Layer 2};
-  \\node[above=0.3cm of O-1, font=\\bfseries\\small] {Output $\\hat{y}$};
-
+  % Layer Headers
+  \\node[invis] at (0, 2.3) {\\textbf{Input}};
+  \\node[invis] at (2.5, 2.3) {\\textbf{Hidden}};
+  \\node[invis] at (5, 2.3) {\\textbf{Output}};
 \\end{tikzpicture}`,
   },
   {
     id: "fsm-automata",
-    name: "Finite State Machine (DFA/NFA)",
-    description: "State transition diagram with initial and accepting states",
+    name: "Finite State Machine (DFA)",
+    description: "State transition diagram with initial, accepting, and error states",
     category: "Computer Science",
-    code: `\\begin{tikzpicture}[
-  >=stealth,
-  node distance=3cm,
-  thick,
-  state/.style={circle, draw=blue!70, fill=blue!10, minimum size=1.2cm, font=\\sffamily\\bfseries},
-  accepting/.style={state, double, double distance=2pt, draw=emerald!70, fill=emerald!10},
-  initial/.style={state, draw=indigo!70, fill=indigo!10}
-]
+    code: `\\begin{tikzpicture}[>=latex, node distance=2.8cm, thick]
+  \\node[circle, draw=blue!80, fill=blue!10, minimum size=1cm] (q0) {$q_0$};
+  \\node[circle, draw=blue!80, fill=blue!10, minimum size=1cm, right of=q0] (q1) {$q_1$};
+  \\node[circle, draw=emerald!80, fill=emerald!10, double, double distance=2pt, minimum size=1cm, right of=q1] (q2) {$q_2$};
+  \\node[circle, draw=rose!80, fill=rose!10, minimum size=1cm, below of=q1, node distance=2.2cm] (q3) {$q_{err}$};
 
-  \\node[initial]   (q0)                {$q_0$};
-  \\node[state]     (q1) [right of=q0]  {$q_1$};
-  \\node[accepting] (q2) [right of=q1]  {$q_2$};
-  \\node[state]     (q3) [below of=q1]  {$q_{err}$};
-
-  \\draw[->] (q0) edge[loop above] node {$0$} (q0)
-            (q0) edge[above]      node {$1$} (q1)
-            (q1) edge[above]      node {$0$} (q2)
-            (q1) edge[bend left]  node {$1$} (q3)
-            (q2) edge[bend left]  node {$0, 1$} (q0)
-            (q3) edge[loop below] node {$0, 1$} (q3);
-
-  \\draw[->, dashed] (-1.5,0) -- node[above] {start} (q0);
-
+  \\draw[->] (q0) edge[loop above] node {0} (q0);
+  \\draw[->] (q0) edge node[above] {1} (q1);
+  \\draw[->] (q1) edge node[above] {0} (q2);
+  \\draw[->] (q1) edge[bend left] node[right] {1} (q3);
+  \\draw[->] (q2) edge[bend left=45] node[above] {0, 1} (q0);
+  \\draw[->] (q3) edge[loop below] node {0, 1} (q3);
+  \\draw[<-, dashed] (q0) -- ++(-1.2, 0) node[left] {start};
 \\end{tikzpicture}`,
   },
   {
     id: "binary-tree",
     name: "Binary Search Tree",
-    description: "Hierarchical binary tree with left and right child pointers",
+    description: "Hierarchical binary tree with root, branches, and leaf nodes",
     category: "Computer Science",
     code: `\\begin{tikzpicture}[
-  every node/.style={circle, draw=indigo!80, fill=indigo!15, thick, minimum size=8mm, font=\\bfseries},
-  level 1/.style={sibling distance=40mm},
-  level 2/.style={sibling distance=20mm},
+  every node/.style={circle, draw=indigo!80, fill=indigo!15, thick, minimum size=8mm},
+  level 1/.style={sibling distance=36mm},
+  level 2/.style={sibling distance=18mm},
   level 3/.style={sibling distance=10mm},
-  edge from parent/.style={draw=gray!70, -latex, thick}
+  edge from parent/.style={draw=gray!70, ->, thick}
 ]
-
-  \\node (root) {$50$}
-    child { node {$30$}
-      child { node {$20$}
-        child { node[fill=rose!20, draw=rose!70] {$10$} }
-        child { node[fill=rose!20, draw=rose!70] {$25$} }
+  \\node {50}
+    child { node {30}
+      child { node {20}
+        child { node[draw=rose!80, fill=rose!20] {10} }
+        child { node[draw=rose!80, fill=rose!20] {25} }
       }
-      child { node {$40$}
+      child { node {40}
         child[missing]
-        child { node[fill=rose!20, draw=rose!70] {$45$} }
+        child { node[draw=rose!80, fill=rose!20] {45} }
       }
     }
-    child { node {$70$}
-      child { node {$60$} }
-      child { node {$80$}
-        child { node[fill=rose!20, draw=rose!70] {$75$} }
-        child { node[fill=rose!20, draw=rose!70] {$90$} }
+    child { node {70}
+      child { node {60} }
+      child { node {80}
+        child { node[draw=rose!80, fill=rose!20] {75} }
+        child { node[draw=rose!80, fill=rose!20] {90} }
       }
     };
-
 \\end{tikzpicture}`,
   },
   {
     id: "memory-layout",
     name: "Process Memory & Stack Layout",
-    description: "Virtual memory address space with Text, Data, Heap, and Stack",
+    description: "Virtual memory address space with Stack, Heap, BSS, Data, and Text",
     category: "Systems",
     code: `\\begin{tikzpicture}[
-  box/.style={draw=black!70, thick, minimum width=5cm, minimum height=1cm, align=center, font=\\sffamily},
-  stack/.style={box, fill=rose!15},
-  heap/.style={box, fill=amber!15},
-  bss/.style={box, fill=blue!15},
-  data/.style={box, fill=teal!15},
-  text/.style={box, fill=purple!15}
+  box/.style={draw=black!70, thick, minimum width=4.5cm, minimum height=0.9cm, align=center},
+  addr/.style={font=\\ttfamily\\footnotesize, anchor=west}
 ]
+  \\node[box, fill=rose!20]  (stack) at (0, 3.2) {\\textbf{Stack Segment} (Local Vars)};
+  \\node[addr] at (2.4, 3.2) {0x7FFF FFFF};
 
-  \\node[stack] (stack) at (0, 4) {\\textbf{Stack Frame} (Local Vars, Returns)};
-  \\node[draw=none] (arrow1) at (0, 3.2) {$\\Downarrow$ Growth $\\Downarrow$};
-  
-  \\node[heap]  (heap)  at (0, 2.2) {\\textbf{Heap Segment} (\\texttt{malloc} / \\texttt{new})};
-  \\node[draw=none] (arrow2) at (0, 1.4) {$\\Uparrow$ Growth $\\Uparrow$};
+  \\node at (0, 2.4) {$\\Downarrow$ \\small Stack Growth $\\Downarrow$};
+  \\node at (0, 1.6) {$\\Uparrow$ \\small Heap Growth $\\Uparrow$};
 
-  \\node[bss]   (bss)   at (0, 0.4) {\\textbf{BSS Segment} (Uninitialized Globals)};
-  \\node[data]  (data)  at (0, -0.6) {\\textbf{Data Segment} (Initialized Globals)};
-  \\node[text]  (text)  at (0, -1.6) {\\textbf{Text / Code} (Binary Instructions)};
-
-  % Addresses
-  \\node[anchor=west, font=\\ttfamily\\small] at (2.7, 4) {0x7FFF FFFF (High)};
-  \\node[anchor=west, font=\\ttfamily\\small] at (2.7, -1.6) {0x0040 0000 (Low)};
-
+  \\node[box, fill=amber!20]  (heap)  at (0, 0.8) {\\textbf{Heap Segment} (\\texttt{malloc})};
+  \\node[box, fill=blue!15]   (bss)   at (0, -0.2) {\\textbf{BSS} (Uninitialized)};
+  \\node[box, fill=teal!15]   (data)  at (0, -1.2) {\\textbf{Data} (Initialized Globals)};
+  \\node[box, fill=purple!15] (text)  at (0, -2.2) {\\textbf{Text / Code} (Instructions)};
+  \\node[addr] at (2.4, -2.2) {0x0040 0000};
 \\end{tikzpicture}`,
   },
   {
     id: "math-coordinate-plane",
     name: "Vector Geometry & Coordinate Plane",
-    description: "2D Cartesian coordinate plane with orthogonal vectors and angle arc",
+    description: "2D Cartesian coordinate plane with orthogonal vectors and parallelogram",
     category: "Mathematics",
-    code: `\\begin{tikzpicture}[>=latex, scale=1.2]
-  % Grid & Axes
-  \\draw[help lines, color=gray!30] (-1,-1) grid (4,4);
+    code: `\\begin{tikzpicture}[>=latex, scale=1.1]
+  \\draw[step=1cm, gray!25, very thin] (-1,-1) grid (4,4);
   \\draw[->, thick] (-1.2,0) -- (4.2,0) node[right] {$x$};
   \\draw[->, thick] (0,-1.2) -- (0,4.2) node[above] {$y$};
 
-  % Vectors
-  \\draw[->, ultra thick, blue!80] (0,0) -- (3,1) node[midway, below right] {$\\vec{u} = (3, 1)$};
-  \\draw[->, ultra thick, purple!80] (0,0) -- (1,3) node[midway, above left] {$\\vec{v} = (1, 3)$};
+  \\draw[->, ultra thick, blue!80] (0,0) -- (3,1) node[midway, below right] {$\\vec{u} = (3,1)$};
+  \\draw[->, ultra thick, purple!80] (0,0) -- (1,3) node[midway, above left] {$\\vec{v} = (1,3)$};
   \\draw[->, thick, dashed, emerald!80] (0,0) -- (4,4) node[above right] {$\\vec{u} + \\vec{v}$};
 
-  % Parallelogram lines
-  \\draw[dashed, gray] (3,1) -- (4,4);
-  \\draw[dashed, gray] (1,3) -- (4,4);
+  \\draw[dashed, gray!70] (3,1) -- (4,4);
+  \\draw[dashed, gray!70] (1,3) -- (4,4);
 
-  % Origin
   \\filldraw[black] (0,0) circle (1.5pt) node[below left] {$O(0,0)$};
 \\end{tikzpicture}`,
   },
@@ -255,6 +197,9 @@ export function TikzCanvas({
   const [compileError, setCompileError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"split" | "code" | "preview">("split");
   const [copied, setCopied] = useState<boolean>(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const templatesRef = useRef<HTMLDivElement | null>(null);
 
   // Zoom & Pan Canvas Transform State
   const [zoom, setZoom] = useState<number>(1);
@@ -262,6 +207,25 @@ export function TikzCanvas({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const viewportRef = useRef<HTMLDivElement | null>(null);
+
+  // Close templates dropdown on outside click
+  useEffect(() => {
+    if (!isTemplatesOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (templatesRef.current && !templatesRef.current.contains(e.target as Node)) {
+        setIsTemplatesOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, [isTemplatesOpen]);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((cur) => (cur === msg ? null : cur));
+    }, 2000);
+  };
 
   // Compile TikZ on code / theme change with debounce
   useEffect(() => {
@@ -283,7 +247,7 @@ export function TikzCanvas({
           setIsCompiling(false);
         }
       }
-    }, 300);
+    }, 250);
 
     return () => {
       active = false;
@@ -298,12 +262,15 @@ export function TikzCanvas({
 
   const handleApplyTemplate = (template: TikzTemplate) => {
     handleCodeChange(template.code);
+    setIsTemplatesOpen(false);
+    showToast(`Template applied: ${template.name}`);
   };
 
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
+      showToast("LaTeX code copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch {}
   };
@@ -313,6 +280,7 @@ export function TikzCanvas({
     try {
       await navigator.clipboard.writeText(svgContent);
       setCopied(true);
+      showToast("Vector SVG copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch {}
   };
@@ -326,6 +294,7 @@ export function TikzCanvas({
     a.download = `${title.replace(/\.[^/.]+$/, "") || "tikz-diagram"}.svg`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast("SVG exported successfully");
   };
 
   const handleExportPng = () => {
@@ -348,6 +317,7 @@ export function TikzCanvas({
         a.href = pngUrl;
         a.download = `${title.replace(/\.[^/.]+$/, "") || "tikz-diagram"}.png`;
         a.click();
+        showToast("PNG exported successfully");
       }
       URL.revokeObjectURL(url);
     };
@@ -414,32 +384,52 @@ export function TikzCanvas({
         {/* Templates Dropdown & View Mode Switcher */}
         <div className="flex items-center gap-1.5">
           {/* Preset Templates */}
-          <div className="relative group/tpl">
+          <div className="relative" ref={templatesRef}>
             <button
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-accent/60 hover:bg-accent text-foreground transition-colors cursor-pointer"
+              onClick={() => setIsTemplatesOpen((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                isTemplatesOpen
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "bg-accent/60 hover:bg-accent text-foreground"
+              }`}
               title="Insert LaTeX TikZ Template"
             >
               <Sparkles className="w-3 h-3 text-amber-500" />
-              <span className="hidden md:inline">Templates</span>
+              <span>Templates</span>
             </button>
 
-            <div className="absolute right-0 top-8 w-64 p-1.5 bg-card/95 backdrop-blur-xl border border-border/80 rounded-xl shadow-2xl z-50 hidden group-hover/tpl:flex flex-col gap-1 text-xs">
-              <span className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Publication Presets
-              </span>
-              {TIKZ_TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl.id}
-                  onClick={() => handleApplyTemplate(tpl)}
-                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-accent hover:text-foreground transition-colors flex flex-col gap-0.5 cursor-pointer"
-                >
-                  <span className="font-semibold text-foreground">{tpl.name}</span>
-                  <span className="text-[10px] text-muted-foreground line-clamp-1">
-                    {tpl.description}
+            {isTemplatesOpen && (
+              <div className="absolute right-0 top-9 w-72 p-2 bg-card/95 backdrop-blur-xl border border-border/80 rounded-xl shadow-2xl z-50 flex flex-col gap-1 text-xs animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-2 py-1 flex items-center justify-between border-b border-border/40 pb-1.5 mb-1">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Publication Presets
                   </span>
-                </button>
-              ))}
-            </div>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    5 Templates
+                  </span>
+                </div>
+
+                {TIKZ_TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => handleApplyTemplate(tpl)}
+                    className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-accent hover:text-foreground transition-colors flex flex-col gap-0.5 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-foreground group-hover:text-primary">
+                        {tpl.name}
+                      </span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-muted text-muted-foreground">
+                        {tpl.category}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground line-clamp-1">
+                      {tpl.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* View Mode Switcher */}
@@ -485,7 +475,11 @@ export function TikzCanvas({
             className="flex items-center gap-1 p-1.5 px-2 rounded-lg text-xs font-medium hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             title="Copy SVG code to clipboard"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
             <span className="hidden lg:inline">{copied ? "Copied" : "Copy SVG"}</span>
           </button>
 
@@ -501,7 +495,15 @@ export function TikzCanvas({
       </div>
 
       {/* Main Studio Body */}
-      <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden">
+      <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden relative">
+        {/* Toast Feedback */}
+        {toastMessage && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-xl bg-foreground text-background text-xs font-medium shadow-xl animate-in fade-in slide-in-from-top-2 duration-150 flex items-center gap-2">
+            <Check className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
         {/* Left: LaTeX Code Editor */}
         {(viewMode === "split" || viewMode === "code") && (
           <div
@@ -537,7 +539,7 @@ export function TikzCanvas({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onWheel={handleWheel}
-            className={`relative flex-1 h-full bg-muted/5 flex items-center justify-center overflow-hidden checkerboard-bg select-none ${
+            className={`relative flex-1 h-full bg-muted/5 flex items-center justify-center overflow-hidden select-none ${
               isDragging ? "cursor-grabbing" : "cursor-grab"
             } ${viewMode === "split" ? "w-1/2" : "w-full"}`}
             style={{
@@ -591,7 +593,7 @@ export function TikzCanvas({
             )}
 
             {/* Error Diagnostics Banner */}
-            {compileError && (
+            {compileError && !isCompiling && (
               <div className="absolute bottom-3 left-3 right-3 max-w-lg z-30 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs shadow-lg animate-in slide-in-from-bottom-2 duration-150">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -606,15 +608,21 @@ export function TikzCanvas({
             )}
 
             {/* Rendered SVG Content with Drag & Zoom transform */}
-            <div
-              style={{
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                transformOrigin: "center center",
-                transition: isDragging ? "none" : "transform 0.1s ease-out",
-              }}
-              className="p-8 max-w-full max-h-full flex items-center justify-center transition-all"
-              dangerouslySetInnerHTML={{ __html: svgContent }}
-            />
+            {svgContent ? (
+              <div
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transformOrigin: "center center",
+                  transition: isDragging ? "none" : "transform 0.1s ease-out",
+                }}
+                className="p-8 max-w-full max-h-full flex items-center justify-center transition-all"
+                dangerouslySetInnerHTML={{ __html: svgContent }}
+              />
+            ) : !isCompiling && !compileError ? (
+              <div className="text-center text-xs font-mono text-muted-foreground/60 p-6">
+                Type TikZ LaTeX code or choose a template to render
+              </div>
+            ) : null}
           </div>
         )}
       </div>
