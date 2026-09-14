@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { AppleSpinner } from "~/components/ui/AppleSpinner";
+import { MacFileLoader } from "~/components/ui/MacFileLoader";
 
 interface WorkspaceLayoutProps {
   session: any;
@@ -393,7 +394,11 @@ export function WorkspaceLayout({
   }, [notesData]);
 
   // Primary Active Note Content Query
-  const { data: fetchedContent, isLoading: isLoadingContent } = api.notes.get.useQuery(
+  const {
+    data: fetchedContent,
+    isLoading: isLoadingContent,
+    isFetching: isFetchingContent,
+  } = api.notes.get.useQuery(
     { id: activeTabId! },
     {
       enabled: !!session?.user && !!activeTabId && !activeTabId.startsWith("temp-"),
@@ -402,13 +407,28 @@ export function WorkspaceLayout({
   );
 
   // Split Active Note Content Query
-  const { data: fetchedSplitContent, isLoading: isLoadingSplitContent } = api.notes.get.useQuery(
+  const {
+    data: fetchedSplitContent,
+    isLoading: isLoadingSplitContent,
+    isFetching: isFetchingSplitContent,
+  } = api.notes.get.useQuery(
     { id: splitTabId! },
     {
       enabled: !!session?.user && !!splitTabId && !splitTabId.startsWith("temp-") && isSplitView,
       staleTime: 300000,
     }
   );
+
+  const isDocumentLoading =
+    Boolean(activeTabId) &&
+    !activeTabId?.startsWith("temp-") &&
+    (isLoadingContent || (isFetchingContent && fetchedContent === undefined));
+
+  const isSplitDocumentLoading =
+    Boolean(splitTabId) &&
+    !splitTabId?.startsWith("temp-") &&
+    isSplitView &&
+    (isLoadingSplitContent || (isFetchingSplitContent && fetchedSplitContent === undefined));
 
   const saveBackupSnapshot = (noteId: string, content: string) => {
     if (!noteId || !content || typeof window === "undefined") return;
@@ -1572,6 +1592,7 @@ export function WorkspaceLayout({
           createFolderMutation.isPending ||
           moveMutation.isPending
         }
+        loadingNoteId={isDocumentLoading ? activeTabId : undefined}
         onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
       />
 
@@ -1639,6 +1660,7 @@ export function WorkspaceLayout({
                 const note = localNotes.find((n) => n.id === tabId);
                 const isActive = activeView === "editor" && activeTabId === tabId;
                 const hasLocalDiff = isActive ? isDirty : false;
+                const isTabLoading = isActive && isDocumentLoading;
 
                 return (
                   <div
@@ -1653,7 +1675,9 @@ export function WorkspaceLayout({
                         : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
                     }`}
                   >
-                    {note?.name.endsWith(".excalidraw") || note?.mimeType === "application/vnd.excalidraw+json" ? (
+                    {isTabLoading ? (
+                      <AppleSpinner size="xs" className="text-foreground shrink-0" />
+                    ) : note?.name.endsWith(".excalidraw") || note?.mimeType === "application/vnd.excalidraw+json" ? (
                       <Palette className={`w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
                     ) : isUmlFile(note) ? (
                       <Network className={`w-3.5 h-3.5 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
@@ -1848,13 +1872,12 @@ export function WorkspaceLayout({
                       mimeType={currentNote?.mimeType}
                     />
                   ) : isUmlFile(currentNote) ? (
-                    (isLoadingContent || fetchedContent === undefined) &&
-                    !activeTabId?.startsWith("temp-") &&
-                    isEmptyApollon(noteContent) ? (
-                      <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                        <AppleSpinner size="md" className="text-foreground" />
-                        <span className="text-xs font-mono">Loading Apollon UML Model…</span>
-                      </div>
+                    isDocumentLoading && isEmptyApollon(noteContent) ? (
+                      <MacFileLoader
+                        fileName={currentNote?.name}
+                        fileType="uml"
+                        message="Opening UML diagram from Google Drive…"
+                      />
                     ) : (
                       <UmlCanvas
                         key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
@@ -1870,28 +1893,35 @@ export function WorkspaceLayout({
                       />
                     )
                   ) : isMermaidFile(currentNote) ? (
-                    <MermaidCanvas
-                      key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
-                      initialContent={noteContent}
-                      theme={isDark ? "dark" : "light"}
-                      title={currentNote?.name}
-                      onChange={(updatedContent) => {
-                        setNoteContent(updatedContent);
-                        if (activeTabId && typeof window !== "undefined") {
-                          localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
-                        }
-                      }}
-                      onSave={handleManualSave}
-                    />
+                    isDocumentLoading && (!noteContent || noteContent.trim() === "") ? (
+                      <MacFileLoader
+                        fileName={currentNote?.name}
+                        fileType="mermaid"
+                        message="Opening Mermaid chart from Google Drive…"
+                      />
+                    ) : (
+                      <MermaidCanvas
+                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                        initialContent={noteContent}
+                        theme={isDark ? "dark" : "light"}
+                        title={currentNote?.name}
+                        onChange={(updatedContent) => {
+                          setNoteContent(updatedContent);
+                          if (activeTabId && typeof window !== "undefined") {
+                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
+                          }
+                        }}
+                        onSave={handleManualSave}
+                      />
+                    )
                   ) : currentNote?.name?.endsWith(".excalidraw") ||
                   currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
-                    (isLoadingContent || fetchedContent === undefined) &&
-                    !activeTabId?.startsWith("temp-") &&
-                    isEmptyExcalidraw(noteContent) ? (
-                      <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                        <AppleSpinner size="md" className="text-foreground" />
-                        <span className="text-xs font-mono">Loading Canvas & Excalidraw scene…</span>
-                      </div>
+                    isDocumentLoading && isEmptyExcalidraw(noteContent) ? (
+                      <MacFileLoader
+                        fileName={currentNote?.name}
+                        fileType="drawing"
+                        message="Opening whiteboard canvas from Google Drive…"
+                      />
                     ) : (
                       <DrawingCanvas
                         key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
@@ -1906,6 +1936,12 @@ export function WorkspaceLayout({
                         onSave={handleManualSave}
                       />
                     )
+                  ) : isDocumentLoading && (!noteContent || noteContent === "") ? (
+                    <MacFileLoader
+                      fileName={currentNote?.name}
+                      fileType="note"
+                      message="Opening note from Google Drive…"
+                    />
                   ) : (
                     <Editor
                       key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
@@ -1958,13 +1994,12 @@ export function WorkspaceLayout({
                         mimeType={currentSplitNote?.mimeType}
                       />
                     ) : isUmlFile(currentSplitNote) ? (
-                      (isLoadingSplitContent || fetchedSplitContent === undefined) &&
-                      !splitTabId?.startsWith("temp-") &&
-                      isEmptyApollon(splitNoteContent) ? (
-                        <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                          <AppleSpinner size="md" className="text-foreground" />
-                          <span className="text-xs font-mono">Loading UML Diagram…</span>
-                        </div>
+                      isSplitDocumentLoading && isEmptyApollon(splitNoteContent) ? (
+                        <MacFileLoader
+                          fileName={currentSplitNote?.name}
+                          fileType="uml"
+                          message="Opening UML diagram in split pane…"
+                        />
                       ) : (
                         <UmlCanvas
                           key={splitTabId || "split-uml"}
@@ -1979,27 +2014,34 @@ export function WorkspaceLayout({
                         />
                       )
                     ) : isMermaidFile(currentSplitNote) ? (
-                      <MermaidCanvas
-                        key={splitTabId || "split-mermaid"}
-                        initialContent={splitNoteContent}
-                        theme={isDark ? "dark" : "light"}
-                        title={currentSplitNote?.name}
-                        onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
-                        onSave={() => {
-                          if (splitTabId && !splitTabId.startsWith("temp-")) {
-                            saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
-                          }
-                        }}
-                      />
+                      isSplitDocumentLoading && (!splitNoteContent || splitNoteContent.trim() === "") ? (
+                        <MacFileLoader
+                          fileName={currentSplitNote?.name}
+                          fileType="mermaid"
+                          message="Opening Mermaid chart in split pane…"
+                        />
+                      ) : (
+                        <MermaidCanvas
+                          key={splitTabId || "split-mermaid"}
+                          initialContent={splitNoteContent}
+                          theme={isDark ? "dark" : "light"}
+                          title={currentSplitNote?.name}
+                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                          onSave={() => {
+                            if (splitTabId && !splitTabId.startsWith("temp-")) {
+                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                            }
+                          }}
+                        />
+                      )
                     ) : currentSplitNote?.name?.endsWith(".excalidraw") ||
                     currentSplitNote?.mimeType === "application/vnd.excalidraw+json" ? (
-                      (isLoadingSplitContent || fetchedSplitContent === undefined) &&
-                      !splitTabId?.startsWith("temp-") &&
-                      isEmptyExcalidraw(splitNoteContent) ? (
-                        <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground gap-3 select-none">
-                          <AppleSpinner size="md" className="text-foreground" />
-                          <span className="text-xs font-mono">Loading Drawing…</span>
-                        </div>
+                      isSplitDocumentLoading && isEmptyExcalidraw(splitNoteContent) ? (
+                        <MacFileLoader
+                          fileName={currentSplitNote?.name}
+                          fileType="drawing"
+                          message="Opening whiteboard in split pane…"
+                        />
                       ) : (
                         <DrawingCanvas
                           key={splitTabId || "split-drawing"}
@@ -2013,6 +2055,12 @@ export function WorkspaceLayout({
                           }}
                         />
                       )
+                    ) : isSplitDocumentLoading && (!splitNoteContent || splitNoteContent === "") ? (
+                      <MacFileLoader
+                        fileName={currentSplitNote?.name}
+                        fileType="note"
+                        message="Opening note in split pane…"
+                      />
                     ) : (
                       <Editor
                         key={splitTabId || "split-editor"}
@@ -2179,6 +2227,7 @@ export function WorkspaceLayout({
         isOpen={isCreateDiagramModalOpen}
         onClose={() => setIsCreateDiagramModalOpen(false)}
         onCreate={(type, name) => handleCreateUml(type, name)}
+        isPending={createMutation.isPending}
       />
 
       {/* Sync & Discard Confirmation Modal */}

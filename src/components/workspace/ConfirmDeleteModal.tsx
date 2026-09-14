@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
+import { AppleSpinner } from "~/components/ui/AppleSpinner";
 
 export interface DeleteTarget {
   type: "note" | "folder" | "batch";
@@ -147,7 +148,10 @@ export function ConfirmDeleteModal({
             className="px-4 py-2 rounded-xl text-xs font-medium text-white bg-red-600 hover:bg-red-700 active:bg-red-800 transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
           >
             {isPending ? (
-              <span>Moving to Trash...</span>
+              <>
+                <AppleSpinner size="xs" />
+                <span>Moving to Trash...</span>
+              </>
             ) : (
               <>
                 <Trash2 className="w-3.5 h-3.5" />

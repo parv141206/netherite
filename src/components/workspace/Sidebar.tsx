@@ -199,6 +199,7 @@ interface SidebarProps {
   onOpenCalendar?: () => void;
   isCalendarActive?: boolean;
   onOpenGlobalSearch?: () => void;
+  loadingNoteId?: string;
 }
 
 export function Sidebar({
@@ -233,6 +234,7 @@ export function Sidebar({
   onOpenCalendar,
   isCalendarActive = false,
   onOpenGlobalSearch,
+  loadingNoteId,
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -240,16 +242,16 @@ export function Sidebar({
     root: true,
   });
 
-  // Resizable Sidebar Width (saved in localStorage)
+  // Resizable Sidebar Width (saved in localStorage, strict minimum 260px)
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("netherite_sidebar_width");
       if (saved) {
         const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 180 && parsed <= 520) return parsed;
+        if (!isNaN(parsed) && parsed >= 260 && parsed <= 560) return parsed;
       }
     }
-    return 260;
+    return 270;
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -257,7 +259,7 @@ export function Sidebar({
     if (!isResizing) return;
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      const newWidth = Math.min(520, Math.max(180, e.clientX));
+      const newWidth = Math.min(560, Math.max(260, e.clientX));
       setSidebarWidth(newWidth);
     };
     const handleMouseUp = () => {
@@ -741,6 +743,9 @@ export function Sidebar({
             ) : (
               <span className="truncate">{displayName}</span>
             )}
+            {loadingNoteId === item.id && (
+              <AppleSpinner size="xs" className="shrink-0 text-foreground ml-auto" />
+            )}
           </div>
         </div>
       );
@@ -874,23 +879,51 @@ export function Sidebar({
           isResizing ? "transition-none select-none" : ""
         }`}
       >
-      {/* Line 1: Top Bar with Mac Traffic Lights on Left & Workspace Action Icons on Right */}
-      <div className="px-3 pt-3 pb-1.5 flex items-center justify-between" data-tauri-drag-region>
+      {/* Row 1: Window Traffic Lights on Left & Collapse Button on Right */}
+      <div className="px-3 pt-3 pb-1 flex items-center justify-between" data-tauri-drag-region>
         <div className="flex items-center pl-0.5">
           <WindowControls />
         </div>
-        <div className="flex items-center gap-1" data-tauri-no-drag>
+        <div className="flex items-center" data-tauri-no-drag>
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 hover:bg-accent/60 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            title="Collapse Sidebar"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Row 2: Workspace Title & Status Spinner */}
+      <div className="px-3 py-1.5 flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0 w-full">
+          <NetheriteLogo className="h-4.5 w-auto text-foreground shrink-0" />
+          <span className="font-semibold text-xs sm:text-sm text-foreground truncate tracking-tight">
+            {userSession?.user?.name ? `${userSession.user.name.split(" ")[0]}'s Notes` : "Netherite"}
+          </span>
+          {(isMutating || isSyncing || isDeepSyncing) && (
+            <AppleSpinner size="xs" className="text-muted-foreground ml-auto shrink-0" />
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: Action Toolbar (Structured & never overlaps) */}
+      <div className="px-2.5 pb-2 pt-0.5 border-b border-border/40" data-tauri-no-drag>
+        <div className="flex items-center justify-between bg-accent/30 p-0.5 rounded-lg border border-border/30">
           <button
             onClick={() => onCreateNote()}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            title="New Page (Ctrl+N)"
+            disabled={isMutating}
+            className="p-1 hover:bg-background/80 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+            title="New Note (Ctrl+N)"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
           {onCreateDrawing && (
             <button
               onClick={() => onCreateDrawing()}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              disabled={isMutating}
+              className="p-1 hover:bg-background/80 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
               title="New Whiteboard / Sketch"
             >
               <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
@@ -899,7 +932,8 @@ export function Sidebar({
           {onCreateUml && (
             <button
               onClick={() => onCreateUml()}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              disabled={isMutating}
+              className="p-1 hover:bg-background/80 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
               title="New UML Diagram (Apollon)"
             >
               <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
@@ -908,34 +942,36 @@ export function Sidebar({
           {onCreateMermaid && (
             <button
               onClick={() => onCreateMermaid()}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              disabled={isMutating}
+              className="p-1 hover:bg-background/80 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
               title="New Mermaid Diagram"
             >
               <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
             </button>
           )}
+          <button
+            onClick={() => onCreateFolder()}
+            disabled={isMutating}
+            className="p-1 hover:bg-background/80 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+            title="New Folder"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+          </button>
           {onOpenCalendar && (
             <button
               onClick={onOpenCalendar}
-              className={`p-1 hover:bg-accent/60 rounded transition-colors cursor-pointer ${
-                isCalendarActive ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              className={`p-1 hover:bg-background/80 rounded transition-colors cursor-pointer ${
+                isCalendarActive ? "bg-background text-blue-600 dark:text-blue-400 shadow-2xs" : "text-muted-foreground hover:text-foreground"
               }`}
               title="Google Calendar"
             >
               <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
             </button>
           )}
-          <button
-            onClick={() => onCreateFolder()}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            title="New Folder"
-          >
-            <FolderPlus className="w-3.5 h-3.5" />
-          </button>
           {onToggleDiff && (
             <button
               onClick={onToggleDiff}
-              className={`p-1 hover:bg-accent/60 rounded transition-colors cursor-pointer ${
+              className={`p-1 hover:bg-background/80 rounded transition-colors cursor-pointer ${
                 isDiffOpen ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "text-muted-foreground hover:text-foreground"
               }`}
               title="Git Diff Inspector (Ctrl+Shift+D)"
@@ -954,29 +990,11 @@ export function Sidebar({
               }
             }}
             disabled={isSyncing || isDeepSyncing}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-1 hover:bg-background/80 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
             title="Deep Sync & Repair Drive Workspace"
           >
             <RotateCw className={`w-3.5 h-3.5 ${isSyncing || isDeepSyncing ? "animate-spin text-foreground" : ""}`} />
           </button>
-          <button
-            onClick={onToggleCollapse}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            title="Collapse Sidebar"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Line 2: Full Width Workspace Title */}
-      <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between">
-        <div className="flex items-center gap-2.5 min-w-0 w-full">
-          <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
-          <span className="font-semibold text-xs sm:text-sm text-foreground truncate tracking-tight">
-            {userSession?.user?.name ? `${userSession.user.name.split(" ")[0]}'s Notes` : "Netherite"}
-          </span>
-          {isMutating && <AppleSpinner size="xs" className="text-muted-foreground ml-auto" />}
         </div>
       </div>
 

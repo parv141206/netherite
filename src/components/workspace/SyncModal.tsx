@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { RefreshCw, AlertTriangle, CheckCircle2, X, CloudDownload } from "lucide-react";
 import { api } from "~/trpc/react";
 import { signIn } from "next-auth/react";
+import { AppleSpinner } from "~/components/ui/AppleSpinner";
 
 interface SyncModalProps {
   isOpen: boolean;
@@ -204,7 +205,11 @@ export function SyncModal({
                 : "bg-foreground text-background hover:opacity-90 active:scale-95"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+            {isSyncing ? (
+              <AppleSpinner size="xs" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
             <span>
               {isSyncing
                 ? "Syncing from Drive..."

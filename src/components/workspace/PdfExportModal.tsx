@@ -12,6 +12,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useTheme, type MdThemeId, type GlobalFontId } from "~/components/ThemeProvider";
+import { AppleSpinner } from "~/components/ui/AppleSpinner";
 
 interface PdfExportModalProps {
   isOpen: boolean;
@@ -806,7 +807,11 @@ export function PdfExportModal({
               disabled={isGenerating}
               className="flex items-center gap-1.5 px-4 py-2 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-sm cursor-pointer disabled:opacity-50"
             >
-              <Printer className="w-3.5 h-3.5" />
+              {isGenerating ? (
+                <AppleSpinner size="xs" />
+              ) : (
+                <Printer className="w-3.5 h-3.5" />
+              )}
               <span>{isGenerating ? "Preparing..." : "Print / Save as PDF"}</span>
             </button>
           </div>

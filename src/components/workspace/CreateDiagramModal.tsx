@@ -20,6 +20,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { UMLDiagramType } from "@tumaet/apollon";
+import { AppleSpinner } from "~/components/ui/AppleSpinner";
 
 export interface DiagramTypeDefinition {
   type: UMLDiagramType;
@@ -146,12 +147,14 @@ interface CreateDiagramModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (diagramType: UMLDiagramType, name: string) => void;
+  isPending?: boolean;
 }
 
 export function CreateDiagramModal({
   isOpen,
   onClose,
   onCreate,
+  isPending = false,
 }: CreateDiagramModalProps) {
   const [selectedType, setSelectedType] = useState<UMLDiagramType>(UMLDiagramType.ClassDiagram);
   const [diagramName, setDiagramName] = useState("");
@@ -346,16 +349,27 @@ export function CreateDiagramModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1.5 rounded-xl border border-border/70 hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              disabled={isPending}
+              className="px-4 py-1.5 rounded-xl border border-border/70 hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-foreground text-background hover:opacity-90 text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
+              disabled={isPending}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-foreground text-background hover:opacity-90 text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
             >
-              <span>Create {selectedDef.name}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {isPending ? (
+                <>
+                  <AppleSpinner size="xs" />
+                  <span>Creating diagram...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create {selectedDef.name}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
             </button>
           </div>
         </form>
