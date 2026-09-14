@@ -229,7 +229,7 @@ export const TIKZ_TEMPLATES: TikzTemplate[] = [
 ];
 
 interface TikzCanvasProps {
-  initialContent?: string;
+  initialContent?: string | null;
   theme?: "light" | "dark";
   title?: string;
   onChange?: (content: string) => void;
@@ -245,8 +245,15 @@ export function TikzCanvas({
 }: TikzCanvasProps) {
   const isDark = theme === "dark";
   const [code, setCode] = useState<string>(() => {
-    return initialContent.trim() ? initialContent : TIKZ_TEMPLATES[0]!.code;
+    return initialContent && initialContent.trim() ? initialContent : TIKZ_TEMPLATES[0]!.code;
   });
+
+  // Synchronize code if initialContent arrives asynchronously from Google Drive
+  useEffect(() => {
+    if (initialContent && initialContent.trim().length > 0) {
+      setCode(initialContent);
+    }
+  }, [initialContent]);
 
   const [svgContent, setSvgContent] = useState<string>("");
   const [isCompiling, setIsCompiling] = useState<boolean>(true);
