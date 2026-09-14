@@ -240,7 +240,11 @@ export function prepareStandaloneLatex(code: string): string {
   }
 
   return `\\documentclass[tikz,border=12pt]{standalone}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
 \\usepackage{tikz}
+\\usepackage{pgfplots}
+\\usepackage{pgfplotstable}
 \\usepackage{amsmath,amssymb,amsfonts,xcolor}
 \\usetikzlibrary{${Array.from(userLibraries).join(", ")}}
 \\definecolor{indigo}{RGB}{99,102,241}
