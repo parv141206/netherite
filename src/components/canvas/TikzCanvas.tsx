@@ -14,7 +14,6 @@ import {
   Sparkles,
   AlertCircle,
   Maximize2,
-  Minimize2,
   FileCode,
   Layers,
   Cpu,
@@ -22,6 +21,9 @@ import {
   Activity,
   Workflow,
   HelpCircle,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { renderTikzQueued, normalizeTikzCode } from "~/components/editor/tikzQueue";
 import { AppleSpinner } from "~/components/ui/AppleSpinner";
@@ -35,6 +37,60 @@ export interface TikzTemplate {
 }
 
 export const TIKZ_TEMPLATES: TikzTemplate[] = [
+  {
+    id: "bus-network",
+    name: "Bus Network Topology",
+    description: "Computer network bus architecture with backbone, terminators, drop lines & taps",
+    category: "Systems",
+    code: `\\begin{tikzpicture}[
+  font=\\sffamily,
+  device/.style={
+    draw=black!80, thick, fill=blue!10,
+    rectangle, rounded corners,
+    minimum width=1.8cm, minimum height=1.2cm,
+    align=center
+  },
+  backbone/.style={line width=3.5pt, draw=black!70},
+  dropline/.style={line width=1.2pt, draw=black!70},
+  terminator/.style={
+    draw=black!80, thick, fill=rose!50,
+    minimum width=0.25cm, minimum height=1cm,
+    inner sep=0pt
+  },
+  tap/.style={circle, fill=black, inner sep=2.5pt},
+  annotation/.style={font=\\sffamily\\small, text=black!70}
+]
+  % The central bus (backbone)
+  \\draw[backbone] (0,0) -- (12,0);
+
+  % Terminators at both ends
+  \\node[terminator] (termL) at (0,0) {};
+  \\node[terminator] (termR) at (12,0) {};
+
+  % Terminator labels
+  \\node[left=0.2cm of termL, annotation] {Terminator};
+  \\node[right=0.2cm of termR, annotation] {Terminator};
+
+  % Backbone label
+  \\node[annotation, above=0.2cm] at (6,0) {\\textbf{Backbone / Main Cable}};
+
+  % Network Devices (Nodes)
+  \\node[device] (pc1) at (2, 2.5) {Computer\\\\1};
+  \\node[device] (pc2) at (4.5, -2.5) {Computer\\\\2};
+  \\node[device] (printer) at (7.5, 2.5) {Printer};
+  \\node[device] (server) at (10, -2.5) {File\\\\Server};
+
+  % Drop lines connecting devices to the backbone
+  \\draw[dropline] (pc1.south) -- (2,0) node[tap] (tap1) {};
+  \\draw[dropline] (pc2.north) -- (4.5,0) node[tap] (tap2) {};
+  \\draw[dropline] (printer.south) -- (7.5,0) node[tap] (tap3) {};
+  \\draw[dropline] (server.north) -- (10,0) node[tap] (tap4) {};
+
+  % Educational annotations
+  \\draw[-Stealth, thick, gray] (2.2, 1.25) -- ++(1,0) node[right, annotation] {Drop Line};
+  \\draw[-Stealth, thick, gray] (7.7, 0.3) -- ++(0.7, 0.7) node[right, annotation] {Tap (Connector)};
+\\end{tikzpicture}`,
+  },
   {
     id: "neural-network",
     name: "Neural Network Architecture",
@@ -196,17 +252,19 @@ export function TikzCanvas({
   const [isCompiling, setIsCompiling] = useState<boolean>(true);
   const [compileError, setCompileError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"split" | "code" | "preview">("split");
+  const [canvasMode, setCanvasMode] = useState<"paper" | "adaptive">("paper");
   const [copied, setCopied] = useState<boolean>(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const templatesRef = useRef<HTMLDivElement | null>(null);
 
-  // Zoom & Pan Canvas Transform State
-  const [zoom, setZoom] = useState<number>(1);
+  // Zoom & Pan Canvas Transform State (Expanded range 0.1x to 10.0x)
+  const [zoom, setZoom] = useState<number>(1.2);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const diagramContentRef = useRef<HTMLDivElement | null>(null);
 
   // Close templates dropdown on outside click
   useEffect(() => {
@@ -227,7 +285,10 @@ export function TikzCanvas({
     }, 2000);
   };
 
-  // Compile TikZ on code / theme change with debounce
+  // Compile TikZ on code change with debounce
+  // When in paper mode, render original TeX light strokes/fills; in adaptive mode, use dark mode styling
+  const compileForDark = canvasMode === "adaptive" && isDark;
+
   useEffect(() => {
     let active = true;
     setIsCompiling(true);
@@ -235,7 +296,7 @@ export function TikzCanvas({
 
     const timer = setTimeout(async () => {
       try {
-        const { svg } = await renderTikzQueued(code, isDark);
+        const { svg } = await renderTikzQueued(code, compileForDark);
         if (active) {
           setSvgContent(svg);
           setCompileError(null);
@@ -253,7 +314,7 @@ export function TikzCanvas({
       active = false;
       clearTimeout(timer);
     };
-  }, [code, isDark]);
+  }, [code, compileForDark]);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
@@ -309,7 +370,7 @@ export function TikzCanvas({
       canvas.height = (img.height || 600) * scaleFactor;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.fillStyle = isDark ? "#09090b" : "#ffffff";
+        ctx.fillStyle = canvasMode === "paper" ? "#ffffff" : isDark ? "#09090b" : "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const pngUrl = canvas.toDataURL("image/png");
@@ -354,17 +415,51 @@ export function TikzCanvas({
   const handleMouseUp = () => setIsDragging(false);
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
+    if (e.ctrlKey || e.metaKey || e.altKey) {
       e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setZoom((z) => Math.min(3, Math.max(0.3, z + delta)));
+      const delta = e.deltaY > 0 ? -0.15 : 0.15;
+      setZoom((z) => Math.min(10, Math.max(0.1, Number((z + delta).toFixed(2)))));
     }
   };
 
   const handleResetView = () => {
-    setZoom(1);
+    setZoom(1.2);
     setPan({ x: 0, y: 0 });
   };
+
+  // Auto-fit diagram to viewport
+  const handleFitView = useCallback(() => {
+    if (!viewportRef.current || !diagramContentRef.current) {
+      setZoom(1.2);
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+    const viewport = viewportRef.current.getBoundingClientRect();
+    const svgEl = diagramContentRef.current.querySelector("svg");
+    if (!svgEl) {
+      setZoom(1.2);
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+    const svgRect = svgEl.getBoundingClientRect();
+    const currentScale = zoom || 1;
+    const rawW = svgRect.width / currentScale;
+    const rawH = svgRect.height / currentScale;
+
+    if (rawW <= 0 || rawH <= 0) {
+      setZoom(1.2);
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+
+    const pad = 120;
+    const targetW = Math.max(100, viewport.width - pad);
+    const targetH = Math.max(100, viewport.height - pad);
+    const fitScale = Math.min(Math.min(targetW / rawW, targetH / rawH), 4.5);
+
+    setZoom(Math.max(0.2, Number(fitScale.toFixed(2))));
+    setPan({ x: 0, y: 0 });
+  }, [zoom]);
 
   return (
     <div className="h-full w-full flex flex-col bg-background text-foreground overflow-hidden select-none">
@@ -405,7 +500,7 @@ export function TikzCanvas({
                     Publication Presets
                   </span>
                   <span className="text-[10px] text-muted-foreground font-mono">
-                    5 Templates
+                    {TIKZ_TEMPLATES.length} Templates
                   </span>
                 </div>
 
@@ -431,6 +526,24 @@ export function TikzCanvas({
               </div>
             )}
           </div>
+
+          {/* Canvas Mode: Paper Sheet vs Dark Adaptive */}
+          <button
+            onClick={() =>
+              setCanvasMode((prev) => (prev === "paper" ? "adaptive" : "paper"))
+            }
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+              canvasMode === "paper"
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300"
+                : "bg-muted border-border/40 text-muted-foreground hover:text-foreground"
+            }`}
+            title={`Switch to ${canvasMode === "paper" ? "Adaptive Theme Canvas" : "Publication Paper Artboard"}`}
+          >
+            <Sun className="w-3 h-3" />
+            <span className="hidden md:inline">
+              {canvasMode === "paper" ? "Paper Sheet" : "Adaptive"}
+            </span>
+          </button>
 
           {/* View Mode Switcher */}
           <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/40 text-xs">
@@ -551,27 +664,34 @@ export function TikzCanvas({
             {/* Top Right Canvas Navigation Controls */}
             <div className="absolute top-3 right-3 z-30 flex items-center gap-1 p-1 rounded-xl bg-background/90 dark:bg-card/90 backdrop-blur-md border border-border/70 shadow-md text-xs select-none">
               <button
-                onClick={() => setZoom((z) => Math.min(3, z + 0.2))}
+                onClick={() => setZoom((z) => Math.min(10, Number((z + 0.2).toFixed(2))))}
                 className="p-1 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Zoom In"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => setZoom((z) => Math.max(0.3, z - 0.2))}
+                onClick={() => setZoom((z) => Math.max(0.1, Number((z - 0.2).toFixed(2))))}
                 className="p-1 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Zoom Out"
               >
                 <ZoomOut className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[10px] font-mono px-1 text-muted-foreground">
+              <span className="text-[10px] font-mono px-1 text-muted-foreground min-w-[42px] text-center">
                 {Math.round(zoom * 100)}%
               </span>
               <div className="h-3 w-[1px] bg-border/60 mx-0.5" />
               <button
+                onClick={handleFitView}
+                className="p-1 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                title="Fit Diagram to View"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+              <button
                 onClick={handleResetView}
                 className="p-1 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title="Reset View"
+                title="Reset View (100%)"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
@@ -607,17 +727,29 @@ export function TikzCanvas({
               </div>
             )}
 
-            {/* Rendered SVG Content with Drag & Zoom transform */}
+            {/* Rendered SVG Content with Drag & Zoom transform & Artboard container */}
             {svgContent ? (
               <div
+                ref={diagramContentRef}
                 style={{
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transformOrigin: "center center",
                   transition: isDragging ? "none" : "transform 0.1s ease-out",
                 }}
-                className="p-8 max-w-full max-h-full flex items-center justify-center transition-all"
-                dangerouslySetInnerHTML={{ __html: svgContent }}
-              />
+                className={`transition-transform flex items-center justify-center ${
+                  canvasMode === "paper"
+                    ? "bg-white text-zinc-900 rounded-2xl shadow-2xl border border-zinc-200/90 dark:border-zinc-800 p-8 sm:p-12 min-w-[420px]"
+                    : "p-8 max-w-full max-h-full"
+                }`}
+              >
+                <div
+                  className="tikz-svg-presentation flex items-center justify-center"
+                  style={{
+                    minWidth: "320px",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: svgContent }}
+                />
+              </div>
             ) : !isCompiling && !compileError ? (
               <div className="text-center text-xs font-mono text-muted-foreground/60 p-6">
                 Type TikZ LaTeX code or choose a template to render

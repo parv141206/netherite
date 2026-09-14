@@ -13,6 +13,17 @@ export function ensureTikzjaxLoaded(): Promise<HTMLIFrameElement> {
     return Promise.reject(new Error("Window is undefined"));
   }
 
+  // Inject TikZ TeX fonts CSS into main document so SVG font glyphs render with exact TeX metrics
+  if (typeof document !== "undefined" && !document.getElementById("netherite-tikz-fonts")) {
+    try {
+      const link = document.createElement("link");
+      link.id = "netherite-tikz-fonts";
+      link.rel = "stylesheet";
+      link.href = "https://tikzjax.com/v1/fonts.css";
+      document.head.appendChild(link);
+    } catch {}
+  }
+
   // Clean up any legacy script from main document head to restore native streams
   const legacyScript = document.getElementById("netherite-tikzjax-script");
   if (legacyScript) {
@@ -90,7 +101,42 @@ export function ensureTikzjaxLoaded(): Promise<HTMLIFrameElement> {
 let tikzQueue = Promise.resolve<any>(null);
 
 /**
- * Normalize raw user TikZ code ensuring valid LaTeX environment & color aliases
+ * Standard TikZ libraries bundled in TikZJax
+ */
+const DEFAULT_TIKZ_LIBRARIES = [
+  "arrows.meta",
+  "positioning",
+  "calc",
+  "automata",
+  "backgrounds",
+  "shapes",
+  "shapes.geometric",
+  "shapes.misc",
+  "shapes.symbols",
+  "shapes.arrows",
+  "shapes.callouts",
+  "fit",
+  "matrix",
+  "trees",
+  "decorations",
+  "decorations.pathmorphing",
+  "decorations.pathreplacing",
+  "decorations.markings",
+  "intersections",
+  "through",
+  "fadings",
+  "shadows",
+  "patterns",
+  "mindmap",
+  "calendar",
+  "scopes",
+  "petri",
+  "er",
+  "plotmarks",
+];
+
+/**
+ * Normalize raw user TikZ code ensuring valid LaTeX environment, standalone envelope stripping, & color aliases
  */
 export function normalizeTikzCode(code: string): string {
   let trimmed = code.trim();
@@ -99,6 +145,28 @@ export function normalizeTikzCode(code: string): string {
   // Strip markdown code fences if present (e.g. ```tikz ... ```)
   trimmed = trimmed.replace(/^```(?:tikz|latex-tikz|pgf|latex|tex)?\s*/i, "");
   trimmed = trimmed.replace(/```\s*$/i, "").trim();
+
+  // Strip LaTeX standalone / article envelopes if provided by user
+  trimmed = trimmed.replace(/\\documentclass(?:\[[^\]]*\])?\{[^}]*\}/gi, "");
+  trimmed = trimmed.replace(/\\usepackage(?:\[[^\]]*\])?\{[^}]*\}/gi, "");
+  trimmed = trimmed.replace(/\\begin\{document\}/gi, "");
+  trimmed = trimmed.replace(/\\end\{document\}/gi, "");
+
+  // Collect any custom \usetikzlibrary definitions
+  const userLibraries = new Set<string>(DEFAULT_TIKZ_LIBRARIES);
+  const libRegex = /\\usetikzlibrary\{([^}]+)\}/gi;
+  let match: RegExpExecArray | null;
+  while ((match = libRegex.exec(trimmed)) !== null) {
+    if (match[1]) {
+      match[1].split(",").forEach((l) => {
+        const clean = l.trim();
+        if (clean) userLibraries.add(clean);
+      });
+    }
+  }
+
+  // Remove individual \usetikzlibrary calls from body
+  trimmed = trimmed.replace(/\\usetikzlibrary\{[^}]*\}\s*/gi, "").trim();
 
   // If user didn't include \begin{tikzpicture}, wrap it
   const hasBegin = /\\begin\{tikzpicture\}/.test(trimmed);
@@ -111,8 +179,8 @@ export function normalizeTikzCode(code: string): string {
     tikzBody = `${trimmed}\n\\end{tikzpicture}`;
   }
 
-  // Prepend standard color definitions and libraries if not already declared
-  const standardPreamble = `\\usetikzlibrary{arrows.meta, positioning, automata, backgrounds, shapes, calc, fit, matrix, trees}
+  // Prepend standard color definitions and combined libraries
+  const standardPreamble = `\\usetikzlibrary{${Array.from(userLibraries).join(", ")}}
 \\definecolor{indigo}{RGB}{99,102,241}
 \\definecolor{emerald}{RGB}{16,185,129}
 \\definecolor{rose}{RGB}{244,63,94}
@@ -121,13 +189,16 @@ export function normalizeTikzCode(code: string): string {
 \\definecolor{violet}{RGB}{139,92,246}
 \\definecolor{fuchsia}{RGB}{217,70,239}
 \\definecolor{slate}{RGB}{100,116,139}
+\\definecolor{zinc}{RGB}{113,113,122}
+\\definecolor{teal}{RGB}{20,184,166}
+\\definecolor{cyan}{RGB}{6,182,212}
+\\definecolor{orange}{RGB}{249,115,22}
+\\definecolor{lime}{RGB}{132,204,22}
+\\definecolor{pink}{RGB}{236,72,153}
+\\definecolor{purple}{RGB}{168,85,247}
 `;
 
-  if (!tikzBody.includes("\\definecolor{indigo}")) {
-    tikzBody = `${standardPreamble}\n${tikzBody}`;
-  }
-
-  return tikzBody.trim();
+  return `${standardPreamble}\n${tikzBody}`.trim();
 }
 
 /**
@@ -251,34 +322,55 @@ export function postProcessTikzSvg(rawSvg: string, isDark: boolean): string {
 
   let svg = rawSvg;
 
-  // Ensure responsive sizing
+  // Add netherite-tikz-svg class to root <svg>
+  if (!svg.includes('class="')) {
+    svg = svg.replace("<svg", '<svg class="netherite-tikz-svg"');
+  } else {
+    svg = svg.replace(/class="([^"]*)"/i, (_full, cls: string) => {
+      return `class="${cls} netherite-tikz-svg"`;
+    });
+  }
+
+  // Ensure responsive sizing with clean aspect ratio preservation
   if (!svg.includes('style="')) {
     svg = svg.replace(
       "<svg",
-      '<svg style="max-width: 100%; height: auto; display: block; margin: auto;"'
+      '<svg style="max-width: 100%; height: auto; display: block; margin: 0 auto; overflow: visible;"'
     );
   } else {
     svg = svg.replace(/style="([^"]*)"/i, (_full, style: string) => {
       const cleaned = style.replace(/max-width:\s*[^;]+;?/gi, "").trim();
       return `style="${cleaned}${
         cleaned && !cleaned.endsWith(";") ? ";" : ""
-      } max-width: 100%; height: auto; display: block; margin: auto;"`;
+      } max-width: 100%; height: auto; display: block; margin: 0 auto; overflow: visible;"`;
     });
   }
 
-  // Dark mode theme inversion & contrast enhancement for TeX strokes and text
-  if (isDark) {
-    const darkModeStyles = `
-      <style>
-        .tikz text, .tikz tspan { fill: var(--foreground, #f3f4f6) !important; color: var(--foreground, #f3f4f6) !important; }
-        .tikz path[stroke="#000000"], .tikz path[stroke="#000"], .tikz path:not([stroke]) { stroke: var(--foreground, #f3f4f6); }
-        .tikz path[fill="#000000"], .tikz path[fill="#000"] { fill: var(--foreground, #f3f4f6); }
-        .tikz g { color: var(--foreground, #f3f4f6); }
-      </style>
-    `;
-    if (svg.includes("</svg>")) {
-      svg = svg.replace("</svg>", `${darkModeStyles}</svg>`);
-    }
+  // Inject TeX fonts rendering rules and anti-clipping
+  const baseStyles = `
+    <style>
+      .netherite-tikz-svg { overflow: visible !important; }
+      .netherite-tikz-svg text, .netherite-tikz-svg tspan { font-family: cmr10, "Computer Modern", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+  `;
+
+  // Dark mode theme inversion for TeX strokes, arrows, and font glyphs
+  const darkModeStyles = isDark
+    ? `
+    <style>
+      .netherite-tikz-svg text, .netherite-tikz-svg tspan { fill: #f4f4f5 !important; }
+      .netherite-tikz-svg path[stroke="#000000"], .netherite-tikz-svg path[stroke="#000"], .netherite-tikz-svg path[stroke="black"], .netherite-tikz-svg path[stroke="rgb(0,0,0)"] { stroke: #f4f4f5 !important; }
+      .netherite-tikz-svg path[stroke="rgb(51,51,51)"], .netherite-tikz-svg path[stroke="rgb(76,76,76)"] { stroke: #e4e4e7 !important; }
+      .netherite-tikz-svg path[fill="#000000"], .netherite-tikz-svg path[fill="#000"], .netherite-tikz-svg path[fill="black"], .netherite-tikz-svg path[fill="rgb(0,0,0)"] { fill: #f4f4f5 !important; }
+      .netherite-tikz-svg use { fill: #f4f4f5 !important; }
+      .netherite-tikz-svg g[stroke="#000000"], .netherite-tikz-svg g[stroke="#000"], .netherite-tikz-svg g[stroke="black"] { stroke: #f4f4f5 !important; }
+      .netherite-tikz-svg g[fill="#000000"], .netherite-tikz-svg g[fill="#000"], .netherite-tikz-svg g[fill="black"] { fill: #f4f4f5 !important; }
+    </style>
+  `
+    : "";
+
+  if (svg.includes("</svg>")) {
+    svg = svg.replace("</svg>", `${baseStyles}${darkModeStyles}</svg>`);
   }
 
   return svg;
