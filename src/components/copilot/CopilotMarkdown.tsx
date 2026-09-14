@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Copy, Check, ArrowDownToLine, Workflow, Code2, AlertCircle } from "lucide-react";
+import { Copy, Check, ArrowDownToLine, Workflow, Code2, AlertCircle, Activity } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 import { renderMermaidQueued, postProcessSvg } from "~/components/editor/mermaidQueue";
+import { renderTikzQueued } from "~/components/editor/tikzQueue";
 
 interface CopilotMarkdownProps {
   content: string;
@@ -113,6 +114,106 @@ function CopilotMermaidBlock({
   );
 }
 
+function CopilotTikzBlock({
+  code,
+  onInsert,
+}: {
+  code: string;
+  onInsert?: (code: string) => void;
+}) {
+  const { isDark } = useTheme();
+  const [svg, setSvg] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [isRaw, setIsRaw] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const renderDiagram = async () => {
+      try {
+        const { svg: renderedSvg } = await renderTikzQueued(code.trim(), isDark);
+        if (!cancelled) {
+          setSvg(renderedSvg);
+          setError(null);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(err?.message || "Invalid TikZ syntax");
+        }
+      }
+    };
+
+    renderDiagram();
+    return () => {
+      cancelled = true;
+    };
+  }, [code, isDark]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="my-2.5 rounded-xl border border-indigo-500/30 bg-card/60 overflow-hidden text-xs">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-indigo-500/10 border-b border-indigo-500/20 text-[11px] font-mono select-none">
+        <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium">
+          <Activity className="w-3.5 h-3.5" />
+          <span>TikZ LaTeX Diagram</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setIsRaw(!isRaw)}
+            className="px-2 py-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Toggle Code / Preview"
+          >
+            {isRaw ? "Preview" : "Code"}
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Copy TikZ LaTeX Code"
+          >
+            {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+          </button>
+          {onInsert && (
+            <button
+              type="button"
+              onClick={() => onInsert(`\`\`\`tikz\n${code}\n\`\`\``)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-600 dark:text-indigo-400 font-medium transition-colors"
+              title="Insert TikZ Diagram into Note"
+            >
+              <ArrowDownToLine className="w-3 h-3" />
+              <span>Insert</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isRaw ? (
+        <pre className="p-3 bg-muted/20 font-mono text-[11px] leading-relaxed overflow-x-auto text-foreground whitespace-pre">
+          {code}
+        </pre>
+      ) : error ? (
+        <div className="p-3 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-mono flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="break-all">{error}</div>
+        </div>
+      ) : svg ? (
+        <div
+          className="p-4 flex items-center justify-center overflow-x-auto bg-white/5 rounded-b-xl"
+          dangerouslySetInnerHTML={{ __html: svg }}
+        />
+      ) : (
+        <div className="p-4 text-center text-muted-foreground/60 font-mono">Compiling TikZ TeX…</div>
+      )}
+    </div>
+  );
+}
+
 // Code block with copy & insert
 function CopilotCodeBlock({
   language,
@@ -131,8 +232,12 @@ function CopilotCodeBlock({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (language.toLowerCase() === "mermaid") {
+  const langLower = (language || "").toLowerCase();
+  if (langLower === "mermaid") {
     return <CopilotMermaidBlock code={code} onInsert={onInsert} />;
+  }
+  if (langLower === "tikz" || langLower === "latex-tikz" || langLower === "pgf") {
+    return <CopilotTikzBlock code={code} onInsert={onInsert} />;
   }
 
   return (

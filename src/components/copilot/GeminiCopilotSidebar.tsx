@@ -23,6 +23,9 @@ import {
   ChevronRight,
   Square,
   RotateCcw,
+  Activity,
+  Cpu,
+  Workflow,
 } from "lucide-react";
 import { GeminiSettingsModal, GEMINI_MODELS } from "./GeminiSettingsModal";
 import { CopilotMarkdown } from "./CopilotMarkdown";
@@ -275,7 +278,7 @@ export function GeminiCopilotSidebar({
         : `\n\nActive Document: "${activeDocName}" (Currently empty or new note)\n`;
 
       const systemInstruction = `You are Gemini Copilot, an expert academic pair-programmer and computer engineering assistant built into Netherite sovereign Markdown studio.
-You assist university students (Course: BE Computer Engineering, Sem 5 GTU) in mastering Computer Networks, systems architecture, machine learning, and engineering principles.
+You assist university students (Course: BE Computer Engineering, Sem 5 GTU) in mastering Computer Networks, systems architecture, machine learning, mathematics, and engineering principles.
 
 IMPORTANT CAPABILITY - DIRECT DOCUMENT EDITING TOOLS:
 You are equipped with tools to manipulate the user's notes:
@@ -287,11 +290,25 @@ You are equipped with tools to manipulate the user's notes:
 CRITICAL INSTRUCTION:
 When the student asks to write or update content "in this file" or the open note, you MUST call the 'edit_active_note' tool rather than just replying with markdown text in the chat!
 
+FIRST-CLASS TIKZ LATEX DIAGRAM CAPABILITY:
+Netherite has native, high-performance TikZ LaTeX rendering with live SVG compilation and full LaTeX package support.
+When asked to create diagrams, schemas, system architectures, network topologies, state machines, neural networks, or mathematical geometry:
+- Generate them using fenced TikZ code blocks (\`\`\`tikz ... \`\`\`).
+- Netherite's TikZ engine pre-loads and supports:
+  * Packages: 'tikz', 'tikz-3dplot' (3D coordinate spheres/projections), 'pgfplots' (2D/3D plots), 'pgfplotstable', 'circuitikz' (electronic circuits), 'amsmath', 'mathtools', 'physics'.
+  * Libraries: 'arrows.meta', 'positioning', 'calc', 'automata', 'backgrounds', 'shapes', 'shapes.geometric', 'fit', 'matrix', 'trees', 'decorations.pathmorphing', 'decorations.pathreplacing', 'patterns', 'angles', 'quotes', '3d', 'perspective'.
+  * Built-in Modern Color Aliases: 'indigo', 'emerald', 'rose', 'amber', 'sky', 'slate', 'zinc', 'teal', 'cyan', 'orange', 'lime', 'pink', 'purple'.
+- Best Practices for Generating TikZ:
+  1. Always wrap in valid '\\begin{tikzpicture}[...]' ... '\\end{tikzpicture}'.
+  2. For nodes with multi-line text (e.g. 'Line 1\\\\Line 2'), always include 'align=center' in the node style.
+  3. Use clean modern arrow heads: '-{Stealth[length=2.5mm]}' or '->, >=stealth'.
+  4. Use relative positioning: 'below=of node', 'right=1.5cm of node', or orthogonal routing '-|', '|-' for beautiful tree/circuit connections.
+  5. Use subtle, elegant pastel fills: 'fill=blue!10, draw=blue!80', 'fill=emerald!15, draw=emerald!80', 'fill=amber!15, draw=amber!80'.
+  6. Use Mermaid (\`\`\`mermaid ... \`\`\`) for simple flowcharts/sequence diagrams, and TikZ (\`\`\`tikz ... \`\`\`) for publication-quality scientific, systems, networks, automata, and mathematical diagrams.
+
 Formatting Guidelines for note content:
 - Use clean GitHub Flavored Markdown with bolding, lists, and tables.
 - Use LaTeX for formulas: inline as $E = mc^2$ and block as $$...$$.
-- When architectural diagrams are relevant, embed them as native Mermaid blocks (\`\`\`mermaid ... \`\`\`).
-- Ensure diagrams are clean, avoiding hardcoded dark style fills.
 ${contextSnippet}`;
 
       // Build tools declarations
@@ -829,6 +846,88 @@ ${contextSnippet}`;
               </div>
             );
           })}
+
+          {/* Quick Starter Prompts for Engineering & TikZ Diagrams */}
+          {messages.length <= 1 && (
+            <div className="pt-2 pb-1 flex flex-col gap-2 animate-in fade-in duration-200">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                Quick Actions & TikZ Diagrams
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSendMessage(
+                      "Create a publication-quality TikZ diagram of the OSI 7-Layer Architecture with protocol annotations and clean colors"
+                    )
+                  }
+                  className="text-left p-2.5 rounded-xl bg-muted/30 hover:bg-indigo-500/10 border border-border/50 hover:border-indigo-500/30 transition-all text-[11px] text-muted-foreground hover:text-foreground cursor-pointer flex flex-col gap-0.5"
+                >
+                  <span className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <span>OSI Stack (TikZ)</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground line-clamp-1">
+                    7-Layer Network Architecture
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSendMessage(
+                      "Draw a TikZ diagram of a Multi-Layer Perceptron (Neural Network) with input, hidden, and output layers and weight connections"
+                    )
+                  }
+                  className="text-left p-2.5 rounded-xl bg-muted/30 hover:bg-purple-500/10 border border-border/50 hover:border-purple-500/30 transition-all text-[11px] text-muted-foreground hover:text-foreground cursor-pointer flex flex-col gap-0.5"
+                >
+                  <span className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                    <span>Neural Net (TikZ)</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground line-clamp-1">
+                    Deep MLP Architecture
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSendMessage(
+                      "Draw a TikZ Finite State Machine (DFA) state transition diagram for binary pattern recognition with start and accepting states"
+                    )
+                  }
+                  className="text-left p-2.5 rounded-xl bg-muted/30 hover:bg-emerald-500/10 border border-border/50 hover:border-emerald-500/30 transition-all text-[11px] text-muted-foreground hover:text-foreground cursor-pointer flex flex-col gap-0.5"
+                >
+                  <span className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Workflow className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>FSM Automata</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground line-clamp-1">
+                    State Machine Transitions
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSendMessage(
+                      "Create a 3D tikz-3dplot stereographic projection and coordinate sphere diagram with axes and angles"
+                    )
+                  }
+                  className="text-left p-2.5 rounded-xl bg-muted/30 hover:bg-amber-500/10 border border-border/50 hover:border-amber-500/30 transition-all text-[11px] text-muted-foreground hover:text-foreground cursor-pointer flex flex-col gap-0.5"
+                >
+                  <span className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>3D Sphere (TikZ)</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground line-clamp-1">
+                    Stereographic Projection
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Active Generation Loading Indicator */}
           {isLoading && messages[messages.length - 1]?.role === "user" && (
