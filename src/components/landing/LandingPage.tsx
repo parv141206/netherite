@@ -39,6 +39,32 @@ function GridCrosshair({ className = "" }: { className?: string }) {
   );
 }
 
+// Pre-render static math once at module level to avoid client re-rendering jank
+const PRE_RENDERED_LATEX = (() => {
+  try {
+    return katex.renderToString(
+      "\\partial_\\mu J^\\mu = 0 \\quad\\implies\\quad Q = \\int_{\\Sigma} d^3x \\, J^0 = \\text{constant}",
+      { displayMode: true, throwOnError: false }
+    );
+  } catch {
+    return "\\partial_\\mu J^\\mu = 0";
+  }
+})();
+
+const PRE_RENDERED_INLINE = (() => {
+  try {
+    return katex.renderToString(
+      "\\mathcal{L}_{\\text{gauge}} = -\\frac{1}{4} F_{\\mu\\nu}F^{\\mu\\nu}",
+      {
+        displayMode: false,
+        throwOnError: false,
+      }
+    );
+  } catch {
+    return "L";
+  }
+})();
+
 export function LandingPage({ session }: { session?: any } = {}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -52,7 +78,7 @@ export function LandingPage({ session }: { session?: any } = {}) {
     const lenis = new Lenis({
       autoRaf: true,
       duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
@@ -71,31 +97,6 @@ export function LandingPage({ session }: { session?: any } = {}) {
     setTimeout(() => setCopiedCmd(false), 2000);
   };
 
-  const renderedLatex = (() => {
-    try {
-      return katex.renderToString(
-        "\\partial_\\mu J^\\mu = 0 \\quad\\implies\\quad Q = \\int_{\\Sigma} d^3x \\, J^0 = \\text{constant}",
-        { displayMode: true, throwOnError: false }
-      );
-    } catch {
-      return "\\partial_\\mu J^\\mu = 0";
-    }
-  })();
-
-  const renderedInline = (() => {
-    try {
-      return katex.renderToString(
-        "\\mathcal{L}_{\\text{gauge}} = -\\frac{1}{4} F_{\\mu\\nu}F^{\\mu\\nu}",
-        {
-          displayMode: false,
-          throwOnError: false,
-        }
-      );
-    } catch {
-      return "L";
-    }
-  })();
-
   return (
     <div
       data-landing-page="true"
@@ -107,10 +108,9 @@ export function LandingPage({ session }: { session?: any } = {}) {
           subMessage="Fetching your notes and whiteboards from Google Drive"
         />
       )}
-
       {/* Atmospheric Ambient Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-blue-500/10 via-blue-600/5 to-transparent blur-3xl pointer-events-none -z-10 dark:from-blue-500/10 dark:via-purple-500/5" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-t from-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-blue-500/10 via-blue-600/5 to-transparent blur-3xl pointer-events-none -z-10 transform-gpu will-change-transform dark:from-blue-500/10 dark:via-purple-500/5" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-t from-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10 transform-gpu will-change-transform" />
 
       {/* Navigation Header */}
       <header className="border-b border-dotted border-blue-500/40 dark:border-blue-400/35 backdrop-blur-md sticky top-0 z-50 bg-white/90 dark:bg-black/90">
@@ -381,14 +381,14 @@ export function LandingPage({ session }: { session?: any } = {}) {
                             In Lagrangian field theory, each continuous global symmetry transformation parameter{" "}
                             <span
                               className="inline-block px-1.5 py-0.5 bg-muted/50 rounded font-sans text-xs"
-                              dangerouslySetInnerHTML={{ __html: renderedInline }}
+                              dangerouslySetInnerHTML={{ __html: PRE_RENDERED_INLINE }}
                             />{" "}
                             leaves the action integral invariant across all boundary hypersurfaces:
                           </p>
 
                           <div
                             className="my-4 p-4 rounded-xl bg-muted/30 border border-border/40 text-center overflow-x-auto"
-                            dangerouslySetInnerHTML={{ __html: renderedLatex }}
+                            dangerouslySetInnerHTML={{ __html: PRE_RENDERED_LATEX }}
                           />
 
                           <blockquote className="pl-4 border-l-2 border-foreground italic text-muted-foreground text-xs sm:text-sm">
@@ -583,7 +583,7 @@ impl<T: Hypersurface> CauchyState<T> {
             <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
-                src="/images/1_notes.svg"
+                src="/images/1_notes.webp"
                 alt="The Sanctuary of Unbroken Thought — Sovereign Notes"
                 loading="lazy"
                 decoding="async"
@@ -651,7 +651,7 @@ impl<T: Hypersurface> CauchyState<T> {
             <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
-                src="/images/2_math.svg"
+                src="/images/2_math.webp"
                 alt="The Geometry of Pure Reason — Mathematical Typesetting"
                 loading="lazy"
                 decoding="async"
@@ -687,7 +687,7 @@ impl<T: Hypersurface> CauchyState<T> {
             <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
-                src="/images/3_literature.svg"
+                src="/images/3_literature.webp"
                 alt="Manuscripts Woven for Centuries — Literature & Prose"
                 loading="lazy"
                 decoding="async"
@@ -755,7 +755,7 @@ impl<T: Hypersurface> CauchyState<T> {
             <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
-                src="/images/4_excalidraw.svg"
+                src="/images/4_excalidraw.webp"
                 alt="Cartography of the Unseen — Vector Whiteboard"
                 loading="lazy"
                 decoding="async"
@@ -791,7 +791,7 @@ impl<T: Hypersurface> CauchyState<T> {
             <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
-                src="/images/5_uml.svg"
+                src="/images/5_uml.webp"
                 alt="The Architectonic Blueprint — Apollon UML Suite"
                 loading="lazy"
                 decoding="async"
@@ -859,7 +859,7 @@ impl<T: Hypersurface> CauchyState<T> {
             <div className="w-full aspect-square flex items-center justify-center border-b lg:border-b-0 lg:border-r border-dotted border-blue-500/40 dark:border-blue-400/35 relative p-0 m-0 bg-white dark:bg-black overflow-hidden">
               <GridCrosshair className="absolute -top-2 -right-2 z-20 hidden lg:block" />
               <img
-                src="/images/6_mermaid.svg"
+                src="/images/6_mermaid.webp"
                 alt="Choreographies of State and Time — Mermaid Diagrams"
                 loading="lazy"
                 decoding="async"

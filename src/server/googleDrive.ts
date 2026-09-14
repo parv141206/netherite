@@ -1,6 +1,26 @@
 import { google } from "googleapis";
 import { Readable } from "stream";
 
+// In-memory cache for folder IDs to eliminate redundant Drive queries (5 min TTL)
+const folderIdCache = new Map<string, { folderId: string; expiresAt: number }>();
+
+function getCachedFolderId(key: string): string | null {
+  const entry = folderIdCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    folderIdCache.delete(key);
+    return null;
+  }
+  return entry.folderId;
+}
+
+function setCachedFolderId(key: string, folderId: string) {
+  folderIdCache.set(key, {
+    folderId,
+    expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+  });
+}
+
 export async function getDriveClient(session: any) {
   const accessToken = session?.accessToken;
   const refreshToken = session?.refreshToken;
@@ -19,28 +39,14 @@ export async function getDriveClient(session: any) {
     refresh_token: refreshToken,
   });
 
-  // Proactively ensure access token is fresh before invoking Drive API
-  if (refreshToken) {
-    try {
-      const tokenRes = await oauth2Client.getAccessToken();
-      if (tokenRes.token && tokenRes.token !== accessToken) {
-        oauth2Client.setCredentials({
-          access_token: tokenRes.token,
-          refresh_token: refreshToken,
-        });
-        if (session) {
-          session.accessToken = tokenRes.token;
-        }
-      }
-    } catch (refreshErr) {
-      console.warn("Proactive OAuth token refresh check:", refreshErr);
-    }
-  }
-
   return google.drive({ version: "v3", auth: oauth2Client });
 }
 
-export async function ensureNetheriteFolder(session: any) {
+export async function ensureNetheriteFolder(session: any): Promise<string> {
+  const cacheKey = `netherite-root-${session?.user?.id || session?.accessToken?.slice(-16) || "default"}`;
+  const cached = getCachedFolderId(cacheKey);
+  if (cached) return cached;
+
   const drive = await getDriveClient(session);
 
   // Check if Netherite folder exists
@@ -51,7 +57,9 @@ export async function ensureNetheriteFolder(session: any) {
   });
 
   if (res.data.files && res.data.files.length > 0 && res.data.files[0]?.id) {
-    return res.data.files[0].id;
+    const id = res.data.files[0].id;
+    setCachedFolderId(cacheKey, id);
+    return id;
   }
 
   // Create folder
@@ -63,10 +71,16 @@ export async function ensureNetheriteFolder(session: any) {
     fields: "id",
   });
 
-  return folderRes.data.id!;
+  const newId = folderRes.data.id!;
+  setCachedFolderId(cacheKey, newId);
+  return newId;
 }
 
-export async function ensureAssetsFolder(session: any) {
+export async function ensureAssetsFolder(session: any): Promise<string> {
+  const cacheKey = `netherite-assets-${session?.user?.id || session?.accessToken?.slice(-16) || "default"}`;
+  const cached = getCachedFolderId(cacheKey);
+  if (cached) return cached;
+
   const drive = await getDriveClient(session);
   const rootFolderId = await ensureNetheriteFolder(session);
 
@@ -77,7 +91,9 @@ export async function ensureAssetsFolder(session: any) {
   });
 
   if (res.data.files && res.data.files.length > 0 && res.data.files[0]?.id) {
-    return res.data.files[0].id;
+    const id = res.data.files[0].id;
+    setCachedFolderId(cacheKey, id);
+    return id;
   }
 
   const folderRes = await drive.files.create({
@@ -89,10 +105,12 @@ export async function ensureAssetsFolder(session: any) {
     fields: "id",
   });
 
-  return folderRes.data.id!;
+  const newId = folderRes.data.id!;
+  setCachedFolderId(cacheKey, newId);
+  return newId;
 }
 
-async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 1000): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 600): Promise<T> {
   let attempt = 0;
   while (attempt <= retries) {
     try {
@@ -101,7 +119,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 1000): 
       attempt++;
       if (attempt > retries) throw err;
       console.warn(`Drive API call transient error (attempt ${attempt}/${retries}):`, err?.message || err);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
   }
   throw new Error("Retry failed");
@@ -235,13 +253,23 @@ export async function listNotes(session: any) {
     const drive = await getDriveClient(session);
     const rootFolderId = await ensureNetheriteFolder(session);
 
-    // 1. Fetch all folders in Drive to resolve descendants of Netherite folder ONLY
-    const foldersRes = await drive.files.list({
-      q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
-      fields: "files(id, name, mimeType, modifiedTime, parents)",
-      pageSize: 1000,
-      spaces: "drive",
-    });
+    // 1. Fetch folders, files, and workspace metadata concurrently
+    const [foldersRes, filesRes, existingMeta] = await Promise.all([
+      drive.files.list({
+        q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
+        fields: "files(id, name, mimeType, modifiedTime, parents)",
+        pageSize: 1000,
+        spaces: "drive",
+      }),
+      drive.files.list({
+        q: "trashed=false and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.folder' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/vnd.apollon+json' or mimeType='text/vnd.mermaid' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.apollon' or name contains '.mmd' or name contains '.mermaid' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')",
+        fields: "files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
+        orderBy: "folder, modifiedTime desc",
+        pageSize: 1000,
+        spaces: "drive",
+      }),
+      getWorkspaceMetadata(session).catch(() => ({ version: 1, folderColors: {}, files: {} })),
+    ]);
 
     const allFolders = foldersRes.data.files ?? [];
     const netheriteFolderIds = new Set<string>([rootFolderId]);
@@ -261,39 +289,12 @@ export async function listNotes(session: any) {
       }
     }
 
-    // 2. Query files strictly inside Netherite folders with pagination
-    const parentIds = Array.from(netheriteFolderIds);
-    const rawFiles: any[] = [];
-    const CHUNK_SIZE = 25;
-
-    for (let i = 0; i < parentIds.length; i += CHUNK_SIZE) {
-      const chunk = parentIds.slice(i, i + CHUNK_SIZE);
-      const parentClause = chunk.map((id) => `'${id}' in parents`).join(" or ");
-      let pageToken: string | undefined = undefined;
-
-      do {
-        const filesRes: any = await drive.files.list({
-          q: `trashed=false and (${parentClause}) and (mimeType='text/markdown' or mimeType='text/plain' or mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.excalidraw+json' or mimeType='application/vnd.apollon+json' or mimeType='text/vnd.mermaid' or mimeType='application/json' or mimeType='application/octet-stream' or mimeType contains 'image/' or name contains '.excalidraw' or name contains '.apollon' or name contains '.mmd' or name contains '.mermaid' or name contains '.md' or name contains '.png' or name contains '.jpg' or name contains '.jpeg' or name contains '.webp' or name contains '.svg' or name contains '.gif' or name contains '.txt' or name contains '.markdown' or name contains 'Copy of')`,
-          fields: "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
-          orderBy: "modifiedTime desc",
-          pageSize: 1000,
-          spaces: "drive",
-          pageToken,
-        });
-
-        if (filesRes.data.files) {
-          rawFiles.push(...filesRes.data.files);
-        }
-        pageToken = filesRes.data.nextPageToken || undefined;
-      } while (pageToken);
-    }
-
-    // 3. Load workspace metadata (.netherite.json)
-    const existingMeta = await getWorkspaceMetadata(session);
+    const rawFiles = filesRes.data.files ?? [];
     const updatedFilesMeta: Record<string, FileMetadata> = { ...(existingMeta.files ?? {}) };
     let metadataNeedsSave = false;
+    const backgroundUpdates: Array<Promise<any>> = [];
 
-    // 4. Filter, normalize manually added items, and generate metadata
+    // Filter, normalize manually added items, and generate metadata
     const itemsToReturn: Array<{
       id: string;
       name: string;
@@ -376,8 +377,10 @@ export async function listNotes(session: any) {
       } else if (!isDrawing && !isUml && !isMermaid && !displayName.endsWith(".md")) {
         const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
         const normalizedName = `${cleanBase}.md`;
-        try {
-          await drive.files.update({
+        displayName = normalizedName;
+        // Non-blocking background sync for property tags
+        backgroundUpdates.push(
+          drive.files.update({
             fileId: f.id,
             requestBody: {
               name: normalizedName,
@@ -386,14 +389,11 @@ export async function listNotes(session: any) {
                 netheriteManaged: "true",
               },
             },
-          });
-          displayName = normalizedName;
-        } catch {
-          displayName = normalizedName;
-        }
+          }).catch(() => {})
+        );
       } else if (!f.properties?.netheriteManaged) {
-        try {
-          await drive.files.update({
+        backgroundUpdates.push(
+          drive.files.update({
             fileId: f.id,
             requestBody: {
               properties: {
@@ -401,10 +401,8 @@ export async function listNotes(session: any) {
                 netheriteManaged: "true",
               },
             },
-          });
-        } catch {
-          // Non-fatal
-        }
+          }).catch(() => {})
+        );
       }
 
       const effectiveMimeType = isImage
@@ -438,11 +436,14 @@ export async function listNotes(session: any) {
     }
 
     if (metadataNeedsSave) {
-      try {
-        await saveWorkspaceMetadata(session, { files: updatedFilesMeta });
-      } catch (saveMetaErr) {
+      saveWorkspaceMetadata(session, { files: updatedFilesMeta }).catch((saveMetaErr) => {
         console.warn("Failed to persist auto-generated workspace metadata:", saveMetaErr);
-      }
+      });
+    }
+
+    // Fire off non-critical property updates without delaying user response
+    if (backgroundUpdates.length > 0) {
+      void Promise.allSettled(backgroundUpdates);
     }
 
     return itemsToReturn;
@@ -487,20 +488,7 @@ export async function getNoteContent(session: any, fileId: string) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
     try {
-      const meta = await drive.files.get({ fileId, fields: "id, mimeType" });
-      if (
-        meta.data.mimeType === "application/vnd.google-apps.folder" ||
-        meta.data.mimeType?.startsWith("image/")
-      ) {
-        return "";
-      }
-      if (meta.data.mimeType === "application/vnd.google-apps.document") {
-        const exportRes = await drive.files.export(
-          { fileId, mimeType: "text/plain" },
-          { responseType: "text" }
-        );
-        return (exportRes.data as string) ?? "";
-      }
+      // Direct media get is 2x faster than querying metadata first
       const res = await drive.files.get(
         { fileId, alt: "media" },
         { responseType: "text" }
@@ -509,8 +497,20 @@ export async function getNoteContent(session: any, fileId: string) {
         return JSON.stringify(res.data);
       }
       return (res.data as string) ?? "";
-    } catch (error) {
-      console.error(`Error in getNoteContent for ${fileId}:`, error);
+    } catch (error: any) {
+      // Fallback for Google Docs formats that require export
+      if (error?.message?.includes("export") || error?.code === 403 || error?.code === 400) {
+        try {
+          const exportRes = await drive.files.export(
+            { fileId, mimeType: "text/plain" },
+            { responseType: "text" }
+          );
+          return (exportRes.data as string) ?? "";
+        } catch {
+          return "";
+        }
+      }
+      console.error(`Error in getNoteContent for ${fileId}:`, error?.message || error);
       return "";
     }
   });

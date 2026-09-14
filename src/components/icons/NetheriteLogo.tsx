@@ -19,6 +19,8 @@ export function NetheriteLogo({
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       preserveAspectRatio="xMidYMid meet"
+      shapeRendering="geometricPrecision"
+      aria-hidden="true"
       {...props}
     >
       <polygon points="265,0 343,112 333,611 258,563 156,349 159,598 123,703 77,561 71,205 0,165 72,164 151,131 259,408" />
