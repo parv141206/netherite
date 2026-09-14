@@ -208,45 +208,7 @@ export function prepareStandaloneLatex(code: string): string {
   trimmed = trimmed.replace(/^```(?:tikz|latex-tikz|pgf|latex|tex)?\s*/i, "");
   trimmed = trimmed.replace(/```\s*$/i, "").trim();
 
-  // Strip standalone/article wrappers if user included them
-  trimmed = trimmed.replace(/\\documentclass(?:\[[^\]]*\])?\{[^}]*\}/gi, "");
-  trimmed = trimmed.replace(/\\usepackage(?:\[[^\]]*\])?\{[^}]*\}/gi, "");
-  trimmed = trimmed.replace(/\\begin\{document\}/gi, "");
-  trimmed = trimmed.replace(/\\end\{document\}/gi, "");
-
-  // Collect user libraries
-  const userLibraries = new Set<string>(DEFAULT_TIKZ_LIBRARIES);
-  const libRegex = /\\usetikzlibrary\{([^}]+)\}/gi;
-  let match: RegExpExecArray | null;
-  while ((match = libRegex.exec(trimmed)) !== null) {
-    if (match[1]) {
-      match[1].split(",").forEach((l) => {
-        const clean = l.trim();
-        if (clean) userLibraries.add(clean);
-      });
-    }
-  }
-
-  trimmed = trimmed.replace(/\\usetikzlibrary\{[^}]*\}\s*/gi, "").trim();
-
-  const hasBegin = /\\begin\{tikzpicture\}/.test(trimmed);
-  const hasEnd = /\\end\{tikzpicture\}/.test(trimmed);
-
-  let body = trimmed;
-  if (!hasBegin && !hasEnd) {
-    body = `\\begin{tikzpicture}\n${trimmed}\n\\end{tikzpicture}`;
-  } else if (hasBegin && !hasEnd) {
-    body = `${trimmed}\n\\end{tikzpicture}`;
-  }
-
-  return `\\documentclass[tikz,border=12pt]{standalone}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
-\\usepackage{tikz}
-\\usepackage{pgfplots}
-\\usepackage{pgfplotstable}
-\\usepackage{amsmath,amssymb,amsfonts,xcolor}
-\\usetikzlibrary{${Array.from(userLibraries).join(", ")}}
+  const standardColorDefs = `
 \\definecolor{indigo}{RGB}{99,102,241}
 \\definecolor{emerald}{RGB}{16,185,129}
 \\definecolor{rose}{RGB}{244,63,94}
@@ -262,6 +224,86 @@ export function prepareStandaloneLatex(code: string): string {
 \\definecolor{lime}{RGB}{132,204,22}
 \\definecolor{pink}{RGB}{236,72,153}
 \\definecolor{purple}{RGB}{168,85,247}
+`;
+
+  const hasDocClass = /\\documentclass(?:\[[^\]]*\])?\{[^}]*\}/.test(trimmed);
+  const hasDocEnv = /\\begin\{document\}/.test(trimmed);
+
+  // If user provided a complete standalone LaTeX document, preserve their exact preamble and document!
+  if (hasDocClass && hasDocEnv) {
+    if (!trimmed.includes("\\definecolor{indigo}")) {
+      trimmed = trimmed.replace(/\\begin\{document\}/i, `${standardColorDefs}\n\\begin{document}`);
+    }
+    return trimmed;
+  }
+
+  // Otherwise, extract any user \usepackage and \usetikzlibrary declarations
+  const userPackages = new Set<string>([
+    "tikz",
+    "tikz-3dplot",
+    "pgfplots",
+    "pgfplotstable",
+    "amsmath",
+    "amssymb",
+    "amsfonts",
+    "mathtools",
+    "bm",
+    "xcolor",
+    "circuitikz",
+  ]);
+
+  const pkgRegex = /\\usepackage(?:\[[^\]]*\])?\{([^}]+)\}/gi;
+  let pkgMatch: RegExpExecArray | null;
+  while ((pkgMatch = pkgRegex.exec(trimmed)) !== null) {
+    if (pkgMatch[1]) {
+      pkgMatch[1].split(",").forEach((p) => {
+        const clean = p.trim();
+        if (clean && !clean.includes("cmbright")) userPackages.add(clean);
+      });
+    }
+  }
+
+  // Collect user libraries
+  const userLibraries = new Set<string>(DEFAULT_TIKZ_LIBRARIES);
+  const libRegex = /\\usetikzlibrary\{([^}]+)\}/gi;
+  let match: RegExpExecArray | null;
+  while ((match = libRegex.exec(trimmed)) !== null) {
+    if (match[1]) {
+      match[1].split(",").forEach((l) => {
+        const clean = l.trim();
+        if (clean) userLibraries.add(clean);
+      });
+    }
+  }
+
+  // Clean standalone markers if partial document
+  let cleanBody = trimmed;
+  cleanBody = cleanBody.replace(/\\documentclass(?:\[[^\]]*\])?\{[^}]*\}/gi, "");
+  cleanBody = cleanBody.replace(/\\usepackage(?:\[[^\]]*\])?\{[^}]*\}/gi, "");
+  cleanBody = cleanBody.replace(/\\usetikzlibrary\{[^}]*\}\s*/gi, "");
+  cleanBody = cleanBody.replace(/\\begin\{document\}/gi, "");
+  cleanBody = cleanBody.replace(/\\end\{document\}/gi, "").trim();
+
+  const hasBegin = /\\begin\{tikzpicture\}/.test(cleanBody);
+  const hasEnd = /\\end\{tikzpicture\}/.test(cleanBody);
+
+  let body = cleanBody;
+  if (!hasBegin && !hasEnd) {
+    body = `\\begin{tikzpicture}\n${cleanBody}\n\\end{tikzpicture}`;
+  } else if (hasBegin && !hasEnd) {
+    body = `${cleanBody}\n\\end{tikzpicture}`;
+  }
+
+  const packageImports = Array.from(userPackages)
+    .map((p) => `\\usepackage{${p}}`)
+    .join("\n");
+
+  return `\\documentclass[tikz,border=12pt]{standalone}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+${packageImports}
+\\usetikzlibrary{${Array.from(userLibraries).join(", ")}}
+${standardColorDefs}
 
 \\begin{document}
 ${body}

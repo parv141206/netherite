@@ -226,6 +226,60 @@ export const TIKZ_TEMPLATES: TikzTemplate[] = [
   \\filldraw[black] (0,0) circle (1.5pt) node[below left] {$O(0,0)$};
 \\end{tikzpicture}`,
   },
+  {
+    id: "3d-sphere-stereographic",
+    name: "3D Sphere & Stereographic Projection",
+    description: "3D Riemannian sphere geometry with angles, projections, and coordinate axes",
+    category: "Mathematics",
+    code: `\\pgfmathdeclarefunction{sphereX}{2}{\\pgfmathparse{cos(#2) * cos(#1)}}
+\\pgfmathdeclarefunction{sphereY}{2}{\\pgfmathparse{cos(#2) * sin(#1)}}
+\\pgfmathdeclarefunction{sphereZ}{2}{\\pgfmathparse{sin(#2)}}
+\\pgfmathdeclarefunction{stereographicprojection}{2}{\\pgfmathparse{#1 / (1 - #2)}}
+\\pgfmathsetmacro{\\azimuth}{100}
+\\pgfmathsetmacro{\\elevation}{30}
+\\pgfmathsetmacro{\\longitude}{60}
+\\pgfmathsetmacro{\\latitude}{30}
+\\pgfmathsetmacro{\\scale}{2}
+\\tdplotsetmaincoords{90-\\elevation}{\\azimuth}
+
+\\begin{tikzpicture}[tdplot_main_coords, very thin]
+  \\draw[-latex] (-2.5*\\scale,0,0) -- (2.5*\\scale,0,0) node[pos=1,below] {$\\scriptstyle x,\\xi,\\mbox{\\scriptsize Re}(z)$};
+  \\draw[-latex] (0,-1.5*\\scale,0) -- (0,1.5*\\scale,0);
+  \\draw[-latex] (0,0,-1.5*\\scale) -- (0,0,1.5*\\scale);
+  \\begin{scope}
+    \\clip[tdplot_screen_coords, postaction={fill, white}] (0,0) circle [radius={1*\\scale}];
+    \\draw[densely dashed] (-2.5*\\scale,0,0) -- (1*\\scale,0,0);
+    \\draw[densely dashed] (0,-1.5*\\scale,0) -- (0,1*\\scale,0);
+    \\draw[densely dashed] (0,0,-1.5*\\scale) -- (0,0,1*\\scale);
+    \\draw[tdplot_screen_coords] (0,0) circle [radius={1*\\scale}];
+    \\draw[densely dashed] (\\azimuth:1*\\scale) arc [start angle={\\azimuth}, end angle={\\azimuth+180}, radius={1*\\scale}];
+    \\draw (\\azimuth:1*\\scale) arc [start angle={\\azimuth}, end angle={\\azimuth-180}, radius={1*\\scale}];
+    
+    \\coordinate (O) at (0,0);
+    \\coordinate (P) at ({sphereX(\\longitude,\\latitude)*\\scale}, {sphereY(\\longitude,\\latitude)*\\scale}, {sphereZ(\\longitude,\\latitude)*\\scale});
+    \\coordinate (P') at ({stereographicprojection(sphereX(\\longitude,\\latitude),sphereZ(\\longitude,\\latitude))*\\scale}, {stereographicprojection(sphereY(\\longitude,\\latitude),sphereZ(\\longitude,\\latitude))*\\scale}, 0);
+    \\coordinate (N) at (0,0,1*\\scale);
+    \\coordinate (S) at (0,0,-1*\\scale);
+    \\coordinate (Q) at ({-sphereX(\\longitude,\\latitude)*\\scale}, {-sphereY(\\longitude,\\latitude)*\\scale}, {-sphereZ(\\longitude,\\latitude)*\\scale});
+    \\coordinate (Q') at ({stereographicprojection(-sphereX(\\longitude,\\latitude),-sphereZ(\\longitude,\\latitude))*\\scale}, {stereographicprojection(-sphereY(\\longitude,\\latitude),-sphereZ(\\longitude,\\latitude))*\\scale}, 0);
+    \\coordinate (projP) at ({sphereX(\\longitude,\\latitude)*\\scale}, {sphereY(\\longitude,\\latitude)*\\scale}, 0);
+
+    \\draw (P) -- (Q) (N) -- (0,0,1.5*\\scale) (1*\\scale,0,0) -- (2.5*\\scale,0,0) (0,1*\\scale,0) -- (0,1.5*\\scale,0) (P) -- (projP);
+    \\draw[densely dashed] (N) -- (Q);
+  \\end{scope}
+  \\draw (N) -- (P') (Q') -- (P');
+  \\pgfmathsetmacro{\\pointradius}{0.025*\\scale}
+  \\begin{scope}[tdplot_screen_coords]
+    \\fill (O) circle[radius=\\pointradius] node[below left=5pt]{$\\scriptstyle O$};
+    \\fill[blue] (P) circle[radius=\\pointradius] node[above right]{$\\scriptstyle P$};
+    \\fill[purple] (P') circle[radius=\\pointradius] node[right]{$\\scriptstyle z$};
+    \\fill (N) circle[radius=\\pointradius] node[above left]{$\\scriptstyle N$};
+    \\fill (S) circle[radius=\\pointradius] node[right]{$\\scriptstyle S$};
+    \\fill[rose] (Q) circle[radius=\\pointradius] node[above left]{$\\scriptstyle Q$};
+    \\fill[rose] (Q') circle[radius=\\pointradius] node[above left]{$\\scriptstyle W$};
+  \\end{scope}
+\\end{tikzpicture}`,
+  },
 ];
 
 interface TikzCanvasProps {
