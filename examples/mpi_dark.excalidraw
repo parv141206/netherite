@@ -1,0 +1,6679 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "netherite-visual-notes",
+  "elements": [
+    {
+      "id": "topic-mu42d03x-1",
+      "type": "rectangle",
+      "x": -266,
+      "y": -35,
+      "width": 533,
+      "height": 70,
+      "angle": 0,
+      "strokeColor": "#3bc9db",
+      "backgroundColor": "#14373b",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 137349,
+      "version": 1,
+      "versionNonce": 755084,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "topic-mu42d03x-1_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "topic-mu42d03x-1_text",
+      "type": "text",
+      "x": -250,
+      "y": -13,
+      "width": 501,
+      "height": 26,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 278546,
+      "version": 1,
+      "versionNonce": 566866,
+      "isDeleted": false,
+      "text": "Microprocessor Operations & Bus Cycles",
+      "fontSize": 22,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "topic-mu42d03x-1"
+    },
+    {
+      "id": "topic-mu42d03x-1-note",
+      "type": "text",
+      "x": -175,
+      "y": 85,
+      "width": 320,
+      "height": 183,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 553001,
+      "version": 1,
+      "versionNonce": 255529,
+      "isDeleted": false,
+      "text": "**Subject Code:** BE05000551 / 3160712\n(Microprocessor and Interfacing - MPI)\n\n**Standard References:** Ramesh S.\nGaonkar (*Microprocessor Architecture,\nProgramming, and Applications with the\n8085*) + Darshan Institute GTU Notes\n(Unit 2) + GTU Past Examination Papers\n(2021–2025)",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-4",
+      "type": "rectangle",
+      "x": -205,
+      "y": -210,
+      "width": 410,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 115329,
+      "version": 1,
+      "versionNonce": 28804,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-4_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-4_text",
+      "type": "text",
+      "x": -193,
+      "y": -195,
+      "width": 386,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 391875,
+      "version": 1,
+      "versionNonce": 943251,
+      "isDeleted": false,
+      "text": "Internal vs External System Operations",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-4"
+    },
+    {
+      "id": "sub-mu42d03x-4-note",
+      "type": "text",
+      "x": -172,
+      "y": -450,
+      "width": 314,
+      "height": 190,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 395427,
+      "version": 1,
+      "versionNonce": 715710,
+      "isDeleted": false,
+      "text": "A microprocessor is an active digital\nlogic device executing programs stored\nin memory. Its operations divide into\ntwo domains: Internal Operations\nexecuted within the CPU architecture\n(ALU operations, register transfers,\nflag updates, instruction decoding), and\nExternal Bus Operations communicating\nacross system buses with memory chips\nand I/O peripherals.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-13",
+      "type": "rectangle",
+      "x": -766,
+      "y": -141,
+      "width": 420,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 258458,
+      "version": 1,
+      "versionNonce": 160617,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-13_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-13_text",
+      "type": "text",
+      "x": -754,
+      "y": -126,
+      "width": 396,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 343218,
+      "version": 1,
+      "versionNonce": 939007,
+      "isDeleted": false,
+      "text": "Control Signals & Hardware Status Lines",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-13"
+    },
+    {
+      "id": "sub-mu42d03x-15",
+      "type": "rectangle",
+      "x": -851,
+      "y": 30,
+      "width": 505,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 330933,
+      "version": 1,
+      "versionNonce": 936596,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-15_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-15_text",
+      "type": "text",
+      "x": -839,
+      "y": 45,
+      "width": 481,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 552940,
+      "version": 1,
+      "versionNonce": 77253,
+      "isDeleted": false,
+      "text": "Microprocessor Operations Architecture Hierarchy",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-15"
+    },
+    {
+      "id": "sub-mu42d03x-13-note",
+      "type": "text",
+      "x": -1152,
+      "y": -186,
+      "width": 306,
+      "height": 171,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 411707,
+      "version": 1,
+      "versionNonce": 778663,
+      "isDeleted": false,
+      "text": "The 8085 coordinates all bus activity\nusing control and status signals: IO/M'\ndesignates whether the current cycle\ntargets memory (0) or peripheral I/O\n(1). RD' coordinates read transfers and\nWR' coordinates write transfers.\nTogether, these signals generate MEMR',\nMEMW', IOR', and IOW' strobes via\nexternal gating logic.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-15-note",
+      "type": "text",
+      "x": -1230,
+      "y": 30,
+      "width": 314,
+      "height": 152,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 126279,
+      "version": 1,
+      "versionNonce": 44682,
+      "isDeleted": false,
+      "text": "The internal architecture executes\nregister-to-register transfers, ALU\narithmetic (+, -), logical bit\nmanipulation (AND, OR, XOR), flag\ncondition updates, and instruction\ndecoding (IR to ID). External operations\ninterface directly with memory arrays\nand peripheral controllers.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-6",
+      "type": "rectangle",
+      "x": -368,
+      "y": 325,
+      "width": 467,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 212870,
+      "version": 1,
+      "versionNonce": 999285,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-6_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-6_text",
+      "type": "text",
+      "x": -356,
+      "y": 340,
+      "width": 443,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 517725,
+      "version": 1,
+      "versionNonce": 196833,
+      "isDeleted": false,
+      "text": "The Four Fundamental External Bus Operations",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-6"
+    },
+    {
+      "id": "flow-mu42d03x-8",
+      "type": "rectangle",
+      "x": -316,
+      "y": 446,
+      "width": 276,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 219412,
+      "version": 1,
+      "versionNonce": 865621,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-8_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-8_text",
+      "type": "text",
+      "x": -306,
+      "y": 461,
+      "width": 256,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 793841,
+      "version": 1,
+      "versionNonce": 102424,
+      "isDeleted": false,
+      "text": "Bus Read Communication Cycle",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-8"
+    },
+    {
+      "id": "flow-mu42d03x-10",
+      "type": "rectangle",
+      "x": 40,
+      "y": 446,
+      "width": 284,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 871118,
+      "version": 1,
+      "versionNonce": 390763,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-10_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-10_text",
+      "type": "text",
+      "x": 50,
+      "y": 461,
+      "width": 264,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 607242,
+      "version": 1,
+      "versionNonce": 797399,
+      "isDeleted": false,
+      "text": "Bus Write Communication Cycle",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-10"
+    },
+    {
+      "id": "sub-mu42d03x-6-note",
+      "type": "text",
+      "x": -651,
+      "y": 446,
+      "width": 275,
+      "height": 190,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 633895,
+      "version": 1,
+      "versionNonce": 673819,
+      "isDeleted": false,
+      "text": "Every computer program reduces to\nfour basic external bus cycles:\nMemory Read (IO/M'=0, RD'=0, WR'=1)\nto fetch opcodes and operands;\nMemory Write (IO/M'=0, RD'=1,\nWR'=0) to store results; I/O Read\n(IO/M'=1, RD'=0, WR'=1) to accept\ndata from sensors/ports; and I/O\nWrite (IO/M'=1, RD'=1, WR'=0) to\noutput data to actuators/displays.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-8-note",
+      "type": "text",
+      "x": -485,
+      "y": 673,
+      "width": 314,
+      "height": 114,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 749409,
+      "version": 1,
+      "versionNonce": 842372,
+      "isDeleted": false,
+      "text": "The microprocessor places a 16-bit\naddress on the address bus to select the\ntargeted memory location or I/O port via\naddress decoders, asserts the active-low\nRD' strobe, and latches data driven onto\nD7-D0 into internal registers.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-10-note",
+      "type": "text",
+      "x": 40,
+      "y": 538,
+      "width": 314,
+      "height": 95,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 185452,
+      "version": 1,
+      "versionNonce": 502253,
+      "isDeleted": false,
+      "text": "The CPU asserts the targeted 16-bit\naddress, drives computed data onto data\nbus lines D7-D0, and emits an active-low\nWR' strobe pulse to latch the data byte\npermanently into the external device.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "diagram-mu42d03x-12",
+      "type": "rectangle",
+      "x": 560,
+      "y": 426,
+      "width": 633,
+      "height": 202,
+      "angle": 0,
+      "strokeColor": "#495057",
+      "backgroundColor": "#141517",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 470855,
+      "version": 1,
+      "versionNonce": 695648,
+      "isDeleted": false
+    },
+    {
+      "id": "diagram-mu42d03x-12_code",
+      "type": "text",
+      "x": 572,
+      "y": 438,
+      "width": 609,
+      "height": 178,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 792080,
+      "version": 1,
+      "versionNonce": 842159,
+      "isDeleted": false,
+      "text": "+----------------+      1. Place 16-bit Address      +----------------------+\n|                |==================================>|                      |\n|                |                                   |  Memory / I/O Port   |\n|                |      2. Assert RD' = 0 (Pulse)    |      Selection       |\n|  Intel 8085    |---------------------------------->|   (Address Decoder)  |\n| Microprocessor |                                   |                      |\n|                |      3. Drive Data on Data Bus    |                      |\n|                |<==================================|                      |\n|                |              (D7 - D0)            +----------------------+\n+----------------+",
+      "fontSize": 13,
+      "fontFamily": 3,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "topic-mu42d03x-18",
+      "type": "rectangle",
+      "x": -322,
+      "y": 1325,
+      "width": 644,
+      "height": 70,
+      "angle": 0,
+      "strokeColor": "#69db7c",
+      "backgroundColor": "#1b3a24",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 220850,
+      "version": 1,
+      "versionNonce": 801686,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "topic-mu42d03x-18_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "topic-mu42d03x-18_text",
+      "type": "text",
+      "x": -306,
+      "y": 1347,
+      "width": 612,
+      "height": 26,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 574781,
+      "version": 1,
+      "versionNonce": 466412,
+      "isDeleted": false,
+      "text": "Semiconductor Memory Classification & Cell Tech",
+      "fontSize": 22,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "topic-mu42d03x-18"
+    },
+    {
+      "id": "sub-mu42d03x-19",
+      "type": "rectangle",
+      "x": -219,
+      "y": 1150,
+      "width": 439,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 704460,
+      "version": 1,
+      "versionNonce": 635040,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-19_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-19_text",
+      "type": "text",
+      "x": -207,
+      "y": 1165,
+      "width": 415,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 635558,
+      "version": 1,
+      "versionNonce": 843924,
+      "isDeleted": false,
+      "text": "Primary Semiconductor Memory Architecture",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-19"
+    },
+    {
+      "id": "sub-mu42d03x-19-note",
+      "type": "text",
+      "x": -168,
+      "y": 967,
+      "width": 306,
+      "height": 133,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 965912,
+      "version": 1,
+      "versionNonce": 126648,
+      "isDeleted": false,
+      "text": "Semiconductor memory is an array of\nstorage cells organized as words\n(bytes). Each location has a unique\nbinary address. Primary memory is split\ninto volatile Read/Write Random Access\nMemory (RAM) and non-volatile Read-Only\nMemory (ROM).",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-28",
+      "type": "rectangle",
+      "x": -784,
+      "y": 1219,
+      "width": 382,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 577977,
+      "version": 1,
+      "versionNonce": 140364,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-28_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-28_text",
+      "type": "text",
+      "x": -772,
+      "y": 1234,
+      "width": 358,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 475267,
+      "version": 1,
+      "versionNonce": 647286,
+      "isDeleted": false,
+      "text": "Read-Only Memory (ROM Technologies)",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-28"
+    },
+    {
+      "id": "sub-mu42d03x-30",
+      "type": "rectangle",
+      "x": -841,
+      "y": 1390,
+      "width": 439,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 981652,
+      "version": 1,
+      "versionNonce": 332455,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-30_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-30_text",
+      "type": "text",
+      "x": -829,
+      "y": 1405,
+      "width": 415,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 23701,
+      "version": 1,
+      "versionNonce": 256842,
+      "isDeleted": false,
+      "text": "Memory Cell Transistor Circuit Topologies",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-30"
+    },
+    {
+      "id": "sub-mu42d03x-28-note",
+      "type": "text",
+      "x": -1193,
+      "y": 1159,
+      "width": 314,
+      "height": 265,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 951304,
+      "version": 1,
+      "versionNonce": 891072,
+      "isDeleted": false,
+      "text": "ROM retains data permanently without\nelectrical power. Masked ROM is\nfactory-programmed via photolithography\nmasks for mass firmware. PROM uses\nfusible links burned once by\nhigh-current pulses. EPROM uses\nfloating-gate charge traps erased by\nexposing its quartz window to UV light\n(253.7 nm) for 20 minutes. EEPROM\nsupports byte-level electrical erasure\nvia Fowler-Nordheim tunneling. Flash\nMemory wipes data in large 4 KB to 64 KB\nblocks for high throughput in SSDs and\nBIOS chips.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-30-note",
+      "type": "text",
+      "x": -1287,
+      "y": 1465,
+      "width": 306,
+      "height": 114,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 745717,
+      "version": 1,
+      "versionNonce": 354080,
+      "isDeleted": false,
+      "text": "The physical silicon topologies define\nspeed and density trade-offs: SRAM uses\ncross-coupled inverters with word line\ngates, while DRAM uses a single\npass-transistor gating storage charge\ninto a microscopic cell capacitor.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-21",
+      "type": "rectangle",
+      "x": -210,
+      "y": 1550,
+      "width": 420,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 743357,
+      "version": 1,
+      "versionNonce": 402712,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-21_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-21_text",
+      "type": "text",
+      "x": -198,
+      "y": 1565,
+      "width": 396,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 574821,
+      "version": 1,
+      "versionNonce": 883744,
+      "isDeleted": false,
+      "text": "Random Access Memory (RAM Technologies)",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-21"
+    },
+    {
+      "id": "flow-mu42d03x-23",
+      "type": "rectangle",
+      "x": -374,
+      "y": 1671,
+      "width": 334,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 360796,
+      "version": 1,
+      "versionNonce": 962305,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-23_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-23_text",
+      "type": "text",
+      "x": -364,
+      "y": 1686,
+      "width": 314,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 157435,
+      "version": 1,
+      "versionNonce": 29072,
+      "isDeleted": false,
+      "text": "Static RAM (SRAM 6-Transistor Cell)",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-23"
+    },
+    {
+      "id": "flow-mu42d03x-25",
+      "type": "rectangle",
+      "x": 40,
+      "y": 1671,
+      "width": 301,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 388684,
+      "version": 1,
+      "versionNonce": 796116,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-25_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-25_text",
+      "type": "text",
+      "x": 50,
+      "y": 1686,
+      "width": 281,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 615540,
+      "version": 1,
+      "versionNonce": 305785,
+      "isDeleted": false,
+      "text": "Dynamic RAM (DRAM 1-T 1-C Cell)",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-25"
+    },
+    {
+      "id": "sub-mu42d03x-21-note",
+      "type": "text",
+      "x": -709,
+      "y": 1671,
+      "width": 275,
+      "height": 95,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 979384,
+      "version": 1,
+      "versionNonce": 505782,
+      "isDeleted": false,
+      "text": "RAM permits both read and write\naccess with identical access\nlatency across all locations. It is\nvolatile, losing data when power is\nremoved.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-23-note",
+      "type": "text",
+      "x": -371,
+      "y": 1763,
+      "width": 298,
+      "height": 133,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 314493,
+      "version": 1,
+      "versionNonce": 744253,
+      "isDeleted": false,
+      "text": "SRAM stores each bit in a bistable\nmulti-transistor flip-flop (6 MOS\ntransistors per cell). It requires no\nrefresh cycles and offers ultra-fast\naccess (10-30 ns), making it ideal for\nCPU caches (L1/L2/L3) and scratchpads\ndespite higher cost and lower density.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-25-note",
+      "type": "text",
+      "x": 49,
+      "y": 1763,
+      "width": 314,
+      "height": 133,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 336611,
+      "version": 1,
+      "versionNonce": 166680,
+      "isDeleted": false,
+      "text": "DRAM stores each bit as charge on a tiny\nMOS gate capacitance (1 transistor + 1\ncapacitor). Dielectric leakage requires\nperiodic refresh cycles every 2-4 ms. It\ndelivers massive density and low cost\nfor main system RAM (DDR4/DDR5) with\n50-100 ns access latency.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "diagram-mu42d03x-27",
+      "type": "rectangle",
+      "x": 560,
+      "y": 1651,
+      "width": 695,
+      "height": 421,
+      "angle": 0,
+      "strokeColor": "#495057",
+      "backgroundColor": "#141517",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 535482,
+      "version": 1,
+      "versionNonce": 753934,
+      "isDeleted": false
+    },
+    {
+      "id": "diagram-mu42d03x-27_code",
+      "type": "text",
+      "x": 572,
+      "y": 1663,
+      "width": 671,
+      "height": 397,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 838119,
+      "version": 1,
+      "versionNonce": 352164,
+      "isDeleted": false,
+      "text": "+-----------------------------------------------------------------------------------+\n|                           MEMORY CLASSIFICATION TREE                              |\n+-----------------------------------------------------------------------------------+\n                                         |\n         +-------------------------------+-------------------------------+\n         |                                                               |\n         v                                                               v\n+---------------------------------+             +---------------------------------+\n|   PRIMARY SEMICONDUCTOR MEMORY  |             |    SECONDARY STORAGE (MASS)     |\n+---------------------------------+             +---------------------------------+\n         |                                                       |\n   +-----+-----+                                           +-----+-----+\n   |           |                                           |           |\n   v           v                                           v           v\n+-----+     +-----+                                     +-------+   +-------+\n| RAM |     | ROM |                                     |MAGNETIC|  |OPTICAL|\n+-----+     +-----+                                     +-------+   +-------+\n   |           |                                            |           |\n   |-- SRAM    |-- Masked ROM                               |-- HDD     |-- CD-ROM\n   |-- DRAM    |-- PROM                                     |-- Tape    |-- CD-R\n               |-- EPROM                                                |-- CD-RW\n               |-- EEPROM                                               |-- DVD\n               |-- Flash Memory",
+      "fontSize": 13,
+      "fontFamily": 3,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "topic-mu42d03x-33",
+      "type": "rectangle",
+      "x": -297,
+      "y": 2648,
+      "width": 594,
+      "height": 70,
+      "angle": 0,
+      "strokeColor": "#9775fa",
+      "backgroundColor": "#2b2149",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 711994,
+      "version": 1,
+      "versionNonce": 874238,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "topic-mu42d03x-33_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "topic-mu42d03x-33_text",
+      "type": "text",
+      "x": -281,
+      "y": 2670,
+      "width": 562,
+      "height": 26,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 956135,
+      "version": 1,
+      "versionNonce": 237578,
+      "isDeleted": false,
+      "text": "Memory Capacity & Address Line Calculations",
+      "fontSize": 22,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "topic-mu42d03x-33"
+    },
+    {
+      "id": "sub-mu42d03x-34",
+      "type": "rectangle",
+      "x": -205,
+      "y": 2473,
+      "width": 410,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 585517,
+      "version": 1,
+      "versionNonce": 753921,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-34_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-34_text",
+      "type": "text",
+      "x": -193,
+      "y": 2488,
+      "width": 386,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 804886,
+      "version": 1,
+      "versionNonce": 308418,
+      "isDeleted": false,
+      "text": "Fundamental Addressability Formulation",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-34"
+    },
+    {
+      "id": "sub-mu42d03x-34-note",
+      "type": "text",
+      "x": -168,
+      "y": 2252,
+      "width": 306,
+      "height": 171,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 302502,
+      "version": 1,
+      "versionNonce": 295260,
+      "isDeleted": false,
+      "text": "The relationship between address lines\n(N) and uniquely addressable memory\nlocations (M) is strictly M = 2^N. With\nbyte-wide storage (8 bits/location),\ntotal capacity equals 2^N bytes. 10\nlines address 1 KB (1024 B), 12 lines\naddress 4 KB (4096 B), 16 lines address\n64 KB (full 8085 space), and 20 lines\naddress 1 MB (full 8086 space).",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-36",
+      "type": "rectangle",
+      "x": -787,
+      "y": 2542,
+      "width": 410,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 95868,
+      "version": 1,
+      "versionNonce": 593474,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-36_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-36_text",
+      "type": "text",
+      "x": -775,
+      "y": 2557,
+      "width": 386,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 432690,
+      "version": 1,
+      "versionNonce": 347645,
+      "isDeleted": false,
+      "text": "Address Range & Boundary Determination",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-36"
+    },
+    {
+      "id": "sub-mu42d03x-38",
+      "type": "rectangle",
+      "x": -854,
+      "y": 2713,
+      "width": 477,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 331793,
+      "version": 1,
+      "versionNonce": 977911,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-38_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-38_text",
+      "type": "text",
+      "x": -842,
+      "y": 2728,
+      "width": 453,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 350642,
+      "version": 1,
+      "versionNonce": 17964,
+      "isDeleted": false,
+      "text": "Solved Exam Numericals (8 KB and 2 KB Ranges)",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-38"
+    },
+    {
+      "id": "sub-mu42d03x-36-note",
+      "type": "text",
+      "x": -1143,
+      "y": 2527,
+      "width": 306,
+      "height": 114,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 190220,
+      "version": 1,
+      "versionNonce": 136382,
+      "isDeleted": false,
+      "text": "Given starting address S in hexadecimal\nand memory capacity C in bytes, the\nending address is E = S + C - 1. The\nminus-one term is mandatory because the\nstarting address byte is itself the\nfirst addressable location.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-38-note",
+      "type": "text",
+      "x": -1195,
+      "y": 2698,
+      "width": 291,
+      "height": 114,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 281649,
+      "version": 1,
+      "versionNonce": 175269,
+      "isDeleted": false,
+      "text": "Problem 1: An 8 KB memory (capacity\n2000H) starting at 2000H spans from\n2000H to (2000H + 2000H - 1) = 3FFFH.\nProblem 2: A 2 KB memory (capacity\n0800H) starting at 8000H spans from\n8000H to (8000H + 0800H - 1) = 87FFH.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-40",
+      "type": "rectangle",
+      "x": -191,
+      "y": 2873,
+      "width": 382,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 797499,
+      "version": 1,
+      "versionNonce": 786368,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-40_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-40_text",
+      "type": "text",
+      "x": -179,
+      "y": 2888,
+      "width": 358,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 643999,
+      "version": 1,
+      "versionNonce": 131852,
+      "isDeleted": false,
+      "text": "16 KB Multi-Chip Interfacing Design",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-40"
+    },
+    {
+      "id": "flow-mu42d03x-42",
+      "type": "rectangle",
+      "x": -458,
+      "y": 2994,
+      "width": 418,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 158554,
+      "version": 1,
+      "versionNonce": 189536,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-42_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-42_text",
+      "type": "text",
+      "x": -448,
+      "y": 3009,
+      "width": 398,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 293893,
+      "version": 1,
+      "versionNonce": 409324,
+      "isDeleted": false,
+      "text": "Memory Array Parallel Bus Connection (A11-A0)",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-42"
+    },
+    {
+      "id": "flow-mu42d03x-44",
+      "type": "rectangle",
+      "x": 40,
+      "y": 2994,
+      "width": 460,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 582715,
+      "version": 1,
+      "versionNonce": 518868,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-44_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-44_text",
+      "type": "text",
+      "x": 50,
+      "y": 3009,
+      "width": 440,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 259909,
+      "version": 1,
+      "versionNonce": 929115,
+      "isDeleted": false,
+      "text": "Higher Address Line Decoding (A13-A12 via 74LS138)",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-44"
+    },
+    {
+      "id": "sub-mu42d03x-40-note",
+      "type": "text",
+      "x": -793,
+      "y": 2994,
+      "width": 275,
+      "height": 152,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 521880,
+      "version": 1,
+      "versionNonce": 313913,
+      "isDeleted": false,
+      "text": "A 16 KB microcomputer system built\nfrom 4 KB x 8 chips requires:\nNumber of chips = (16 KB x 8) / (4\nKB x 8) = 4 chips. Address lines\nper individual chip = 2^12 = 12\nlines (A11-A0). Address lines for\ntotal 16 KB space = 2^14 = 14 lines\n(A13-A0).",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-42-note",
+      "type": "text",
+      "x": -421,
+      "y": 3086,
+      "width": 314,
+      "height": 95,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 884101,
+      "version": 1,
+      "versionNonce": 878235,
+      "isDeleted": false,
+      "text": "Address lines A11 through A0 connect in\nparallel to all 4 memory chips to\nprovide internal 12-bit word indexing\nacross 4096 memory registers within each\nchip.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-44-note",
+      "type": "text",
+      "x": 140,
+      "y": 3086,
+      "width": 291,
+      "height": 95,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 381571,
+      "version": 1,
+      "versionNonce": 53702,
+      "isDeleted": false,
+      "text": "Higher address lines A13 and A12 feed\ndirectly into a 2-to-4 line decoder\n(74LS138) to generate 4 distinct,\nmutually exclusive active-low Chip\nEnable (CE') strobe signals.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "diagram-mu42d03x-46",
+      "type": "rectangle",
+      "x": 600,
+      "y": 2974,
+      "width": 836,
+      "height": 235,
+      "angle": 0,
+      "strokeColor": "#495057",
+      "backgroundColor": "#141517",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 648722,
+      "version": 1,
+      "versionNonce": 190172,
+      "isDeleted": false
+    },
+    {
+      "id": "diagram-mu42d03x-46_code",
+      "type": "text",
+      "x": 612,
+      "y": 2986,
+      "width": 812,
+      "height": 211,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 931569,
+      "version": 1,
+      "versionNonce": 508398,
+      "isDeleted": false,
+      "text": "+---------------+-------------------+----------------------+------------------------------------------+\n| ADDRESS LINES | CAPACITY FORMULA  | TOTAL BYTES          | INDUSTRY UNIT NOTATION                   |\n+---------------+-------------------+----------------------+------------------------------------------+\n| N = 10 lines  | 2^10 bytes        | 1,024 bytes          | 1 Kilobyte (1 KB)                        |\n| N = 11 lines  | 2^11 = 2 x 2^10   | 2,048 bytes          | 2 Kilobytes (2 KB)                       |\n| N = 12 lines  | 2^12 = 4 x 2^10   | 4,096 bytes          | 4 Kilobytes (4 KB)                       |\n| N = 13 lines  | 2^13 = 8 x 2^10   | 8,192 bytes          | 8 Kilobytes (8 KB)                       |\n| N = 14 lines  | 2^14 = 16 x 2^10  | 16,384 bytes         | 16 Kilobytes (16 KB)                     |\n| N = 15 lines  | 2^15 = 32 x 2^10  | 32,768 bytes         | 32 Kilobytes (32 KB)                     |\n| N = 16 lines  | 2^16 = 64 x 2^10  | 65,536 bytes         | 64 Kilobytes (64 KB) -> Full 8085 Space  |\n| N = 20 lines  | 2^20 = 1 x 2^20   | 1,048,576 bytes      | 1 Megabyte (1 MB) -> Full 8086 Space     |\n+---------------+-------------------+----------------------+------------------------------------------+",
+      "fontSize": 13,
+      "fontFamily": 3,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "topic-mu42d03x-47",
+      "type": "rectangle",
+      "x": -334,
+      "y": 3841,
+      "width": 668,
+      "height": 70,
+      "angle": 0,
+      "strokeColor": "#fcc419",
+      "backgroundColor": "#403417",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 408660,
+      "version": 1,
+      "versionNonce": 98096,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "topic-mu42d03x-47_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "topic-mu42d03x-47_text",
+      "type": "text",
+      "x": -318,
+      "y": 3863,
+      "width": 636,
+      "height": 26,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 561298,
+      "version": 1,
+      "versionNonce": 357529,
+      "isDeleted": false,
+      "text": "Peripheral Interfacing & Hardware Building Blocks",
+      "fontSize": 22,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "topic-mu42d03x-47"
+    },
+    {
+      "id": "sub-mu42d03x-48",
+      "type": "rectangle",
+      "x": -248,
+      "y": 3666,
+      "width": 496,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 924398,
+      "version": 1,
+      "versionNonce": 777281,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-48_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-48_text",
+      "type": "text",
+      "x": -236,
+      "y": 3681,
+      "width": 472,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 108601,
+      "version": 1,
+      "versionNonce": 923143,
+      "isDeleted": false,
+      "text": "Four Physical Constraints Mandating Interfacing",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-48"
+    },
+    {
+      "id": "sub-mu42d03x-48-note",
+      "type": "text",
+      "x": -172,
+      "y": 3389,
+      "width": 314,
+      "height": 227,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 725242,
+      "version": 1,
+      "versionNonce": 49284,
+      "isDeleted": false,
+      "text": "Peripherals cannot wire directly to the\nCPU bus due to four critical hardware\nconstraints: 1. Speed Mismatch (CPU\noperates in sub-microsecond cycles while\nmechanical I/O takes milliseconds); 2.\nSignal & Voltage Incompatibility (TTL\n+5V vs 24V industrial or analog\nvoltages); 3. Transient Data Bus (CPU\noutput data is valid for only ~300 ns\nduring T2-T3); 4. Bus Contention\n(unbuffered inputs would short-circuit\nthe shared data bus).",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-50",
+      "type": "rectangle",
+      "x": -939,
+      "y": 3735,
+      "width": 525,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 865539,
+      "version": 1,
+      "versionNonce": 903842,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-50_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-50_text",
+      "type": "text",
+      "x": -927,
+      "y": 3750,
+      "width": 501,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 814319,
+      "version": 1,
+      "versionNonce": 433796,
+      "isDeleted": false,
+      "text": "Input Port Interfacing: Tri-State Buffer (74LS244)",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-50"
+    },
+    {
+      "id": "sub-mu42d03x-59",
+      "type": "rectangle",
+      "x": -767,
+      "y": 3906,
+      "width": 353,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 115244,
+      "version": 1,
+      "versionNonce": 414838,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-59_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-59_text",
+      "type": "text",
+      "x": -755,
+      "y": 3921,
+      "width": 329,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 579573,
+      "version": 1,
+      "versionNonce": 705382,
+      "isDeleted": false,
+      "text": "Solved GTU Interfacing Questions",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-59"
+    },
+    {
+      "id": "sub-mu42d03x-50-note",
+      "type": "text",
+      "x": -1303,
+      "y": 3720,
+      "width": 314,
+      "height": 152,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 171288,
+      "version": 1,
+      "versionNonce": 428001,
+      "isDeleted": false,
+      "text": "Input peripherals must connect through\noctal tri-state buffers (IC 74LS244).\nWhen active-low OE' is high, outputs\nremain in High-Impedance (Z), completely\nisolating the peripheral from the data\nbus. During an active I/O read cycle,\naddress decoding and RD' assert OE'=0,\ncleanly routing port data onto D7-D0.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-59-note",
+      "type": "text",
+      "x": -1146,
+      "y": 3906,
+      "width": 314,
+      "height": 171,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 500005,
+      "version": 1,
+      "versionNonce": 672731,
+      "isDeleted": false,
+      "text": "GTU Winter 2024: Latches provide\nessential temporary-to-static data\nholding for output peripherals,\nresolving data bus transient decay.\nTri-state buffers eliminate electrical\nbus contention during multi-device input\nmultiplexing by enforcing High-Impedance\nisolation until an authorized read\nstrobe occurs.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-52",
+      "type": "rectangle",
+      "x": -243,
+      "y": 4066,
+      "width": 486,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 838379,
+      "version": 1,
+      "versionNonce": 244290,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-52_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-52_text",
+      "type": "text",
+      "x": -231,
+      "y": 4081,
+      "width": 462,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 199552,
+      "version": 1,
+      "versionNonce": 369229,
+      "isDeleted": false,
+      "text": "Output Port Interfacing: Octal Latch (74LS373)",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-52"
+    },
+    {
+      "id": "flow-mu42d03x-54",
+      "type": "rectangle",
+      "x": -341,
+      "y": 4187,
+      "width": 301,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 4630,
+      "version": 1,
+      "versionNonce": 364075,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-54_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-54_text",
+      "type": "text",
+      "x": -331,
+      "y": 4202,
+      "width": 281,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 80612,
+      "version": 1,
+      "versionNonce": 248947,
+      "isDeleted": false,
+      "text": "Tri-State Active-Low Bus Access",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-54"
+    },
+    {
+      "id": "flow-mu42d03x-56",
+      "type": "rectangle",
+      "x": 40,
+      "y": 4187,
+      "width": 292,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 55052,
+      "version": 1,
+      "versionNonce": 84038,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-56_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-56_text",
+      "type": "text",
+      "x": 50,
+      "y": 4202,
+      "width": 272,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 111563,
+      "version": 1,
+      "versionNonce": 785447,
+      "isDeleted": false,
+      "text": "Latched Persistent Data Output",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-56"
+    },
+    {
+      "id": "sub-mu42d03x-52-note",
+      "type": "text",
+      "x": -676,
+      "y": 4187,
+      "width": 275,
+      "height": 171,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 671296,
+      "version": 1,
+      "versionNonce": 460825,
+      "isDeleted": false,
+      "text": "Output peripherals require\ntransparent D-latches (IC 74LS373).\nBecause CPU bus data persists for\nonly ~300 ns, the latch captures\ndata on the falling edge of WR'\ncombined with device selection,\nholding output voltage levels\nindefinitely to drive external\ndisplays and actuators.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-54-note",
+      "type": "text",
+      "x": -362,
+      "y": 4279,
+      "width": 314,
+      "height": 114,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 493208,
+      "version": 1,
+      "versionNonce": 822781,
+      "isDeleted": false,
+      "text": "During an I/O Read cycle, address\ndecoder output gates with RD' to pulse\nthe tri-state buffer OE' low, bridging\nperipheral lines to the CPU data bus for\nthe precise duration of the T3 sampling\nphase.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-56-note",
+      "type": "text",
+      "x": 52,
+      "y": 4279,
+      "width": 298,
+      "height": 95,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 245483,
+      "version": 1,
+      "versionNonce": 26580,
+      "isDeleted": false,
+      "text": "During an I/O Write cycle, the address\ndecoder gates with WR' to pulse the\nlatch clock pin, capturing transient\ndata from D7-D0 and sustaining static\noutput drive indefinitely.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "diagram-mu42d03x-58",
+      "type": "rectangle",
+      "x": 560,
+      "y": 4167,
+      "width": 680,
+      "height": 286,
+      "angle": 0,
+      "strokeColor": "#495057",
+      "backgroundColor": "#141517",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 636252,
+      "version": 1,
+      "versionNonce": 327786,
+      "isDeleted": false
+    },
+    {
+      "id": "diagram-mu42d03x-58_code",
+      "type": "text",
+      "x": 572,
+      "y": 4179,
+      "width": 656,
+      "height": 262,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 534086,
+      "version": 1,
+      "versionNonce": 998088,
+      "isDeleted": false,
+      "text": "   INPUT PORT (Tri-State Buffer - 74LS244)          OUTPUT PORT (Latch - 74LS373)\n   \n        Peripheral Input Data                         CPU Data Bus (D7 - D0)\n                 |                                               |\n                 v                                               v\n        +-----------------+                             +-----------------+\n        |  Tri-State Gate |                             |    D-Latch      |\n        +-----------------+                             +-----------------+\n                 |                                               |\n    Enable Pulse | (Active LOW)                     Clock Pulse  | (Falling Edge)\n    from Address +----------------+                 from Address +----------------+\n    Decoder & RD'                 |                 Decoder & WR'                 |\n                 v                |                              v                |\n         CPU Data Bus (D7-D0)     |                      Peripheral Output Pins   |\n    (Enabled ONLY during Read)    |                 (Holds data continuously)     |",
+      "fontSize": 13,
+      "fontFamily": 3,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "topic-mu42d03x-61",
+      "type": "rectangle",
+      "x": -297,
+      "y": 4948,
+      "width": 594,
+      "height": 70,
+      "angle": 0,
+      "strokeColor": "#f783ac",
+      "backgroundColor": "#3d1b28",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 986777,
+      "version": 1,
+      "versionNonce": 8933,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "topic-mu42d03x-61_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "topic-mu42d03x-61_text",
+      "type": "text",
+      "x": -281,
+      "y": 4970,
+      "width": 562,
+      "height": 26,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 188613,
+      "version": 1,
+      "versionNonce": 860162,
+      "isDeleted": false,
+      "text": "Memory-Mapped I/O vs. Peripheral-Mapped I/O",
+      "fontSize": 22,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "topic-mu42d03x-61"
+    },
+    {
+      "id": "sub-mu42d03x-62",
+      "type": "rectangle",
+      "x": -787,
+      "y": 4842,
+      "width": 410,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 48987,
+      "version": 1,
+      "versionNonce": 254998,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-62_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-62_text",
+      "type": "text",
+      "x": -775,
+      "y": 4857,
+      "width": 386,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 601137,
+      "version": 1,
+      "versionNonce": 399203,
+      "isDeleted": false,
+      "text": "Unified Memory-Mapped I/O Architecture",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-62"
+    },
+    {
+      "id": "sub-mu42d03x-71",
+      "type": "rectangle",
+      "x": -844,
+      "y": 5013,
+      "width": 467,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 162269,
+      "version": 1,
+      "versionNonce": 976944,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-71_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-71_text",
+      "type": "text",
+      "x": -832,
+      "y": 5028,
+      "width": 443,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 684243,
+      "version": 1,
+      "versionNonce": 678896,
+      "isDeleted": false,
+      "text": "Master 8-Point Engineering Comparison Matrix",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-71"
+    },
+    {
+      "id": "sub-mu42d03x-62-note",
+      "type": "text",
+      "x": -1173,
+      "y": 4797,
+      "width": 306,
+      "height": 171,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 988400,
+      "version": 1,
+      "versionNonce": 567771,
+      "isDeleted": false,
+      "text": "In Memory-Mapped I/O, peripherals are\ntreated as memory registers. The system\nassigns a full 16-bit address (A15-A0)\nwithin the 64 KB memory map directly to\neach I/O port. The CPU asserts memory\ncontrol signals: IO/M'=0, MEMR', and\nMEMW'. Accessible by all memory\ninstructions (MOV r, M; LDA; STA; ADD\nM).",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-71-note",
+      "type": "text",
+      "x": -1215,
+      "y": 5013,
+      "width": 306,
+      "height": 246,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 489932,
+      "version": 1,
+      "versionNonce": 73295,
+      "isDeleted": false,
+      "text": "GTU Summer 2024 / 2025 (7 Marks): 1.\nAddress Bus: 16-bit (A15-A0) vs 8-bit\n(A7-A0); 2. Capacity: 64 KB shared vs\n256 isolated; 3. Control: IO/M'=0\n(MEMR/MEMW) vs IO/M'=1 (IOR/IOW); 4.\nInstructions: All memory ops (MOV, LDA,\nSTA, ADD M) vs IN/OUT only; 5. Target:\nAny register (A-L) vs Accumulator only;\n6. Arithmetic: Direct ALU execution on\nports vs Accumulator copy required; 7.\nDecoders: 16-bit complex vs 8-bit\nsimple; 8. Speed: 13 T-states vs 10\nT-states.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "sub-mu42d03x-64",
+      "type": "rectangle",
+      "x": -229,
+      "y": 5173,
+      "width": 458,
+      "height": 51,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#212529",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 995990,
+      "version": 1,
+      "versionNonce": 201091,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "sub-mu42d03x-64_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "sub-mu42d03x-64_text",
+      "type": "text",
+      "x": -217,
+      "y": 5188,
+      "width": 434,
+      "height": 22,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 716683,
+      "version": 1,
+      "versionNonce": 400460,
+      "isDeleted": false,
+      "text": "Isolated Peripheral-Mapped I/O Architecture",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sub-mu42d03x-64"
+    },
+    {
+      "id": "flow-mu42d03x-66",
+      "type": "rectangle",
+      "x": -408,
+      "y": 5294,
+      "width": 368,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 524267,
+      "version": 1,
+      "versionNonce": 412023,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-66_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-66_text",
+      "type": "text",
+      "x": -398,
+      "y": 5309,
+      "width": 348,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 8794,
+      "version": 1,
+      "versionNonce": 793851,
+      "isDeleted": false,
+      "text": "Unified 16-Bit Memory-Mapped Addressing",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-66"
+    },
+    {
+      "id": "flow-mu42d03x-68",
+      "type": "rectangle",
+      "x": 40,
+      "y": 5294,
+      "width": 376,
+      "height": 49,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "#1a1a1f",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 898793,
+      "version": 1,
+      "versionNonce": 435476,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "flow-mu42d03x-68_text",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "flow-mu42d03x-68_text",
+      "type": "text",
+      "x": 50,
+      "y": 5309,
+      "width": 356,
+      "height": 20,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 392854,
+      "version": 1,
+      "versionNonce": 911175,
+      "isDeleted": false,
+      "text": "Dedicated 8-Bit Isolated Port Addressing",
+      "fontSize": 15,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "flow-mu42d03x-68"
+    },
+    {
+      "id": "sub-mu42d03x-64-note",
+      "type": "text",
+      "x": -743,
+      "y": 5294,
+      "width": 275,
+      "height": 227,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 487317,
+      "version": 1,
+      "versionNonce": 951776,
+      "isDeleted": false,
+      "text": "In Peripheral-Mapped (Isolated)\nI/O, the CPU maintains two\ncompletely separate address spaces:\n64 KB for Memory and 256\nindependent ports for I/O. Ports\nuse 8-bit addresses (A7-A0\nduplicated on A15-A8). The CPU\nasserts IO/M'=1, generating IOR'\nand IOW' strobes. Access is\nstrictly limited to IN and OUT\ninstructions passing through the\nAccumulator.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-66-note",
+      "type": "text",
+      "x": -396,
+      "y": 5386,
+      "width": 314,
+      "height": 114,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 776825,
+      "version": 1,
+      "versionNonce": 139781,
+      "isDeleted": false,
+      "text": "CPU drives 16-bit address on A15-A0 with\nIO/M'=0. Any internal register (A, B, C,\nD, E, H, L) can serve as source or\ndestination, and arithmetic/logical\noperations (ADD M, CMP M) execute\ndirectly on port data.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "flow-mu42d03x-68-note",
+      "type": "text",
+      "x": 86,
+      "y": 5386,
+      "width": 314,
+      "height": 133,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 87222,
+      "version": 1,
+      "versionNonce": 648089,
+      "isDeleted": false,
+      "text": "CPU drives 8-bit port address with\nIO/M'=1. Data transfer is strictly\nrestricted through Accumulator Register\nA via IN port_addr (10 T-states) and OUT\nport_addr (10 T-states), leaving the\nentire 64 KB address space available for\nRAM and ROM.",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "diagram-mu42d03x-70",
+      "type": "rectangle",
+      "x": 560,
+      "y": 5274,
+      "width": 695,
+      "height": 320,
+      "angle": 0,
+      "strokeColor": "#495057",
+      "backgroundColor": "#141517",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "seed": 37608,
+      "version": 1,
+      "versionNonce": 730182,
+      "isDeleted": false
+    },
+    {
+      "id": "diagram-mu42d03x-70_code",
+      "type": "text",
+      "x": 572,
+      "y": 5286,
+      "width": 671,
+      "height": 296,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 787431,
+      "version": 1,
+      "versionNonce": 946343,
+      "isDeleted": false,
+      "text": "+-----------------------------------------------------------------------------------+\n|                    ADDRESS SPACE ALLOCATION ARCHITECTURE                          |\n+-----------------------------------------------------------------------------------+\n      MEMORY-MAPPED I/O (Unified Space)           ISOLATED I/O (Separated Spaces)\n      \n          FFFFH +-----------------+                   FFFFH +-----------------+\n                |   RAM Memory    |                         |                 |\n                |                 |                         |   64 KB Full    |\n          8000H +-----------------+                         |   Memory Space  |\n                | I/O Port Space  |                         |  (RAM and ROM)  |\n          7FFFH +-----------------+                         |                 |\n                |   ROM Memory    |                   0000H +-----------------+\n                |                 |\n          0000H +-----------------+                   FFH   +-----------------+\n                                                            | 256 I/O Ports   |\n          (Total Space = 64 KB Shared)                00H   +-----------------+\n                                                            (Dedicated I/O Space)",
+      "fontSize": 13,
+      "fontFamily": 3,
+      "textAlign": "left",
+      "verticalAlign": "top"
+    },
+    {
+      "id": "edge-topic-mu42d03x-1-topic-mu42d03x-1-note",
+      "type": "arrow",
+      "x": 89,
+      "y": 37,
+      "width": 0,
+      "height": 34,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 535363,
+      "version": 1,
+      "versionNonce": 182107,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          34
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-1",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-1-sub-mu42d03x-4",
+      "type": "arrow",
+      "x": 0,
+      "y": -37,
+      "width": 0,
+      "height": -112,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 621165,
+      "version": 1,
+      "versionNonce": 490139,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -112
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-1",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-4",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-4-sub-mu42d03x-4-note",
+      "type": "arrow",
+      "x": 0,
+      "y": -212,
+      "width": 0,
+      "height": -34,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 749336,
+      "version": 1,
+      "versionNonce": 671942,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -34
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-4",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-1-sub-mu42d03x-13",
+      "type": "arrow",
+      "x": -268,
+      "y": -12,
+      "width": -68,
+      "height": -104,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 28915,
+      "version": 1,
+      "versionNonce": 744281,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          -104
+        ],
+        [
+          -68,
+          -104
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-1",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-13",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-1-sub-mu42d03x-15",
+      "type": "arrow",
+      "x": -268,
+      "y": 12,
+      "width": -68,
+      "height": 44,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 315624,
+      "version": 1,
+      "versionNonce": 574810,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          44
+        ],
+        [
+          -68,
+          44
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-1",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-15",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-13-sub-mu42d03x-13-note",
+      "type": "arrow",
+      "x": -768,
+      "y": -115,
+      "width": -64,
+      "height": -48,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 109291,
+      "version": 1,
+      "versionNonce": 299205,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -64,
+          -48
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-13",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-15-sub-mu42d03x-15-note",
+      "type": "arrow",
+      "x": -853,
+      "y": 56,
+      "width": -49,
+      "height": -3,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 258349,
+      "version": 1,
+      "versionNonce": 704426,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -49,
+          -3
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-15",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-1-sub-mu42d03x-6",
+      "type": "arrow",
+      "x": -89,
+      "y": 37,
+      "width": -46,
+      "height": 278,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 900422,
+      "version": 1,
+      "versionNonce": 601435,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -46,
+          278
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-1",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-6",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-6-sub-mu42d03x-6-note",
+      "type": "arrow",
+      "x": -370,
+      "y": 351,
+      "width": -25,
+      "height": 82,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 29159,
+      "version": 1,
+      "versionNonce": 791971,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -15,
+          0
+        ],
+        [
+          -25,
+          49
+        ],
+        [
+          -25,
+          82
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-6",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-6-flow-mu42d03x-8",
+      "type": "arrow",
+      "x": -213,
+      "y": 378,
+      "width": 35,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 166934,
+      "version": 1,
+      "versionNonce": 853157,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          35,
+          29
+        ],
+        [
+          35,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-6",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-8",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-6-flow-mu42d03x-10",
+      "type": "arrow",
+      "x": -57,
+      "y": 378,
+      "width": 239,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 901325,
+      "version": 1,
+      "versionNonce": 474773,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          239,
+          29
+        ],
+        [
+          239,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-6",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-10",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-8-flow-mu42d03x-8-note",
+      "type": "arrow",
+      "x": -178,
+      "y": 497,
+      "width": -13,
+      "height": 162,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 231296,
+      "version": 1,
+      "versionNonce": 250650,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -13,
+          162
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-8",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-10-flow-mu42d03x-10-note",
+      "type": "arrow",
+      "x": 182,
+      "y": 497,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 965372,
+      "version": 1,
+      "versionNonce": 416058,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-10",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-10-diagram-mu42d03x-12",
+      "type": "arrow",
+      "x": 326,
+      "y": 471,
+      "width": 222,
+      "height": -4,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 919837,
+      "version": 1,
+      "versionNonce": 737550,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          111,
+          0
+        ],
+        [
+          111,
+          -4
+        ],
+        [
+          222,
+          -4
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-10",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42d03x-10-diagram-mu42d03x-12_label",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "edge-flow-mu42d03x-10-diagram-mu42d03x-12_label",
+      "type": "text",
+      "x": 317,
+      "y": 454,
+      "width": 240,
+      "height": 24,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_1"
+      ],
+      "roundness": null,
+      "seed": 432880,
+      "version": 1,
+      "versionNonce": 344509,
+      "isDeleted": false,
+      "text": "Bus Communication Flowchart (Read Cycle)",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "edge-flow-mu42d03x-10-diagram-mu42d03x-12",
+      "autoResize": true
+    },
+    {
+      "id": "edge-topic-mu42d03x-18-sub-mu42d03x-19",
+      "type": "arrow",
+      "x": 0,
+      "y": 1323,
+      "width": 0,
+      "height": -112,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 801240,
+      "version": 1,
+      "versionNonce": 324624,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -112
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-18",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-19",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-19-sub-mu42d03x-19-note",
+      "type": "arrow",
+      "x": 0,
+      "y": 1148,
+      "width": 0,
+      "height": -34,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 787651,
+      "version": 1,
+      "versionNonce": 19596,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -34
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-19",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-18-sub-mu42d03x-28",
+      "type": "arrow",
+      "x": -324,
+      "y": 1348,
+      "width": -68,
+      "height": -104,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 498038,
+      "version": 1,
+      "versionNonce": 410859,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          -104
+        ],
+        [
+          -68,
+          -104
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-18",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-28",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-18-sub-mu42d03x-30",
+      "type": "arrow",
+      "x": -324,
+      "y": 1372,
+      "width": -68,
+      "height": 44,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 379775,
+      "version": 1,
+      "versionNonce": 963622,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          44
+        ],
+        [
+          -68,
+          44
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-18",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-30",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-28-sub-mu42d03x-28-note",
+      "type": "arrow",
+      "x": -786,
+      "y": 1245,
+      "width": -79,
+      "height": -63,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 795501,
+      "version": 1,
+      "versionNonce": 450310,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -79,
+          -63
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-28",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-30-sub-mu42d03x-30-note",
+      "type": "arrow",
+      "x": -843,
+      "y": 1416,
+      "width": -124,
+      "height": 72,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 631027,
+      "version": 1,
+      "versionNonce": 781849,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -124,
+          72
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-30",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-18-sub-mu42d03x-21",
+      "type": "arrow",
+      "x": 0,
+      "y": 1397,
+      "width": 0,
+      "height": 143,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 928665,
+      "version": 1,
+      "versionNonce": 894582,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          143
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-18",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-21",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-21-sub-mu42d03x-21-note",
+      "type": "arrow",
+      "x": -212,
+      "y": 1576,
+      "width": -242,
+      "height": 82,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 27667,
+      "version": 1,
+      "versionNonce": 583827,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -145,
+          0
+        ],
+        [
+          -242,
+          49
+        ],
+        [
+          -242,
+          82
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-21",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-21-flow-mu42d03x-23",
+      "type": "arrow",
+      "x": -70,
+      "y": 1603,
+      "width": -137,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 824622,
+      "version": 1,
+      "versionNonce": 709909,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          -137,
+          29
+        ],
+        [
+          -137,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-21",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-23",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-21-flow-mu42d03x-25",
+      "type": "arrow",
+      "x": 70,
+      "y": 1603,
+      "width": 121,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 804147,
+      "version": 1,
+      "versionNonce": 643200,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          121,
+          29
+        ],
+        [
+          121,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-21",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-25",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-23-flow-mu42d03x-23-note",
+      "type": "arrow",
+      "x": -207,
+      "y": 1722,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 346301,
+      "version": 1,
+      "versionNonce": 796876,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-23",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-25-flow-mu42d03x-25-note",
+      "type": "arrow",
+      "x": 191,
+      "y": 1722,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 440488,
+      "version": 1,
+      "versionNonce": 594090,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-25",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-25-diagram-mu42d03x-27",
+      "type": "arrow",
+      "x": 343,
+      "y": 1696,
+      "width": 205,
+      "height": -4,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 405999,
+      "version": 1,
+      "versionNonce": 604795,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          103,
+          0
+        ],
+        [
+          103,
+          -4
+        ],
+        [
+          205,
+          -4
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-25",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42d03x-25-diagram-mu42d03x-27_label",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "edge-flow-mu42d03x-25-diagram-mu42d03x-27_label",
+      "type": "text",
+      "x": 326,
+      "y": 1679,
+      "width": 240,
+      "height": 24,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_2"
+      ],
+      "roundness": null,
+      "seed": 132506,
+      "version": 1,
+      "versionNonce": 7390,
+      "isDeleted": false,
+      "text": "Semiconductor Memory Classification Tree",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "edge-flow-mu42d03x-25-diagram-mu42d03x-27",
+      "autoResize": true
+    },
+    {
+      "id": "edge-topic-mu42d03x-33-sub-mu42d03x-34",
+      "type": "arrow",
+      "x": 0,
+      "y": 2646,
+      "width": 0,
+      "height": -112,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 649672,
+      "version": 1,
+      "versionNonce": 474074,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -112
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-33",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-34",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-34-sub-mu42d03x-34-note",
+      "type": "arrow",
+      "x": 0,
+      "y": 2471,
+      "width": 0,
+      "height": -34,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 949541,
+      "version": 1,
+      "versionNonce": 797795,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -34
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-34",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-33-sub-mu42d03x-36",
+      "type": "arrow",
+      "x": -299,
+      "y": 2671,
+      "width": -68,
+      "height": -104,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 905601,
+      "version": 1,
+      "versionNonce": 903334,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          -104
+        ],
+        [
+          -68,
+          -104
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-33",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-36",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-33-sub-mu42d03x-38",
+      "type": "arrow",
+      "x": -299,
+      "y": 2695,
+      "width": -68,
+      "height": 44,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 562198,
+      "version": 1,
+      "versionNonce": 563295,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          44
+        ],
+        [
+          -68,
+          44
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-33",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-38",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-36-sub-mu42d03x-36-note",
+      "type": "arrow",
+      "x": -789,
+      "y": 2568,
+      "width": -34,
+      "height": -18,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 139049,
+      "version": 1,
+      "versionNonce": 134770,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          -18
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-36",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-38-sub-mu42d03x-38-note",
+      "type": "arrow",
+      "x": -856,
+      "y": 2739,
+      "width": -34,
+      "height": -18,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 465235,
+      "version": 1,
+      "versionNonce": 920503,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          -18
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-38",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-33-sub-mu42d03x-40",
+      "type": "arrow",
+      "x": 0,
+      "y": 2720,
+      "width": 0,
+      "height": 143,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 516738,
+      "version": 1,
+      "versionNonce": 733902,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          143
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-33",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-40",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-40-sub-mu42d03x-40-note",
+      "type": "arrow",
+      "x": -193,
+      "y": 2899,
+      "width": -345,
+      "height": 82,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 626603,
+      "version": 1,
+      "versionNonce": 336706,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -207,
+          0
+        ],
+        [
+          -345,
+          49
+        ],
+        [
+          -345,
+          82
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-40",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-40-flow-mu42d03x-42",
+      "type": "arrow",
+      "x": -64,
+      "y": 2926,
+      "width": -185,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 715007,
+      "version": 1,
+      "versionNonce": 427081,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          -185,
+          29
+        ],
+        [
+          -185,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-40",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-42",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-40-flow-mu42d03x-44",
+      "type": "arrow",
+      "x": 64,
+      "y": 2926,
+      "width": 206,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 470730,
+      "version": 1,
+      "versionNonce": 128565,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          206,
+          29
+        ],
+        [
+          206,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-40",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-44",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-42-flow-mu42d03x-42-note",
+      "type": "arrow",
+      "x": -249,
+      "y": 3045,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 622705,
+      "version": 1,
+      "versionNonce": 676299,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-42",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-44-flow-mu42d03x-44-note",
+      "type": "arrow",
+      "x": 270,
+      "y": 3045,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 695125,
+      "version": 1,
+      "versionNonce": 316313,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-44",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-44-diagram-mu42d03x-46",
+      "type": "arrow",
+      "x": 502,
+      "y": 3019,
+      "width": 86,
+      "height": -4,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 975634,
+      "version": 1,
+      "versionNonce": 50812,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          0
+        ],
+        [
+          43,
+          -4
+        ],
+        [
+          86,
+          -4
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-44",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42d03x-44-diagram-mu42d03x-46_label",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "edge-flow-mu42d03x-44-diagram-mu42d03x-46_label",
+      "type": "text",
+      "x": 425,
+      "y": 3002,
+      "width": 240,
+      "height": 24,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_3"
+      ],
+      "roundness": null,
+      "seed": 641618,
+      "version": 1,
+      "versionNonce": 890182,
+      "isDeleted": false,
+      "text": "Memory Capacity vs Address Line Mapping",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "edge-flow-mu42d03x-44-diagram-mu42d03x-46",
+      "autoResize": true
+    },
+    {
+      "id": "edge-topic-mu42d03x-47-sub-mu42d03x-48",
+      "type": "arrow",
+      "x": 0,
+      "y": 3839,
+      "width": 0,
+      "height": -112,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 899196,
+      "version": 1,
+      "versionNonce": 503079,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -112
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-47",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-48",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-48-sub-mu42d03x-48-note",
+      "type": "arrow",
+      "x": 0,
+      "y": 3664,
+      "width": 0,
+      "height": -34,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 933406,
+      "version": 1,
+      "versionNonce": 967907,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -34
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-48",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-47-sub-mu42d03x-50",
+      "type": "arrow",
+      "x": -336,
+      "y": 3864,
+      "width": -68,
+      "height": -104,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 961473,
+      "version": 1,
+      "versionNonce": 709772,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          -104
+        ],
+        [
+          -68,
+          -104
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-47",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-50",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-47-sub-mu42d03x-59",
+      "type": "arrow",
+      "x": -336,
+      "y": 3888,
+      "width": -68,
+      "height": 44,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 15927,
+      "version": 1,
+      "versionNonce": 35152,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          44
+        ],
+        [
+          -68,
+          44
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-47",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-59",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-50-sub-mu42d03x-50-note",
+      "type": "arrow",
+      "x": -941,
+      "y": 3761,
+      "width": -34,
+      "height": -18,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 101922,
+      "version": 1,
+      "versionNonce": 499161,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          -18
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-50",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-59-sub-mu42d03x-59-note",
+      "type": "arrow",
+      "x": -769,
+      "y": 3932,
+      "width": -49,
+      "height": -3,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 138567,
+      "version": 1,
+      "versionNonce": 333160,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -49,
+          -3
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-59",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-47-sub-mu42d03x-52",
+      "type": "arrow",
+      "x": 0,
+      "y": 3913,
+      "width": 0,
+      "height": 143,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 451764,
+      "version": 1,
+      "versionNonce": 784104,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          143
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-47",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-52",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-52-sub-mu42d03x-52-note",
+      "type": "arrow",
+      "x": -245,
+      "y": 4092,
+      "width": -176,
+      "height": 82,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 464913,
+      "version": 1,
+      "versionNonce": 287449,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -106,
+          0
+        ],
+        [
+          -176,
+          49
+        ],
+        [
+          -176,
+          82
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-52",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-52-flow-mu42d03x-54",
+      "type": "arrow",
+      "x": -81,
+      "y": 4119,
+      "width": -109,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 275697,
+      "version": 1,
+      "versionNonce": 71083,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          -109,
+          29
+        ],
+        [
+          -109,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-52",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-54",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-52-flow-mu42d03x-56",
+      "type": "arrow",
+      "x": 81,
+      "y": 4119,
+      "width": 105,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 993102,
+      "version": 1,
+      "versionNonce": 209842,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          105,
+          29
+        ],
+        [
+          105,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-52",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-56",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-54-flow-mu42d03x-54-note",
+      "type": "arrow",
+      "x": -190,
+      "y": 4238,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 395902,
+      "version": 1,
+      "versionNonce": 74888,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-54",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-56-flow-mu42d03x-56-note",
+      "type": "arrow",
+      "x": 186,
+      "y": 4238,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 780785,
+      "version": 1,
+      "versionNonce": 353146,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-56",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-56-diagram-mu42d03x-58",
+      "type": "arrow",
+      "x": 334,
+      "y": 4212,
+      "width": 214,
+      "height": -4,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 559714,
+      "version": 1,
+      "versionNonce": 68507,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          107,
+          0
+        ],
+        [
+          107,
+          -4
+        ],
+        [
+          214,
+          -4
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-56",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42d03x-56-diagram-mu42d03x-58_label",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "edge-flow-mu42d03x-56-diagram-mu42d03x-58_label",
+      "type": "text",
+      "x": 321,
+      "y": 4195,
+      "width": 240,
+      "height": 24,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_4"
+      ],
+      "roundness": null,
+      "seed": 398798,
+      "version": 1,
+      "versionNonce": 728274,
+      "isDeleted": false,
+      "text": "Hardware Building Blocks (Tri-State Buffer & Latch)",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "edge-flow-mu42d03x-56-diagram-mu42d03x-58",
+      "autoResize": true
+    },
+    {
+      "id": "edge-topic-mu42d03x-61-sub-mu42d03x-62",
+      "type": "arrow",
+      "x": -299,
+      "y": 4971,
+      "width": -68,
+      "height": -104,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 592631,
+      "version": 1,
+      "versionNonce": 49095,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          -104
+        ],
+        [
+          -68,
+          -104
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-61",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-62",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-61-sub-mu42d03x-71",
+      "type": "arrow",
+      "x": -299,
+      "y": 4995,
+      "width": -68,
+      "height": 44,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 244347,
+      "version": 1,
+      "versionNonce": 901859,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -34,
+          0
+        ],
+        [
+          -34,
+          44
+        ],
+        [
+          -68,
+          44
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-61",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-71",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-62-sub-mu42d03x-62-note",
+      "type": "arrow",
+      "x": -789,
+      "y": 4868,
+      "width": -64,
+      "height": -48,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 969058,
+      "version": 1,
+      "versionNonce": 318679,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -64,
+          -48
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-62",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-71-sub-mu42d03x-71-note",
+      "type": "arrow",
+      "x": -846,
+      "y": 5039,
+      "width": -49,
+      "height": -3,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 186175,
+      "version": 1,
+      "versionNonce": 199842,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -49,
+          -3
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-71",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-topic-mu42d03x-61-sub-mu42d03x-64",
+      "type": "arrow",
+      "x": 0,
+      "y": 5020,
+      "width": 0,
+      "height": 143,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 893775,
+      "version": 1,
+      "versionNonce": 960173,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          143
+        ]
+      ],
+      "startBinding": {
+        "elementId": "topic-mu42d03x-61",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "sub-mu42d03x-64",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-64-sub-mu42d03x-64-note",
+      "type": "arrow",
+      "x": -231,
+      "y": 5199,
+      "width": -257,
+      "height": 82,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 6310,
+      "version": 1,
+      "versionNonce": 122723,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -154,
+          0
+        ],
+        [
+          -257,
+          49
+        ],
+        [
+          -257,
+          82
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-64",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-64-flow-mu42d03x-66",
+      "type": "arrow",
+      "x": -76,
+      "y": 5226,
+      "width": -148,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 784440,
+      "version": 1,
+      "versionNonce": 814803,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          -148,
+          29
+        ],
+        [
+          -148,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-64",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-66",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-sub-mu42d03x-64-flow-mu42d03x-68",
+      "type": "arrow",
+      "x": 76,
+      "y": 5226,
+      "width": 152,
+      "height": 58,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 472431,
+      "version": 1,
+      "versionNonce": 314844,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          29
+        ],
+        [
+          152,
+          29
+        ],
+        [
+          152,
+          58
+        ]
+      ],
+      "startBinding": {
+        "elementId": "sub-mu42d03x-64",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "flow-mu42d03x-68",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-66-flow-mu42d03x-66-note",
+      "type": "arrow",
+      "x": -224,
+      "y": 5345,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 123536,
+      "version": 1,
+      "versionNonce": 222141,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-66",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-68-flow-mu42d03x-68-note",
+      "type": "arrow",
+      "x": 228,
+      "y": 5345,
+      "width": 0,
+      "height": 27,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "elbowed": false,
+      "seed": 683667,
+      "version": 1,
+      "versionNonce": 906087,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-68",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": null
+    },
+    {
+      "id": "edge-flow-mu42d03x-68-diagram-mu42d03x-70",
+      "type": "arrow",
+      "x": 418,
+      "y": 5319,
+      "width": 130,
+      "height": -4,
+      "angle": 0,
+      "strokeColor": "#ced4da",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": {
+        "type": 2
+      },
+      "elbowed": false,
+      "seed": 994146,
+      "version": 1,
+      "versionNonce": 919528,
+      "isDeleted": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          65,
+          0
+        ],
+        [
+          65,
+          -4
+        ],
+        [
+          130,
+          -4
+        ]
+      ],
+      "startBinding": {
+        "elementId": "flow-mu42d03x-68",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42d03x-68-diagram-mu42d03x-70_label",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "edge-flow-mu42d03x-68-diagram-mu42d03x-70_label",
+      "type": "text",
+      "x": 363,
+      "y": 5302,
+      "width": 240,
+      "height": 24,
+      "angle": 0,
+      "strokeColor": "#f8f9fa",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [
+        "grp_mu42d041_5"
+      ],
+      "roundness": null,
+      "seed": 328600,
+      "version": 1,
+      "versionNonce": 277784,
+      "isDeleted": false,
+      "text": "Address Space Allocation Architecture",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "edge-flow-mu42d03x-68-diagram-mu42d03x-70",
+      "autoResize": true
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#121212",
+    "currentItemFontFamily": 1,
+    "theme": "dark",
+    "gridSize": null
+  },
+  "files": {}
+}

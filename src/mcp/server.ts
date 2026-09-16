@@ -15,6 +15,7 @@ import {
 import { buildApollonModel } from "./diagramBuilders/apollonBuilder";
 import { buildExcalidrawScene } from "./diagramBuilders/excalidrawBuilder";
 import { validateAndFormatMermaid } from "./diagramBuilders/mermaidBuilder";
+import { markdownToExcalidraw } from "~/features/visual-notes";
 
 export function createNetheriteMcpServer() {
   const server = new McpServer({
@@ -493,6 +494,59 @@ export function createNetheriteMcpServer() {
         return {
           isError: true,
           content: [{ type: "text", text: `Failed to create Excalidraw drawing: ${err.message}` }],
+        };
+      }
+    }
+  );
+
+  // ==========================================
+  // TOOL 7.5: Generate Visual Notes from Markdown
+  // ==========================================
+  server.tool(
+    "netherite_generate_visual_notes",
+    "Convert structured Markdown notes into a publication-grade Excalidraw diagram (.excalidraw) with central colored topic, radial subtopics, dashed flow steps, branching notes, and collision-free ASCII diagrams. Can save directly to Google Drive or return the scene JSON.",
+    {
+      markdown: z.string().describe("Structured hierarchical Markdown notes to visualize"),
+      title: z.string().optional().describe("Optional drawing title (e.g. 'Transport Layer Notes.excalidraw'). If provided, saves to Google Drive."),
+      theme: z.enum(["dark", "light"]).default("light").describe("Canvas background theme (default: light)"),
+      parentId: z.string().optional().describe("Optional folder ID to create inside"),
+    },
+    async ({ markdown, title, theme, parentId }) => {
+      try {
+        const scene = markdownToExcalidraw(markdown, { theme });
+        const contentString = JSON.stringify(scene, null, 2);
+
+        let createdFile: any = null;
+        if (title) {
+          const session = getMcpSession();
+          const cleanTitle = title.endsWith(".excalidraw") ? title : `${title}.excalidraw`;
+          createdFile = await createNote(session, cleanTitle, contentString, parentId, "drawing");
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: createdFile
+                    ? `Visual note created and saved as '${createdFile.name}' (${scene.elements.length} elements)`
+                    : `Visual note diagram generated successfully with ${scene.elements.length} elements`,
+                  file: createdFile,
+                  elementCount: scene.elements.length,
+                  scene: createdFile ? undefined : scene,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: `Failed to generate visual notes: ${err.message}` }],
         };
       }
     }

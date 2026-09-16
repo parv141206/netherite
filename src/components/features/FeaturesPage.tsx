@@ -163,7 +163,7 @@ export function FeaturesPage({ session }: { session?: any } = {}) {
   const x = useTransform(smoothProgress, [0, 1], ["0%", `-${(totalSlides - 1) * 100}vw`]);
 
   useEffect(() => {
-    const unsubscribe = scrollYProgress.on("change", (val) => {
+    const unsubscribe = scrollYProgress.on("change", (val: number) => {
       const idx = Math.min(totalSlides - 1, Math.max(0, Math.round(val * (totalSlides - 1))));
       setActiveSlideIndex(idx);
     });

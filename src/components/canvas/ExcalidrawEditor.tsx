@@ -25,6 +25,8 @@ import {
 import { EngineeringBottomPanel } from "@/features/engineering-canvas/engineering-bottom-panel";
 import engineeringStyles from "@/features/engineering-canvas/engineering-sidebar.module.scss";
 import { useTheme } from "~/components/ThemeProvider";
+import { Sparkles } from "lucide-react";
+import { VisualNotesModal } from "./VisualNotesModal";
 
 interface ExcalidrawEditorProps {
   initialContent?: string;
@@ -46,6 +48,7 @@ export default function ExcalidrawEditor({
   const [elements, setElements] = useState<readonly ExcalidrawElement[]>([]);
   const [appState, setAppState] = useState<AppState | null>(null);
   const [sidebarDocked, setSidebarDocked] = useState(false);
+  const [isVisualNotesModalOpen, setIsVisualNotesModalOpen] = useState(false);
   const [, startSidebarTransition] = useTransition();
 
   const onSaveRef = useRef(onSave);
@@ -248,7 +251,20 @@ export default function ExcalidrawEditor({
         theme={activeTheme}
         onExcalidrawAPI={handleApi}
         onChange={handleChange}
-        renderTopRightUI={() => <EngineeringSidebarTrigger />}
+        renderTopRightUI={() => (
+          <div className="flex items-center gap-1.5 mr-1">
+            <button
+              type="button"
+              onClick={() => setIsVisualNotesModalOpen(true)}
+              title="Generate Visual Notes from Markdown"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Visual Notes</span>
+            </button>
+            <EngineeringSidebarTrigger />
+          </div>
+        )}
         UIOptions={{
           canvasActions: {
             loadScene: false, // keep everything native in Netherite
@@ -268,6 +284,12 @@ export default function ExcalidrawEditor({
           />
         </Footer>
       </Excalidraw>
+      <VisualNotesModal
+        isOpen={isVisualNotesModalOpen}
+        onClose={() => setIsVisualNotesModalOpen(false)}
+        api={api}
+        currentTheme={activeTheme}
+      />
     </div>
   );
 }
