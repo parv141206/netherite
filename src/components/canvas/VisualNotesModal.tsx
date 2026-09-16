@@ -21,6 +21,7 @@ import {
   parseMarkdownNotes,
   CN_STUDY_TEMPLATE,
   REFERENCE_SKETCH_TEMPLATE,
+  VISUAL_NOTES_CONVERSION_PROMPT,
 } from "~/features/visual-notes";
 
 interface VisualNotesModalProps {
@@ -40,6 +41,15 @@ export function VisualNotesModal({
   const [theme, setTheme] = useState<"light" | "dark">(currentTheme);
   const [roughness, setRoughness] = useState<number>(1);
   const [copied, setCopied] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
+
+  const handleCopyPrompt = () => {
+    navigator.clipboard.writeText(VISUAL_NOTES_CONVERSION_PROMPT);
+    setPromptCopied(true);
+    toast.success("AI Conversion Prompt copied to clipboard!");
+    setTimeout(() => setPromptCopied(false), 2500);
+  };
 
   // Live parsed document statistics
   const docStats = useMemo(() => {
@@ -190,7 +200,21 @@ export function VisualNotesModal({
           )}
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-neutral-400">Presets:</span>
+            <button
+              type="button"
+              onClick={() => setShowPrompt(!showPrompt)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs transition-colors ${
+                showPrompt
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+              }`}
+              title="Copy AI Prompt to convert your raw notes into Netherite Visual Notes without losing data"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{showPrompt ? "Hide AI Prompt" : "AI Conversion Prompt"}</span>
+            </button>
+
+            <span className="text-neutral-400 ml-1">Presets:</span>
             <button
               type="button"
               onClick={() => setMarkdown(CN_STUDY_TEMPLATE)}
@@ -210,12 +234,42 @@ export function VisualNotesModal({
           </div>
         </div>
 
+        {/* Collapsible AI Prompt Drawer */}
+        {showPrompt && (
+          <div className="mx-6 mt-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                  AI Conversion Prompt (ChatGPT / Claude / Gemini / DeepSeek)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyPrompt}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {promptCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{promptCopied ? "Copied Prompt!" : "Copy Full Prompt"}</span>
+              </button>
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Paste this prompt into your favorite AI along with your raw notes. It guarantees <strong>100% preservation of all content, numerical data, formulas, and schematics</strong> while structuring the markdown into <code># Topic</code>, <code>## Subtopic</code>, <code>### [flow]</code>, and <code>#### Concept</code> tags.
+            </p>
+            <div className="relative">
+              <pre className="max-h-36 overflow-y-auto p-3 text-[11px] font-mono leading-relaxed rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 select-all whitespace-pre-wrap">
+                {VISUAL_NOTES_CONVERSION_PROMPT}
+              </pre>
+            </div>
+          </div>
+        )}
+
         {/* Body Editor */}
         <div className="flex-1 min-h-[360px] p-6 flex flex-col gap-3 overflow-hidden">
           <div className="flex items-center justify-between text-xs text-neutral-500">
             <span>Markdown Notes Source</span>
             <span className="text-neutral-400">
-              Supports <code># Topic [color: green]</code>, <code>## Subtopic</code>, <code>### [flow] Step</code>, bullets &amp; <code>```ascii</code>
+              Supports <code># Topic [color: green]</code>, <code>## Subtopic</code>, <code>### [flow] Step</code>, <code>#### Concept</code>, bullets &amp; <code>```ascii</code>
             </span>
           </div>
 

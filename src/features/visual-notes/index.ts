@@ -14,6 +14,7 @@ export * from "./parser";
 export * from "./layout";
 export * from "./generator";
 export * from "./templates";
+export * from "./prompt";
 
 /**
  * Main API: Converts structured Markdown notes into a publication-grade Excalidraw diagram scene.

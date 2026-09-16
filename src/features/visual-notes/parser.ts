@@ -231,7 +231,7 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
     }
 
     // Level 3 Heading: Sub-subtopic or Flow step
-    if (line.startsWith("### ")) {
+    if (line.startsWith("### ") && !line.startsWith("####")) {
       const headingText = line.slice(4).trim();
       const tags = extractDirectives(headingText);
 
@@ -252,6 +252,39 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
         id: uniqueId("flow"),
         title: tags.cleanedText || "Flow Step",
         style: tags.style || "dashed", // default to dashed rounded box matching user sketch
+        color: tags.color,
+        positionHint: tags.positionHint,
+        isFlowStep: tags.isFlow,
+        notes: [],
+        children: [],
+        diagrams: [],
+      };
+      currentSubtopic.children.push(currentChild);
+      continue;
+    }
+
+    // Level 4 Heading: Deep Concept / Sub-branch
+    if (line.startsWith("#### ")) {
+      const headingText = line.slice(5).trim();
+      const tags = extractDirectives(headingText);
+
+      if (!currentSubtopic) {
+        const topic = ensureTopic();
+        currentSubtopic = {
+          id: uniqueId("sub"),
+          title: "Sub Topic",
+          style: "solid",
+          notes: [],
+          children: [],
+          diagrams: [],
+        };
+        topic.subtopics.push(currentSubtopic);
+      }
+
+      currentChild = {
+        id: uniqueId("flow"),
+        title: tags.cleanedText || "Concept",
+        style: tags.style || "dashed",
         color: tags.color,
         positionHint: tags.positionHint,
         isFlowStep: tags.isFlow,
