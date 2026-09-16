@@ -4,7 +4,7 @@
   "source": "netherite-visual-notes",
   "elements": [
     {
-      "id": "topic-mu42cwol-1",
+      "id": "topic-mu42zdxy-1",
       "type": "rectangle",
       "x": -266,
       "y": -35,
@@ -19,24 +19,44 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 479921,
+      "seed": 133232,
       "version": 1,
-      "versionNonce": 933399,
+      "versionNonce": 712399,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu42cwol-1_text",
+          "id": "topic-mu42zdxy-1_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-topic-mu42zdxy-1-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-4",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-13",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-15",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-6",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu42cwol-1_text",
+      "id": "topic-mu42zdxy-1_text",
       "type": "text",
       "x": -250,
       "y": -13,
@@ -51,25 +71,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 665648,
+      "seed": 525014,
       "version": 1,
-      "versionNonce": 288197,
+      "versionNonce": 287999,
       "isDeleted": false,
       "text": "Microprocessor Operations & Bus Cycles",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu42cwol-1"
+      "containerId": "topic-mu42zdxy-1"
     },
     {
-      "id": "topic-mu42cwol-1-note",
+      "id": "topic-mu42zdxy-1-note",
       "type": "text",
-      "x": -175,
-      "y": 85,
+      "x": 327,
+      "y": -46,
       "width": 320,
       "height": 183,
       "angle": 0,
@@ -81,21 +101,27 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 527127,
+      "seed": 141937,
       "version": 1,
-      "versionNonce": 297692,
+      "versionNonce": 791488,
       "isDeleted": false,
       "text": "**Subject Code:** BE05000551 / 3160712\n(Microprocessor and Interfacing - MPI)\n\n**Standard References:** Ramesh S.\nGaonkar (*Microprocessor Architecture,\nProgramming, and Applications with the\n8085*) + Darshan Institute GTU Notes\n(Unit 2) + GTU Past Examination Papers\n(2021–2025)",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-topic-mu42zdxy-1-topic-mu42zdxy-1-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwol-4",
+      "id": "sub-mu42zdxy-4",
       "type": "rectangle",
       "x": -205,
       "y": -210,
@@ -103,31 +129,39 @@
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 112971,
+      "seed": 139726,
       "version": 1,
-      "versionNonce": 41874,
+      "versionNonce": 375958,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwol-4_text",
+          "id": "sub-mu42zdxy-4_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-4",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-4-sub-mu42zdxy-4-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwol-4_text",
+      "id": "sub-mu42zdxy-4_text",
       "type": "text",
       "x": -193,
       "y": -195,
@@ -142,22 +176,22 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 602664,
+      "seed": 791281,
       "version": 1,
-      "versionNonce": 574412,
+      "versionNonce": 340069,
       "isDeleted": false,
       "text": "Internal vs External System Operations",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwol-4"
+      "containerId": "sub-mu42zdxy-4"
     },
     {
-      "id": "sub-mu42cwol-4-note",
+      "id": "sub-mu42zdxy-4-note",
       "type": "text",
       "x": -172,
       "y": -450,
@@ -172,21 +206,27 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 830359,
+      "seed": 936254,
       "version": 1,
-      "versionNonce": 776568,
+      "versionNonce": 751036,
       "isDeleted": false,
       "text": "A microprocessor is an active digital\nlogic device executing programs stored\nin memory. Its operations divide into\ntwo domains: Internal Operations\nexecuted within the CPU architecture\n(ALU operations, register transfers,\nflag updates, instruction decoding), and\nExternal Bus Operations communicating\nacross system buses with memory chips\nand I/O peripherals.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-4-sub-mu42zdxy-4-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwol-13",
+      "id": "sub-mu42zdxy-13",
       "type": "rectangle",
       "x": -766,
       "y": -141,
@@ -194,31 +234,39 @@
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 842478,
+      "seed": 518510,
       "version": 1,
-      "versionNonce": 937536,
+      "versionNonce": 75653,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwol-13_text",
+          "id": "sub-mu42zdxy-13_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-13",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-13-sub-mu42zdxy-13-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwol-13_text",
+      "id": "sub-mu42zdxy-13_text",
       "type": "text",
       "x": -754,
       "y": -126,
@@ -233,22 +281,22 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 797654,
+      "seed": 286852,
       "version": 1,
-      "versionNonce": 281808,
+      "versionNonce": 754768,
       "isDeleted": false,
       "text": "Control Signals & Hardware Status Lines",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwol-13"
+      "containerId": "sub-mu42zdxy-13"
     },
     {
-      "id": "sub-mu42cwom-15",
+      "id": "sub-mu42zdxy-15",
       "type": "rectangle",
       "x": -851,
       "y": 30,
@@ -256,31 +304,39 @@
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 62671,
+      "seed": 73292,
       "version": 1,
-      "versionNonce": 222265,
+      "versionNonce": 59011,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-15_text",
+          "id": "sub-mu42zdxy-15_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-15",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-15-sub-mu42zdxy-15-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-15_text",
+      "id": "sub-mu42zdxy-15_text",
       "type": "text",
       "x": -839,
       "y": 45,
@@ -295,22 +351,22 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 770141,
+      "seed": 832203,
       "version": 1,
-      "versionNonce": 196638,
+      "versionNonce": 475744,
       "isDeleted": false,
       "text": "Microprocessor Operations Architecture Hierarchy",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-15"
+      "containerId": "sub-mu42zdxy-15"
     },
     {
-      "id": "sub-mu42cwol-13-note",
+      "id": "sub-mu42zdxy-13-note",
       "type": "text",
       "x": -1152,
       "y": -186,
@@ -325,21 +381,27 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 256563,
+      "seed": 219754,
       "version": 1,
-      "versionNonce": 351325,
+      "versionNonce": 748692,
       "isDeleted": false,
       "text": "The 8085 coordinates all bus activity\nusing control and status signals: IO/M'\ndesignates whether the current cycle\ntargets memory (0) or peripheral I/O\n(1). RD' coordinates read transfers and\nWR' coordinates write transfers.\nTogether, these signals generate MEMR',\nMEMW', IOR', and IOW' strobes via\nexternal gating logic.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-13-sub-mu42zdxy-13-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-15-note",
+      "id": "sub-mu42zdxy-15-note",
       "type": "text",
       "x": -1230,
       "y": 30,
@@ -354,56 +416,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 945443,
+      "seed": 564587,
       "version": 1,
-      "versionNonce": 998223,
+      "versionNonce": 892440,
       "isDeleted": false,
       "text": "The internal architecture executes\nregister-to-register transfers, ALU\narithmetic (+, -), logical bit\nmanipulation (AND, OR, XOR), flag\ncondition updates, and instruction\ndecoding (IR to ID). External operations\ninterface directly with memory arrays\nand peripheral controllers.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-15-sub-mu42zdxy-15-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwol-6",
+      "id": "sub-mu42zdxy-6",
       "type": "rectangle",
-      "x": -368,
-      "y": 325,
+      "x": -233,
+      "y": 190,
       "width": 467,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 337936,
+      "seed": 796327,
       "version": 1,
-      "versionNonce": 331858,
+      "versionNonce": 447520,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwol-6_text",
+          "id": "sub-mu42zdxy-6_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-6",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-6-sub-mu42zdxy-6-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-6-flow-mu42zdxy-8",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-6-flow-mu42zdxy-10",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwol-6_text",
+      "id": "sub-mu42zdxy-6_text",
       "type": "text",
-      "x": -356,
-      "y": 340,
+      "x": -221,
+      "y": 205,
       "width": 443,
       "height": 22,
       "angle": 0,
@@ -415,57 +499,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 706536,
+      "seed": 831404,
       "version": 1,
-      "versionNonce": 144309,
+      "versionNonce": 518127,
       "isDeleted": false,
       "text": "The Four Fundamental External Bus Operations",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwol-6"
+      "containerId": "sub-mu42zdxy-6"
     },
     {
-      "id": "flow-mu42cwol-8",
+      "id": "flow-mu42zdxy-8",
       "type": "rectangle",
       "x": -316,
-      "y": 446,
+      "y": 311,
       "width": 276,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 299220,
+      "seed": 117128,
       "version": 1,
-      "versionNonce": 880136,
+      "versionNonce": 869854,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwol-8_text",
+          "id": "flow-mu42zdxy-8_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-6-flow-mu42zdxy-8",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-8-flow-mu42zdxy-8-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwol-8_text",
+      "id": "flow-mu42zdxy-8_text",
       "type": "text",
       "x": -306,
-      "y": 461,
+      "y": 326,
       "width": 256,
       "height": 20,
       "angle": 0,
@@ -477,57 +569,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 39301,
+      "seed": 472408,
       "version": 1,
-      "versionNonce": 945960,
+      "versionNonce": 435126,
       "isDeleted": false,
       "text": "Bus Read Communication Cycle",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwol-8"
+      "containerId": "flow-mu42zdxy-8"
     },
     {
-      "id": "flow-mu42cwol-10",
+      "id": "flow-mu42zdxy-10",
       "type": "rectangle",
       "x": 40,
-      "y": 446,
+      "y": 311,
       "width": 284,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 645230,
+      "seed": 460439,
       "version": 1,
-      "versionNonce": 546271,
+      "versionNonce": 658462,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwol-10_text",
+          "id": "flow-mu42zdxy-10_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-6-flow-mu42zdxy-10",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-10-flow-mu42zdxy-10-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-10-diagram-mu42zdxy-12",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwol-10_text",
+      "id": "flow-mu42zdxy-10_text",
       "type": "text",
       "x": 50,
-      "y": 461,
+      "y": 326,
       "width": 264,
       "height": 20,
       "angle": 0,
@@ -539,25 +643,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 151474,
+      "seed": 366349,
       "version": 1,
-      "versionNonce": 250291,
+      "versionNonce": 839703,
       "isDeleted": false,
       "text": "Bus Write Communication Cycle",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwol-10"
+      "containerId": "flow-mu42zdxy-10"
     },
     {
-      "id": "sub-mu42cwol-6-note",
+      "id": "sub-mu42zdxy-6-note",
       "type": "text",
       "x": -651,
-      "y": 446,
+      "y": 311,
       "width": 275,
       "height": 190,
       "angle": 0,
@@ -569,24 +673,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 788997,
+      "seed": 445170,
       "version": 1,
-      "versionNonce": 546444,
+      "versionNonce": 26690,
       "isDeleted": false,
       "text": "Every computer program reduces to\nfour basic external bus cycles:\nMemory Read (IO/M'=0, RD'=0, WR'=1)\nto fetch opcodes and operands;\nMemory Write (IO/M'=0, RD'=1,\nWR'=0) to store results; I/O Read\n(IO/M'=1, RD'=0, WR'=1) to accept\ndata from sensors/ports; and I/O\nWrite (IO/M'=1, RD'=1, WR'=0) to\noutput data to actuators/displays.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-6-sub-mu42zdxy-6-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwol-8-note",
+      "id": "flow-mu42zdxy-8-note",
       "type": "text",
       "x": -485,
-      "y": 673,
+      "y": 538,
       "width": 314,
       "height": 114,
       "angle": 0,
@@ -598,24 +708,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 467718,
+      "seed": 517399,
       "version": 1,
-      "versionNonce": 727459,
+      "versionNonce": 995965,
       "isDeleted": false,
       "text": "The microprocessor places a 16-bit\naddress on the address bus to select the\ntargeted memory location or I/O port via\naddress decoders, asserts the active-low\nRD' strobe, and latches data driven onto\nD7-D0 into internal registers.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-8-flow-mu42zdxy-8-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwol-10-note",
+      "id": "flow-mu42zdxy-10-note",
       "type": "text",
       "x": 40,
-      "y": 538,
+      "y": 403,
       "width": 314,
       "height": 95,
       "angle": 0,
@@ -627,50 +743,62 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 22243,
+      "seed": 96220,
       "version": 1,
-      "versionNonce": 513546,
+      "versionNonce": 424867,
       "isDeleted": false,
       "text": "The CPU asserts the targeted 16-bit\naddress, drives computed data onto data\nbus lines D7-D0, and emits an active-low\nWR' strobe pulse to latch the data byte\npermanently into the external device.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-10-flow-mu42zdxy-10-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwol-12",
+      "id": "diagram-mu42zdxy-12",
       "type": "rectangle",
       "x": 560,
-      "y": 426,
+      "y": 291,
       "width": 633,
       "height": 202,
       "angle": 0,
-      "strokeColor": "#dee2e6",
-      "backgroundColor": "#fafafa",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 901626,
+      "seed": 753635,
       "version": 1,
-      "versionNonce": 575098,
-      "isDeleted": false
+      "versionNonce": 211105,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-10-diagram-mu42zdxy-12",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwol-12_code",
+      "id": "diagram-mu42zdxy-12_code",
       "type": "text",
       "x": 572,
-      "y": 438,
+      "y": 303,
       "width": 609,
       "height": 178,
       "angle": 0,
@@ -682,12 +810,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 884965,
+      "seed": 370927,
       "version": 1,
-      "versionNonce": 578935,
+      "versionNonce": 554887,
       "isDeleted": false,
       "text": "+----------------+      1. Place 16-bit Address      +----------------------+\n|                |==================================>|                      |\n|                |                                   |  Memory / I/O Port   |\n|                |      2. Assert RD' = 0 (Pulse)    |      Selection       |\n|  Intel 8085    |---------------------------------->|   (Address Decoder)  |\n| Microprocessor |                                   |                      |\n|                |      3. Drive Data on Data Bus    |                      |\n|                |<==================================|                      |\n|                |              (D7 - D0)            +----------------------+\n+----------------+",
       "fontSize": 13,
@@ -696,10 +824,10 @@
       "verticalAlign": "top"
     },
     {
-      "id": "topic-mu42cwom-18",
+      "id": "topic-mu42zdxy-18",
       "type": "rectangle",
       "x": -322,
-      "y": 1325,
+      "y": 1190,
       "width": 644,
       "height": 70,
       "angle": 0,
@@ -711,27 +839,43 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 494119,
+      "seed": 153782,
       "version": 1,
-      "versionNonce": 566359,
+      "versionNonce": 673924,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu42cwom-18_text",
+          "id": "topic-mu42zdxy-18_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-19",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-28",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-30",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-21",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu42cwom-18_text",
+      "id": "topic-mu42zdxy-18_text",
       "type": "text",
       "x": -306,
-      "y": 1347,
+      "y": 1212,
       "width": 612,
       "height": 26,
       "angle": 0,
@@ -743,57 +887,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 315662,
+      "seed": 57276,
       "version": 1,
-      "versionNonce": 313829,
+      "versionNonce": 699962,
       "isDeleted": false,
       "text": "Semiconductor Memory Classification & Cell Tech",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu42cwom-18"
+      "containerId": "topic-mu42zdxy-18"
     },
     {
-      "id": "sub-mu42cwom-19",
+      "id": "sub-mu42zdxy-19",
       "type": "rectangle",
       "x": -219,
-      "y": 1150,
+      "y": 1015,
       "width": 439,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 197352,
+      "seed": 498978,
       "version": 1,
-      "versionNonce": 78795,
+      "versionNonce": 561652,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-19_text",
+          "id": "sub-mu42zdxy-19_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-19",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-19-sub-mu42zdxy-19-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-19_text",
+      "id": "sub-mu42zdxy-19_text",
       "type": "text",
       "x": -207,
-      "y": 1165,
+      "y": 1030,
       "width": 415,
       "height": 22,
       "angle": 0,
@@ -805,25 +957,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 427768,
+      "seed": 572663,
       "version": 1,
-      "versionNonce": 282414,
+      "versionNonce": 393376,
       "isDeleted": false,
       "text": "Primary Semiconductor Memory Architecture",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-19"
+      "containerId": "sub-mu42zdxy-19"
     },
     {
-      "id": "sub-mu42cwom-19-note",
+      "id": "sub-mu42zdxy-19-note",
       "type": "text",
       "x": -168,
-      "y": 967,
+      "y": 832,
       "width": 306,
       "height": 133,
       "angle": 0,
@@ -835,56 +987,70 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 488044,
+      "seed": 201915,
       "version": 1,
-      "versionNonce": 160849,
+      "versionNonce": 418022,
       "isDeleted": false,
       "text": "Semiconductor memory is an array of\nstorage cells organized as words\n(bytes). Each location has a unique\nbinary address. Primary memory is split\ninto volatile Read/Write Random Access\nMemory (RAM) and non-volatile Read-Only\nMemory (ROM).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-19-sub-mu42zdxy-19-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-28",
+      "id": "sub-mu42zdxy-28",
       "type": "rectangle",
       "x": -784,
-      "y": 1219,
+      "y": 1084,
       "width": 382,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 106650,
+      "seed": 928004,
       "version": 1,
-      "versionNonce": 877420,
+      "versionNonce": 864700,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-28_text",
+          "id": "sub-mu42zdxy-28_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-28",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-28-sub-mu42zdxy-28-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-28_text",
+      "id": "sub-mu42zdxy-28_text",
       "type": "text",
       "x": -772,
-      "y": 1234,
+      "y": 1099,
       "width": 358,
       "height": 22,
       "angle": 0,
@@ -896,57 +1062,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 644059,
+      "seed": 352382,
       "version": 1,
-      "versionNonce": 171974,
+      "versionNonce": 560726,
       "isDeleted": false,
       "text": "Read-Only Memory (ROM Technologies)",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-28"
+      "containerId": "sub-mu42zdxy-28"
     },
     {
-      "id": "sub-mu42cwom-30",
+      "id": "sub-mu42zdxy-30",
       "type": "rectangle",
       "x": -841,
-      "y": 1390,
+      "y": 1255,
       "width": 439,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 158700,
+      "seed": 674647,
       "version": 1,
-      "versionNonce": 574524,
+      "versionNonce": 278353,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-30_text",
+          "id": "sub-mu42zdxy-30_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-30",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-30-sub-mu42zdxy-30-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-30_text",
+      "id": "sub-mu42zdxy-30_text",
       "type": "text",
       "x": -829,
-      "y": 1405,
+      "y": 1270,
       "width": 415,
       "height": 22,
       "angle": 0,
@@ -958,25 +1132,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 434836,
+      "seed": 313699,
       "version": 1,
-      "versionNonce": 71768,
+      "versionNonce": 303460,
       "isDeleted": false,
       "text": "Memory Cell Transistor Circuit Topologies",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-30"
+      "containerId": "sub-mu42zdxy-30"
     },
     {
-      "id": "sub-mu42cwom-28-note",
+      "id": "sub-mu42zdxy-28-note",
       "type": "text",
       "x": -1193,
-      "y": 1159,
+      "y": 1024,
       "width": 314,
       "height": 265,
       "angle": 0,
@@ -988,24 +1162,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 880644,
+      "seed": 693848,
       "version": 1,
-      "versionNonce": 858589,
+      "versionNonce": 227193,
       "isDeleted": false,
       "text": "ROM retains data permanently without\nelectrical power. Masked ROM is\nfactory-programmed via photolithography\nmasks for mass firmware. PROM uses\nfusible links burned once by\nhigh-current pulses. EPROM uses\nfloating-gate charge traps erased by\nexposing its quartz window to UV light\n(253.7 nm) for 20 minutes. EEPROM\nsupports byte-level electrical erasure\nvia Fowler-Nordheim tunneling. Flash\nMemory wipes data in large 4 KB to 64 KB\nblocks for high throughput in SSDs and\nBIOS chips.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-28-sub-mu42zdxy-28-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-30-note",
+      "id": "sub-mu42zdxy-30-note",
       "type": "text",
       "x": -1287,
-      "y": 1465,
+      "y": 1330,
       "width": 306,
       "height": 114,
       "angle": 0,
@@ -1017,56 +1197,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 77817,
+      "seed": 173922,
       "version": 1,
-      "versionNonce": 265155,
+      "versionNonce": 281114,
       "isDeleted": false,
       "text": "The physical silicon topologies define\nspeed and density trade-offs: SRAM uses\ncross-coupled inverters with word line\ngates, while DRAM uses a single\npass-transistor gating storage charge\ninto a microscopic cell capacitor.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-30-sub-mu42zdxy-30-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-21",
+      "id": "sub-mu42zdxy-21",
       "type": "rectangle",
       "x": -210,
-      "y": 1550,
+      "y": 1415,
       "width": 420,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 413064,
+      "seed": 857357,
       "version": 1,
-      "versionNonce": 611769,
+      "versionNonce": 778912,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-21_text",
+          "id": "sub-mu42zdxy-21_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-21",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-21-sub-mu42zdxy-21-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-21-flow-mu42zdxy-23",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-21-flow-mu42zdxy-25",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-21_text",
+      "id": "sub-mu42zdxy-21_text",
       "type": "text",
       "x": -198,
-      "y": 1565,
+      "y": 1430,
       "width": 396,
       "height": 22,
       "angle": 0,
@@ -1078,57 +1280,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 438399,
+      "seed": 825324,
       "version": 1,
-      "versionNonce": 44644,
+      "versionNonce": 865420,
       "isDeleted": false,
       "text": "Random Access Memory (RAM Technologies)",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-21"
+      "containerId": "sub-mu42zdxy-21"
     },
     {
-      "id": "flow-mu42cwom-23",
+      "id": "flow-mu42zdxy-23",
       "type": "rectangle",
       "x": -374,
-      "y": 1671,
+      "y": 1536,
       "width": 334,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 968801,
+      "seed": 264635,
       "version": 1,
-      "versionNonce": 497194,
+      "versionNonce": 281112,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-23_text",
+          "id": "flow-mu42zdxy-23_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-21-flow-mu42zdxy-23",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-23-flow-mu42zdxy-23-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-23_text",
+      "id": "flow-mu42zdxy-23_text",
       "type": "text",
       "x": -364,
-      "y": 1686,
+      "y": 1551,
       "width": 314,
       "height": 20,
       "angle": 0,
@@ -1140,57 +1350,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 502856,
+      "seed": 901649,
       "version": 1,
-      "versionNonce": 646299,
+      "versionNonce": 816925,
       "isDeleted": false,
       "text": "Static RAM (SRAM 6-Transistor Cell)",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-23"
+      "containerId": "flow-mu42zdxy-23"
     },
     {
-      "id": "flow-mu42cwom-25",
+      "id": "flow-mu42zdxy-25",
       "type": "rectangle",
       "x": 40,
-      "y": 1671,
+      "y": 1536,
       "width": 301,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 307041,
+      "seed": 462880,
       "version": 1,
-      "versionNonce": 837260,
+      "versionNonce": 385531,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-25_text",
+          "id": "flow-mu42zdxy-25_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-21-flow-mu42zdxy-25",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-25-flow-mu42zdxy-25-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-25-diagram-mu42zdxy-27",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-25_text",
+      "id": "flow-mu42zdxy-25_text",
       "type": "text",
       "x": 50,
-      "y": 1686,
+      "y": 1551,
       "width": 281,
       "height": 20,
       "angle": 0,
@@ -1202,25 +1424,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 45422,
+      "seed": 714839,
       "version": 1,
-      "versionNonce": 824422,
+      "versionNonce": 328580,
       "isDeleted": false,
       "text": "Dynamic RAM (DRAM 1-T 1-C Cell)",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-25"
+      "containerId": "flow-mu42zdxy-25"
     },
     {
-      "id": "sub-mu42cwom-21-note",
+      "id": "sub-mu42zdxy-21-note",
       "type": "text",
       "x": -709,
-      "y": 1671,
+      "y": 1536,
       "width": 275,
       "height": 95,
       "angle": 0,
@@ -1232,24 +1454,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 165261,
+      "seed": 232511,
       "version": 1,
-      "versionNonce": 868695,
+      "versionNonce": 229990,
       "isDeleted": false,
       "text": "RAM permits both read and write\naccess with identical access\nlatency across all locations. It is\nvolatile, losing data when power is\nremoved.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-21-sub-mu42zdxy-21-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-23-note",
+      "id": "flow-mu42zdxy-23-note",
       "type": "text",
       "x": -371,
-      "y": 1763,
+      "y": 1628,
       "width": 298,
       "height": 133,
       "angle": 0,
@@ -1261,24 +1489,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 417268,
+      "seed": 65247,
       "version": 1,
-      "versionNonce": 752146,
+      "versionNonce": 879768,
       "isDeleted": false,
       "text": "SRAM stores each bit in a bistable\nmulti-transistor flip-flop (6 MOS\ntransistors per cell). It requires no\nrefresh cycles and offers ultra-fast\naccess (10-30 ns), making it ideal for\nCPU caches (L1/L2/L3) and scratchpads\ndespite higher cost and lower density.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-23-flow-mu42zdxy-23-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-25-note",
+      "id": "flow-mu42zdxy-25-note",
       "type": "text",
       "x": 49,
-      "y": 1763,
+      "y": 1628,
       "width": 314,
       "height": 133,
       "angle": 0,
@@ -1290,50 +1524,62 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 2406,
+      "seed": 583027,
       "version": 1,
-      "versionNonce": 460699,
+      "versionNonce": 245644,
       "isDeleted": false,
       "text": "DRAM stores each bit as charge on a tiny\nMOS gate capacitance (1 transistor + 1\ncapacitor). Dielectric leakage requires\nperiodic refresh cycles every 2-4 ms. It\ndelivers massive density and low cost\nfor main system RAM (DDR4/DDR5) with\n50-100 ns access latency.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-25-flow-mu42zdxy-25-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-27",
+      "id": "diagram-mu42zdxy-27",
       "type": "rectangle",
       "x": 560,
-      "y": 1651,
+      "y": 1516,
       "width": 695,
       "height": 421,
       "angle": 0,
-      "strokeColor": "#dee2e6",
-      "backgroundColor": "#fafafa",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 53290,
+      "seed": 857193,
       "version": 1,
-      "versionNonce": 475965,
-      "isDeleted": false
+      "versionNonce": 452662,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-25-diagram-mu42zdxy-27",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-27_code",
+      "id": "diagram-mu42zdxy-27_code",
       "type": "text",
       "x": 572,
-      "y": 1663,
+      "y": 1528,
       "width": 671,
       "height": 397,
       "angle": 0,
@@ -1345,12 +1591,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 481607,
+      "seed": 676109,
       "version": 1,
-      "versionNonce": 949037,
+      "versionNonce": 411294,
       "isDeleted": false,
       "text": "+-----------------------------------------------------------------------------------+\n|                           MEMORY CLASSIFICATION TREE                              |\n+-----------------------------------------------------------------------------------+\n                                         |\n         +-------------------------------+-------------------------------+\n         |                                                               |\n         v                                                               v\n+---------------------------------+             +---------------------------------+\n|   PRIMARY SEMICONDUCTOR MEMORY  |             |    SECONDARY STORAGE (MASS)     |\n+---------------------------------+             +---------------------------------+\n         |                                                       |\n   +-----+-----+                                           +-----+-----+\n   |           |                                           |           |\n   v           v                                           v           v\n+-----+     +-----+                                     +-------+   +-------+\n| RAM |     | ROM |                                     |MAGNETIC|  |OPTICAL|\n+-----+     +-----+                                     +-------+   +-------+\n   |           |                                            |           |\n   |-- SRAM    |-- Masked ROM                               |-- HDD     |-- CD-ROM\n   |-- DRAM    |-- PROM                                     |-- Tape    |-- CD-R\n               |-- EPROM                                                |-- CD-RW\n               |-- EEPROM                                               |-- DVD\n               |-- Flash Memory",
       "fontSize": 13,
@@ -1359,10 +1605,10 @@
       "verticalAlign": "top"
     },
     {
-      "id": "topic-mu42cwom-33",
+      "id": "topic-mu42zdxy-33",
       "type": "rectangle",
       "x": -297,
-      "y": 2648,
+      "y": 2513,
       "width": 594,
       "height": 70,
       "angle": 0,
@@ -1374,27 +1620,43 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 63970,
+      "seed": 550385,
       "version": 1,
-      "versionNonce": 863138,
+      "versionNonce": 76207,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu42cwom-33_text",
+          "id": "topic-mu42zdxy-33_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-34",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-36",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-38",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-40",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu42cwom-33_text",
+      "id": "topic-mu42zdxy-33_text",
       "type": "text",
       "x": -281,
-      "y": 2670,
+      "y": 2535,
       "width": 562,
       "height": 26,
       "angle": 0,
@@ -1406,57 +1668,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 321437,
+      "seed": 414642,
       "version": 1,
-      "versionNonce": 554113,
+      "versionNonce": 620214,
       "isDeleted": false,
       "text": "Memory Capacity & Address Line Calculations",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu42cwom-33"
+      "containerId": "topic-mu42zdxy-33"
     },
     {
-      "id": "sub-mu42cwom-34",
+      "id": "sub-mu42zdxy-34",
       "type": "rectangle",
       "x": -205,
-      "y": 2473,
+      "y": 2338,
       "width": 410,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 536276,
+      "seed": 186897,
       "version": 1,
-      "versionNonce": 207622,
+      "versionNonce": 329079,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-34_text",
+          "id": "sub-mu42zdxy-34_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-34",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-34-sub-mu42zdxy-34-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-34_text",
+      "id": "sub-mu42zdxy-34_text",
       "type": "text",
       "x": -193,
-      "y": 2488,
+      "y": 2353,
       "width": 386,
       "height": 22,
       "angle": 0,
@@ -1468,25 +1738,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 521693,
+      "seed": 876413,
       "version": 1,
-      "versionNonce": 123727,
+      "versionNonce": 971234,
       "isDeleted": false,
       "text": "Fundamental Addressability Formulation",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-34"
+      "containerId": "sub-mu42zdxy-34"
     },
     {
-      "id": "sub-mu42cwom-34-note",
+      "id": "sub-mu42zdxy-34-note",
       "type": "text",
       "x": -168,
-      "y": 2252,
+      "y": 2117,
       "width": 306,
       "height": 171,
       "angle": 0,
@@ -1498,56 +1768,70 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 50541,
+      "seed": 136665,
       "version": 1,
-      "versionNonce": 750858,
+      "versionNonce": 361791,
       "isDeleted": false,
       "text": "The relationship between address lines\n(N) and uniquely addressable memory\nlocations (M) is strictly M = 2^N. With\nbyte-wide storage (8 bits/location),\ntotal capacity equals 2^N bytes. 10\nlines address 1 KB (1024 B), 12 lines\naddress 4 KB (4096 B), 16 lines address\n64 KB (full 8085 space), and 20 lines\naddress 1 MB (full 8086 space).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-34-sub-mu42zdxy-34-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-36",
+      "id": "sub-mu42zdxy-36",
       "type": "rectangle",
       "x": -787,
-      "y": 2542,
+      "y": 2407,
       "width": 410,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 170635,
+      "seed": 861192,
       "version": 1,
-      "versionNonce": 952954,
+      "versionNonce": 267871,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-36_text",
+          "id": "sub-mu42zdxy-36_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-36",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-36-sub-mu42zdxy-36-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-36_text",
+      "id": "sub-mu42zdxy-36_text",
       "type": "text",
       "x": -775,
-      "y": 2557,
+      "y": 2422,
       "width": 386,
       "height": 22,
       "angle": 0,
@@ -1559,57 +1843,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 348833,
+      "seed": 607734,
       "version": 1,
-      "versionNonce": 193747,
+      "versionNonce": 413643,
       "isDeleted": false,
       "text": "Address Range & Boundary Determination",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-36"
+      "containerId": "sub-mu42zdxy-36"
     },
     {
-      "id": "sub-mu42cwom-38",
+      "id": "sub-mu42zdxy-38",
       "type": "rectangle",
       "x": -854,
-      "y": 2713,
+      "y": 2578,
       "width": 477,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 422459,
+      "seed": 496403,
       "version": 1,
-      "versionNonce": 373895,
+      "versionNonce": 128521,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-38_text",
+          "id": "sub-mu42zdxy-38_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-38",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-38-sub-mu42zdxy-38-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-38_text",
+      "id": "sub-mu42zdxy-38_text",
       "type": "text",
       "x": -842,
-      "y": 2728,
+      "y": 2593,
       "width": 453,
       "height": 22,
       "angle": 0,
@@ -1621,25 +1913,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 848424,
+      "seed": 620136,
       "version": 1,
-      "versionNonce": 147971,
+      "versionNonce": 587714,
       "isDeleted": false,
       "text": "Solved Exam Numericals (8 KB and 2 KB Ranges)",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-38"
+      "containerId": "sub-mu42zdxy-38"
     },
     {
-      "id": "sub-mu42cwom-36-note",
+      "id": "sub-mu42zdxy-36-note",
       "type": "text",
       "x": -1143,
-      "y": 2527,
+      "y": 2392,
       "width": 306,
       "height": 114,
       "angle": 0,
@@ -1651,24 +1943,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 142641,
+      "seed": 704072,
       "version": 1,
-      "versionNonce": 550387,
+      "versionNonce": 518957,
       "isDeleted": false,
       "text": "Given starting address S in hexadecimal\nand memory capacity C in bytes, the\nending address is E = S + C - 1. The\nminus-one term is mandatory because the\nstarting address byte is itself the\nfirst addressable location.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-36-sub-mu42zdxy-36-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-38-note",
+      "id": "sub-mu42zdxy-38-note",
       "type": "text",
       "x": -1195,
-      "y": 2698,
+      "y": 2563,
       "width": 291,
       "height": 114,
       "angle": 0,
@@ -1680,56 +1978,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 790023,
+      "seed": 530648,
       "version": 1,
-      "versionNonce": 85106,
+      "versionNonce": 946885,
       "isDeleted": false,
       "text": "Problem 1: An 8 KB memory (capacity\n2000H) starting at 2000H spans from\n2000H to (2000H + 2000H - 1) = 3FFFH.\nProblem 2: A 2 KB memory (capacity\n0800H) starting at 8000H spans from\n8000H to (8000H + 0800H - 1) = 87FFH.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-38-sub-mu42zdxy-38-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-40",
+      "id": "sub-mu42zdxy-40",
       "type": "rectangle",
       "x": -191,
-      "y": 2873,
+      "y": 2738,
       "width": 382,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 235758,
+      "seed": 266342,
       "version": 1,
-      "versionNonce": 237487,
+      "versionNonce": 949757,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-40_text",
+          "id": "sub-mu42zdxy-40_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-40",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-40-sub-mu42zdxy-40-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-40-flow-mu42zdxy-42",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-40-flow-mu42zdxy-44",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-40_text",
+      "id": "sub-mu42zdxy-40_text",
       "type": "text",
       "x": -179,
-      "y": 2888,
+      "y": 2753,
       "width": 358,
       "height": 22,
       "angle": 0,
@@ -1741,57 +2061,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 838734,
+      "seed": 875519,
       "version": 1,
-      "versionNonce": 566776,
+      "versionNonce": 894792,
       "isDeleted": false,
       "text": "16 KB Multi-Chip Interfacing Design",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-40"
+      "containerId": "sub-mu42zdxy-40"
     },
     {
-      "id": "flow-mu42cwom-42",
+      "id": "flow-mu42zdxy-42",
       "type": "rectangle",
       "x": -458,
-      "y": 2994,
+      "y": 2859,
       "width": 418,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 523366,
+      "seed": 952146,
       "version": 1,
-      "versionNonce": 519421,
+      "versionNonce": 353095,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-42_text",
+          "id": "flow-mu42zdxy-42_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-40-flow-mu42zdxy-42",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-42-flow-mu42zdxy-42-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-42_text",
+      "id": "flow-mu42zdxy-42_text",
       "type": "text",
       "x": -448,
-      "y": 3009,
+      "y": 2874,
       "width": 398,
       "height": 20,
       "angle": 0,
@@ -1803,57 +2131,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 973566,
+      "seed": 224331,
       "version": 1,
-      "versionNonce": 917861,
+      "versionNonce": 187047,
       "isDeleted": false,
       "text": "Memory Array Parallel Bus Connection (A11-A0)",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-42"
+      "containerId": "flow-mu42zdxy-42"
     },
     {
-      "id": "flow-mu42cwom-44",
+      "id": "flow-mu42zdxy-44",
       "type": "rectangle",
       "x": 40,
-      "y": 2994,
+      "y": 2859,
       "width": 460,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 42169,
+      "seed": 26493,
       "version": 1,
-      "versionNonce": 62863,
+      "versionNonce": 704851,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-44_text",
+          "id": "flow-mu42zdxy-44_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-40-flow-mu42zdxy-44",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-44-flow-mu42zdxy-44-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-44-diagram-mu42zdxy-46",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-44_text",
+      "id": "flow-mu42zdxy-44_text",
       "type": "text",
       "x": 50,
-      "y": 3009,
+      "y": 2874,
       "width": 440,
       "height": 20,
       "angle": 0,
@@ -1865,25 +2205,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 971058,
+      "seed": 33718,
       "version": 1,
-      "versionNonce": 420946,
+      "versionNonce": 442404,
       "isDeleted": false,
       "text": "Higher Address Line Decoding (A13-A12 via 74LS138)",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-44"
+      "containerId": "flow-mu42zdxy-44"
     },
     {
-      "id": "sub-mu42cwom-40-note",
+      "id": "sub-mu42zdxy-40-note",
       "type": "text",
       "x": -793,
-      "y": 2994,
+      "y": 2859,
       "width": 275,
       "height": 152,
       "angle": 0,
@@ -1895,24 +2235,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 541112,
+      "seed": 420476,
       "version": 1,
-      "versionNonce": 573055,
+      "versionNonce": 944126,
       "isDeleted": false,
       "text": "A 16 KB microcomputer system built\nfrom 4 KB x 8 chips requires:\nNumber of chips = (16 KB x 8) / (4\nKB x 8) = 4 chips. Address lines\nper individual chip = 2^12 = 12\nlines (A11-A0). Address lines for\ntotal 16 KB space = 2^14 = 14 lines\n(A13-A0).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-40-sub-mu42zdxy-40-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-42-note",
+      "id": "flow-mu42zdxy-42-note",
       "type": "text",
       "x": -421,
-      "y": 3086,
+      "y": 2951,
       "width": 314,
       "height": 95,
       "angle": 0,
@@ -1924,24 +2270,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 853658,
+      "seed": 163541,
       "version": 1,
-      "versionNonce": 818083,
+      "versionNonce": 327535,
       "isDeleted": false,
       "text": "Address lines A11 through A0 connect in\nparallel to all 4 memory chips to\nprovide internal 12-bit word indexing\nacross 4096 memory registers within each\nchip.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-42-flow-mu42zdxy-42-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-44-note",
+      "id": "flow-mu42zdxy-44-note",
       "type": "text",
       "x": 140,
-      "y": 3086,
+      "y": 2951,
       "width": 291,
       "height": 95,
       "angle": 0,
@@ -1953,50 +2305,62 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 810114,
+      "seed": 221554,
       "version": 1,
-      "versionNonce": 955783,
+      "versionNonce": 943912,
       "isDeleted": false,
       "text": "Higher address lines A13 and A12 feed\ndirectly into a 2-to-4 line decoder\n(74LS138) to generate 4 distinct,\nmutually exclusive active-low Chip\nEnable (CE') strobe signals.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-44-flow-mu42zdxy-44-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-46",
+      "id": "diagram-mu42zdxy-46",
       "type": "rectangle",
       "x": 600,
-      "y": 2974,
+      "y": 2839,
       "width": 836,
       "height": 235,
       "angle": 0,
-      "strokeColor": "#dee2e6",
-      "backgroundColor": "#fafafa",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 18529,
+      "seed": 70981,
       "version": 1,
-      "versionNonce": 533518,
-      "isDeleted": false
+      "versionNonce": 13694,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-44-diagram-mu42zdxy-46",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-46_code",
+      "id": "diagram-mu42zdxy-46_code",
       "type": "text",
       "x": 612,
-      "y": 2986,
+      "y": 2851,
       "width": 812,
       "height": 211,
       "angle": 0,
@@ -2008,12 +2372,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 968319,
+      "seed": 603970,
       "version": 1,
-      "versionNonce": 157660,
+      "versionNonce": 795395,
       "isDeleted": false,
       "text": "+---------------+-------------------+----------------------+------------------------------------------+\n| ADDRESS LINES | CAPACITY FORMULA  | TOTAL BYTES          | INDUSTRY UNIT NOTATION                   |\n+---------------+-------------------+----------------------+------------------------------------------+\n| N = 10 lines  | 2^10 bytes        | 1,024 bytes          | 1 Kilobyte (1 KB)                        |\n| N = 11 lines  | 2^11 = 2 x 2^10   | 2,048 bytes          | 2 Kilobytes (2 KB)                       |\n| N = 12 lines  | 2^12 = 4 x 2^10   | 4,096 bytes          | 4 Kilobytes (4 KB)                       |\n| N = 13 lines  | 2^13 = 8 x 2^10   | 8,192 bytes          | 8 Kilobytes (8 KB)                       |\n| N = 14 lines  | 2^14 = 16 x 2^10  | 16,384 bytes         | 16 Kilobytes (16 KB)                     |\n| N = 15 lines  | 2^15 = 32 x 2^10  | 32,768 bytes         | 32 Kilobytes (32 KB)                     |\n| N = 16 lines  | 2^16 = 64 x 2^10  | 65,536 bytes         | 64 Kilobytes (64 KB) -> Full 8085 Space  |\n| N = 20 lines  | 2^20 = 1 x 2^20   | 1,048,576 bytes      | 1 Megabyte (1 MB) -> Full 8086 Space     |\n+---------------+-------------------+----------------------+------------------------------------------+",
       "fontSize": 13,
@@ -2022,10 +2386,10 @@
       "verticalAlign": "top"
     },
     {
-      "id": "topic-mu42cwom-47",
+      "id": "topic-mu42zdxy-47",
       "type": "rectangle",
       "x": -334,
-      "y": 3841,
+      "y": 3706,
       "width": 668,
       "height": 70,
       "angle": 0,
@@ -2037,27 +2401,43 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 572214,
+      "seed": 951922,
       "version": 1,
-      "versionNonce": 935799,
+      "versionNonce": 856052,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu42cwom-47_text",
+          "id": "topic-mu42zdxy-47_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-48",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-50",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-59",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-52",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu42cwom-47_text",
+      "id": "topic-mu42zdxy-47_text",
       "type": "text",
       "x": -318,
-      "y": 3863,
+      "y": 3728,
       "width": 636,
       "height": 26,
       "angle": 0,
@@ -2069,57 +2449,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 865299,
+      "seed": 860202,
       "version": 1,
-      "versionNonce": 745327,
+      "versionNonce": 288105,
       "isDeleted": false,
       "text": "Peripheral Interfacing & Hardware Building Blocks",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu42cwom-47"
+      "containerId": "topic-mu42zdxy-47"
     },
     {
-      "id": "sub-mu42cwom-48",
+      "id": "sub-mu42zdxy-48",
       "type": "rectangle",
       "x": -248,
-      "y": 3666,
+      "y": 3531,
       "width": 496,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 576606,
+      "seed": 151012,
       "version": 1,
-      "versionNonce": 929033,
+      "versionNonce": 141988,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-48_text",
+          "id": "sub-mu42zdxy-48_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-48",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-48-sub-mu42zdxy-48-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-48_text",
+      "id": "sub-mu42zdxy-48_text",
       "type": "text",
       "x": -236,
-      "y": 3681,
+      "y": 3546,
       "width": 472,
       "height": 22,
       "angle": 0,
@@ -2131,25 +2519,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 205619,
+      "seed": 833671,
       "version": 1,
-      "versionNonce": 213398,
+      "versionNonce": 801110,
       "isDeleted": false,
       "text": "Four Physical Constraints Mandating Interfacing",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-48"
+      "containerId": "sub-mu42zdxy-48"
     },
     {
-      "id": "sub-mu42cwom-48-note",
+      "id": "sub-mu42zdxy-48-note",
       "type": "text",
       "x": -172,
-      "y": 3389,
+      "y": 3254,
       "width": 314,
       "height": 227,
       "angle": 0,
@@ -2161,56 +2549,70 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 844105,
+      "seed": 46533,
       "version": 1,
-      "versionNonce": 50973,
+      "versionNonce": 346987,
       "isDeleted": false,
       "text": "Peripherals cannot wire directly to the\nCPU bus due to four critical hardware\nconstraints: 1. Speed Mismatch (CPU\noperates in sub-microsecond cycles while\nmechanical I/O takes milliseconds); 2.\nSignal & Voltage Incompatibility (TTL\n+5V vs 24V industrial or analog\nvoltages); 3. Transient Data Bus (CPU\noutput data is valid for only ~300 ns\nduring T2-T3); 4. Bus Contention\n(unbuffered inputs would short-circuit\nthe shared data bus).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-48-sub-mu42zdxy-48-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-50",
+      "id": "sub-mu42zdxy-50",
       "type": "rectangle",
       "x": -939,
-      "y": 3735,
+      "y": 3600,
       "width": 525,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 162739,
+      "seed": 705057,
       "version": 1,
-      "versionNonce": 254611,
+      "versionNonce": 739723,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-50_text",
+          "id": "sub-mu42zdxy-50_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-50",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-50-sub-mu42zdxy-50-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-50_text",
+      "id": "sub-mu42zdxy-50_text",
       "type": "text",
       "x": -927,
-      "y": 3750,
+      "y": 3615,
       "width": 501,
       "height": 22,
       "angle": 0,
@@ -2222,57 +2624,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 871377,
+      "seed": 100869,
       "version": 1,
-      "versionNonce": 194023,
+      "versionNonce": 958165,
       "isDeleted": false,
       "text": "Input Port Interfacing: Tri-State Buffer (74LS244)",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-50"
+      "containerId": "sub-mu42zdxy-50"
     },
     {
-      "id": "sub-mu42cwom-59",
+      "id": "sub-mu42zdxy-59",
       "type": "rectangle",
       "x": -767,
-      "y": 3906,
+      "y": 3771,
       "width": 353,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 754894,
+      "seed": 426328,
       "version": 1,
-      "versionNonce": 990396,
+      "versionNonce": 269335,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-59_text",
+          "id": "sub-mu42zdxy-59_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-59",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-59-sub-mu42zdxy-59-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-59_text",
+      "id": "sub-mu42zdxy-59_text",
       "type": "text",
       "x": -755,
-      "y": 3921,
+      "y": 3786,
       "width": 329,
       "height": 22,
       "angle": 0,
@@ -2284,25 +2694,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 414777,
+      "seed": 522708,
       "version": 1,
-      "versionNonce": 89283,
+      "versionNonce": 462671,
       "isDeleted": false,
       "text": "Solved GTU Interfacing Questions",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-59"
+      "containerId": "sub-mu42zdxy-59"
     },
     {
-      "id": "sub-mu42cwom-50-note",
+      "id": "sub-mu42zdxy-50-note",
       "type": "text",
       "x": -1303,
-      "y": 3720,
+      "y": 3585,
       "width": 314,
       "height": 152,
       "angle": 0,
@@ -2314,24 +2724,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 677469,
+      "seed": 427055,
       "version": 1,
-      "versionNonce": 476101,
+      "versionNonce": 455994,
       "isDeleted": false,
       "text": "Input peripherals must connect through\noctal tri-state buffers (IC 74LS244).\nWhen active-low OE' is high, outputs\nremain in High-Impedance (Z), completely\nisolating the peripheral from the data\nbus. During an active I/O read cycle,\naddress decoding and RD' assert OE'=0,\ncleanly routing port data onto D7-D0.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-50-sub-mu42zdxy-50-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-59-note",
+      "id": "sub-mu42zdxy-59-note",
       "type": "text",
       "x": -1146,
-      "y": 3906,
+      "y": 3771,
       "width": 314,
       "height": 171,
       "angle": 0,
@@ -2343,56 +2759,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 612120,
+      "seed": 799837,
       "version": 1,
-      "versionNonce": 319571,
+      "versionNonce": 488445,
       "isDeleted": false,
       "text": "GTU Winter 2024: Latches provide\nessential temporary-to-static data\nholding for output peripherals,\nresolving data bus transient decay.\nTri-state buffers eliminate electrical\nbus contention during multi-device input\nmultiplexing by enforcing High-Impedance\nisolation until an authorized read\nstrobe occurs.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-59-sub-mu42zdxy-59-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-52",
+      "id": "sub-mu42zdxy-52",
       "type": "rectangle",
       "x": -243,
-      "y": 4066,
+      "y": 3931,
       "width": 486,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 259265,
+      "seed": 639249,
       "version": 1,
-      "versionNonce": 25837,
+      "versionNonce": 439735,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-52_text",
+          "id": "sub-mu42zdxy-52_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-52",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-52-sub-mu42zdxy-52-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-52-flow-mu42zdxy-54",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-52-flow-mu42zdxy-56",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-52_text",
+      "id": "sub-mu42zdxy-52_text",
       "type": "text",
       "x": -231,
-      "y": 4081,
+      "y": 3946,
       "width": 462,
       "height": 22,
       "angle": 0,
@@ -2404,57 +2842,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 971195,
+      "seed": 177942,
       "version": 1,
-      "versionNonce": 676484,
+      "versionNonce": 385137,
       "isDeleted": false,
       "text": "Output Port Interfacing: Octal Latch (74LS373)",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-52"
+      "containerId": "sub-mu42zdxy-52"
     },
     {
-      "id": "flow-mu42cwom-54",
+      "id": "flow-mu42zdxy-54",
       "type": "rectangle",
       "x": -341,
-      "y": 4187,
+      "y": 4052,
       "width": 301,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 694395,
+      "seed": 950155,
       "version": 1,
-      "versionNonce": 211943,
+      "versionNonce": 769469,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-54_text",
+          "id": "flow-mu42zdxy-54_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-52-flow-mu42zdxy-54",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-54-flow-mu42zdxy-54-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-54_text",
+      "id": "flow-mu42zdxy-54_text",
       "type": "text",
       "x": -331,
-      "y": 4202,
+      "y": 4067,
       "width": 281,
       "height": 20,
       "angle": 0,
@@ -2466,57 +2912,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 553216,
+      "seed": 331439,
       "version": 1,
-      "versionNonce": 583777,
+      "versionNonce": 300912,
       "isDeleted": false,
       "text": "Tri-State Active-Low Bus Access",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-54"
+      "containerId": "flow-mu42zdxy-54"
     },
     {
-      "id": "flow-mu42cwom-56",
+      "id": "flow-mu42zdxy-56",
       "type": "rectangle",
       "x": 40,
-      "y": 4187,
+      "y": 4052,
       "width": 292,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 200471,
+      "seed": 291229,
       "version": 1,
-      "versionNonce": 12633,
+      "versionNonce": 156391,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-56_text",
+          "id": "flow-mu42zdxy-56_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-52-flow-mu42zdxy-56",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-56-flow-mu42zdxy-56-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-56-diagram-mu42zdxy-58",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-56_text",
+      "id": "flow-mu42zdxy-56_text",
       "type": "text",
       "x": 50,
-      "y": 4202,
+      "y": 4067,
       "width": 272,
       "height": 20,
       "angle": 0,
@@ -2528,25 +2986,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 4752,
+      "seed": 618002,
       "version": 1,
-      "versionNonce": 104711,
+      "versionNonce": 60415,
       "isDeleted": false,
       "text": "Latched Persistent Data Output",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-56"
+      "containerId": "flow-mu42zdxy-56"
     },
     {
-      "id": "sub-mu42cwom-52-note",
+      "id": "sub-mu42zdxy-52-note",
       "type": "text",
       "x": -676,
-      "y": 4187,
+      "y": 4052,
       "width": 275,
       "height": 171,
       "angle": 0,
@@ -2558,24 +3016,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 853854,
+      "seed": 251334,
       "version": 1,
-      "versionNonce": 843940,
+      "versionNonce": 861904,
       "isDeleted": false,
       "text": "Output peripherals require\ntransparent D-latches (IC 74LS373).\nBecause CPU bus data persists for\nonly ~300 ns, the latch captures\ndata on the falling edge of WR'\ncombined with device selection,\nholding output voltage levels\nindefinitely to drive external\ndisplays and actuators.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-52-sub-mu42zdxy-52-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-54-note",
+      "id": "flow-mu42zdxy-54-note",
       "type": "text",
       "x": -362,
-      "y": 4279,
+      "y": 4144,
       "width": 314,
       "height": 114,
       "angle": 0,
@@ -2587,24 +3051,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 864133,
+      "seed": 213538,
       "version": 1,
-      "versionNonce": 832619,
+      "versionNonce": 529727,
       "isDeleted": false,
       "text": "During an I/O Read cycle, address\ndecoder output gates with RD' to pulse\nthe tri-state buffer OE' low, bridging\nperipheral lines to the CPU data bus for\nthe precise duration of the T3 sampling\nphase.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-54-flow-mu42zdxy-54-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-56-note",
+      "id": "flow-mu42zdxy-56-note",
       "type": "text",
       "x": 52,
-      "y": 4279,
+      "y": 4144,
       "width": 298,
       "height": 95,
       "angle": 0,
@@ -2616,50 +3086,62 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 63811,
+      "seed": 54261,
       "version": 1,
-      "versionNonce": 394834,
+      "versionNonce": 362879,
       "isDeleted": false,
       "text": "During an I/O Write cycle, the address\ndecoder gates with WR' to pulse the\nlatch clock pin, capturing transient\ndata from D7-D0 and sustaining static\noutput drive indefinitely.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-56-flow-mu42zdxy-56-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-58",
+      "id": "diagram-mu42zdxy-58",
       "type": "rectangle",
       "x": 560,
-      "y": 4167,
+      "y": 4032,
       "width": 680,
       "height": 286,
       "angle": 0,
-      "strokeColor": "#dee2e6",
-      "backgroundColor": "#fafafa",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 588834,
+      "seed": 93189,
       "version": 1,
-      "versionNonce": 82206,
-      "isDeleted": false
+      "versionNonce": 322170,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-56-diagram-mu42zdxy-58",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-58_code",
+      "id": "diagram-mu42zdxy-58_code",
       "type": "text",
       "x": 572,
-      "y": 4179,
+      "y": 4044,
       "width": 656,
       "height": 262,
       "angle": 0,
@@ -2671,12 +3153,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 941715,
+      "seed": 570040,
       "version": 1,
-      "versionNonce": 444188,
+      "versionNonce": 642983,
       "isDeleted": false,
       "text": "   INPUT PORT (Tri-State Buffer - 74LS244)          OUTPUT PORT (Latch - 74LS373)\n   \n        Peripheral Input Data                         CPU Data Bus (D7 - D0)\n                 |                                               |\n                 v                                               v\n        +-----------------+                             +-----------------+\n        |  Tri-State Gate |                             |    D-Latch      |\n        +-----------------+                             +-----------------+\n                 |                                               |\n    Enable Pulse | (Active LOW)                     Clock Pulse  | (Falling Edge)\n    from Address +----------------+                 from Address +----------------+\n    Decoder & RD'                 |                 Decoder & WR'                 |\n                 v                |                              v                |\n         CPU Data Bus (D7-D0)     |                      Peripheral Output Pins   |\n    (Enabled ONLY during Read)    |                 (Holds data continuously)     |",
       "fontSize": 13,
@@ -2685,10 +3167,10 @@
       "verticalAlign": "top"
     },
     {
-      "id": "topic-mu42cwom-61",
+      "id": "topic-mu42zdxy-61",
       "type": "rectangle",
       "x": -297,
-      "y": 4948,
+      "y": 4813,
       "width": 594,
       "height": 70,
       "angle": 0,
@@ -2700,27 +3182,39 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 871283,
+      "seed": 505019,
       "version": 1,
-      "versionNonce": 187046,
+      "versionNonce": 125941,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu42cwom-61_text",
+          "id": "topic-mu42zdxy-61_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-62",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-71",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-64",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu42cwom-61_text",
+      "id": "topic-mu42zdxy-61_text",
       "type": "text",
       "x": -281,
-      "y": 4970,
+      "y": 4835,
       "width": 562,
       "height": 26,
       "angle": 0,
@@ -2732,57 +3226,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 853706,
+      "seed": 699558,
       "version": 1,
-      "versionNonce": 748078,
+      "versionNonce": 763710,
       "isDeleted": false,
       "text": "Memory-Mapped I/O vs. Peripheral-Mapped I/O",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu42cwom-61"
+      "containerId": "topic-mu42zdxy-61"
     },
     {
-      "id": "sub-mu42cwom-62",
+      "id": "sub-mu42zdxy-62",
       "type": "rectangle",
       "x": -787,
-      "y": 4842,
+      "y": 4707,
       "width": 410,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 560348,
+      "seed": 522698,
       "version": 1,
-      "versionNonce": 432122,
+      "versionNonce": 773843,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-62_text",
+          "id": "sub-mu42zdxy-62_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-62",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-62-sub-mu42zdxy-62-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-62_text",
+      "id": "sub-mu42zdxy-62_text",
       "type": "text",
       "x": -775,
-      "y": 4857,
+      "y": 4722,
       "width": 386,
       "height": 22,
       "angle": 0,
@@ -2794,57 +3296,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 282789,
+      "seed": 343183,
       "version": 1,
-      "versionNonce": 424877,
+      "versionNonce": 134397,
       "isDeleted": false,
       "text": "Unified Memory-Mapped I/O Architecture",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-62"
+      "containerId": "sub-mu42zdxy-62"
     },
     {
-      "id": "sub-mu42cwom-71",
+      "id": "sub-mu42zdxy-71",
       "type": "rectangle",
       "x": -844,
-      "y": 5013,
+      "y": 4878,
       "width": 467,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 814003,
+      "seed": 120893,
       "version": 1,
-      "versionNonce": 648882,
+      "versionNonce": 955832,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-71_text",
+          "id": "sub-mu42zdxy-71_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-71",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-71-sub-mu42zdxy-71-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-71_text",
+      "id": "sub-mu42zdxy-71_text",
       "type": "text",
       "x": -832,
-      "y": 5028,
+      "y": 4893,
       "width": 443,
       "height": 22,
       "angle": 0,
@@ -2856,25 +3366,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 508533,
+      "seed": 714393,
       "version": 1,
-      "versionNonce": 462306,
+      "versionNonce": 746824,
       "isDeleted": false,
       "text": "Master 8-Point Engineering Comparison Matrix",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-71"
+      "containerId": "sub-mu42zdxy-71"
     },
     {
-      "id": "sub-mu42cwom-62-note",
+      "id": "sub-mu42zdxy-62-note",
       "type": "text",
       "x": -1173,
-      "y": 4797,
+      "y": 4662,
       "width": 306,
       "height": 171,
       "angle": 0,
@@ -2886,24 +3396,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 222907,
+      "seed": 355306,
       "version": 1,
-      "versionNonce": 368581,
+      "versionNonce": 863669,
       "isDeleted": false,
       "text": "In Memory-Mapped I/O, peripherals are\ntreated as memory registers. The system\nassigns a full 16-bit address (A15-A0)\nwithin the 64 KB memory map directly to\neach I/O port. The CPU asserts memory\ncontrol signals: IO/M'=0, MEMR', and\nMEMW'. Accessible by all memory\ninstructions (MOV r, M; LDA; STA; ADD\nM).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-62-sub-mu42zdxy-62-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-71-note",
+      "id": "sub-mu42zdxy-71-note",
       "type": "text",
       "x": -1215,
-      "y": 5013,
+      "y": 4878,
       "width": 306,
       "height": 246,
       "angle": 0,
@@ -2915,56 +3431,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 640947,
+      "seed": 374383,
       "version": 1,
-      "versionNonce": 706124,
+      "versionNonce": 98118,
       "isDeleted": false,
       "text": "GTU Summer 2024 / 2025 (7 Marks): 1.\nAddress Bus: 16-bit (A15-A0) vs 8-bit\n(A7-A0); 2. Capacity: 64 KB shared vs\n256 isolated; 3. Control: IO/M'=0\n(MEMR/MEMW) vs IO/M'=1 (IOR/IOW); 4.\nInstructions: All memory ops (MOV, LDA,\nSTA, ADD M) vs IN/OUT only; 5. Target:\nAny register (A-L) vs Accumulator only;\n6. Arithmetic: Direct ALU execution on\nports vs Accumulator copy required; 7.\nDecoders: 16-bit complex vs 8-bit\nsimple; 8. Speed: 13 T-states vs 10\nT-states.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-71-sub-mu42zdxy-71-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu42cwom-64",
+      "id": "sub-mu42zdxy-64",
       "type": "rectangle",
       "x": -229,
-      "y": 5173,
+      "y": 5038,
       "width": 458,
       "height": 51,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 314707,
+      "seed": 693257,
       "version": 1,
-      "versionNonce": 829284,
+      "versionNonce": 643592,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu42cwom-64_text",
+          "id": "sub-mu42zdxy-64_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-64",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-64-sub-mu42zdxy-64-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-64-flow-mu42zdxy-66",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-64-flow-mu42zdxy-68",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu42cwom-64_text",
+      "id": "sub-mu42zdxy-64_text",
       "type": "text",
       "x": -217,
-      "y": 5188,
+      "y": 5053,
       "width": 434,
       "height": 22,
       "angle": 0,
@@ -2976,57 +3514,65 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 232512,
+      "seed": 885983,
       "version": 1,
-      "versionNonce": 941702,
+      "versionNonce": 821508,
       "isDeleted": false,
       "text": "Isolated Peripheral-Mapped I/O Architecture",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu42cwom-64"
+      "containerId": "sub-mu42zdxy-64"
     },
     {
-      "id": "flow-mu42cwom-66",
+      "id": "flow-mu42zdxy-66",
       "type": "rectangle",
       "x": -408,
-      "y": 5294,
+      "y": 5159,
       "width": 368,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 914766,
+      "seed": 722427,
       "version": 1,
-      "versionNonce": 98008,
+      "versionNonce": 328568,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-66_text",
+          "id": "flow-mu42zdxy-66_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-64-flow-mu42zdxy-66",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-66-flow-mu42zdxy-66-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-66_text",
+      "id": "flow-mu42zdxy-66_text",
       "type": "text",
       "x": -398,
-      "y": 5309,
+      "y": 5174,
       "width": 348,
       "height": 20,
       "angle": 0,
@@ -3038,57 +3584,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 666270,
+      "seed": 946822,
       "version": 1,
-      "versionNonce": 431971,
+      "versionNonce": 26411,
       "isDeleted": false,
       "text": "Unified 16-Bit Memory-Mapped Addressing",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-66"
+      "containerId": "flow-mu42zdxy-66"
     },
     {
-      "id": "flow-mu42cwom-68",
+      "id": "flow-mu42zdxy-68",
       "type": "rectangle",
       "x": 40,
-      "y": 5294,
+      "y": 5159,
       "width": 376,
       "height": 49,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 680388,
+      "seed": 2646,
       "version": 1,
-      "versionNonce": 797116,
+      "versionNonce": 571958,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu42cwom-68_text",
+          "id": "flow-mu42zdxy-68_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42zdxy-64-flow-mu42zdxy-68",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-68-flow-mu42zdxy-68-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42zdxy-68-diagram-mu42zdxy-70",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu42cwom-68_text",
+      "id": "flow-mu42zdxy-68_text",
       "type": "text",
       "x": 50,
-      "y": 5309,
+      "y": 5174,
       "width": 356,
       "height": 20,
       "angle": 0,
@@ -3100,25 +3658,25 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 213995,
+      "seed": 823027,
       "version": 1,
-      "versionNonce": 938959,
+      "versionNonce": 420761,
       "isDeleted": false,
       "text": "Dedicated 8-Bit Isolated Port Addressing",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu42cwom-68"
+      "containerId": "flow-mu42zdxy-68"
     },
     {
-      "id": "sub-mu42cwom-64-note",
+      "id": "sub-mu42zdxy-64-note",
       "type": "text",
       "x": -743,
-      "y": 5294,
+      "y": 5159,
       "width": 275,
       "height": 227,
       "angle": 0,
@@ -3130,24 +3688,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 247314,
+      "seed": 600413,
       "version": 1,
-      "versionNonce": 850469,
+      "versionNonce": 419840,
       "isDeleted": false,
       "text": "In Peripheral-Mapped (Isolated)\nI/O, the CPU maintains two\ncompletely separate address spaces:\n64 KB for Memory and 256\nindependent ports for I/O. Ports\nuse 8-bit addresses (A7-A0\nduplicated on A15-A8). The CPU\nasserts IO/M'=1, generating IOR'\nand IOW' strobes. Access is\nstrictly limited to IN and OUT\ninstructions passing through the\nAccumulator.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42zdxy-64-sub-mu42zdxy-64-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-66-note",
+      "id": "flow-mu42zdxy-66-note",
       "type": "text",
       "x": -396,
-      "y": 5386,
+      "y": 5251,
       "width": 314,
       "height": 114,
       "angle": 0,
@@ -3159,24 +3723,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 160163,
+      "seed": 927677,
       "version": 1,
-      "versionNonce": 323594,
+      "versionNonce": 391538,
       "isDeleted": false,
       "text": "CPU drives 16-bit address on A15-A0 with\nIO/M'=0. Any internal register (A, B, C,\nD, E, H, L) can serve as source or\ndestination, and arithmetic/logical\noperations (ADD M, CMP M) execute\ndirectly on port data.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-66-flow-mu42zdxy-66-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu42cwom-68-note",
+      "id": "flow-mu42zdxy-68-note",
       "type": "text",
       "x": 86,
-      "y": 5386,
+      "y": 5251,
       "width": 314,
       "height": 133,
       "angle": 0,
@@ -3188,50 +3758,62 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 122265,
+      "seed": 197462,
       "version": 1,
-      "versionNonce": 51354,
+      "versionNonce": 308740,
       "isDeleted": false,
       "text": "CPU drives 8-bit port address with\nIO/M'=1. Data transfer is strictly\nrestricted through Accumulator Register\nA via IN port_addr (10 T-states) and OUT\nport_addr (10 T-states), leaving the\nentire 64 KB address space available for\nRAM and ROM.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-68-flow-mu42zdxy-68-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-70",
+      "id": "diagram-mu42zdxy-70",
       "type": "rectangle",
       "x": 560,
-      "y": 5274,
+      "y": 5139,
       "width": 695,
       "height": 320,
       "angle": 0,
-      "strokeColor": "#dee2e6",
-      "backgroundColor": "#fafafa",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 246134,
+      "seed": 418955,
       "version": 1,
-      "versionNonce": 762021,
-      "isDeleted": false
+      "versionNonce": 590875,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42zdxy-68-diagram-mu42zdxy-70",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu42cwom-70_code",
+      "id": "diagram-mu42zdxy-70_code",
       "type": "text",
       "x": 572,
-      "y": 5286,
+      "y": 5151,
       "width": 671,
       "height": 296,
       "angle": 0,
@@ -3243,12 +3825,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 681185,
+      "seed": 768434,
       "version": 1,
-      "versionNonce": 506032,
+      "versionNonce": 867597,
       "isDeleted": false,
       "text": "+-----------------------------------------------------------------------------------+\n|                    ADDRESS SPACE ALLOCATION ARCHITECTURE                          |\n+-----------------------------------------------------------------------------------+\n      MEMORY-MAPPED I/O (Unified Space)           ISOLATED I/O (Separated Spaces)\n      \n          FFFFH +-----------------+                   FFFFH +-----------------+\n                |   RAM Memory    |                         |                 |\n                |                 |                         |   64 KB Full    |\n          8000H +-----------------+                         |   Memory Space  |\n                | I/O Port Space  |                         |  (RAM and ROM)  |\n          7FFFH +-----------------+                         |                 |\n                |   ROM Memory    |                   0000H +-----------------+\n                |                 |\n          0000H +-----------------+                   FFH   +-----------------+\n                                                            | 256 I/O Ports   |\n          (Total Space = 64 KB Shared)                00H   +-----------------+\n                                                            (Dedicated I/O Space)",
       "fontSize": 13,
@@ -3257,12 +3839,12 @@
       "verticalAlign": "top"
     },
     {
-      "id": "edge-topic-mu42cwol-1-topic-mu42cwol-1-note",
+      "id": "edge-topic-mu42zdxy-1-topic-mu42zdxy-1-note",
       "type": "arrow",
-      "x": 89,
-      "y": 37,
-      "width": 0,
-      "height": 34,
+      "x": 269,
+      "y": 0,
+      "width": 44,
+      "height": -24,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -3272,13 +3854,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 818189,
+      "seed": 42109,
       "version": 1,
-      "versionNonce": 920281,
+      "versionNonce": 934680,
       "isDeleted": false,
       "points": [
         [
@@ -3286,22 +3868,26 @@
           0
         ],
         [
-          0,
-          34
+          44,
+          -24
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwol-1",
+        "elementId": "topic-mu42zdxy-1",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "topic-mu42zdxy-1-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwol-1-sub-mu42cwol-4",
+      "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-4",
       "type": "arrow",
       "x": 0,
       "y": -37,
@@ -3316,13 +3902,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 592599,
+      "seed": 582919,
       "version": 1,
-      "versionNonce": 502506,
+      "versionNonce": 749642,
       "isDeleted": false,
       "points": [
         [
@@ -3335,21 +3921,21 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwol-1",
+        "elementId": "topic-mu42zdxy-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwol-4",
+        "elementId": "sub-mu42zdxy-4",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwol-4-sub-mu42cwol-4-note",
+      "id": "edge-sub-mu42zdxy-4-sub-mu42zdxy-4-note",
       "type": "arrow",
       "x": 0,
       "y": -212,
@@ -3364,13 +3950,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 339598,
+      "seed": 249096,
       "version": 1,
-      "versionNonce": 697114,
+      "versionNonce": 169221,
       "isDeleted": false,
       "points": [
         [
@@ -3383,17 +3969,21 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwol-4",
+        "elementId": "sub-mu42zdxy-4",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-4-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwol-1-sub-mu42cwol-13",
+      "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-13",
       "type": "arrow",
       "x": -268,
       "y": -12,
@@ -3408,15 +3998,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 780392,
+      "seed": 583680,
       "version": 1,
-      "versionNonce": 113136,
+      "versionNonce": 637338,
       "isDeleted": false,
       "points": [
         [
@@ -3424,12 +4014,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          -10
         ],
         [
-          -34,
-          -104
+          -37,
+          -93
         ],
         [
           -68,
@@ -3437,21 +4027,21 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwol-1",
+        "elementId": "topic-mu42zdxy-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwol-13",
+        "elementId": "sub-mu42zdxy-13",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwol-1-sub-mu42cwom-15",
+      "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-15",
       "type": "arrow",
       "x": -268,
       "y": 12,
@@ -3466,15 +4056,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 493121,
+      "seed": 518590,
       "version": 1,
-      "versionNonce": 657456,
+      "versionNonce": 828964,
       "isDeleted": false,
       "points": [
         [
@@ -3482,12 +4072,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          4
         ],
         [
-          -34,
-          44
+          -37,
+          39
         ],
         [
           -68,
@@ -3495,21 +4085,21 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwol-1",
+        "elementId": "topic-mu42zdxy-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-15",
+        "elementId": "sub-mu42zdxy-15",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwol-13-sub-mu42cwol-13-note",
+      "id": "edge-sub-mu42zdxy-13-sub-mu42zdxy-13-note",
       "type": "arrow",
       "x": -768,
       "y": -115,
@@ -3524,13 +4114,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 515168,
+      "seed": 842432,
       "version": 1,
-      "versionNonce": 51159,
+      "versionNonce": 171693,
       "isDeleted": false,
       "points": [
         [
@@ -3543,17 +4133,21 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwol-13",
+        "elementId": "sub-mu42zdxy-13",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-13-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-15-sub-mu42cwom-15-note",
+      "id": "edge-sub-mu42zdxy-15-sub-mu42zdxy-15-note",
       "type": "arrow",
       "x": -853,
       "y": 56,
@@ -3568,13 +4162,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 552413,
+      "seed": 365655,
       "version": 1,
-      "versionNonce": 665508,
+      "versionNonce": 535824,
       "isDeleted": false,
       "points": [
         [
@@ -3587,22 +4181,26 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-15",
+        "elementId": "sub-mu42zdxy-15",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-15-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwol-1-sub-mu42cwol-6",
+      "id": "edge-topic-mu42zdxy-1-sub-mu42zdxy-6",
       "type": "arrow",
-      "x": -89,
+      "x": 0,
       "y": 37,
-      "width": -46,
-      "height": 278,
+      "width": 0,
+      "height": 143,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -3612,13 +4210,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 590352,
+      "seed": 278799,
       "version": 1,
-      "versionNonce": 792200,
+      "versionNonce": 910721,
       "isDeleted": false,
       "points": [
         [
@@ -3626,30 +4224,30 @@
           0
         ],
         [
-          -46,
-          278
+          0,
+          143
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwol-1",
+        "elementId": "topic-mu42zdxy-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwol-6",
+        "elementId": "sub-mu42zdxy-6",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwol-6-sub-mu42cwol-6-note",
+      "id": "edge-sub-mu42zdxy-6-sub-mu42zdxy-6-note",
       "type": "arrow",
-      "x": -370,
-      "y": 351,
-      "width": -25,
+      "x": -235,
+      "y": 216,
+      "width": -160,
       "height": 82,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -3660,15 +4258,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 446178,
+      "seed": 835717,
       "version": 1,
-      "versionNonce": 240089,
+      "versionNonce": 829435,
       "isDeleted": false,
       "points": [
         [
@@ -3676,34 +4274,34 @@
           0
         ],
         [
-          -15,
-          0
+          -80,
+          41
         ],
         [
-          -25,
-          49
-        ],
-        [
-          -25,
+          -160,
           82
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwol-6",
+        "elementId": "sub-mu42zdxy-6",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-6-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwol-6-flow-mu42cwol-8",
+      "id": "edge-sub-mu42zdxy-6-flow-mu42zdxy-8",
       "type": "arrow",
-      "x": -213,
-      "y": 378,
-      "width": 35,
+      "x": -78,
+      "y": 243,
+      "width": -100,
       "height": 58,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -3714,15 +4312,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 396279,
+      "seed": 424357,
       "version": 1,
-      "versionNonce": 938988,
+      "versionNonce": 71489,
       "isDeleted": false,
       "points": [
         [
@@ -3730,38 +4328,38 @@
           0
         ],
         [
-          0,
-          29
+          -10,
+          26
         ],
         [
-          35,
-          29
+          -90,
+          32
         ],
         [
-          35,
+          -100,
           58
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwol-6",
+        "elementId": "sub-mu42zdxy-6",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwol-8",
+        "elementId": "flow-mu42zdxy-8",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwol-6-flow-mu42cwol-10",
+      "id": "edge-sub-mu42zdxy-6-flow-mu42zdxy-10",
       "type": "arrow",
-      "x": -57,
-      "y": 378,
-      "width": 239,
+      "x": 78,
+      "y": 243,
+      "width": 104,
       "height": 58,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -3772,15 +4370,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 147052,
+      "seed": 905479,
       "version": 1,
-      "versionNonce": 766693,
+      "versionNonce": 457577,
       "isDeleted": false,
       "points": [
         [
@@ -3788,37 +4386,37 @@
           0
         ],
         [
-          0,
-          29
+          10,
+          26
         ],
         [
-          239,
-          29
+          94,
+          32
         ],
         [
-          239,
+          104,
           58
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwol-6",
+        "elementId": "sub-mu42zdxy-6",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwol-10",
+        "elementId": "flow-mu42zdxy-10",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwol-8-flow-mu42cwol-8-note",
+      "id": "edge-flow-mu42zdxy-8-flow-mu42zdxy-8-note",
       "type": "arrow",
       "x": -178,
-      "y": 497,
+      "y": 362,
       "width": -13,
       "height": 162,
       "angle": 0,
@@ -3830,13 +4428,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 864306,
+      "seed": 780743,
       "version": 1,
-      "versionNonce": 960488,
+      "versionNonce": 297774,
       "isDeleted": false,
       "points": [
         [
@@ -3849,20 +4447,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwol-8",
+        "elementId": "flow-mu42zdxy-8",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-8-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwol-10-flow-mu42cwol-10-note",
+      "id": "edge-flow-mu42zdxy-10-flow-mu42zdxy-10-note",
       "type": "arrow",
       "x": 182,
-      "y": 497,
+      "y": 362,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -3874,13 +4476,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 332283,
+      "seed": 300762,
       "version": 1,
-      "versionNonce": 654039,
+      "versionNonce": 286598,
       "isDeleted": false,
       "points": [
         [
@@ -3893,20 +4495,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwol-10",
+        "elementId": "flow-mu42zdxy-10",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-10-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwol-10-diagram-mu42cwol-12",
+      "id": "edge-flow-mu42zdxy-10-diagram-mu42zdxy-12",
       "type": "arrow",
       "x": 326,
-      "y": 471,
+      "y": 336,
       "width": 222,
       "height": -4,
       "angle": 0,
@@ -3918,15 +4524,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 792638,
+      "seed": 876194,
       "version": 1,
-      "versionNonce": 66275,
+      "versionNonce": 192585,
       "isDeleted": false,
       "points": [
         [
@@ -3947,25 +4553,29 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwol-10",
+        "elementId": "flow-mu42zdxy-10",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42zdxy-12",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-flow-mu42cwol-10-diagram-mu42cwol-12_label",
+          "id": "edge-flow-mu42zdxy-10-diagram-mu42zdxy-12_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-flow-mu42cwol-10-diagram-mu42cwol-12_label",
+      "id": "edge-flow-mu42zdxy-10-diagram-mu42zdxy-12_label",
       "type": "text",
       "x": 317,
-      "y": 454,
+      "y": 319,
       "width": 240,
       "height": 24,
       "angle": 0,
@@ -3977,26 +4587,26 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_1"
+        "grp_mu42zdy2_1"
       ],
       "roundness": null,
-      "seed": 814032,
+      "seed": 950438,
       "version": 1,
-      "versionNonce": 584503,
+      "versionNonce": 326156,
       "isDeleted": false,
       "text": "Bus Communication Flowchart (Read Cycle)",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-flow-mu42cwol-10-diagram-mu42cwol-12",
+      "containerId": "edge-flow-mu42zdxy-10-diagram-mu42zdxy-12",
       "autoResize": true
     },
     {
-      "id": "edge-topic-mu42cwom-18-sub-mu42cwom-19",
+      "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-19",
       "type": "arrow",
       "x": 0,
-      "y": 1323,
+      "y": 1188,
       "width": 0,
       "height": -112,
       "angle": 0,
@@ -4008,13 +4618,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 233918,
+      "seed": 539258,
       "version": 1,
-      "versionNonce": 686574,
+      "versionNonce": 583042,
       "isDeleted": false,
       "points": [
         [
@@ -4027,24 +4637,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-18",
+        "elementId": "topic-mu42zdxy-18",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-19",
+        "elementId": "sub-mu42zdxy-19",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-19-sub-mu42cwom-19-note",
+      "id": "edge-sub-mu42zdxy-19-sub-mu42zdxy-19-note",
       "type": "arrow",
       "x": 0,
-      "y": 1148,
+      "y": 1013,
       "width": 0,
       "height": -34,
       "angle": 0,
@@ -4056,13 +4666,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 726489,
+      "seed": 692582,
       "version": 1,
-      "versionNonce": 960980,
+      "versionNonce": 437567,
       "isDeleted": false,
       "points": [
         [
@@ -4075,20 +4685,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-19",
+        "elementId": "sub-mu42zdxy-19",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-19-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-18-sub-mu42cwom-28",
+      "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-28",
       "type": "arrow",
       "x": -324,
-      "y": 1348,
+      "y": 1213,
       "width": -68,
       "height": -104,
       "angle": 0,
@@ -4100,15 +4714,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 480321,
+      "seed": 464015,
       "version": 1,
-      "versionNonce": 167659,
+      "versionNonce": 490920,
       "isDeleted": false,
       "points": [
         [
@@ -4116,12 +4730,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          -10
         ],
         [
-          -34,
-          -104
+          -37,
+          -93
         ],
         [
           -68,
@@ -4129,24 +4743,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-18",
+        "elementId": "topic-mu42zdxy-18",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-28",
+        "elementId": "sub-mu42zdxy-28",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-18-sub-mu42cwom-30",
+      "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-30",
       "type": "arrow",
       "x": -324,
-      "y": 1372,
+      "y": 1237,
       "width": -68,
       "height": 44,
       "angle": 0,
@@ -4158,15 +4772,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 506599,
+      "seed": 496386,
       "version": 1,
-      "versionNonce": 638132,
+      "versionNonce": 90308,
       "isDeleted": false,
       "points": [
         [
@@ -4174,12 +4788,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          4
         ],
         [
-          -34,
-          44
+          -37,
+          39
         ],
         [
           -68,
@@ -4187,24 +4801,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-18",
+        "elementId": "topic-mu42zdxy-18",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-30",
+        "elementId": "sub-mu42zdxy-30",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-28-sub-mu42cwom-28-note",
+      "id": "edge-sub-mu42zdxy-28-sub-mu42zdxy-28-note",
       "type": "arrow",
       "x": -786,
-      "y": 1245,
+      "y": 1110,
       "width": -79,
       "height": -63,
       "angle": 0,
@@ -4216,13 +4830,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 398165,
+      "seed": 604201,
       "version": 1,
-      "versionNonce": 80222,
+      "versionNonce": 929839,
       "isDeleted": false,
       "points": [
         [
@@ -4235,20 +4849,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-28",
+        "elementId": "sub-mu42zdxy-28",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-28-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-30-sub-mu42cwom-30-note",
+      "id": "edge-sub-mu42zdxy-30-sub-mu42zdxy-30-note",
       "type": "arrow",
       "x": -843,
-      "y": 1416,
+      "y": 1281,
       "width": -124,
       "height": 72,
       "angle": 0,
@@ -4260,13 +4878,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 446459,
+      "seed": 724659,
       "version": 1,
-      "versionNonce": 546695,
+      "versionNonce": 72125,
       "isDeleted": false,
       "points": [
         [
@@ -4279,20 +4897,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-30",
+        "elementId": "sub-mu42zdxy-30",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-30-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-18-sub-mu42cwom-21",
+      "id": "edge-topic-mu42zdxy-18-sub-mu42zdxy-21",
       "type": "arrow",
       "x": 0,
-      "y": 1397,
+      "y": 1262,
       "width": 0,
       "height": 143,
       "angle": 0,
@@ -4304,13 +4926,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 948037,
+      "seed": 452013,
       "version": 1,
-      "versionNonce": 704791,
+      "versionNonce": 76844,
       "isDeleted": false,
       "points": [
         [
@@ -4323,24 +4945,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-18",
+        "elementId": "topic-mu42zdxy-18",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-21",
+        "elementId": "sub-mu42zdxy-21",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-21-sub-mu42cwom-21-note",
+      "id": "edge-sub-mu42zdxy-21-sub-mu42zdxy-21-note",
       "type": "arrow",
       "x": -212,
-      "y": 1576,
+      "y": 1441,
       "width": -242,
       "height": 82,
       "angle": 0,
@@ -4352,15 +4974,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 9896,
+      "seed": 658034,
       "version": 1,
-      "versionNonce": 322896,
+      "versionNonce": 254734,
       "isDeleted": false,
       "points": [
         [
@@ -4368,12 +4990,8 @@
           0
         ],
         [
-          -145,
-          0
-        ],
-        [
-          -242,
-          49
+          -121,
+          41
         ],
         [
           -242,
@@ -4381,20 +4999,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-21",
+        "elementId": "sub-mu42zdxy-21",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-21-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-21-flow-mu42cwom-23",
+      "id": "edge-sub-mu42zdxy-21-flow-mu42zdxy-23",
       "type": "arrow",
       "x": -70,
-      "y": 1603,
+      "y": 1468,
       "width": -137,
       "height": 58,
       "angle": 0,
@@ -4406,15 +5028,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 823856,
+      "seed": 279710,
       "version": 1,
-      "versionNonce": 843048,
+      "versionNonce": 254348,
       "isDeleted": false,
       "points": [
         [
@@ -4422,12 +5044,12 @@
           0
         ],
         [
-          0,
-          29
+          -14,
+          26
         ],
         [
-          -137,
-          29
+          -123,
+          32
         ],
         [
           -137,
@@ -4435,24 +5057,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-21",
+        "elementId": "sub-mu42zdxy-21",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-23",
+        "elementId": "flow-mu42zdxy-23",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-21-flow-mu42cwom-25",
+      "id": "edge-sub-mu42zdxy-21-flow-mu42zdxy-25",
       "type": "arrow",
       "x": 70,
-      "y": 1603,
+      "y": 1468,
       "width": 121,
       "height": 58,
       "angle": 0,
@@ -4464,15 +5086,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 453816,
+      "seed": 65662,
       "version": 1,
-      "versionNonce": 438786,
+      "versionNonce": 889477,
       "isDeleted": false,
       "points": [
         [
@@ -4480,12 +5102,12 @@
           0
         ],
         [
-          0,
-          29
+          12,
+          26
         ],
         [
-          121,
-          29
+          108,
+          32
         ],
         [
           121,
@@ -4493,24 +5115,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-21",
+        "elementId": "sub-mu42zdxy-21",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-25",
+        "elementId": "flow-mu42zdxy-25",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-23-flow-mu42cwom-23-note",
+      "id": "edge-flow-mu42zdxy-23-flow-mu42zdxy-23-note",
       "type": "arrow",
       "x": -207,
-      "y": 1722,
+      "y": 1587,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -4522,13 +5144,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 961090,
+      "seed": 952808,
       "version": 1,
-      "versionNonce": 239578,
+      "versionNonce": 287262,
       "isDeleted": false,
       "points": [
         [
@@ -4541,20 +5163,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-23",
+        "elementId": "flow-mu42zdxy-23",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-23-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-25-flow-mu42cwom-25-note",
+      "id": "edge-flow-mu42zdxy-25-flow-mu42zdxy-25-note",
       "type": "arrow",
       "x": 191,
-      "y": 1722,
+      "y": 1587,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -4566,13 +5192,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 182887,
+      "seed": 62704,
       "version": 1,
-      "versionNonce": 257190,
+      "versionNonce": 584991,
       "isDeleted": false,
       "points": [
         [
@@ -4585,20 +5211,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-25",
+        "elementId": "flow-mu42zdxy-25",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-25-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-25-diagram-mu42cwom-27",
+      "id": "edge-flow-mu42zdxy-25-diagram-mu42zdxy-27",
       "type": "arrow",
       "x": 343,
-      "y": 1696,
+      "y": 1561,
       "width": 205,
       "height": -4,
       "angle": 0,
@@ -4610,15 +5240,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 375098,
+      "seed": 382771,
       "version": 1,
-      "versionNonce": 852595,
+      "versionNonce": 608678,
       "isDeleted": false,
       "points": [
         [
@@ -4639,25 +5269,29 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-25",
+        "elementId": "flow-mu42zdxy-25",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42zdxy-27",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-flow-mu42cwom-25-diagram-mu42cwom-27_label",
+          "id": "edge-flow-mu42zdxy-25-diagram-mu42zdxy-27_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-flow-mu42cwom-25-diagram-mu42cwom-27_label",
+      "id": "edge-flow-mu42zdxy-25-diagram-mu42zdxy-27_label",
       "type": "text",
       "x": 326,
-      "y": 1679,
+      "y": 1544,
       "width": 240,
       "height": 24,
       "angle": 0,
@@ -4669,26 +5303,26 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_2"
+        "grp_mu42zdy2_2"
       ],
       "roundness": null,
-      "seed": 306368,
+      "seed": 267883,
       "version": 1,
-      "versionNonce": 817191,
+      "versionNonce": 593495,
       "isDeleted": false,
       "text": "Semiconductor Memory Classification Tree",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-flow-mu42cwom-25-diagram-mu42cwom-27",
+      "containerId": "edge-flow-mu42zdxy-25-diagram-mu42zdxy-27",
       "autoResize": true
     },
     {
-      "id": "edge-topic-mu42cwom-33-sub-mu42cwom-34",
+      "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-34",
       "type": "arrow",
       "x": 0,
-      "y": 2646,
+      "y": 2511,
       "width": 0,
       "height": -112,
       "angle": 0,
@@ -4700,13 +5334,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 655414,
+      "seed": 672766,
       "version": 1,
-      "versionNonce": 718960,
+      "versionNonce": 272644,
       "isDeleted": false,
       "points": [
         [
@@ -4719,24 +5353,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-33",
+        "elementId": "topic-mu42zdxy-33",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-34",
+        "elementId": "sub-mu42zdxy-34",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-34-sub-mu42cwom-34-note",
+      "id": "edge-sub-mu42zdxy-34-sub-mu42zdxy-34-note",
       "type": "arrow",
       "x": 0,
-      "y": 2471,
+      "y": 2336,
       "width": 0,
       "height": -34,
       "angle": 0,
@@ -4748,13 +5382,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 218631,
+      "seed": 975094,
       "version": 1,
-      "versionNonce": 884167,
+      "versionNonce": 532480,
       "isDeleted": false,
       "points": [
         [
@@ -4767,20 +5401,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-34",
+        "elementId": "sub-mu42zdxy-34",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-34-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-33-sub-mu42cwom-36",
+      "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-36",
       "type": "arrow",
       "x": -299,
-      "y": 2671,
+      "y": 2536,
       "width": -68,
       "height": -104,
       "angle": 0,
@@ -4792,15 +5430,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 341382,
+      "seed": 225433,
       "version": 1,
-      "versionNonce": 761752,
+      "versionNonce": 839106,
       "isDeleted": false,
       "points": [
         [
@@ -4808,12 +5446,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          -10
         ],
         [
-          -34,
-          -104
+          -37,
+          -93
         ],
         [
           -68,
@@ -4821,24 +5459,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-33",
+        "elementId": "topic-mu42zdxy-33",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-36",
+        "elementId": "sub-mu42zdxy-36",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-33-sub-mu42cwom-38",
+      "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-38",
       "type": "arrow",
       "x": -299,
-      "y": 2695,
+      "y": 2560,
       "width": -68,
       "height": 44,
       "angle": 0,
@@ -4850,15 +5488,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 472287,
+      "seed": 55050,
       "version": 1,
-      "versionNonce": 162647,
+      "versionNonce": 393526,
       "isDeleted": false,
       "points": [
         [
@@ -4866,12 +5504,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          4
         ],
         [
-          -34,
-          44
+          -37,
+          39
         ],
         [
           -68,
@@ -4879,24 +5517,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-33",
+        "elementId": "topic-mu42zdxy-33",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-38",
+        "elementId": "sub-mu42zdxy-38",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-36-sub-mu42cwom-36-note",
+      "id": "edge-sub-mu42zdxy-36-sub-mu42zdxy-36-note",
       "type": "arrow",
       "x": -789,
-      "y": 2568,
+      "y": 2433,
       "width": -34,
       "height": -18,
       "angle": 0,
@@ -4908,13 +5546,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 40028,
+      "seed": 542470,
       "version": 1,
-      "versionNonce": 349374,
+      "versionNonce": 670988,
       "isDeleted": false,
       "points": [
         [
@@ -4927,20 +5565,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-36",
+        "elementId": "sub-mu42zdxy-36",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-36-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-38-sub-mu42cwom-38-note",
+      "id": "edge-sub-mu42zdxy-38-sub-mu42zdxy-38-note",
       "type": "arrow",
       "x": -856,
-      "y": 2739,
+      "y": 2604,
       "width": -34,
       "height": -18,
       "angle": 0,
@@ -4952,13 +5594,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 982214,
+      "seed": 185303,
       "version": 1,
-      "versionNonce": 340502,
+      "versionNonce": 139360,
       "isDeleted": false,
       "points": [
         [
@@ -4971,20 +5613,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-38",
+        "elementId": "sub-mu42zdxy-38",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-38-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-33-sub-mu42cwom-40",
+      "id": "edge-topic-mu42zdxy-33-sub-mu42zdxy-40",
       "type": "arrow",
       "x": 0,
-      "y": 2720,
+      "y": 2585,
       "width": 0,
       "height": 143,
       "angle": 0,
@@ -4996,13 +5642,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 441358,
+      "seed": 44658,
       "version": 1,
-      "versionNonce": 432604,
+      "versionNonce": 555538,
       "isDeleted": false,
       "points": [
         [
@@ -5015,24 +5661,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-33",
+        "elementId": "topic-mu42zdxy-33",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-40",
+        "elementId": "sub-mu42zdxy-40",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-40-sub-mu42cwom-40-note",
+      "id": "edge-sub-mu42zdxy-40-sub-mu42zdxy-40-note",
       "type": "arrow",
       "x": -193,
-      "y": 2899,
+      "y": 2764,
       "width": -345,
       "height": 82,
       "angle": 0,
@@ -5044,15 +5690,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 274363,
+      "seed": 735906,
       "version": 1,
-      "versionNonce": 253839,
+      "versionNonce": 160919,
       "isDeleted": false,
       "points": [
         [
@@ -5060,12 +5706,8 @@
           0
         ],
         [
-          -207,
-          0
-        ],
-        [
-          -345,
-          49
+          -172,
+          41
         ],
         [
           -345,
@@ -5073,20 +5715,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-40",
+        "elementId": "sub-mu42zdxy-40",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-40-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-40-flow-mu42cwom-42",
+      "id": "edge-sub-mu42zdxy-40-flow-mu42zdxy-42",
       "type": "arrow",
       "x": -64,
-      "y": 2926,
+      "y": 2791,
       "width": -185,
       "height": 58,
       "angle": 0,
@@ -5098,15 +5744,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 984545,
+      "seed": 215437,
       "version": 1,
-      "versionNonce": 591558,
+      "versionNonce": 892838,
       "isDeleted": false,
       "points": [
         [
@@ -5114,12 +5760,12 @@
           0
         ],
         [
-          0,
-          29
+          -19,
+          26
         ],
         [
-          -185,
-          29
+          -167,
+          32
         ],
         [
           -185,
@@ -5127,24 +5773,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-40",
+        "elementId": "sub-mu42zdxy-40",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-42",
+        "elementId": "flow-mu42zdxy-42",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-40-flow-mu42cwom-44",
+      "id": "edge-sub-mu42zdxy-40-flow-mu42zdxy-44",
       "type": "arrow",
       "x": 64,
-      "y": 2926,
+      "y": 2791,
       "width": 206,
       "height": 58,
       "angle": 0,
@@ -5156,15 +5802,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 606434,
+      "seed": 124971,
       "version": 1,
-      "versionNonce": 563704,
+      "versionNonce": 425021,
       "isDeleted": false,
       "points": [
         [
@@ -5172,12 +5818,12 @@
           0
         ],
         [
-          0,
-          29
+          21,
+          26
         ],
         [
-          206,
-          29
+          186,
+          32
         ],
         [
           206,
@@ -5185,24 +5831,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-40",
+        "elementId": "sub-mu42zdxy-40",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-44",
+        "elementId": "flow-mu42zdxy-44",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-42-flow-mu42cwom-42-note",
+      "id": "edge-flow-mu42zdxy-42-flow-mu42zdxy-42-note",
       "type": "arrow",
       "x": -249,
-      "y": 3045,
+      "y": 2910,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -5214,13 +5860,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 108633,
+      "seed": 929229,
       "version": 1,
-      "versionNonce": 158713,
+      "versionNonce": 515197,
       "isDeleted": false,
       "points": [
         [
@@ -5233,20 +5879,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-42",
+        "elementId": "flow-mu42zdxy-42",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-42-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-44-flow-mu42cwom-44-note",
+      "id": "edge-flow-mu42zdxy-44-flow-mu42zdxy-44-note",
       "type": "arrow",
       "x": 270,
-      "y": 3045,
+      "y": 2910,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -5258,13 +5908,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 429962,
+      "seed": 988703,
       "version": 1,
-      "versionNonce": 62370,
+      "versionNonce": 981146,
       "isDeleted": false,
       "points": [
         [
@@ -5277,20 +5927,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-44",
+        "elementId": "flow-mu42zdxy-44",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-44-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-44-diagram-mu42cwom-46",
+      "id": "edge-flow-mu42zdxy-44-diagram-mu42zdxy-46",
       "type": "arrow",
       "x": 502,
-      "y": 3019,
+      "y": 2884,
       "width": 86,
       "height": -4,
       "angle": 0,
@@ -5302,15 +5956,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 636964,
+      "seed": 106781,
       "version": 1,
-      "versionNonce": 130924,
+      "versionNonce": 643300,
       "isDeleted": false,
       "points": [
         [
@@ -5331,25 +5985,29 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-44",
+        "elementId": "flow-mu42zdxy-44",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42zdxy-46",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-flow-mu42cwom-44-diagram-mu42cwom-46_label",
+          "id": "edge-flow-mu42zdxy-44-diagram-mu42zdxy-46_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-flow-mu42cwom-44-diagram-mu42cwom-46_label",
+      "id": "edge-flow-mu42zdxy-44-diagram-mu42zdxy-46_label",
       "type": "text",
       "x": 425,
-      "y": 3002,
+      "y": 2867,
       "width": 240,
       "height": 24,
       "angle": 0,
@@ -5361,26 +6019,26 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_3"
+        "grp_mu42zdy2_3"
       ],
       "roundness": null,
-      "seed": 315823,
+      "seed": 915746,
       "version": 1,
-      "versionNonce": 248023,
+      "versionNonce": 558889,
       "isDeleted": false,
       "text": "Memory Capacity vs Address Line Mapping",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-flow-mu42cwom-44-diagram-mu42cwom-46",
+      "containerId": "edge-flow-mu42zdxy-44-diagram-mu42zdxy-46",
       "autoResize": true
     },
     {
-      "id": "edge-topic-mu42cwom-47-sub-mu42cwom-48",
+      "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-48",
       "type": "arrow",
       "x": 0,
-      "y": 3839,
+      "y": 3704,
       "width": 0,
       "height": -112,
       "angle": 0,
@@ -5392,13 +6050,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 676980,
+      "seed": 2810,
       "version": 1,
-      "versionNonce": 714451,
+      "versionNonce": 68503,
       "isDeleted": false,
       "points": [
         [
@@ -5411,24 +6069,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-47",
+        "elementId": "topic-mu42zdxy-47",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-48",
+        "elementId": "sub-mu42zdxy-48",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-48-sub-mu42cwom-48-note",
+      "id": "edge-sub-mu42zdxy-48-sub-mu42zdxy-48-note",
       "type": "arrow",
       "x": 0,
-      "y": 3664,
+      "y": 3529,
       "width": 0,
       "height": -34,
       "angle": 0,
@@ -5440,13 +6098,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 866866,
+      "seed": 459766,
       "version": 1,
-      "versionNonce": 910337,
+      "versionNonce": 543970,
       "isDeleted": false,
       "points": [
         [
@@ -5459,20 +6117,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-48",
+        "elementId": "sub-mu42zdxy-48",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-48-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-47-sub-mu42cwom-50",
+      "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-50",
       "type": "arrow",
       "x": -336,
-      "y": 3864,
+      "y": 3729,
       "width": -68,
       "height": -104,
       "angle": 0,
@@ -5484,15 +6146,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 739037,
+      "seed": 663480,
       "version": 1,
-      "versionNonce": 970766,
+      "versionNonce": 214689,
       "isDeleted": false,
       "points": [
         [
@@ -5500,12 +6162,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          -10
         ],
         [
-          -34,
-          -104
+          -37,
+          -93
         ],
         [
           -68,
@@ -5513,24 +6175,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-47",
+        "elementId": "topic-mu42zdxy-47",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-50",
+        "elementId": "sub-mu42zdxy-50",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-47-sub-mu42cwom-59",
+      "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-59",
       "type": "arrow",
       "x": -336,
-      "y": 3888,
+      "y": 3753,
       "width": -68,
       "height": 44,
       "angle": 0,
@@ -5542,15 +6204,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 512332,
+      "seed": 996893,
       "version": 1,
-      "versionNonce": 534328,
+      "versionNonce": 303203,
       "isDeleted": false,
       "points": [
         [
@@ -5558,12 +6220,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          4
         ],
         [
-          -34,
-          44
+          -37,
+          39
         ],
         [
           -68,
@@ -5571,24 +6233,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-47",
+        "elementId": "topic-mu42zdxy-47",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-59",
+        "elementId": "sub-mu42zdxy-59",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-50-sub-mu42cwom-50-note",
+      "id": "edge-sub-mu42zdxy-50-sub-mu42zdxy-50-note",
       "type": "arrow",
       "x": -941,
-      "y": 3761,
+      "y": 3626,
       "width": -34,
       "height": -18,
       "angle": 0,
@@ -5600,13 +6262,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 564596,
+      "seed": 60653,
       "version": 1,
-      "versionNonce": 504767,
+      "versionNonce": 503870,
       "isDeleted": false,
       "points": [
         [
@@ -5619,20 +6281,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-50",
+        "elementId": "sub-mu42zdxy-50",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-50-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-59-sub-mu42cwom-59-note",
+      "id": "edge-sub-mu42zdxy-59-sub-mu42zdxy-59-note",
       "type": "arrow",
       "x": -769,
-      "y": 3932,
+      "y": 3797,
       "width": -49,
       "height": -3,
       "angle": 0,
@@ -5644,13 +6310,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 88935,
+      "seed": 211101,
       "version": 1,
-      "versionNonce": 816185,
+      "versionNonce": 609963,
       "isDeleted": false,
       "points": [
         [
@@ -5663,20 +6329,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-59",
+        "elementId": "sub-mu42zdxy-59",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-59-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-47-sub-mu42cwom-52",
+      "id": "edge-topic-mu42zdxy-47-sub-mu42zdxy-52",
       "type": "arrow",
       "x": 0,
-      "y": 3913,
+      "y": 3778,
       "width": 0,
       "height": 143,
       "angle": 0,
@@ -5688,13 +6358,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 830886,
+      "seed": 512968,
       "version": 1,
-      "versionNonce": 872801,
+      "versionNonce": 301672,
       "isDeleted": false,
       "points": [
         [
@@ -5707,24 +6377,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-47",
+        "elementId": "topic-mu42zdxy-47",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-52",
+        "elementId": "sub-mu42zdxy-52",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-52-sub-mu42cwom-52-note",
+      "id": "edge-sub-mu42zdxy-52-sub-mu42zdxy-52-note",
       "type": "arrow",
       "x": -245,
-      "y": 4092,
+      "y": 3957,
       "width": -176,
       "height": 82,
       "angle": 0,
@@ -5736,15 +6406,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 918245,
+      "seed": 971624,
       "version": 1,
-      "versionNonce": 981267,
+      "versionNonce": 183201,
       "isDeleted": false,
       "points": [
         [
@@ -5752,12 +6422,8 @@
           0
         ],
         [
-          -106,
-          0
-        ],
-        [
-          -176,
-          49
+          -88,
+          41
         ],
         [
           -176,
@@ -5765,20 +6431,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-52",
+        "elementId": "sub-mu42zdxy-52",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-52-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-52-flow-mu42cwom-54",
+      "id": "edge-sub-mu42zdxy-52-flow-mu42zdxy-54",
       "type": "arrow",
       "x": -81,
-      "y": 4119,
+      "y": 3984,
       "width": -109,
       "height": 58,
       "angle": 0,
@@ -5790,15 +6460,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 35167,
+      "seed": 337722,
       "version": 1,
-      "versionNonce": 441811,
+      "versionNonce": 953582,
       "isDeleted": false,
       "points": [
         [
@@ -5806,12 +6476,12 @@
           0
         ],
         [
-          0,
-          29
+          -11,
+          26
         ],
         [
-          -109,
-          29
+          -99,
+          32
         ],
         [
           -109,
@@ -5819,24 +6489,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-52",
+        "elementId": "sub-mu42zdxy-52",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-54",
+        "elementId": "flow-mu42zdxy-54",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-52-flow-mu42cwom-56",
+      "id": "edge-sub-mu42zdxy-52-flow-mu42zdxy-56",
       "type": "arrow",
       "x": 81,
-      "y": 4119,
+      "y": 3984,
       "width": 105,
       "height": 58,
       "angle": 0,
@@ -5848,15 +6518,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 674652,
+      "seed": 369443,
       "version": 1,
-      "versionNonce": 389673,
+      "versionNonce": 852508,
       "isDeleted": false,
       "points": [
         [
@@ -5864,12 +6534,12 @@
           0
         ],
         [
-          0,
-          29
+          11,
+          26
         ],
         [
-          105,
-          29
+          95,
+          32
         ],
         [
           105,
@@ -5877,24 +6547,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-52",
+        "elementId": "sub-mu42zdxy-52",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-56",
+        "elementId": "flow-mu42zdxy-56",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-54-flow-mu42cwom-54-note",
+      "id": "edge-flow-mu42zdxy-54-flow-mu42zdxy-54-note",
       "type": "arrow",
       "x": -190,
-      "y": 4238,
+      "y": 4103,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -5906,13 +6576,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 14306,
+      "seed": 134026,
       "version": 1,
-      "versionNonce": 226900,
+      "versionNonce": 777505,
       "isDeleted": false,
       "points": [
         [
@@ -5925,20 +6595,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-54",
+        "elementId": "flow-mu42zdxy-54",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-54-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-56-flow-mu42cwom-56-note",
+      "id": "edge-flow-mu42zdxy-56-flow-mu42zdxy-56-note",
       "type": "arrow",
       "x": 186,
-      "y": 4238,
+      "y": 4103,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -5950,13 +6624,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 269997,
+      "seed": 916611,
       "version": 1,
-      "versionNonce": 938138,
+      "versionNonce": 485493,
       "isDeleted": false,
       "points": [
         [
@@ -5969,20 +6643,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-56",
+        "elementId": "flow-mu42zdxy-56",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-56-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-56-diagram-mu42cwom-58",
+      "id": "edge-flow-mu42zdxy-56-diagram-mu42zdxy-58",
       "type": "arrow",
       "x": 334,
-      "y": 4212,
+      "y": 4077,
       "width": 214,
       "height": -4,
       "angle": 0,
@@ -5994,15 +6672,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 149945,
+      "seed": 196008,
       "version": 1,
-      "versionNonce": 432273,
+      "versionNonce": 626530,
       "isDeleted": false,
       "points": [
         [
@@ -6023,25 +6701,29 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-56",
+        "elementId": "flow-mu42zdxy-56",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42zdxy-58",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-flow-mu42cwom-56-diagram-mu42cwom-58_label",
+          "id": "edge-flow-mu42zdxy-56-diagram-mu42zdxy-58_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-flow-mu42cwom-56-diagram-mu42cwom-58_label",
+      "id": "edge-flow-mu42zdxy-56-diagram-mu42zdxy-58_label",
       "type": "text",
       "x": 321,
-      "y": 4195,
+      "y": 4060,
       "width": 240,
       "height": 24,
       "angle": 0,
@@ -6053,26 +6735,26 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_4"
+        "grp_mu42zdy2_4"
       ],
       "roundness": null,
-      "seed": 883996,
+      "seed": 86928,
       "version": 1,
-      "versionNonce": 560212,
+      "versionNonce": 616888,
       "isDeleted": false,
       "text": "Hardware Building Blocks (Tri-State Buffer & Latch)",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-flow-mu42cwom-56-diagram-mu42cwom-58",
+      "containerId": "edge-flow-mu42zdxy-56-diagram-mu42zdxy-58",
       "autoResize": true
     },
     {
-      "id": "edge-topic-mu42cwom-61-sub-mu42cwom-62",
+      "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-62",
       "type": "arrow",
       "x": -299,
-      "y": 4971,
+      "y": 4836,
       "width": -68,
       "height": -104,
       "angle": 0,
@@ -6084,15 +6766,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 13933,
+      "seed": 393183,
       "version": 1,
-      "versionNonce": 590531,
+      "versionNonce": 879052,
       "isDeleted": false,
       "points": [
         [
@@ -6100,12 +6782,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          -10
         ],
         [
-          -34,
-          -104
+          -37,
+          -93
         ],
         [
           -68,
@@ -6113,24 +6795,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-61",
+        "elementId": "topic-mu42zdxy-61",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-62",
+        "elementId": "sub-mu42zdxy-62",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-61-sub-mu42cwom-71",
+      "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-71",
       "type": "arrow",
       "x": -299,
-      "y": 4995,
+      "y": 4860,
       "width": -68,
       "height": 44,
       "angle": 0,
@@ -6142,15 +6824,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 33179,
+      "seed": 605471,
       "version": 1,
-      "versionNonce": 772835,
+      "versionNonce": 754624,
       "isDeleted": false,
       "points": [
         [
@@ -6158,12 +6840,12 @@
           0
         ],
         [
-          -34,
-          0
+          -31,
+          4
         ],
         [
-          -34,
-          44
+          -37,
+          39
         ],
         [
           -68,
@@ -6171,24 +6853,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-61",
+        "elementId": "topic-mu42zdxy-61",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-71",
+        "elementId": "sub-mu42zdxy-71",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-62-sub-mu42cwom-62-note",
+      "id": "edge-sub-mu42zdxy-62-sub-mu42zdxy-62-note",
       "type": "arrow",
       "x": -789,
-      "y": 4868,
+      "y": 4733,
       "width": -64,
       "height": -48,
       "angle": 0,
@@ -6200,13 +6882,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 998725,
+      "seed": 788241,
       "version": 1,
-      "versionNonce": 332215,
+      "versionNonce": 270899,
       "isDeleted": false,
       "points": [
         [
@@ -6219,20 +6901,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-62",
+        "elementId": "sub-mu42zdxy-62",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-62-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-71-sub-mu42cwom-71-note",
+      "id": "edge-sub-mu42zdxy-71-sub-mu42zdxy-71-note",
       "type": "arrow",
       "x": -846,
-      "y": 5039,
+      "y": 4904,
       "width": -49,
       "height": -3,
       "angle": 0,
@@ -6244,13 +6930,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 464108,
+      "seed": 250493,
       "version": 1,
-      "versionNonce": 244369,
+      "versionNonce": 54581,
       "isDeleted": false,
       "points": [
         [
@@ -6263,20 +6949,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-71",
+        "elementId": "sub-mu42zdxy-71",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-71-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu42cwom-61-sub-mu42cwom-64",
+      "id": "edge-topic-mu42zdxy-61-sub-mu42zdxy-64",
       "type": "arrow",
       "x": 0,
-      "y": 5020,
+      "y": 4885,
       "width": 0,
       "height": 143,
       "angle": 0,
@@ -6288,13 +6978,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 97536,
+      "seed": 90614,
       "version": 1,
-      "versionNonce": 120149,
+      "versionNonce": 464241,
       "isDeleted": false,
       "points": [
         [
@@ -6307,24 +6997,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu42cwom-61",
+        "elementId": "topic-mu42zdxy-61",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu42cwom-64",
+        "elementId": "sub-mu42zdxy-64",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-64-sub-mu42cwom-64-note",
+      "id": "edge-sub-mu42zdxy-64-sub-mu42zdxy-64-note",
       "type": "arrow",
       "x": -231,
-      "y": 5199,
+      "y": 5064,
       "width": -257,
       "height": 82,
       "angle": 0,
@@ -6336,15 +7026,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 605718,
+      "seed": 882268,
       "version": 1,
-      "versionNonce": 329144,
+      "versionNonce": 983789,
       "isDeleted": false,
       "points": [
         [
@@ -6352,12 +7042,8 @@
           0
         ],
         [
-          -154,
-          0
-        ],
-        [
-          -257,
-          49
+          -128,
+          41
         ],
         [
           -257,
@@ -6365,20 +7051,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-64",
+        "elementId": "sub-mu42zdxy-64",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42zdxy-64-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-64-flow-mu42cwom-66",
+      "id": "edge-sub-mu42zdxy-64-flow-mu42zdxy-66",
       "type": "arrow",
       "x": -76,
-      "y": 5226,
+      "y": 5091,
       "width": -148,
       "height": 58,
       "angle": 0,
@@ -6390,15 +7080,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 874950,
+      "seed": 70860,
       "version": 1,
-      "versionNonce": 164010,
+      "versionNonce": 508915,
       "isDeleted": false,
       "points": [
         [
@@ -6406,12 +7096,12 @@
           0
         ],
         [
-          0,
-          29
+          -15,
+          26
         ],
         [
-          -148,
-          29
+          -133,
+          32
         ],
         [
           -148,
@@ -6419,24 +7109,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-64",
+        "elementId": "sub-mu42zdxy-64",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-66",
+        "elementId": "flow-mu42zdxy-66",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu42cwom-64-flow-mu42cwom-68",
+      "id": "edge-sub-mu42zdxy-64-flow-mu42zdxy-68",
       "type": "arrow",
       "x": 76,
-      "y": 5226,
+      "y": 5091,
       "width": 152,
       "height": 58,
       "angle": 0,
@@ -6448,15 +7138,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 66804,
+      "seed": 498885,
       "version": 1,
-      "versionNonce": 743083,
+      "versionNonce": 111333,
       "isDeleted": false,
       "points": [
         [
@@ -6464,12 +7154,12 @@
           0
         ],
         [
-          0,
-          29
+          15,
+          26
         ],
         [
-          152,
-          29
+          137,
+          32
         ],
         [
           152,
@@ -6477,24 +7167,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu42cwom-64",
+        "elementId": "sub-mu42zdxy-64",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu42cwom-68",
+        "elementId": "flow-mu42zdxy-68",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-66-flow-mu42cwom-66-note",
+      "id": "edge-flow-mu42zdxy-66-flow-mu42zdxy-66-note",
       "type": "arrow",
       "x": -224,
-      "y": 5345,
+      "y": 5210,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -6506,13 +7196,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 506070,
+      "seed": 945119,
       "version": 1,
-      "versionNonce": 946944,
+      "versionNonce": 452216,
       "isDeleted": false,
       "points": [
         [
@@ -6525,20 +7215,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-66",
+        "elementId": "flow-mu42zdxy-66",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-66-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-68-flow-mu42cwom-68-note",
+      "id": "edge-flow-mu42zdxy-68-flow-mu42zdxy-68-note",
       "type": "arrow",
       "x": 228,
-      "y": 5345,
+      "y": 5210,
       "width": 0,
       "height": 27,
       "angle": 0,
@@ -6550,13 +7244,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 863713,
+      "seed": 902246,
       "version": 1,
-      "versionNonce": 839,
+      "versionNonce": 963466,
       "isDeleted": false,
       "points": [
         [
@@ -6569,20 +7263,24 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-68",
+        "elementId": "flow-mu42zdxy-68",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42zdxy-68-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu42cwom-68-diagram-mu42cwom-70",
+      "id": "edge-flow-mu42zdxy-68-diagram-mu42zdxy-70",
       "type": "arrow",
       "x": 418,
-      "y": 5319,
+      "y": 5184,
       "width": 130,
       "height": -4,
       "angle": 0,
@@ -6594,15 +7292,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 348016,
+      "seed": 317582,
       "version": 1,
-      "versionNonce": 484958,
+      "versionNonce": 269835,
       "isDeleted": false,
       "points": [
         [
@@ -6623,25 +7321,29 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu42cwom-68",
+        "elementId": "flow-mu42zdxy-68",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42zdxy-70",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-flow-mu42cwom-68-diagram-mu42cwom-70_label",
+          "id": "edge-flow-mu42zdxy-68-diagram-mu42zdxy-70_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-flow-mu42cwom-68-diagram-mu42cwom-70_label",
+      "id": "edge-flow-mu42zdxy-68-diagram-mu42zdxy-70_label",
       "type": "text",
       "x": 363,
-      "y": 5302,
+      "y": 5167,
       "width": 240,
       "height": 24,
       "angle": 0,
@@ -6653,19 +7355,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu42cwoq_5"
+        "grp_mu42zdy2_5"
       ],
       "roundness": null,
-      "seed": 343214,
+      "seed": 587010,
       "version": 1,
-      "versionNonce": 352728,
+      "versionNonce": 194770,
       "isDeleted": false,
       "text": "Address Space Allocation Architecture",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-flow-mu42cwom-68-diagram-mu42cwom-70",
+      "containerId": "edge-flow-mu42zdxy-68-diagram-mu42zdxy-70",
       "autoResize": true
     }
   ],

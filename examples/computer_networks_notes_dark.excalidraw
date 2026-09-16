@@ -4,46 +4,66 @@
   "source": "netherite-visual-notes",
   "elements": [
     {
-      "id": "topic-mu426zol-1",
+      "id": "topic-mu42ugjw-1",
       "type": "rectangle",
       "x": -198,
       "y": -35,
       "width": 397,
       "height": 70,
       "angle": 0,
-      "strokeColor": "#69db7c",
-      "backgroundColor": "#1b3a24",
+      "strokeColor": "#2b8a3e",
+      "backgroundColor": "#c7f9cc",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 259516,
+      "seed": 223423,
       "version": 1,
-      "versionNonce": 555297,
+      "versionNonce": 28642,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu426zol-1_text",
+          "id": "topic-mu42ugjw-1_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-2",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-15",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-4",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-13",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-6",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu426zol-1_text",
+      "id": "topic-mu42ugjw-1_text",
       "type": "text",
       "x": -182,
       "y": -13,
       "width": 365,
       "height": 26,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -51,61 +71,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 71007,
+      "seed": 377291,
       "version": 1,
-      "versionNonce": 89830,
+      "versionNonce": 738417,
       "isDeleted": false,
       "text": "Internet Protocol v4 (IPv4)",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu426zol-1"
+      "containerId": "topic-mu42ugjw-1"
     },
     {
-      "id": "sub-mu426zol-2",
+      "id": "sub-mu42ugjw-2",
       "type": "rectangle",
       "x": -105,
       "y": -210,
       "width": 210,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 931581,
+      "seed": 76551,
       "version": 1,
-      "versionNonce": 152366,
+      "versionNonce": 21931,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-2_text",
+          "id": "sub-mu42ugjw-2_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-2",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-2-sub-mu42ugjw-2-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-2_text",
+      "id": "sub-mu42ugjw-2_text",
       "type": "text",
       "x": -93,
       "y": -195,
       "width": 186,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -113,29 +141,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 359328,
+      "seed": 664636,
       "version": 1,
-      "versionNonce": 135534,
+      "versionNonce": 407115,
       "isDeleted": false,
       "text": "Addressing & CIDR",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-2"
+      "containerId": "sub-mu42ugjw-2"
     },
     {
-      "id": "sub-mu426zol-2-note",
+      "id": "sub-mu42ugjw-2-note",
       "type": "text",
       "x": -172,
       "y": -506,
       "width": 314,
       "height": 246,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -143,60 +171,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 931055,
+      "seed": 508142,
       "version": 1,
-      "versionNonce": 574742,
+      "versionNonce": 910711,
       "isDeleted": false,
       "text": "IPv4 operates on a 32-bit hierarchical\naddress space providing approximately\n4.3 billion unique identifiers.\nAddresses are structured as Network\nPrefix and Host ID. Modern routing\nrelies on Classless Inter-Domain Routing\n(CIDR) slash notation (/24 =\n255.255.255.0). Private address\nallocations defined in RFC 1918\n(10.0.0.0/8, 172.16.0.0/12,\n192.168.0.0/16) prevent global address\nexhaustion and enable private enterprise\nsubnets.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjw-2-sub-mu42ugjw-2-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-15",
+      "id": "sub-mu42ugjw-15",
       "type": "rectangle",
       "x": 380,
       "y": -20,
       "width": 344,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 992771,
+      "seed": 348836,
       "version": 1,
-      "versionNonce": 643611,
+      "versionNonce": 972564,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-15_text",
+          "id": "sub-mu42ugjw-15_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-15",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-15-sub-mu42ugjw-15-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-15-flow-mu42ugjx-17",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-15_text",
+      "id": "sub-mu42ugjw-15_text",
       "type": "text",
       "x": 392,
       "y": -5,
       "width": 320,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -204,29 +250,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 405567,
+      "seed": 184221,
       "version": 1,
-      "versionNonce": 587356,
+      "versionNonce": 457118,
       "isDeleted": false,
       "text": "Diagnostics & Control Protocols",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-15"
+      "containerId": "sub-mu42ugjw-15"
     },
     {
-      "id": "sub-mu426zol-15-note",
+      "id": "sub-mu42ugjw-15-note",
       "type": "text",
       "x": 405,
       "y": 71,
       "width": 314,
       "height": 76,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -234,60 +280,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 721493,
+      "seed": 643230,
       "version": 1,
-      "versionNonce": 730683,
+      "versionNonce": 852166,
       "isDeleted": false,
       "text": "Internet Control Message Protocol (ICMP)\noperates alongside IPv4 to communicate\nnetwork layer errors and diagnostic\nmetrics back to source hosts.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjw-15-sub-mu42ugjw-15-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-17",
+      "id": "flow-mu42ugjx-17",
       "type": "rectangle",
       "x": 400,
       "y": -154,
       "width": 259,
       "height": 49,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#1a1a1f",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 766013,
+      "seed": 651319,
       "version": 1,
-      "versionNonce": 308240,
+      "versionNonce": 802049,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu426zol-17_text",
+          "id": "flow-mu42ugjx-17_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-15-flow-mu42ugjx-17",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-17-flow-mu42ugjx-17-note-0",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-17-flow-mu42ugjx-17-note-1",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu426zol-17_text",
+      "id": "flow-mu42ugjx-17_text",
       "type": "text",
       "x": 410,
       "y": -139,
       "width": 239,
       "height": 20,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -295,29 +359,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 854265,
+      "seed": 72997,
       "version": 1,
-      "versionNonce": 288539,
+      "versionNonce": 468541,
       "isDeleted": false,
       "text": "ICMP Diagnostic Operations",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu426zol-17"
+      "containerId": "flow-mu42ugjx-17"
     },
     {
-      "id": "flow-mu426zol-17-note-0",
+      "id": "flow-mu42ugjx-17-note-0",
       "type": "text",
       "x": 784,
       "y": -274,
       "width": 314,
       "height": 95,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -325,28 +389,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 938250,
+      "seed": 950118,
       "version": 1,
-      "versionNonce": 49035,
+      "versionNonce": 435393,
       "isDeleted": false,
       "text": "Ping sends ICMP Echo Requests (Type 8)\nexpecting Echo Replies (Type 0) to\nverify bidirectional end-to-end\nreachability and measure Round-Trip Time\n(RTT).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-17-flow-mu42ugjx-17-note-0",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-17-note-1",
+      "id": "flow-mu42ugjx-17-note-1",
       "type": "text",
       "x": 784,
       "y": -144,
       "width": 314,
       "height": 95,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -354,60 +424,74 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 185620,
+      "seed": 343933,
       "version": 1,
-      "versionNonce": 70370,
+      "versionNonce": 991778,
       "isDeleted": false,
       "text": "Traceroute transmits packets with\nincrementing TTL values (1, 2, 3...) to\ntrigger ICMP Time Exceeded (Type 11)\nmessages, mapping each transit router in\nthe forwarding path.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-17-flow-mu42ugjx-17-note-1",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-4",
+      "id": "sub-mu42ugjw-4",
       "type": "rectangle",
       "x": -603,
       "y": -141,
       "width": 325,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 783848,
+      "seed": 362079,
       "version": 1,
-      "versionNonce": 681062,
+      "versionNonce": 994997,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-4_text",
+          "id": "sub-mu42ugjw-4_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-4",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-4-sub-mu42ugjw-4-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-4_text",
+      "id": "sub-mu42ugjw-4_text",
       "type": "text",
       "x": -591,
       "y": -126,
       "width": 301,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -415,61 +499,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 721754,
+      "seed": 917056,
       "version": 1,
-      "versionNonce": 344558,
+      "versionNonce": 975588,
       "isDeleted": false,
       "text": "Packet Header & Encapsulation",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-4"
+      "containerId": "sub-mu42ugjw-4"
     },
     {
-      "id": "sub-mu426zol-13",
+      "id": "sub-mu42ugjw-13",
       "type": "rectangle",
       "x": -764,
       "y": 30,
       "width": 486,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 374784,
+      "seed": 340233,
       "version": 1,
-      "versionNonce": 280008,
+      "versionNonce": 185314,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-13_text",
+          "id": "sub-mu42ugjw-13_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-13",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-13-sub-mu42ugjw-13-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-13_text",
+      "id": "sub-mu42ugjw-13_text",
       "type": "text",
       "x": -752,
       "y": 45,
       "width": 462,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -477,29 +569,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 460798,
+      "seed": 96033,
       "version": 1,
-      "versionNonce": 295584,
+      "versionNonce": 989435,
       "isDeleted": false,
       "text": "Subnetting & Network Address Translation (NAT)",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-13"
+      "containerId": "sub-mu42ugjw-13"
     },
     {
-      "id": "sub-mu426zol-4-note",
+      "id": "sub-mu42ugjw-4-note",
       "type": "text",
       "x": -1027,
       "y": -216,
       "width": 314,
       "height": 208,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -507,28 +599,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 127614,
+      "seed": 230257,
       "version": 1,
-      "versionNonce": 228432,
+      "versionNonce": 333276,
       "isDeleted": false,
       "text": "The standard IPv4 header is 20 bytes\nlong without optional fields (up to 60\nbytes with options). The 4-bit IHL field\nspecifies header length in 32-bit words.\nTotal Length supports datagrams up to\n65,535 bytes. The Time-to-Live (TTL)\nfield decrements at each forwarding\nrouter hop to prevent forwarding loops.\nProtocol field multiplexes Layer 4\npayloads (6 for TCP, 17 for UDP, 1 for\nICMP).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjw-4-sub-mu42ugjw-4-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-13-note",
+      "id": "sub-mu42ugjw-13-note",
       "type": "text",
       "x": -1143,
       "y": 30,
       "width": 314,
       "height": 208,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -536,60 +634,82 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 451911,
+      "seed": 47898,
       "version": 1,
-      "versionNonce": 673683,
+      "versionNonce": 73466,
       "isDeleted": false,
       "text": "Subnetting divides address blocks into\nsmaller collision and broadcast domains.\nNAT rewrites IP headers at the router\nboundary, allowing multiple internal\nhosts with private RFC 1918 IPs to share\na single public IP. Port Address\nTranslation (PAT / NAPT) tracks sessions\nvia 16-bit ephemeral source ports,\nmultiplexing thousands of concurrent\nexternal connections across one public\nIP address.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjw-13-sub-mu42ugjw-13-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-6",
+      "id": "sub-mu42ugjw-6",
       "type": "rectangle",
       "x": -148,
       "y": 190,
       "width": 296,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 353033,
+      "seed": 294038,
       "version": 1,
-      "versionNonce": 457598,
+      "versionNonce": 454235,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-6_text",
+          "id": "sub-mu42ugjw-6_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-6",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-6-sub-mu42ugjw-6-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-6-flow-mu42ugjw-8",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-6-flow-mu42ugjw-10",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-6_text",
+      "id": "sub-mu42ugjw-6_text",
       "type": "text",
       "x": -136,
       "y": 205,
       "width": 272,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -597,61 +717,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 325254,
+      "seed": 613402,
       "version": 1,
-      "versionNonce": 529293,
+      "versionNonce": 664759,
       "isDeleted": false,
       "text": "Fragmentation & Reassembly",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-6"
+      "containerId": "sub-mu42ugjw-6"
     },
     {
-      "id": "flow-mu426zol-8",
+      "id": "flow-mu42ugjw-8",
       "type": "rectangle",
       "x": -332,
       "y": 311,
       "width": 292,
       "height": 49,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#1a1a1f",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 22395,
+      "seed": 182325,
       "version": 1,
-      "versionNonce": 778698,
+      "versionNonce": 255578,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu426zol-8_text",
+          "id": "flow-mu42ugjw-8_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-6-flow-mu42ugjw-8",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjw-8-flow-mu42ugjw-8-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu426zol-8_text",
+      "id": "flow-mu42ugjw-8_text",
       "type": "text",
       "x": -322,
       "y": 326,
       "width": 272,
       "height": 20,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -659,61 +787,73 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 207258,
+      "seed": 341789,
       "version": 1,
-      "versionNonce": 410938,
+      "versionNonce": 687733,
       "isDeleted": false,
       "text": "MTU Check & Fragment Splitting",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu426zol-8"
+      "containerId": "flow-mu42ugjw-8"
     },
     {
-      "id": "flow-mu426zol-10",
+      "id": "flow-mu42ugjw-10",
       "type": "rectangle",
       "x": 40,
       "y": 311,
       "width": 242,
       "height": 49,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#1a1a1f",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 672397,
+      "seed": 474268,
       "version": 1,
-      "versionNonce": 665562,
+      "versionNonce": 674364,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu426zol-10_text",
+          "id": "flow-mu42ugjw-10_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42ugjw-6-flow-mu42ugjw-10",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjw-10-flow-mu42ugjw-10-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjw-10-diagram-mu42ugjw-12",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu426zol-10_text",
+      "id": "flow-mu42ugjw-10_text",
       "type": "text",
       "x": 50,
       "y": 326,
       "width": 222,
       "height": 20,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -721,29 +861,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 162577,
+      "seed": 80677,
       "version": 1,
-      "versionNonce": 45642,
+      "versionNonce": 941088,
       "isDeleted": false,
       "text": "Flags & Offset Alignment",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu426zol-10"
+      "containerId": "flow-mu42ugjw-10"
     },
     {
-      "id": "sub-mu426zol-6-note",
+      "id": "sub-mu42ugjw-6-note",
       "type": "text",
       "x": -659,
       "y": 311,
       "width": 267,
       "height": 133,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -751,28 +891,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 688522,
+      "seed": 119161,
       "version": 1,
-      "versionNonce": 40232,
+      "versionNonce": 94266,
       "isDeleted": false,
       "text": "IPv4 handles unequal link-layer\nMTUs along an end-to-end path\nthrough fragmentation. The 16-bit\nIdentification field pairs\nfragments from the same original\ndatagram, while Flags and Fragment\nOffset dictate order.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjw-6-sub-mu42ugjw-6-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-8-note",
+      "id": "flow-mu42ugjw-8-note",
       "type": "text",
       "x": -358,
       "y": 403,
       "width": 314,
       "height": 114,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -780,28 +926,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 267929,
+      "seed": 826356,
       "version": 1,
-      "versionNonce": 769492,
+      "versionNonce": 507096,
       "isDeleted": false,
       "text": "When an outgoing packet exceeds the\negress link Maximum Transmission Unit\n(typically 1500 bytes for standard\nEthernet), the router verifies the Don't\nFragment (DF) flag before slicing\npayload into MTU-compliant segments.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjw-8-flow-mu42ugjw-8-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-10-note",
+      "id": "flow-mu42ugjw-10-note",
       "type": "text",
       "x": 19,
       "y": 403,
       "width": 314,
       "height": 114,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -809,54 +961,66 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 374628,
+      "seed": 585419,
       "version": 1,
-      "versionNonce": 182165,
+      "versionNonce": 700956,
       "isDeleted": false,
       "text": "The router sets More Fragments (MF=1) on\nall slices except the last (MF=0). The\n13-bit Fragment Offset specifies the\nrelative payload position measured\nstrictly in 8-byte units to reconstruct\nthe original datagram.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjw-10-flow-mu42ugjw-10-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu426zol-12",
+      "id": "diagram-mu42ugjw-12",
       "type": "rectangle",
       "x": 560,
       "y": 291,
       "width": 539,
       "height": 286,
       "angle": 0,
-      "strokeColor": "#495057",
-      "backgroundColor": "#141517",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 165430,
+      "seed": 454497,
       "version": 1,
-      "versionNonce": 655505,
-      "isDeleted": false
+      "versionNonce": 144813,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjw-10-diagram-mu42ugjw-12",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu426zol-12_code",
+      "id": "diagram-mu42ugjw-12_code",
       "type": "text",
       "x": 572,
       "y": 303,
       "width": 515,
       "height": 262,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -864,12 +1028,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 202615,
+      "seed": 433233,
       "version": 1,
-      "versionNonce": 585742,
+      "versionNonce": 339781,
       "isDeleted": false,
       "text": " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|Version|  IHL  |Type of Service|          Total Length         |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|         Identification        |Flags|      Fragment Offset    |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|  Time to Live |    Protocol   |         Header Checksum       |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|                       Source IP Address                       |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|                    Destination IP Address                     |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|                    Options (0 to 40 bytes)                    |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
       "fontSize": 13,
@@ -878,46 +1042,62 @@
       "verticalAlign": "top"
     },
     {
-      "id": "topic-mu426zol-20",
+      "id": "topic-mu42ugjx-20",
       "type": "rectangle",
       "x": -248,
       "y": 1172,
       "width": 496,
       "height": 70,
       "angle": 0,
-      "strokeColor": "#4dabf7",
-      "backgroundColor": "#18324f",
+      "strokeColor": "#1c7ed6",
+      "backgroundColor": "#d0ebff",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 211648,
+      "seed": 894700,
       "version": 1,
-      "versionNonce": 906394,
+      "versionNonce": 218978,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu426zol-20_text",
+          "id": "topic-mu42ugjx-20_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-28",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-32",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-30",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-21",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu426zol-20_text",
+      "id": "topic-mu42ugjx-20_text",
       "type": "text",
       "x": -232,
       "y": 1194,
       "width": 464,
       "height": 26,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -925,61 +1105,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 779576,
+      "seed": 355973,
       "version": 1,
-      "versionNonce": 989244,
+      "versionNonce": 898499,
       "isDeleted": false,
       "text": "Transmission Control Protocol (TCP)",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu426zol-20"
+      "containerId": "topic-mu42ugjx-20"
     },
     {
-      "id": "sub-mu426zol-28",
+      "id": "sub-mu42ugjx-28",
       "type": "rectangle",
       "x": -153,
       "y": 997,
       "width": 306,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 30464,
+      "seed": 110083,
       "version": 1,
-      "versionNonce": 873452,
+      "versionNonce": 413791,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-28_text",
+          "id": "sub-mu42ugjx-28_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-28",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-28-sub-mu42ugjx-28-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-28_text",
+      "id": "sub-mu42ugjx-28_text",
       "type": "text",
       "x": -141,
       "y": 1012,
       "width": 282,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -987,29 +1175,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 138540,
+      "seed": 802155,
       "version": 1,
-      "versionNonce": 564970,
+      "versionNonce": 571203,
       "isDeleted": false,
       "text": "Reliable Transmission & ARQ",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-28"
+      "containerId": "sub-mu42ugjx-28"
     },
     {
-      "id": "sub-mu426zol-28-note",
+      "id": "sub-mu42ugjx-28-note",
       "type": "text",
       "x": -168,
       "y": 757,
       "width": 306,
       "height": 190,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1017,60 +1205,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 1663,
+      "seed": 353463,
       "version": 1,
-      "versionNonce": 820603,
+      "versionNonce": 300847,
       "isDeleted": false,
       "text": "TCP treats payload data as an\nunstructured stream of bytes. Sequence\nnumbers track the first byte in each\nsegment. The receiver issues cumulative\nACKs indicating the next expected byte.\nIf 3 duplicate ACKs arrive, Fast\nRetransmit immediately resends the\nmissing segment without waiting for the\nRetransmission Timeout (RTO) timer to\nexpire.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-28-sub-mu42ugjx-28-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-32",
+      "id": "sub-mu42ugjx-32",
       "type": "rectangle",
       "x": 380,
       "y": 1187,
       "width": 334,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 342523,
+      "seed": 145656,
       "version": 1,
-      "versionNonce": 454739,
+      "versionNonce": 575938,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-32_text",
+          "id": "sub-mu42ugjx-32_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-32",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-32-sub-mu42ugjx-32-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-32-flow-mu42ugjx-34",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-32_text",
+      "id": "sub-mu42ugjx-32_text",
       "type": "text",
       "x": 392,
       "y": 1202,
       "width": 310,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1078,29 +1284,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 444897,
+      "seed": 946960,
       "version": 1,
-      "versionNonce": 291353,
+      "versionNonce": 371108,
       "isDeleted": false,
       "text": "Congestion Control & Avoidance",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-32"
+      "containerId": "sub-mu42ugjx-32"
     },
     {
-      "id": "sub-mu426zol-32-note",
+      "id": "sub-mu42ugjx-32-note",
       "type": "text",
       "x": 405,
       "y": 1278,
       "width": 298,
       "height": 76,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1108,60 +1314,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 759915,
+      "seed": 799381,
       "version": 1,
-      "versionNonce": 797261,
+      "versionNonce": 958322,
       "isDeleted": false,
       "text": "TCP regulates network load via\nCongestion Window (cwnd) maintained by\nthe sender. Transmission rate is\nthrottled to min(cwnd, rwnd).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-32-sub-mu42ugjx-32-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-34",
+      "id": "flow-mu42ugjx-34",
       "type": "rectangle",
       "x": 400,
       "y": 1053,
       "width": 225,
       "height": 49,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#1a1a1f",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 482153,
+      "seed": 495392,
       "version": 1,
-      "versionNonce": 799957,
+      "versionNonce": 934205,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu426zol-34_text",
+          "id": "flow-mu42ugjx-34_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-32-flow-mu42ugjx-34",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-34-flow-mu42ugjx-34-note-0",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-34-flow-mu42ugjx-34-note-1",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu426zol-34_text",
+      "id": "flow-mu42ugjx-34_text",
       "type": "text",
       "x": 410,
       "y": 1068,
       "width": 205,
       "height": 20,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1169,29 +1393,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 132294,
+      "seed": 467526,
       "version": 1,
-      "versionNonce": 732079,
+      "versionNonce": 626989,
       "isDeleted": false,
       "text": "AIMD & Rate Adaptation",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu426zol-34"
+      "containerId": "flow-mu42ugjx-34"
     },
     {
-      "id": "flow-mu426zol-34-note-0",
+      "id": "flow-mu42ugjx-34-note-0",
       "type": "text",
       "x": 774,
       "y": 952,
       "width": 291,
       "height": 76,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1199,28 +1423,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 674403,
+      "seed": 347589,
       "version": 1,
-      "versionNonce": 444347,
+      "versionNonce": 350921,
       "isDeleted": false,
       "text": "Slow Start exponentially doubles cwnd\nevery RTT until reaching slow start\nthreshold (ssthresh), rapidly\ndiscovering bottleneck bandwidth.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-34-flow-mu42ugjx-34-note-0",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-34-note-1",
+      "id": "flow-mu42ugjx-34-note-1",
       "type": "text",
       "x": 774,
       "y": 1063,
       "width": 283,
       "height": 95,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1228,60 +1458,74 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 513461,
+      "seed": 760746,
       "version": 1,
-      "versionNonce": 984386,
+      "versionNonce": 877590,
       "isDeleted": false,
       "text": "Congestion Avoidance increments cwnd\nlinearly by 1 MSS per RTT once past\nssthresh, using Additive Increase\nMultiplicative Decrease (AIMD) to\nstabilize throughput.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-34-flow-mu42ugjx-34-note-1",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-30",
+      "id": "sub-mu42ugjx-30",
       "type": "rectangle",
       "x": -605,
       "y": 1182,
       "width": 277,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 400841,
+      "seed": 654752,
       "version": 1,
-      "versionNonce": 718506,
+      "versionNonce": 655738,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-30_text",
+          "id": "sub-mu42ugjx-30_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-30",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-30-sub-mu42ugjx-30-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-30_text",
+      "id": "sub-mu42ugjx-30_text",
       "type": "text",
       "x": -593,
       "y": 1196,
       "width": 253,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1289,29 +1533,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 148230,
+      "seed": 654957,
       "version": 1,
-      "versionNonce": 361160,
+      "versionNonce": 67859,
       "isDeleted": false,
       "text": "Flow Control & Windowing",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-30"
+      "containerId": "sub-mu42ugjx-30"
     },
     {
-      "id": "sub-mu426zol-30-note",
+      "id": "sub-mu42ugjx-30-note",
       "type": "text",
       "x": -969,
       "y": 1172,
       "width": 314,
       "height": 190,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1319,60 +1563,82 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 391062,
+      "seed": 798453,
       "version": 1,
-      "versionNonce": 156464,
+      "versionNonce": 36463,
       "isDeleted": false,
       "text": "Flow control prevents a fast sender from\noverwhelming a slow receiver. The\nreceiver advertises its available buffer\ncapacity in the 16-bit Window Size field\n(rwnd). When rwnd drops to 0, sender\nstops transmitting and periodically\nemits Zero-Window Probes to detect when\nreceiver buffer space clears. Window\nScaling option (RFC 7323) shifts window\nsize up to 1 GB.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-30-sub-mu42ugjx-30-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-21",
+      "id": "sub-mu42ugjx-21",
       "type": "rectangle",
       "x": -195,
       "y": 1397,
       "width": 391,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 205824,
+      "seed": 418858,
       "version": 1,
-      "versionNonce": 260408,
+      "versionNonce": 702369,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-21_text",
+          "id": "sub-mu42ugjx-21_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-21",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-21-sub-mu42ugjx-21-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-21-flow-mu42ugjx-23",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-21-flow-mu42ugjx-25",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-21_text",
+      "id": "sub-mu42ugjx-21_text",
       "type": "text",
       "x": -183,
       "y": 1412,
       "width": 367,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1380,61 +1646,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 771149,
+      "seed": 364522,
       "version": 1,
-      "versionNonce": 161460,
+      "versionNonce": 79147,
       "isDeleted": false,
       "text": "Connection Lifecycle & State Machine",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-21"
+      "containerId": "sub-mu42ugjx-21"
     },
     {
-      "id": "flow-mu426zol-23",
+      "id": "flow-mu42ugjx-23",
       "type": "rectangle",
       "x": -270,
       "y": 1518,
       "width": 230,
       "height": 49,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#1a1a1f",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 149231,
+      "seed": 704718,
       "version": 1,
-      "versionNonce": 984660,
+      "versionNonce": 806628,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu426zol-23_text",
+          "id": "flow-mu42ugjx-23_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-21-flow-mu42ugjx-23",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-23-flow-mu42ugjx-23-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu426zol-23_text",
+      "id": "flow-mu42ugjx-23_text",
       "type": "text",
       "x": -260,
       "y": 1533,
       "width": 210,
       "height": 20,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1442,61 +1716,73 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 750989,
+      "seed": 982206,
       "version": 1,
-      "versionNonce": 340333,
+      "versionNonce": 955037,
       "isDeleted": false,
       "text": "Three-Way Handshake",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu426zol-23"
+      "containerId": "flow-mu42ugjx-23"
     },
     {
-      "id": "flow-mu426zol-25",
+      "id": "flow-mu42ugjx-25",
       "type": "rectangle",
       "x": 40,
       "y": 1518,
       "width": 309,
       "height": 49,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#1a1a1f",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 977618,
+      "seed": 118671,
       "version": 1,
-      "versionNonce": 734540,
+      "versionNonce": 325309,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu426zol-25_text",
+          "id": "flow-mu42ugjx-25_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-21-flow-mu42ugjx-25",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-25-flow-mu42ugjx-25-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-25-diagram-mu42ugjx-27",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu426zol-25_text",
+      "id": "flow-mu42ugjx-25_text",
       "type": "text",
       "x": 50,
       "y": 1533,
       "width": 289,
       "height": 20,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1504,29 +1790,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 533317,
+      "seed": 104412,
       "version": 1,
-      "versionNonce": 864810,
+      "versionNonce": 395026,
       "isDeleted": false,
       "text": "Four-Way Termination & TIME_WAIT",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu426zol-25"
+      "containerId": "flow-mu42ugjx-25"
     },
     {
-      "id": "sub-mu426zol-21-note",
+      "id": "sub-mu42ugjx-21-note",
       "type": "text",
       "x": -605,
       "y": 1518,
       "width": 275,
       "height": 171,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1534,28 +1820,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 28235,
+      "seed": 447457,
       "version": 1,
-      "versionNonce": 670221,
+      "versionNonce": 832373,
       "isDeleted": false,
       "text": "TCP is a connection-oriented,\nfull-duplex protocol providing\nreliable stream transport. Sockets\nsynchronize state using explicit\nhandshakes before exchanging\npayload data, and transition\nthrough established states (LISTEN,\nSYN_SENT, ESTABLISHED, FIN_WAIT,\nTIME_WAIT).",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-21-sub-mu42ugjx-21-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-23-note",
+      "id": "flow-mu42ugjx-23-note",
       "type": "text",
       "x": -447,
       "y": 1730,
       "width": 314,
       "height": 114,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1563,28 +1855,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 575924,
+      "seed": 617593,
       "version": 1,
-      "versionNonce": 888389,
+      "versionNonce": 741525,
       "isDeleted": false,
       "text": "Client initiates with SYN (Seq=x).\nServer responds with SYN-ACK (Seq=y,\nAck=x+1). Client completes handshake\nwith ACK (Ack=y+1). Both hosts establish\nsequence baseline and initial receive\nwindows.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-23-flow-mu42ugjx-23-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-25-note",
+      "id": "flow-mu42ugjx-25-note",
       "type": "text",
       "x": 57,
       "y": 1610,
       "width": 306,
       "height": 114,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1592,54 +1890,66 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 303935,
+      "seed": 831364,
       "version": 1,
-      "versionNonce": 683877,
+      "versionNonce": 97464,
       "isDeleted": false,
       "text": "Active closer sends FIN. Passive\nreceiver ACKs. Once application closes,\nreceiver sends FIN. Final ACK from\ninitiator triggers TIME_WAIT state (2 *\nMSL) ensuring late arriving segments\ndrain before port reuse.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-25-flow-mu42ugjx-25-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu426zol-27",
+      "id": "diagram-mu42ugjx-27",
       "type": "rectangle",
       "x": 560,
       "y": 1498,
       "width": 539,
       "height": 320,
       "angle": 0,
-      "strokeColor": "#495057",
-      "backgroundColor": "#141517",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 443563,
+      "seed": 886955,
       "version": 1,
-      "versionNonce": 203414,
-      "isDeleted": false
+      "versionNonce": 722255,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-25-diagram-mu42ugjx-27",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu426zol-27_code",
+      "id": "diagram-mu42ugjx-27_code",
       "type": "text",
       "x": 572,
       "y": 1510,
       "width": 515,
       "height": 296,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1647,12 +1957,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 915598,
+      "seed": 619092,
       "version": 1,
-      "versionNonce": 442451,
+      "versionNonce": 868230,
       "isDeleted": false,
       "text": " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|          Source Port          |       Destination Port        |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|                        Sequence Number                        |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|                    Acknowledgment Number                      |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|  Data |           |U|A|P|R|S|F|                               |\n| Offset| Reserved  |R|C|S|S|Y|I|          Window Size          |\n|  (4b) |   (6b)    |G|K|H|T|N|N|                               |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|           Checksum            |         Urgent Pointer        |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|                    Options (0 to 40 bytes)                    |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
       "fontSize": 13,
@@ -1661,46 +1971,66 @@
       "verticalAlign": "top"
     },
     {
-      "id": "topic-mu426zol-37",
+      "id": "topic-mu42ugjx-37",
       "type": "rectangle",
       "x": -204,
       "y": 2420,
       "width": 409,
       "height": 70,
       "angle": 0,
-      "strokeColor": "#fcc419",
-      "backgroundColor": "#403417",
+      "strokeColor": "#f59f00",
+      "backgroundColor": "#ffec99",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 13603,
+      "seed": 69794,
       "version": 1,
-      "versionNonce": 626048,
+      "versionNonce": 391938,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "topic-mu426zol-37_text",
+          "id": "topic-mu42ugjx-37_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-38",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-47",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-43",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-45",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-40",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "topic-mu426zol-37_text",
+      "id": "topic-mu42ugjx-37_text",
       "type": "text",
       "x": -188,
       "y": 2442,
       "width": 377,
       "height": 26,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1708,61 +2038,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 23441,
+      "seed": 249857,
       "version": 1,
-      "versionNonce": 649359,
+      "versionNonce": 975752,
       "isDeleted": false,
       "text": "User Datagram Protocol (UDP)",
       "fontSize": 22,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "topic-mu426zol-37"
+      "containerId": "topic-mu42ugjx-37"
     },
     {
-      "id": "sub-mu426zol-38",
+      "id": "sub-mu42ugjx-38",
       "type": "rectangle",
       "x": -162,
       "y": 2245,
       "width": 325,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 661186,
+      "seed": 295863,
       "version": 1,
-      "versionNonce": 468060,
+      "versionNonce": 329522,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-38_text",
+          "id": "sub-mu42ugjx-38_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-38",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-38-sub-mu42ugjx-38-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-38_text",
+      "id": "sub-mu42ugjx-38_text",
       "type": "text",
       "x": -150,
       "y": 2260,
       "width": 301,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1770,29 +2108,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 491243,
+      "seed": 85519,
       "version": 1,
-      "versionNonce": 37452,
+      "versionNonce": 406846,
       "isDeleted": false,
       "text": "Stateless & Minimal Transport",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-38"
+      "containerId": "sub-mu42ugjx-38"
     },
     {
-      "id": "sub-mu426zol-38-note",
+      "id": "sub-mu42ugjx-38-note",
       "type": "text",
       "x": -172,
       "y": 2024,
       "width": 314,
       "height": 171,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1800,60 +2138,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 957073,
+      "seed": 729931,
       "version": 1,
-      "versionNonce": 446137,
+      "versionNonce": 962750,
       "isDeleted": false,
       "text": "UDP provides lightweight, connectionless\ndatagram transport with zero state\nmanagement. Unlike TCP, UDP executes no\nhandshakes, maintains no socket buffer\nstates, provides no retransmissions, and\nenforces no ordering or congestion\nbackoff. Applications gain direct, raw\ntransmission access to IP layer\nperformance.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-38-sub-mu42ugjx-38-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-47",
+      "id": "sub-mu42ugjx-47",
       "type": "rectangle",
       "x": 380,
       "y": 2435,
       "width": 229,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 488680,
+      "seed": 818037,
       "version": 1,
-      "versionNonce": 450780,
+      "versionNonce": 146436,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-47_text",
+          "id": "sub-mu42ugjx-47_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-47",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-47-sub-mu42ugjx-47-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-47-flow-mu42ugjx-49",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-47_text",
+      "id": "sub-mu42ugjx-47_text",
       "type": "text",
       "x": 392,
       "y": 2450,
       "width": 205,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1861,29 +2217,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 211333,
+      "seed": 197946,
       "version": 1,
-      "versionNonce": 953285,
+      "versionNonce": 918300,
       "isDeleted": false,
       "text": "Protocol Trade-offs",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-47"
+      "containerId": "sub-mu42ugjx-47"
     },
     {
-      "id": "sub-mu426zol-47-note",
+      "id": "sub-mu42ugjx-47-note",
       "type": "text",
       "x": 405,
       "y": 2526,
       "width": 306,
       "height": 57,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1891,60 +2247,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 79298,
+      "seed": 689764,
       "version": 1,
-      "versionNonce": 603164,
+      "versionNonce": 372903,
       "isDeleted": false,
       "text": "Understanding when to select TCP versus\nUDP is fundamental to high-performance\nnetwork system design.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-47-sub-mu42ugjx-47-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-49",
+      "id": "flow-mu42ugjx-49",
       "type": "rectangle",
       "x": 400,
       "y": 2301,
       "width": 242,
       "height": 49,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#1a1a1f",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "dashed",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 632215,
+      "seed": 322702,
       "version": 1,
-      "versionNonce": 911365,
+      "versionNonce": 279195,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "flow-mu426zol-49_text",
+          "id": "flow-mu42ugjx-49_text",
           "type": "text"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-47-flow-mu42ugjx-49",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-49-flow-mu42ugjx-49-note-0",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-flow-mu42ugjx-49-flow-mu42ugjx-49-note-1",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "flow-mu426zol-49_text",
+      "id": "flow-mu42ugjx-49_text",
       "type": "text",
       "x": 410,
       "y": 2316,
       "width": 222,
       "height": 20,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1952,29 +2326,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 76579,
+      "seed": 947428,
       "version": 1,
-      "versionNonce": 135397,
+      "versionNonce": 967403,
       "isDeleted": false,
       "text": "Architectural Comparison",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "flow-mu426zol-49"
+      "containerId": "flow-mu42ugjx-49"
     },
     {
-      "id": "flow-mu426zol-49-note-0",
+      "id": "flow-mu42ugjx-49-note-0",
       "type": "text",
       "x": 746,
       "y": 2200,
       "width": 298,
       "height": 76,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -1982,28 +2356,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 249921,
+      "seed": 581206,
       "version": 1,
-      "versionNonce": 789518,
+      "versionNonce": 877974,
       "isDeleted": false,
       "text": "TCP guarantees reliable, in-order byte\ndelivery with congestion throttling at\nthe cost of 3-way handshake delay and\nhead-of-line blocking stalls.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-49-flow-mu42ugjx-49-note-0",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "flow-mu426zol-49-note-1",
+      "id": "flow-mu42ugjx-49-note-1",
       "type": "text",
       "x": 746,
       "y": 2311,
       "width": 306,
       "height": 76,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2011,60 +2391,74 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 70533,
+      "seed": 170996,
       "version": 1,
-      "versionNonce": 283166,
+      "versionNonce": 671098,
       "isDeleted": false,
       "text": "UDP delivers unthrottled zero-latency\ndatagrams with minimal packet overhead,\nserving as the modern foundation for\nHTTP/3 QUIC transport.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-flow-mu42ugjx-49-flow-mu42ugjx-49-note-1",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-43",
+      "id": "sub-mu42ugjx-43",
       "type": "rectangle",
       "x": -675,
       "y": 2314,
       "width": 391,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 329690,
+      "seed": 49402,
       "version": 1,
-      "versionNonce": 736642,
+      "versionNonce": 50765,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-43_text",
+          "id": "sub-mu42ugjx-43_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-43",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-43-sub-mu42ugjx-43-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-43_text",
+      "id": "sub-mu42ugjx-43_text",
       "type": "text",
       "x": -663,
       "y": 2329,
       "width": 367,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2072,61 +2466,69 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 957432,
+      "seed": 953194,
       "version": 1,
-      "versionNonce": 52236,
+      "versionNonce": 310433,
       "isDeleted": false,
       "text": "Error Detection & Checksum Mechanism",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-43"
+      "containerId": "sub-mu42ugjx-43"
     },
     {
-      "id": "sub-mu426zol-45",
+      "id": "sub-mu42ugjx-45",
       "type": "rectangle",
       "x": -685,
       "y": 2485,
       "width": 401,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 118319,
+      "seed": 334556,
       "version": 1,
-      "versionNonce": 927285,
+      "versionNonce": 513899,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-45_text",
+          "id": "sub-mu42ugjx-45_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-45",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-45-sub-mu42ugjx-45-note",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-45_text",
+      "id": "sub-mu42ugjx-45_text",
       "type": "text",
       "x": -673,
       "y": 2500,
       "width": 377,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2134,29 +2536,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 126051,
+      "seed": 8165,
       "version": 1,
-      "versionNonce": 110113,
+      "versionNonce": 106374,
       "isDeleted": false,
       "text": "Core Protocols & Production Use Cases",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-45"
+      "containerId": "sub-mu42ugjx-45"
     },
     {
-      "id": "sub-mu426zol-43-note",
+      "id": "sub-mu42ugjx-43-note",
       "type": "text",
       "x": -1039,
       "y": 2299,
       "width": 314,
       "height": 171,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2164,28 +2566,34 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 458478,
+      "seed": 498925,
       "version": 1,
-      "versionNonce": 436675,
+      "versionNonce": 520383,
       "isDeleted": false,
       "text": "UDP computes an optional 16-bit one's\ncomplement checksum over a pseudo-header\n(Source IP, Destination IP, Protocol 17,\nUDP Length) combined with the header and\npayload. Corrupted datagrams are\ndiscarded silently without generating\nACKs or error packets, delegating any\nrecovery logic to user-space application\nprotocols.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-43-sub-mu42ugjx-43-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-45-note",
+      "id": "sub-mu42ugjx-45-note",
       "type": "text",
       "x": -1086,
       "y": 2515,
       "width": 306,
       "height": 152,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2193,60 +2601,78 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 11308,
+      "seed": 536109,
       "version": 1,
-      "versionNonce": 925099,
+      "versionNonce": 493422,
       "isDeleted": false,
       "text": "UDP powers real-time and foundational\nnetwork infrastructure: DNS queries for\ninstant domain resolution, DHCP for\nbootstrap host configuration, NTP for\ndistributed clock synchronization, and\nWebRTC / RTP for real-time video\nconferencing where low latency\nsupersedes packet retransmission.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-45-sub-mu42ugjx-45-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "sub-mu426zol-40",
+      "id": "sub-mu42ugjx-40",
       "type": "rectangle",
       "x": -176,
       "y": 2645,
       "width": 353,
       "height": 51,
       "angle": 0,
-      "strokeColor": "#ced4da",
-      "backgroundColor": "#212529",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
       "strokeStyle": "solid",
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 654977,
+      "seed": 771871,
       "version": 1,
-      "versionNonce": 31977,
+      "versionNonce": 696523,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "sub-mu426zol-40_text",
+          "id": "sub-mu42ugjx-40_text",
           "type": "text"
+        },
+        {
+          "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-40",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-40-sub-mu42ugjx-40-note",
+          "type": "arrow"
+        },
+        {
+          "id": "edge-sub-mu42ugjx-40-diagram-mu42ugjx-42",
+          "type": "arrow"
         }
       ]
     },
     {
-      "id": "sub-mu426zol-40_text",
+      "id": "sub-mu42ugjx-40_text",
       "type": "text",
       "x": -164,
       "y": 2660,
       "width": 329,
       "height": 22,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2254,29 +2680,29 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 907604,
+      "seed": 785150,
       "version": 1,
-      "versionNonce": 662439,
+      "versionNonce": 959173,
       "isDeleted": false,
       "text": "Fixed 8-Byte Header Architecture",
       "fontSize": 17,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "sub-mu426zol-40"
+      "containerId": "sub-mu42ugjx-40"
     },
     {
-      "id": "sub-mu426zol-40-note",
+      "id": "sub-mu42ugjx-40-note",
       "type": "text",
       "x": -172,
       "y": 2746,
       "width": 314,
       "height": 152,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2284,54 +2710,66 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 92784,
+      "seed": 948399,
       "version": 1,
-      "versionNonce": 427752,
+      "versionNonce": 78405,
       "isDeleted": false,
       "text": "UDP features an ultra-compact 8-byte\nheader minimizing packet overhead and\nserialization latency. It consists of\nfour 16-bit fields: Source Port,\nDestination Port, Length (header +\npayload, min 8 bytes), and Checksum. The\nsimple structure allows line-rate ASIC\nparsing in network hardware.",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "left",
-      "verticalAlign": "top"
+      "verticalAlign": "top",
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-40-sub-mu42ugjx-40-note",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu426zol-42",
+      "id": "diagram-mu42ugjx-42",
       "type": "rectangle",
       "x": 560,
       "y": 2625,
       "width": 539,
       "height": 185,
       "angle": 0,
-      "strokeColor": "#495057",
-      "backgroundColor": "#141517",
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
       "strokeStyle": "dashed",
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 3
       },
-      "seed": 898648,
+      "seed": 595688,
       "version": 1,
-      "versionNonce": 988285,
-      "isDeleted": false
+      "versionNonce": 370049,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "edge-sub-mu42ugjx-40-diagram-mu42ugjx-42",
+          "type": "arrow"
+        }
+      ]
     },
     {
-      "id": "diagram-mu426zol-42_code",
+      "id": "diagram-mu42ugjx-42_code",
       "type": "text",
       "x": 572,
       "y": 2637,
       "width": 515,
       "height": 161,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -2339,12 +2777,12 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 988435,
+      "seed": 159813,
       "version": 1,
-      "versionNonce": 88910,
+      "versionNonce": 406916,
       "isDeleted": false,
       "text": " 0                   1                   2                   3\n 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|          Source Port          |       Destination Port        |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|            Length             |            Checksum           |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|                            Payload                            |\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
       "fontSize": 13,
@@ -2353,14 +2791,14 @@
       "verticalAlign": "top"
     },
     {
-      "id": "edge-topic-mu426zol-1-sub-mu426zol-2",
+      "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-2",
       "type": "arrow",
       "x": 0,
       "y": -37,
       "width": 0,
       "height": -112,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2368,13 +2806,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 74972,
+      "seed": 71809,
       "version": 1,
-      "versionNonce": 575373,
+      "versionNonce": 538589,
       "isDeleted": false,
       "points": [
         [
@@ -2387,28 +2825,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-1",
+        "elementId": "topic-mu42ugjw-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-2",
+        "elementId": "sub-mu42ugjw-2",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-2-sub-mu426zol-2-note",
+      "id": "edge-sub-mu42ugjw-2-sub-mu42ugjw-2-note",
       "type": "arrow",
       "x": 0,
       "y": -212,
       "width": 0,
       "height": -34,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2416,13 +2854,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 34498,
+      "seed": 757177,
       "version": 1,
-      "versionNonce": 808006,
+      "versionNonce": 319571,
       "isDeleted": false,
       "points": [
         [
@@ -2435,24 +2873,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-2",
+        "elementId": "sub-mu42ugjw-2",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjw-2-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-1-sub-mu426zol-15",
+      "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-15",
       "type": "arrow",
       "x": 201,
       "y": 0,
       "width": 170,
       "height": 6,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2460,13 +2902,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 836667,
+      "seed": 133492,
       "version": 1,
-      "versionNonce": 549831,
+      "versionNonce": 584631,
       "isDeleted": false,
       "points": [
         [
@@ -2479,28 +2921,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-1",
+        "elementId": "topic-mu42ugjw-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-15",
+        "elementId": "sub-mu42ugjw-15",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-15-sub-mu426zol-15-note",
+      "id": "edge-sub-mu42ugjw-15-sub-mu42ugjw-15-note",
       "type": "arrow",
       "x": 552,
       "y": 33,
       "width": 0,
       "height": 24,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2508,13 +2950,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 847061,
+      "seed": 745728,
       "version": 1,
-      "versionNonce": 466271,
+      "versionNonce": 312078,
       "isDeleted": false,
       "points": [
         [
@@ -2527,24 +2969,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-15",
+        "elementId": "sub-mu42ugjw-15",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjw-15-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-15-flow-mu426zol-17",
+      "id": "edge-sub-mu42ugjw-15-flow-mu42ugjx-17",
       "type": "arrow",
       "x": 552,
       "y": -22,
       "width": -22,
       "height": -73,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2552,15 +2998,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 672357,
+      "seed": 620729,
       "version": 1,
-      "versionNonce": 300721,
+      "versionNonce": 190359,
       "isDeleted": false,
       "points": [
         [
@@ -2581,28 +3027,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-15",
+        "elementId": "sub-mu42ugjw-15",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu426zol-17",
+        "elementId": "flow-mu42ugjx-17",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-17-flow-mu426zol-17-note-0",
+      "id": "edge-flow-mu42ugjx-17-flow-mu42ugjx-17-note-0",
       "type": "arrow",
       "x": 661,
       "y": -138,
       "width": 109,
       "height": -114,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2610,15 +3056,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 130902,
+      "seed": 564073,
       "version": 1,
-      "versionNonce": 862922,
+      "versionNonce": 406890,
       "isDeleted": false,
       "points": [
         [
@@ -2639,24 +3085,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-17",
+        "elementId": "flow-mu42ugjx-17",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-17-note-0",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-17-flow-mu426zol-17-note-1",
+      "id": "edge-flow-mu42ugjx-17-flow-mu42ugjx-17-note-1",
       "type": "arrow",
       "x": 661,
       "y": -121,
       "width": 109,
       "height": -1,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2664,15 +3114,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 393163,
+      "seed": 339110,
       "version": 1,
-      "versionNonce": 64201,
+      "versionNonce": 585774,
       "isDeleted": false,
       "points": [
         [
@@ -2693,24 +3143,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-17",
+        "elementId": "flow-mu42ugjx-17",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-17-note-1",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-1-sub-mu426zol-4",
+      "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-4",
       "type": "arrow",
       "x": -200,
       "y": -12,
       "width": -68,
       "height": -104,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2718,15 +3172,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 705376,
+      "seed": 886827,
       "version": 1,
-      "versionNonce": 762337,
+      "versionNonce": 136620,
       "isDeleted": false,
       "points": [
         [
@@ -2747,28 +3201,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-1",
+        "elementId": "topic-mu42ugjw-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-4",
+        "elementId": "sub-mu42ugjw-4",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-1-sub-mu426zol-13",
+      "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-13",
       "type": "arrow",
       "x": -200,
       "y": 12,
       "width": -68,
       "height": 44,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2776,15 +3230,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 121174,
+      "seed": 681259,
       "version": 1,
-      "versionNonce": 892570,
+      "versionNonce": 119582,
       "isDeleted": false,
       "points": [
         [
@@ -2805,28 +3259,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-1",
+        "elementId": "topic-mu42ugjw-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-13",
+        "elementId": "sub-mu42ugjw-13",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-4-sub-mu426zol-4-note",
+      "id": "edge-sub-mu42ugjw-4-sub-mu42ugjw-4-note",
       "type": "arrow",
       "x": -605,
       "y": -115,
       "width": -94,
       "height": -78,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2834,13 +3288,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 767011,
+      "seed": 407792,
       "version": 1,
-      "versionNonce": 184953,
+      "versionNonce": 31001,
       "isDeleted": false,
       "points": [
         [
@@ -2853,24 +3307,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-4",
+        "elementId": "sub-mu42ugjw-4",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjw-4-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-13-sub-mu426zol-13-note",
+      "id": "edge-sub-mu42ugjw-13-sub-mu42ugjw-13-note",
       "type": "arrow",
       "x": -766,
       "y": 56,
       "width": -49,
       "height": -3,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2878,13 +3336,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 496375,
+      "seed": 697936,
       "version": 1,
-      "versionNonce": 860884,
+      "versionNonce": 729200,
       "isDeleted": false,
       "points": [
         [
@@ -2897,24 +3355,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-13",
+        "elementId": "sub-mu42ugjw-13",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjw-13-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-1-sub-mu426zol-6",
+      "id": "edge-topic-mu42ugjw-1-sub-mu42ugjw-6",
       "type": "arrow",
       "x": 0,
       "y": 37,
       "width": 0,
       "height": 143,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2922,13 +3384,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 790479,
+      "seed": 474644,
       "version": 1,
-      "versionNonce": 386761,
+      "versionNonce": 597652,
       "isDeleted": false,
       "points": [
         [
@@ -2941,28 +3403,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-1",
+        "elementId": "topic-mu42ugjw-1",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-6",
+        "elementId": "sub-mu42ugjw-6",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-6-sub-mu426zol-6-note",
+      "id": "edge-sub-mu42ugjw-6-sub-mu42ugjw-6-note",
       "type": "arrow",
       "x": -150,
       "y": 216,
       "width": -262,
       "height": 82,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -2970,15 +3432,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 50823,
+      "seed": 123296,
       "version": 1,
-      "versionNonce": 856240,
+      "versionNonce": 771358,
       "isDeleted": false,
       "points": [
         [
@@ -2999,24 +3461,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-6",
+        "elementId": "sub-mu42ugjw-6",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjw-6-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-6-flow-mu426zol-8",
+      "id": "edge-sub-mu42ugjw-6-flow-mu42ugjw-8",
       "type": "arrow",
       "x": -49,
       "y": 243,
       "width": -137,
       "height": 58,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3024,15 +3490,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 71155,
+      "seed": 882124,
       "version": 1,
-      "versionNonce": 688004,
+      "versionNonce": 470995,
       "isDeleted": false,
       "points": [
         [
@@ -3053,28 +3519,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-6",
+        "elementId": "sub-mu42ugjw-6",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu426zol-8",
+        "elementId": "flow-mu42ugjw-8",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-6-flow-mu426zol-10",
+      "id": "edge-sub-mu42ugjw-6-flow-mu42ugjw-10",
       "type": "arrow",
       "x": 49,
       "y": 243,
       "width": 112,
       "height": 58,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3082,15 +3548,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 381587,
+      "seed": 121711,
       "version": 1,
-      "versionNonce": 404623,
+      "versionNonce": 348365,
       "isDeleted": false,
       "points": [
         [
@@ -3111,28 +3577,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-6",
+        "elementId": "sub-mu42ugjw-6",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu426zol-10",
+        "elementId": "flow-mu42ugjw-10",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-8-flow-mu426zol-8-note",
+      "id": "edge-flow-mu42ugjw-8-flow-mu42ugjw-8-note",
       "type": "arrow",
       "x": -186,
       "y": 362,
       "width": 0,
       "height": 27,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3140,13 +3606,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 409155,
+      "seed": 78456,
       "version": 1,
-      "versionNonce": 63668,
+      "versionNonce": 575310,
       "isDeleted": false,
       "points": [
         [
@@ -3159,24 +3625,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-8",
+        "elementId": "flow-mu42ugjw-8",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjw-8-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-10-flow-mu426zol-10-note",
+      "id": "edge-flow-mu42ugjw-10-flow-mu42ugjw-10-note",
       "type": "arrow",
       "x": 161,
       "y": 362,
       "width": 0,
       "height": 27,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3184,13 +3654,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 606626,
+      "seed": 54793,
       "version": 1,
-      "versionNonce": 74497,
+      "versionNonce": 639791,
       "isDeleted": false,
       "points": [
         [
@@ -3203,24 +3673,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-10",
+        "elementId": "flow-mu42ugjw-10",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjw-10-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-10-diagram-mu426zol-12",
+      "id": "edge-flow-mu42ugjw-10-diagram-mu42ugjw-12",
       "type": "arrow",
       "x": 284,
       "y": 336,
       "width": 264,
       "height": -4,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3228,15 +3702,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 45167,
+      "seed": 700242,
       "version": 1,
-      "versionNonce": 403988,
+      "versionNonce": 903028,
       "isDeleted": false,
       "points": [
         [
@@ -3257,29 +3731,33 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-10",
+        "elementId": "flow-mu42ugjw-10",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42ugjw-12",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-flow-mu426zol-10-diagram-mu426zol-12_label",
+          "id": "edge-flow-mu42ugjw-10-diagram-mu42ugjw-12_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-flow-mu426zol-10-diagram-mu426zol-12_label",
+      "id": "edge-flow-mu42ugjw-10-diagram-mu42ugjw-12_label",
       "type": "text",
       "x": 296,
       "y": 319,
       "width": 240,
       "height": 24,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -3287,30 +3765,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_1"
+        "grp_mu42ugk0_1"
       ],
       "roundness": null,
-      "seed": 675231,
+      "seed": 114057,
       "version": 1,
-      "versionNonce": 909987,
+      "versionNonce": 925253,
       "isDeleted": false,
       "text": "IPv4 Packet Header (20 Bytes Base)",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-flow-mu426zol-10-diagram-mu426zol-12",
+      "containerId": "edge-flow-mu42ugjw-10-diagram-mu42ugjw-12",
       "autoResize": true
     },
     {
-      "id": "edge-topic-mu426zol-20-sub-mu426zol-28",
+      "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-28",
       "type": "arrow",
       "x": 0,
       "y": 1170,
       "width": 0,
       "height": -112,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3318,13 +3796,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 131791,
+      "seed": 386510,
       "version": 1,
-      "versionNonce": 604895,
+      "versionNonce": 396428,
       "isDeleted": false,
       "points": [
         [
@@ -3337,28 +3815,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-20",
+        "elementId": "topic-mu42ugjx-20",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-28",
+        "elementId": "sub-mu42ugjx-28",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-28-sub-mu426zol-28-note",
+      "id": "edge-sub-mu42ugjx-28-sub-mu42ugjx-28-note",
       "type": "arrow",
       "x": 0,
       "y": 995,
       "width": 0,
       "height": -34,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3366,13 +3844,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 299314,
+      "seed": 624218,
       "version": 1,
-      "versionNonce": 601088,
+      "versionNonce": 592681,
       "isDeleted": false,
       "points": [
         [
@@ -3385,24 +3863,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-28",
+        "elementId": "sub-mu42ugjx-28",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-28-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-20-sub-mu426zol-32",
+      "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-32",
       "type": "arrow",
       "x": 250,
       "y": 1207,
       "width": 120,
       "height": 6,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3410,13 +3892,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 252326,
+      "seed": 345173,
       "version": 1,
-      "versionNonce": 882814,
+      "versionNonce": 653407,
       "isDeleted": false,
       "points": [
         [
@@ -3429,28 +3911,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-20",
+        "elementId": "topic-mu42ugjx-20",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-32",
+        "elementId": "sub-mu42ugjx-32",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-32-sub-mu426zol-32-note",
+      "id": "edge-sub-mu42ugjx-32-sub-mu42ugjx-32-note",
       "type": "arrow",
       "x": 547,
       "y": 1240,
       "width": 0,
       "height": 24,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3458,13 +3940,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 928841,
+      "seed": 255673,
       "version": 1,
-      "versionNonce": 702597,
+      "versionNonce": 97476,
       "isDeleted": false,
       "points": [
         [
@@ -3477,24 +3959,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-32",
+        "elementId": "sub-mu42ugjx-32",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-32-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-32-flow-mu426zol-34",
+      "id": "edge-sub-mu42ugjx-32-flow-mu42ugjx-34",
       "type": "arrow",
       "x": 547,
       "y": 1185,
       "width": -34,
       "height": -73,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3502,15 +3988,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 637970,
+      "seed": 947651,
       "version": 1,
-      "versionNonce": 163082,
+      "versionNonce": 306519,
       "isDeleted": false,
       "points": [
         [
@@ -3531,28 +4017,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-32",
+        "elementId": "sub-mu42ugjx-32",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu426zol-34",
+        "elementId": "flow-mu42ugjx-34",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-34-flow-mu426zol-34-note-0",
+      "id": "edge-flow-mu42ugjx-34-flow-mu42ugjx-34-note-0",
       "type": "arrow",
       "x": 627,
       "y": 1069,
       "width": 133,
       "height": -95,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3560,15 +4046,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 974138,
+      "seed": 361661,
       "version": 1,
-      "versionNonce": 725106,
+      "versionNonce": 132235,
       "isDeleted": false,
       "points": [
         [
@@ -3589,24 +4075,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-34",
+        "elementId": "flow-mu42ugjx-34",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-34-note-0",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-34-flow-mu426zol-34-note-1",
+      "id": "edge-flow-mu42ugjx-34-flow-mu42ugjx-34-note-1",
       "type": "arrow",
       "x": 627,
       "y": 1086,
       "width": 133,
       "height": -1,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3614,15 +4104,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 519986,
+      "seed": 311954,
       "version": 1,
-      "versionNonce": 961519,
+      "versionNonce": 900001,
       "isDeleted": false,
       "points": [
         [
@@ -3643,24 +4133,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-34",
+        "elementId": "flow-mu42ugjx-34",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-34-note-1",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-20-sub-mu426zol-30",
+      "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-30",
       "type": "arrow",
       "x": -250,
       "y": 1207,
       "width": -68,
       "height": 0,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3668,13 +4162,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 144932,
+      "seed": 63598,
       "version": 1,
-      "versionNonce": 604422,
+      "versionNonce": 249675,
       "isDeleted": false,
       "points": [
         [
@@ -3687,28 +4181,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-20",
+        "elementId": "topic-mu42ugjx-20",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-30",
+        "elementId": "sub-mu42ugjx-30",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-30-sub-mu426zol-30-note",
+      "id": "edge-sub-mu42ugjx-30-sub-mu42ugjx-30-note",
       "type": "arrow",
       "x": -607,
       "y": 1207,
       "width": -34,
       "height": -13,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3716,13 +4210,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 207507,
+      "seed": 289545,
       "version": 1,
-      "versionNonce": 580099,
+      "versionNonce": 883991,
       "isDeleted": false,
       "points": [
         [
@@ -3735,24 +4229,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-30",
+        "elementId": "sub-mu42ugjx-30",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-30-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-20-sub-mu426zol-21",
+      "id": "edge-topic-mu42ugjx-20-sub-mu42ugjx-21",
       "type": "arrow",
       "x": 0,
       "y": 1244,
       "width": 0,
       "height": 143,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3760,13 +4258,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 133067,
+      "seed": 268035,
       "version": 1,
-      "versionNonce": 568672,
+      "versionNonce": 891273,
       "isDeleted": false,
       "points": [
         [
@@ -3779,28 +4277,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-20",
+        "elementId": "topic-mu42ugjx-20",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-21",
+        "elementId": "sub-mu42ugjx-21",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-21-sub-mu426zol-21-note",
+      "id": "edge-sub-mu42ugjx-21-sub-mu42ugjx-21-note",
       "type": "arrow",
       "x": -197,
       "y": 1423,
       "width": -152,
       "height": 82,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3808,15 +4306,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 951637,
+      "seed": 840377,
       "version": 1,
-      "versionNonce": 58787,
+      "versionNonce": 626148,
       "isDeleted": false,
       "points": [
         [
@@ -3837,24 +4335,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-21",
+        "elementId": "sub-mu42ugjx-21",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-21-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-21-flow-mu426zol-23",
+      "id": "edge-sub-mu42ugjx-21-flow-mu42ugjx-23",
       "type": "arrow",
       "x": -65,
       "y": 1450,
       "width": -90,
       "height": 58,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3862,15 +4364,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 66838,
+      "seed": 781134,
       "version": 1,
-      "versionNonce": 681529,
+      "versionNonce": 422888,
       "isDeleted": false,
       "points": [
         [
@@ -3891,28 +4393,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-21",
+        "elementId": "sub-mu42ugjx-21",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu426zol-23",
+        "elementId": "flow-mu42ugjx-23",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-21-flow-mu426zol-25",
+      "id": "edge-sub-mu42ugjx-21-flow-mu42ugjx-25",
       "type": "arrow",
       "x": 65,
       "y": 1450,
       "width": 129,
       "height": 58,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3920,15 +4422,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 581357,
+      "seed": 192595,
       "version": 1,
-      "versionNonce": 302462,
+      "versionNonce": 240447,
       "isDeleted": false,
       "points": [
         [
@@ -3949,28 +4451,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-21",
+        "elementId": "sub-mu42ugjx-21",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu426zol-25",
+        "elementId": "flow-mu42ugjx-25",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-23-flow-mu426zol-23-note",
+      "id": "edge-flow-mu42ugjx-23-flow-mu42ugjx-23-note",
       "type": "arrow",
       "x": -155,
       "y": 1569,
       "width": 0,
       "height": 147,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -3978,13 +4480,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 465258,
+      "seed": 380217,
       "version": 1,
-      "versionNonce": 53981,
+      "versionNonce": 984840,
       "isDeleted": false,
       "points": [
         [
@@ -3997,24 +4499,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-23",
+        "elementId": "flow-mu42ugjx-23",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-23-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-25-flow-mu426zol-25-note",
+      "id": "edge-flow-mu42ugjx-25-flow-mu42ugjx-25-note",
       "type": "arrow",
       "x": 195,
       "y": 1569,
       "width": 0,
       "height": 27,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4022,13 +4528,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 551315,
+      "seed": 167339,
       "version": 1,
-      "versionNonce": 399319,
+      "versionNonce": 861560,
       "isDeleted": false,
       "points": [
         [
@@ -4041,24 +4547,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-25",
+        "elementId": "flow-mu42ugjx-25",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-25-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-25-diagram-mu426zol-27",
+      "id": "edge-flow-mu42ugjx-25-diagram-mu42ugjx-27",
       "type": "arrow",
       "x": 351,
       "y": 1543,
       "width": 197,
       "height": -4,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4066,15 +4576,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 861326,
+      "seed": 633898,
       "version": 1,
-      "versionNonce": 762356,
+      "versionNonce": 841098,
       "isDeleted": false,
       "points": [
         [
@@ -4095,29 +4605,33 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-25",
+        "elementId": "flow-mu42ugjx-25",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42ugjx-27",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-flow-mu426zol-25-diagram-mu426zol-27_label",
+          "id": "edge-flow-mu42ugjx-25-diagram-mu42ugjx-27_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-flow-mu426zol-25-diagram-mu426zol-27_label",
+      "id": "edge-flow-mu42ugjx-25-diagram-mu42ugjx-27_label",
       "type": "text",
       "x": 330,
       "y": 1526,
       "width": 240,
       "height": 24,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -4125,30 +4639,30 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_2"
+        "grp_mu42ugk0_2"
       ],
       "roundness": null,
-      "seed": 19782,
+      "seed": 308234,
       "version": 1,
-      "versionNonce": 787453,
+      "versionNonce": 764253,
       "isDeleted": false,
       "text": "TCP Segment Header (20 Bytes Base)",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-flow-mu426zol-25-diagram-mu426zol-27",
+      "containerId": "edge-flow-mu42ugjx-25-diagram-mu42ugjx-27",
       "autoResize": true
     },
     {
-      "id": "edge-topic-mu426zol-37-sub-mu426zol-38",
+      "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-38",
       "type": "arrow",
       "x": 0,
       "y": 2418,
       "width": 0,
       "height": -112,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4156,13 +4670,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 117377,
+      "seed": 677832,
       "version": 1,
-      "versionNonce": 96933,
+      "versionNonce": 787366,
       "isDeleted": false,
       "points": [
         [
@@ -4175,28 +4689,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-37",
+        "elementId": "topic-mu42ugjx-37",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-38",
+        "elementId": "sub-mu42ugjx-38",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-38-sub-mu426zol-38-note",
+      "id": "edge-sub-mu42ugjx-38-sub-mu42ugjx-38-note",
       "type": "arrow",
       "x": 0,
       "y": 2243,
       "width": 0,
       "height": -34,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4204,13 +4718,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 889813,
+      "seed": 884396,
       "version": 1,
-      "versionNonce": 192253,
+      "versionNonce": 214178,
       "isDeleted": false,
       "points": [
         [
@@ -4223,24 +4737,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-38",
+        "elementId": "sub-mu42ugjx-38",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-38-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-37-sub-mu426zol-47",
+      "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-47",
       "type": "arrow",
       "x": 207,
       "y": 2455,
       "width": 164,
       "height": 6,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4248,13 +4766,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 779712,
+      "seed": 721561,
       "version": 1,
-      "versionNonce": 899060,
+      "versionNonce": 219540,
       "isDeleted": false,
       "points": [
         [
@@ -4267,28 +4785,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-37",
+        "elementId": "topic-mu42ugjx-37",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-47",
+        "elementId": "sub-mu42ugjx-47",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-47-sub-mu426zol-47-note",
+      "id": "edge-sub-mu42ugjx-47-sub-mu42ugjx-47-note",
       "type": "arrow",
       "x": 495,
       "y": 2488,
       "width": 0,
       "height": 24,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4296,13 +4814,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 597508,
+      "seed": 342454,
       "version": 1,
-      "versionNonce": 182010,
+      "versionNonce": 240241,
       "isDeleted": false,
       "points": [
         [
@@ -4315,24 +4833,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-47",
+        "elementId": "sub-mu42ugjx-47",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-47-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-47-flow-mu426zol-49",
+      "id": "edge-sub-mu42ugjx-47-flow-mu42ugjx-49",
       "type": "arrow",
       "x": 495,
       "y": 2433,
       "width": 27,
       "height": -73,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4340,15 +4862,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 544072,
+      "seed": 662675,
       "version": 1,
-      "versionNonce": 641922,
+      "versionNonce": 98208,
       "isDeleted": false,
       "points": [
         [
@@ -4369,28 +4891,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-47",
+        "elementId": "sub-mu42ugjx-47",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "flow-mu426zol-49",
+        "elementId": "flow-mu42ugjx-49",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-49-flow-mu426zol-49-note-0",
+      "id": "edge-flow-mu42ugjx-49-flow-mu42ugjx-49-note-0",
       "type": "arrow",
       "x": 644,
       "y": 2317,
       "width": 88,
       "height": -95,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4398,15 +4920,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 987748,
+      "seed": 975867,
       "version": 1,
-      "versionNonce": 189380,
+      "versionNonce": 524301,
       "isDeleted": false,
       "points": [
         [
@@ -4427,24 +4949,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-49",
+        "elementId": "flow-mu42ugjx-49",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-49-note-0",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-flow-mu426zol-49-flow-mu426zol-49-note-1",
+      "id": "edge-flow-mu42ugjx-49-flow-mu42ugjx-49-note-1",
       "type": "arrow",
       "x": 644,
       "y": 2334,
       "width": 88,
       "height": -1,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4452,15 +4978,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 63211,
+      "seed": 93455,
       "version": 1,
-      "versionNonce": 793529,
+      "versionNonce": 809875,
       "isDeleted": false,
       "points": [
         [
@@ -4481,24 +5007,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "flow-mu426zol-49",
+        "elementId": "flow-mu42ugjx-49",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "flow-mu42ugjx-49-note-1",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-37-sub-mu426zol-43",
+      "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-43",
       "type": "arrow",
       "x": -206,
       "y": 2443,
       "width": -68,
       "height": -104,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4506,15 +5036,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 761635,
+      "seed": 134719,
       "version": 1,
-      "versionNonce": 587239,
+      "versionNonce": 541231,
       "isDeleted": false,
       "points": [
         [
@@ -4535,28 +5065,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-37",
+        "elementId": "topic-mu42ugjx-37",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-43",
+        "elementId": "sub-mu42ugjx-43",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-37-sub-mu426zol-45",
+      "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-45",
       "type": "arrow",
       "x": -206,
       "y": 2467,
       "width": -68,
       "height": 44,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4564,15 +5094,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 681455,
+      "seed": 590376,
       "version": 1,
-      "versionNonce": 684945,
+      "versionNonce": 770108,
       "isDeleted": false,
       "points": [
         [
@@ -4593,28 +5123,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-37",
+        "elementId": "topic-mu42ugjx-37",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-45",
+        "elementId": "sub-mu42ugjx-45",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-43-sub-mu426zol-43-note",
+      "id": "edge-sub-mu42ugjx-43-sub-mu42ugjx-43-note",
       "type": "arrow",
       "x": -677,
       "y": 2340,
       "width": -34,
       "height": -18,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4622,13 +5152,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 201861,
+      "seed": 642732,
       "version": 1,
-      "versionNonce": 905710,
+      "versionNonce": 243616,
       "isDeleted": false,
       "points": [
         [
@@ -4641,24 +5171,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-43",
+        "elementId": "sub-mu42ugjx-43",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-43-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-45-sub-mu426zol-45-note",
+      "id": "edge-sub-mu42ugjx-45-sub-mu42ugjx-45-note",
       "type": "arrow",
       "x": -687,
       "y": 2511,
       "width": -79,
       "height": 27,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4666,13 +5200,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 133932,
+      "seed": 865292,
       "version": 1,
-      "versionNonce": 315249,
+      "versionNonce": 527823,
       "isDeleted": false,
       "points": [
         [
@@ -4685,24 +5219,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-45",
+        "elementId": "sub-mu42ugjx-45",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-45-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-topic-mu426zol-37-sub-mu426zol-40",
+      "id": "edge-topic-mu42ugjx-37-sub-mu42ugjx-40",
       "type": "arrow",
       "x": 0,
       "y": 2492,
       "width": 0,
       "height": 143,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4710,13 +5248,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 499883,
+      "seed": 766196,
       "version": 1,
-      "versionNonce": 162532,
+      "versionNonce": 694422,
       "isDeleted": false,
       "points": [
         [
@@ -4729,28 +5267,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "topic-mu426zol-37",
+        "elementId": "topic-mu42ugjx-37",
         "focus": 0,
         "gap": 4
       },
       "endBinding": {
-        "elementId": "sub-mu426zol-40",
+        "elementId": "sub-mu42ugjx-40",
         "focus": 0,
-        "gap": 10
+        "gap": 8
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-40-sub-mu426zol-40-note",
+      "id": "edge-sub-mu42ugjx-40-sub-mu42ugjx-40-note",
       "type": "arrow",
       "x": 0,
       "y": 2698,
       "width": 0,
       "height": 34,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4758,13 +5296,13 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
       "elbowed": false,
-      "seed": 66055,
+      "seed": 207215,
       "version": 1,
-      "versionNonce": 910512,
+      "versionNonce": 650884,
       "isDeleted": false,
       "points": [
         [
@@ -4777,24 +5315,28 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-40",
+        "elementId": "sub-mu42ugjx-40",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "sub-mu42ugjx-40-note",
+        "focus": 0,
+        "gap": 6
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": null
     },
     {
-      "id": "edge-sub-mu426zol-40-diagram-mu426zol-42",
+      "id": "edge-sub-mu42ugjx-40-diagram-mu42ugjx-42",
       "type": "arrow",
       "x": 179,
       "y": 2671,
       "width": 370,
       "height": -5,
       "angle": 0,
-      "strokeColor": "#ced4da",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 2,
@@ -4802,15 +5344,15 @@
       "roughness": 1,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": {
         "type": 2
       },
       "elbowed": false,
-      "seed": 175036,
+      "seed": 44749,
       "version": 1,
-      "versionNonce": 646547,
+      "versionNonce": 4357,
       "isDeleted": false,
       "points": [
         [
@@ -4831,29 +5373,33 @@
         ]
       ],
       "startBinding": {
-        "elementId": "sub-mu426zol-40",
+        "elementId": "sub-mu42ugjx-40",
         "focus": 0,
         "gap": 4
       },
-      "endBinding": null,
+      "endBinding": {
+        "elementId": "diagram-mu42ugjx-42",
+        "focus": 0,
+        "gap": 8
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow",
       "boundElements": [
         {
-          "id": "edge-sub-mu426zol-40-diagram-mu426zol-42_label",
+          "id": "edge-sub-mu42ugjx-40-diagram-mu42ugjx-42_label",
           "type": "text"
         }
       ]
     },
     {
-      "id": "edge-sub-mu426zol-40-diagram-mu426zol-42_label",
+      "id": "edge-sub-mu42ugjx-40-diagram-mu42ugjx-42_label",
       "type": "text",
       "x": 244,
       "y": 2653,
       "width": 240,
       "height": 24,
       "angle": 0,
-      "strokeColor": "#f8f9fa",
+      "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "fillStyle": "solid",
       "strokeWidth": 1,
@@ -4861,19 +5407,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [
-        "grp_mu426zop_3"
+        "grp_mu42ugk0_3"
       ],
       "roundness": null,
-      "seed": 451106,
+      "seed": 634397,
       "version": 1,
-      "versionNonce": 514495,
+      "versionNonce": 824956,
       "isDeleted": false,
       "text": "UDP Datagram Header (8 Bytes Fixed)",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "edge-sub-mu426zol-40-diagram-mu426zol-42",
+      "containerId": "edge-sub-mu42ugjx-40-diagram-mu42ugjx-42",
       "autoResize": true
     }
   ],

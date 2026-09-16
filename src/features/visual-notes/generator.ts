@@ -148,50 +148,44 @@ function calculateConnectionPoints(
       ];
     }
   } else {
-    // 3. Curved Arrow (Hand-drawn Bezier):
-    // Coordinates are strictly bounded inside [0, relEndX] x [0, relEndY].
-    // Zero overshoots, zero self-intersections, zero loops.
+    // 3. Curved Arrow (Hand-drawn smooth spline):
+    // Control points are strictly monotonic fractions within [0, relEndX] x [0, relEndY].
+    // Eliminates orthogonal 90-degree corners that cause Catmull-Rom splines to balloon or loop.
     if (
       (exitSide === "left" || exitSide === "right") &&
       (entrySide === "left" || entrySide === "right")
     ) {
-      const midX = Math.round(relEndX * 0.5);
+      const p1X = Math.round(relEndX * 0.45);
+      const p1Y = Math.round(relEndY * 0.1);
+      const p2X = Math.round(relEndX * 0.55);
+      const p2Y = Math.round(relEndY * 0.9);
       waypoints = [
         [0, 0],
-        [midX, 0],
-        [midX, relEndY],
+        [p1X, p1Y],
+        [p2X, p2Y],
         [relEndX, relEndY],
       ];
     } else if (
       (exitSide === "top" || exitSide === "bottom") &&
       (entrySide === "top" || entrySide === "bottom")
     ) {
-      const midY = Math.round(relEndY * 0.5);
+      const p1X = Math.round(relEndX * 0.1);
+      const p1Y = Math.round(relEndY * 0.45);
+      const p2X = Math.round(relEndX * 0.9);
+      const p2Y = Math.round(relEndY * 0.55);
       waypoints = [
         [0, 0],
-        [0, midY],
-        [relEndX, midY],
-        [relEndX, relEndY],
-      ];
-    } else if (
-      (exitSide === "top" || exitSide === "bottom") &&
-      (entrySide === "left" || entrySide === "right")
-    ) {
-      const midY = Math.round(relEndY * 0.6);
-      const midX = Math.round(relEndX * 0.6);
-      waypoints = [
-        [0, 0],
-        [0, midY],
-        [midX, relEndY],
+        [p1X, p1Y],
+        [p2X, p2Y],
         [relEndX, relEndY],
       ];
     } else {
-      const midX = Math.round(relEndX * 0.6);
-      const midY = Math.round(relEndY * 0.6);
+      // Perpendicular transitions (e.g. exit side to entry top)
+      const midX = Math.round(relEndX * 0.5);
+      const midY = Math.round(relEndY * 0.5);
       waypoints = [
         [0, 0],
-        [midX, 0],
-        [relEndX, midY],
+        [midX, midY],
         [relEndX, relEndY],
       ];
     }
@@ -208,9 +202,14 @@ export function generateExcalidrawElements(
   options?: VisualNoteOptions,
 ): any[] {
   elementCounter = 0;
-  const isDark = options?.theme === "dark";
-  const defaultStroke = isDark ? "#ced4da" : "#1e1e1e";
-  const defaultText = isDark ? "#f8f9fa" : "#1e1e1e";
+  // Excalidraw standard default colors:
+  // All text, borders, and arrows use default black (#1e1e1e) and transparent backgrounds.
+  // This allows Excalidraw's built-in canvas theme switcher (light/dark) to automatically invert
+  // text and strokes cleanly without hardcoded color conflicts.
+  // Only main topic titles use custom elegant pastel palettes.
+  const defaultStroke = "#1e1e1e";
+  const defaultText = "#1e1e1e";
+  const defaultBg = "transparent";
   const roughness = options?.roughness ?? 1;
 
   const elements: any[] = [];
@@ -225,6 +224,25 @@ export function generateExcalidrawElements(
     clusterGroupMap.set(c.id, nextElementId("grp"));
   }
 
+  // Pre-calculate which arrows connect to which nodes for bidirectional Excalidraw binding
+  const nodeArrowBindings = new Map<string, { id: string; type: "arrow" }[]>();
+  for (const edge of layout.edges) {
+    const arrowId = edge.id;
+    if (!nodeArrowBindings.has(edge.sourceId)) nodeArrowBindings.set(edge.sourceId, []);
+    nodeArrowBindings.get(edge.sourceId)!.push({ id: arrowId, type: "arrow" });
+
+    if (!nodeArrowBindings.has(edge.targetId)) nodeArrowBindings.set(edge.targetId, []);
+    nodeArrowBindings.get(edge.targetId)!.push({ id: arrowId, type: "arrow" });
+  }
+
+  const getBoundElements = (nodeId: string, internalTextId?: string) => {
+    const arrows = nodeArrowBindings.get(nodeId) ?? [];
+    if (internalTextId) {
+      return [{ id: internalTextId, type: "text" as const }, ...arrows];
+    }
+    return arrows.length > 0 ? arrows : null;
+  };
+
   // 1. Generate Nodes (Shapes & Text)
   for (const node of layout.nodes) {
     const groupId = clusterGroupMap.get(node.clusterId) ?? nextElementId("grp");
@@ -232,8 +250,8 @@ export function generateExcalidrawElements(
 
     if (node.type === "main-topic") {
       const palette = node.colorTheme;
-      const strokeColor = palette?.stroke ?? (isDark ? "#69db7c" : "#2b8a3e");
-      const bgColor = palette?.fill ?? (isDark ? "#1b3a24" : "#c7f9cc");
+      const strokeColor = palette?.stroke ?? "#1098ad";
+      const bgColor = palette?.fill ?? "#c5f6fa";
       const textColor = palette?.text ?? defaultText;
 
       const containerId = node.id;
@@ -261,7 +279,7 @@ export function generateExcalidrawElements(
         version: 1,
         versionNonce: nextSeed(),
         isDeleted: false,
-        boundElements: [{ id: textId, type: "text" }],
+        boundElements: getBoundElements(node.id, textId),
       });
 
       // Centered Label Text
@@ -295,7 +313,7 @@ export function generateExcalidrawElements(
       });
     } else if (node.type === "subtopic") {
       const strokeColor = defaultStroke;
-      const bgColor = isDark ? "#212529" : "#ffffff";
+      const bgColor = defaultBg;
       const textColor = defaultText;
 
       const containerId = node.id;
@@ -323,7 +341,7 @@ export function generateExcalidrawElements(
         version: 1,
         versionNonce: nextSeed(),
         isDeleted: false,
-        boundElements: [{ id: textId, type: "text" }],
+        boundElements: getBoundElements(node.id, textId),
       });
 
       // Centered Subtopic Text
@@ -358,7 +376,7 @@ export function generateExcalidrawElements(
     } else if (node.type === "flow-step" || node.type === "sub-subtopic") {
       // Flow steps and sub-subtopics use dashed border matching user sketch
       const strokeColor = defaultStroke;
-      const bgColor = isDark ? "#1a1a1f" : "#ffffff";
+      const bgColor = defaultBg;
       const textColor = defaultText;
 
       const containerId = node.id;
@@ -385,7 +403,7 @@ export function generateExcalidrawElements(
         version: 1,
         versionNonce: nextSeed(),
         isDeleted: false,
-        boundElements: [{ id: textId, type: "text" }],
+        boundElements: getBoundElements(node.id, textId),
       });
 
       elements.push({
@@ -444,6 +462,7 @@ export function generateExcalidrawElements(
         fontFamily: node.fontFamily, // Virgil
         textAlign: "left",
         verticalAlign: "top",
+        boundElements: getBoundElements(node.id),
       });
     } else if (node.type === "ascii-diagram") {
       // Monospace ASCII Diagram Block (preserving all spaces and alignment)
@@ -459,8 +478,8 @@ export function generateExcalidrawElements(
         width: Math.round(node.width),
         height: Math.round(node.height),
         angle: 0,
-        strokeColor: isDark ? "#495057" : "#dee2e6",
-        backgroundColor: isDark ? "#141517" : "#fafafa",
+        strokeColor: defaultStroke,
+        backgroundColor: defaultBg,
         fillStyle: "solid",
         strokeWidth: 1,
         strokeStyle: "dashed",
@@ -472,6 +491,7 @@ export function generateExcalidrawElements(
         version: 1,
         versionNonce: nextSeed(),
         isDeleted: false,
+        boundElements: getBoundElements(node.id),
       });
 
       // Raw Cascadia monospace text inside
@@ -584,14 +604,11 @@ export function generateExcalidrawElements(
         focus: 0,
         gap: 4,
       },
-      endBinding:
-        target.type === "note" || target.type === "ascii-diagram"
-          ? null
-          : {
-              elementId: target.id,
-              focus: 0,
-              gap: 10,
-            },
+      endBinding: {
+        elementId: target.id,
+        focus: 0,
+        gap: target.type === "note" ? 6 : 8,
+      },
       startArrowhead: null,
       endArrowhead: edge.arrowhead || "arrow",
       boundElements: edge.label ? [{ id: `${arrowId}_label`, type: "text" }] : null,

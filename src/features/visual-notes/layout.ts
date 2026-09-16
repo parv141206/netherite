@@ -126,7 +126,7 @@ function layoutTopicCluster(
   centerY: number,
   options: Required<VisualNoteOptions>,
 ): LayoutCluster {
-  const palette = getPaletteForTopic(clusterIndex, topic.color, options.theme);
+  const palette = getPaletteForTopic(clusterIndex, topic.color, "light");
   const clusterId = topic.id;
 
   const nodes: LayoutNode[] = [];
@@ -182,7 +182,18 @@ function layoutTopicCluster(
   };
   registerAndPlace(mainNode, 30);
 
-  // Center note directly below main topic if specified
+  // =========================================================================
+  // 2. SECTOR ASSIGNMENT & CORRIDOR BOUNDARIES
+  // =========================================================================
+  const { bottomSub, topSub, rightSub, leftSubs } = categorizeSubtopics(topic.subtopics);
+
+  // Clear corridor boundaries around main topic
+  const centerLeftBoundary = centerX - Math.max(mainDim.width / 2, 180) - 80;
+  const centerRightBoundary = centerX + Math.max(mainDim.width / 2, 180) + 80;
+
+  // =========================================================================
+  // 2.5 TOPIC-LEVEL CENTER / METADATA NOTES
+  // =========================================================================
   if (topic.centerNotes.length > 0) {
     const noteText = wrapText(
       topic.centerNotes.map((n) => n.text).join("\n\n"),
@@ -191,12 +202,45 @@ function layoutTopicCluster(
       1,
     );
     const noteDim = measureTextBlock(noteText, 15, 1);
+
+    let noteX: number;
+    let noteY: number;
+    let exitSide: "left" | "right" | "top" | "bottom";
+    let entrySide: "left" | "right" | "top" | "bottom";
+
+    if (!bottomSub) {
+      // If no bottom subtopic, center corridor below main topic is completely free
+      noteX = centerX - noteDim.width / 2;
+      noteY = mainNode.y + mainNode.height + 35;
+      exitSide = "bottom";
+      entrySide = "top";
+    } else if (!rightSub) {
+      // If bottom subtopic exists but right flank is free, place on right flank
+      noteX = mainNode.x + mainNode.width + 45;
+      noteY = mainNode.y + 4;
+      exitSide = "right";
+      entrySide = "left";
+    } else if (leftSubs.length < 2) {
+      // If right is occupied but left flank has room
+      noteX = mainNode.x - noteDim.width - 45;
+      noteY = mainNode.y + 4;
+      exitSide = "left";
+      entrySide = "right";
+    } else {
+      // Both left and right have subtopics: place in bottom-right diagonal quadrant
+      // strictly offset from the central corridor [centerX - 80, centerX + 80]
+      noteX = centerX + Math.max(mainDim.width / 2, 160) + 30;
+      noteY = mainNode.y + mainNode.height + 30;
+      exitSide = "bottom";
+      entrySide = "top";
+    }
+
     const noteNode: LayoutNode = {
       id: `${topic.id}-note`,
       type: "note",
       text: noteText,
-      x: centerX - noteDim.width / 2,
-      y: mainNode.y + mainNode.height + 35,
+      x: noteX,
+      y: noteY,
       width: noteDim.width,
       height: noteDim.height,
       style: "solid",
@@ -212,21 +256,12 @@ function layoutTopicCluster(
       targetId: noteNode.id,
       style: "dashed",
       arrowType: "sharp",
-      exitSide: "bottom",
-      entrySide: "top",
+      exitSide,
+      entrySide,
       clusterId,
       arrowhead: "arrow",
     });
   }
-
-  // =========================================================================
-  // 2. SECTOR ASSIGNMENT
-  // =========================================================================
-  const { bottomSub, topSub, rightSub, leftSubs } = categorizeSubtopics(topic.subtopics);
-
-  // Clear corridor boundaries around main topic
-  const centerLeftBoundary = centerX - Math.max(mainDim.width / 2, 180) - 80;
-  const centerRightBoundary = centerX + Math.max(mainDim.width / 2, 180) + 80;
 
   // =========================================================================
   // 3. TOP SECTOR: Conceptual Subtopic & Notes (Laid out in y <= centerY - 140)
@@ -306,26 +341,16 @@ function layoutTopicCluster(
         subNode.x + subDim.width + 60,
       );
 
-      for (let j = 0; j < noteCount; j++) {
-        const item = child.notes[j]!;
+      if (noteCount === 1) {
+        const item = child.notes[0]!;
         const wrapped = wrapText(item.text, ctx.maxTextWidth, 14, 1);
         const noteDim = measureTextBlock(wrapped, 14, 1);
-
-        let branchY = childNode.y;
-        if (noteCount === 1) {
-          branchY = childNode.y - 10;
-        } else if (j === 0) {
-          branchY = childNode.y - noteDim.height - 25;
-        } else {
-          branchY = childNode.y + 10;
-        }
-
         const noteNode: LayoutNode = {
-          id: `${child.id}-note-${j}`,
+          id: `${child.id}-note`,
           type: "note",
           text: wrapped,
           x: branchX,
-          y: branchY,
+          y: childNode.y + (childDim.height - noteDim.height) / 2,
           width: noteDim.width,
           height: noteDim.height,
           style: "solid",
@@ -334,8 +359,102 @@ function layoutTopicCluster(
           clusterId,
           parentId: child.id,
         };
-        registerAndPlace(noteNode, 8);
+        registerAndPlace(noteNode, 16);
+        edges.push({
+          id: `edge-${child.id}-${noteNode.id}`,
+          sourceId: child.id,
+          targetId: noteNode.id,
+          style: "dashed",
+          arrowType: "curved",
+          exitSide: "right",
+          entrySide: "left",
+          clusterId,
+          arrowhead: "arrow",
+        });
+      } else if (noteCount === 2) {
+        // Two distinct branching concepts: one above, one below
+        const item0 = child.notes[0]!;
+        const item1 = child.notes[1]!;
+        const wrapped0 = wrapText(item0.text, ctx.maxTextWidth, 14, 1);
+        const wrapped1 = wrapText(item1.text, ctx.maxTextWidth, 14, 1);
+        const dim0 = measureTextBlock(wrapped0, 14, 1);
+        const dim1 = measureTextBlock(wrapped1, 14, 1);
 
+        const note0: LayoutNode = {
+          id: `${child.id}-note-0`,
+          type: "note",
+          text: wrapped0,
+          x: branchX,
+          y: childNode.y - dim0.height - 20,
+          width: dim0.width,
+          height: dim0.height,
+          style: "solid",
+          fontFamily: 1,
+          fontSize: 14,
+          clusterId,
+          parentId: child.id,
+        };
+        const note1: LayoutNode = {
+          id: `${child.id}-note-1`,
+          type: "note",
+          text: wrapped1,
+          x: branchX,
+          y: childNode.y + childDim.height + 20,
+          width: dim1.width,
+          height: dim1.height,
+          style: "solid",
+          fontFamily: 1,
+          fontSize: 14,
+          clusterId,
+          parentId: child.id,
+        };
+        registerAndPlace(note0, 12);
+        registerAndPlace(note1, 12);
+        edges.push({
+          id: `edge-${child.id}-${note0.id}`,
+          sourceId: child.id,
+          targetId: note0.id,
+          style: "dashed",
+          arrowType: "curved",
+          exitSide: "right",
+          entrySide: "left",
+          clusterId,
+          arrowhead: "arrow",
+        });
+        edges.push({
+          id: `edge-${child.id}-${note1.id}`,
+          sourceId: child.id,
+          targetId: note1.id,
+          style: "dashed",
+          arrowType: "curved",
+          exitSide: "right",
+          entrySide: "left",
+          clusterId,
+          arrowhead: "arrow",
+        });
+      } else if (noteCount > 2) {
+        // Consolidate bulleted / long list of notes into one unified, structured note card
+        const formatted = child.notes
+          .map((n) => (n.isBullet && !n.text.startsWith("•") ? `• ${n.text}` : n.text))
+          .join("\n\n");
+        const wrapped = wrapText(formatted, Math.max(ctx.maxTextWidth, 340), 14, 1);
+        const noteDim = measureTextBlock(wrapped, 14, 1);
+
+        const noteNode: LayoutNode = {
+          id: `${child.id}-note`,
+          type: "note",
+          text: wrapped,
+          x: branchX,
+          y: childNode.y + (childDim.height - noteDim.height) / 2,
+          width: noteDim.width,
+          height: noteDim.height,
+          style: "solid",
+          fontFamily: 1,
+          fontSize: 14,
+          clusterId,
+          parentId: child.id,
+        };
+        registerAndPlace(noteNode, 16);
         edges.push({
           id: `edge-${child.id}-${noteNode.id}`,
           sourceId: child.id,
@@ -520,26 +639,16 @@ function layoutTopicCluster(
         rightSubNotesMaxX + 50,
       );
 
-      for (let j = 0; j < noteCount; j++) {
-        const item = child.notes[j]!;
+      if (noteCount === 1) {
+        const item = child.notes[0]!;
         const wrapped = wrapText(item.text, ctx.maxTextWidth, 14, 1);
         const noteDim = measureTextBlock(wrapped, 14, 1);
-
-        let branchY = childNode.y;
-        if (noteCount === 1) {
-          branchY = childNode.y - 10;
-        } else if (j === 0) {
-          branchY = childNode.y - noteDim.height - 25;
-        } else {
-          branchY = childNode.y + 10;
-        }
-
         const noteNode: LayoutNode = {
-          id: `${child.id}-note-${j}`,
+          id: `${child.id}-note`,
           type: "note",
           text: wrapped,
           x: branchX,
-          y: branchY,
+          y: childNode.y + (childDim.height - noteDim.height) / 2,
           width: noteDim.width,
           height: noteDim.height,
           style: "solid",
@@ -548,8 +657,102 @@ function layoutTopicCluster(
           clusterId,
           parentId: child.id,
         };
-        registerAndPlace(noteNode, 8);
+        registerAndPlace(noteNode, 16);
+        edges.push({
+          id: `edge-${child.id}-${noteNode.id}`,
+          sourceId: child.id,
+          targetId: noteNode.id,
+          style: "dashed",
+          arrowType: "curved",
+          exitSide: "right",
+          entrySide: "left",
+          clusterId,
+          arrowhead: "arrow",
+        });
+      } else if (noteCount === 2) {
+        // Two distinct branching concepts: one above, one below
+        const item0 = child.notes[0]!;
+        const item1 = child.notes[1]!;
+        const wrapped0 = wrapText(item0.text, ctx.maxTextWidth, 14, 1);
+        const wrapped1 = wrapText(item1.text, ctx.maxTextWidth, 14, 1);
+        const dim0 = measureTextBlock(wrapped0, 14, 1);
+        const dim1 = measureTextBlock(wrapped1, 14, 1);
 
+        const note0: LayoutNode = {
+          id: `${child.id}-note-0`,
+          type: "note",
+          text: wrapped0,
+          x: branchX,
+          y: childNode.y - dim0.height - 20,
+          width: dim0.width,
+          height: dim0.height,
+          style: "solid",
+          fontFamily: 1,
+          fontSize: 14,
+          clusterId,
+          parentId: child.id,
+        };
+        const note1: LayoutNode = {
+          id: `${child.id}-note-1`,
+          type: "note",
+          text: wrapped1,
+          x: branchX,
+          y: childNode.y + childDim.height + 20,
+          width: dim1.width,
+          height: dim1.height,
+          style: "solid",
+          fontFamily: 1,
+          fontSize: 14,
+          clusterId,
+          parentId: child.id,
+        };
+        registerAndPlace(note0, 12);
+        registerAndPlace(note1, 12);
+        edges.push({
+          id: `edge-${child.id}-${note0.id}`,
+          sourceId: child.id,
+          targetId: note0.id,
+          style: "dashed",
+          arrowType: "curved",
+          exitSide: "right",
+          entrySide: "left",
+          clusterId,
+          arrowhead: "arrow",
+        });
+        edges.push({
+          id: `edge-${child.id}-${note1.id}`,
+          sourceId: child.id,
+          targetId: note1.id,
+          style: "dashed",
+          arrowType: "curved",
+          exitSide: "right",
+          entrySide: "left",
+          clusterId,
+          arrowhead: "arrow",
+        });
+      } else if (noteCount > 2) {
+        // Consolidate bulleted / long list of notes into one unified, structured note card
+        const formatted = child.notes
+          .map((n) => (n.isBullet && !n.text.startsWith("•") ? `• ${n.text}` : n.text))
+          .join("\n\n");
+        const wrapped = wrapText(formatted, Math.max(ctx.maxTextWidth, 340), 14, 1);
+        const noteDim = measureTextBlock(wrapped, 14, 1);
+
+        const noteNode: LayoutNode = {
+          id: `${child.id}-note`,
+          type: "note",
+          text: wrapped,
+          x: branchX,
+          y: childNode.y + (childDim.height - noteDim.height) / 2,
+          width: noteDim.width,
+          height: noteDim.height,
+          style: "solid",
+          fontFamily: 1,
+          fontSize: 14,
+          clusterId,
+          parentId: child.id,
+        };
+        registerAndPlace(noteNode, 16);
         edges.push({
           id: `edge-${child.id}-${noteNode.id}`,
           sourceId: child.id,
