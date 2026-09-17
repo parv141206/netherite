@@ -33,6 +33,10 @@ export interface NoteItem {
   id: string;
   text: string;
   isBullet?: boolean;
+  boldTitle?: string;
+  description?: string;
+  indentLevel?: number;
+  children?: NoteItem[];
 }
 
 export interface DiagramBlock {
@@ -89,7 +93,9 @@ export interface BoundingBox {
 
 export type LayoutNodeType =
   | "main-topic"
+  | "header-pill"
   | "subtopic"
+  | "concept-card"
   | "flow-step"
   | "sub-subtopic"
   | "note"
@@ -100,6 +106,7 @@ export interface LayoutNode {
   type: LayoutNodeType;
   title?: string;
   text?: string;
+  secondaryText?: string;
   x: number;
   y: number;
   width: number;
@@ -110,6 +117,8 @@ export interface LayoutNode {
   fontSize: number;
   clusterId: string;
   parentId?: string;
+  isContainer?: boolean;
+  cardStyle?: "pill" | "card" | "plain" | "dashed" | "tinted";
 }
 
 export interface LayoutEdge {
@@ -157,9 +166,12 @@ export interface TopicPalette {
 
 export interface VisualNoteOptions {
   theme?: "light" | "dark";
-  clusterGap?: number; // vertical gap between stacked main topics (default 180)
+  clusterGap?: number; // gap between topic clusters (default 240)
   roughness?: number; // 0 for clean, 1 for sketchy (default 1)
   defaultFontFamily?: number; // default 1 (Virgil)
-  maxTextWidth?: number; // wrapping width for prose notes (default 320)
+  maxTextWidth?: number; // wrapping width for prose notes (default 340)
   asciiPadding?: number; // padding for ascii diagram blocks (default 16)
+  columns?: number; // 1 (vertical), 2 (balanced 2-col), 3 (3-col) - default auto/2
+  layoutMode?: "grid" | "tree" | "vertical" | "radial"; // default "grid"
+  colGap?: number; // horizontal gap between columns (default 360)
 }

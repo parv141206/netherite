@@ -154,7 +154,7 @@ describe("Visual Notes Engine", () => {
 
   test("Multi-topic vertical stacking ensures clear separation without overlap", () => {
     const doc = parseMarkdownNotes(TWO_TOPICS_MARKDOWN);
-    const layout = layoutVisualNotes(doc, { clusterGap: 180 });
+    const layout = layoutVisualNotes(doc, { layoutMode: "vertical", clusterGap: 180 });
 
     expect(layout.clusters.length).toBe(2);
 
@@ -163,6 +163,18 @@ describe("Visual Notes Engine", () => {
 
     // Cluster 2 must start strictly below Cluster 1's bottom with at least clusterGap
     expect(cluster2.bounds.minY).toBeGreaterThanOrEqual(cluster1.bounds.maxY + 150);
+  });
+
+  test("Multi-topic 2D masonry layout packs clusters side-by-side", () => {
+    const doc = parseMarkdownNotes(TWO_TOPICS_MARKDOWN);
+    const layout = layoutVisualNotes(doc, { columns: 2 });
+
+    expect(layout.clusters.length).toBe(2);
+    const cluster1 = layout.clusters[0]!;
+    const cluster2 = layout.clusters[1]!;
+
+    // Cluster 2 is placed horizontally in column 2
+    expect(cluster2.bounds.minX).toBeGreaterThan(cluster1.bounds.maxX);
   });
 
   test("Generator produces valid Excalidraw scene JSON", () => {
@@ -187,16 +199,94 @@ describe("Visual Notes Engine", () => {
     const arrow = scene.elements.find((e: any) => e.type === "arrow");
     expect(arrow.startBinding).toBeDefined();
 
-    const curvedArrow = scene.elements.find(
-      (e: any) => e.type === "arrow" && e.roundness !== null,
+    // Verify native Excalidraw elbow arrows
+    const elbowedArrow = scene.elements.find(
+      (e: any) => e.type === "arrow" && e.elbowed === true,
     );
-    expect(curvedArrow).toBeDefined();
-    expect(curvedArrow.roundness).toEqual({ type: 2 });
+    expect(elbowedArrow).toBeDefined();
 
     // Verify diagram arrow label
     const diagArrow = scene.elements.find((e: any) =>
       scene.elements.some((t: any) => t.text === "diagram for it")
     );
     expect(diagArrow).toBeDefined();
+  });
+
+  test("Parser extracts bold definition items (- **Term**: Description)", () => {
+    const md = `
+# Systems Programming
+
+## Core Abstractions
+- **Domain**: A world or framework in which a program executes.
+- **Semantics**: The set of rules governing meaning and behavior.
+- **Semantic Gap**: The conceptual distance between problem domain and machine execution.
+`;
+    const doc = parseMarkdownNotes(md);
+    expect(doc.topics.length).toBe(1);
+    const sub = doc.topics[0]!.subtopics[0]!;
+    expect(sub.notes.length).toBe(3);
+    expect(sub.notes[0]!.boldTitle).toBe("Domain");
+    expect(sub.notes[0]!.description).toBe("A world or framework in which a program executes.");
+    expect(sub.notes[1]!.boldTitle).toBe("Semantics");
+    expect(sub.notes[2]!.boldTitle).toBe("Semantic Gap");
+
+    // Test generator creates concept-cards with bold titles and elbow arrows
+    const scene = markdownToExcalidraw(md);
+    const titleTexts = scene.elements.filter(
+      (e: any) => e.type === "text" && (e.text === "Domain" || e.text === "Semantics"),
+    );
+    expect(titleTexts.length).toBe(2);
+
+    const elbowArrows = scene.elements.filter(
+      (e: any) => e.type === "arrow" && e.elbowed === true,
+    );
+    expect(elbowArrows.length).toBeGreaterThanOrEqual(3);
+  });
+
+  test("5+ Topics 2D Masonry Bin-Packing produces balanced landscape canvas", () => {
+    const md = `
+# Topic 1: Software Architecture
+## Sub 1.1
+- Notes on architecture
+
+# Topic 2: Compiler Design
+## Sub 2.1
+- Lexing and Parsing
+
+# Topic 3: Operating Systems
+## Sub 3.1
+- Virtual memory and paging
+
+# Topic 4: Database Internals
+## Sub 4.1
+- B-Trees and WAL
+
+# Topic 5: Distributed Systems
+## Sub 5.1
+- Raft consensus and Paxos
+`;
+    const doc = parseMarkdownNotes(md);
+    expect(doc.topics.length).toBe(5);
+
+    const layout = layoutVisualNotes(doc);
+    expect(layout.clusters.length).toBe(5);
+
+    const totalWidth = layout.bounds.maxX - layout.bounds.minX;
+    const totalHeight = layout.bounds.maxY - layout.bounds.minY;
+    const aspectRatio = totalWidth / totalHeight;
+
+    // A balanced 2D canvas should have aspect ratio between 0.8 and 3.5 (NOT a 1:10 tall ribbon)
+    expect(aspectRatio).toBeGreaterThan(0.7);
+    expect(aspectRatio).toBeLessThan(4.5);
+
+    // Verify official Excalidraw pastel palettes were used
+    const scene = markdownToExcalidraw(md);
+    const pastelFills = new Set(
+      scene.elements
+        .filter((e: any) => e.type === "rectangle" && e.backgroundColor !== "transparent")
+        .map((e: any) => e.backgroundColor),
+    );
+    // Should have pastel colors like #a5d8ff, #b2f2bb, #d0bfff, #ffc9c9
+    expect(pastelFills.size).toBeGreaterThanOrEqual(3);
   });
 });

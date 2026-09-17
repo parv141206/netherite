@@ -40,6 +40,8 @@ export function VisualNotesModal({
   const [markdown, setMarkdown] = useState<string>(CN_STUDY_TEMPLATE);
   const [theme, setTheme] = useState<"light" | "dark">(currentTheme);
   const [roughness, setRoughness] = useState<number>(1);
+  const [columns, setColumns] = useState<number>(0);
+  const [layoutMode, setLayoutMode] = useState<"grid" | "radial" | "vertical">("grid");
   const [copied, setCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
@@ -103,6 +105,8 @@ export function VisualNotesModal({
       const elements = markdownToExcalidrawElements(markdown, {
         theme,
         roughness,
+        columns,
+        layoutMode,
       });
 
       if (elements.length === 0) {
@@ -140,7 +144,12 @@ export function VisualNotesModal({
 
   const handleCopyJson = () => {
     try {
-      const scene = markdownToExcalidraw(markdown, { theme, roughness });
+      const scene = markdownToExcalidraw(markdown, {
+        theme,
+        roughness,
+        columns,
+        layoutMode,
+      });
       navigator.clipboard.writeText(JSON.stringify(scene, null, 2));
       setCopied(true);
       toast.success("Excalidraw JSON copied to clipboard!");
@@ -306,6 +315,35 @@ export function VisualNotesModal({
                   <option value={0}>Crisp (Architectural)</option>
                 </select>
               </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-neutral-500">Layout:</span>
+                <select
+                  value={layoutMode}
+                  onChange={(e) => setLayoutMode(e.target.value as any)}
+                  className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium"
+                >
+                  <option value="grid">2D Whiteboard (Masonry)</option>
+                  <option value="radial">Radial Mindmap</option>
+                  <option value="vertical">Single Column</option>
+                </select>
+              </div>
+
+              {layoutMode === "grid" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-neutral-500">Columns:</span>
+                  <select
+                    value={columns}
+                    onChange={(e) => setColumns(Number(e.target.value))}
+                    className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium"
+                  >
+                    <option value={0}>Auto</option>
+                    <option value={1}>1 Col</option>
+                    <option value={2}>2 Cols</option>
+                    <option value={3}>3 Cols</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             <button

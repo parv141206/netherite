@@ -296,14 +296,30 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
       continue;
     }
 
-    // Bullet points: - Note or * Note
-    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+    // Bullet points: - Note or * Note (with indentation tracking)
+    const bulletMatch = rawLine.match(/^(\s*)[-*]\s+(.*)$/);
     if (bulletMatch) {
-      const bulletText = bulletMatch[1]!.trim();
+      const indentSpaces = bulletMatch[1]!.replace(/\t/g, "  ").length;
+      const indentLevel = Math.floor(indentSpaces / 2);
+      const bulletContent = bulletMatch[2]!.trim();
+
+      // Extract bold title if formatted as **Bold Title**: Description or **Bold Title**
+      let boldTitle: string | undefined;
+      let description: string | undefined;
+      const boldMatch = bulletContent.match(/^\*\*([^*]+)\*\*(?:[:\s–—-]*(.*))?$/);
+      if (boldMatch) {
+        boldTitle = boldMatch[1]!.trim();
+        description = (boldMatch[2] || "").trim();
+      }
+
       const noteItem: NoteItem = {
         id: uniqueId("note"),
-        text: bulletText,
+        text: bulletContent,
         isBullet: true,
+        boldTitle,
+        description,
+        indentLevel,
+        children: [],
       };
 
       if (currentChild) {
@@ -323,6 +339,7 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
       id: uniqueId("note"),
       text: line,
       isBullet: false,
+      children: [],
     };
 
     if (currentChild) {

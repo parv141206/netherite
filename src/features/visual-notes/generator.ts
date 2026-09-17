@@ -55,7 +55,8 @@ function calculateConnectionPoints(
 
   const isNote = target.type === "note";
   const isDiagram = target.type === "ascii-diagram";
-  const targetGap = isNote ? 14 : isDiagram ? 12 : 10;
+  const isCard = target.type === "concept-card";
+  const targetGap = isNote ? 14 : isDiagram ? 12 : 8;
   const sourceGap = 2;
 
   // Infer exit and entry sides if not explicitly specified on the edge
@@ -109,11 +110,11 @@ function calculateConnectionPoints(
     endX = target.x + target.width + targetGap;
     endY = isNote ? target.y + Math.min(22, target.height / 2) : isDiagram ? target.y + 40 : tcy;
   } else if (entrySide === "top") {
-    endX = isNote ? Math.max(target.x + 20, Math.min(target.x + target.width - 20, startX)) : tcx;
+    endX = (isNote || isCard) ? Math.max(target.x + 20, Math.min(target.x + target.width - 20, startX)) : tcx;
     endY = target.y - targetGap;
   } else {
     // entrySide === "bottom"
-    endX = isNote ? Math.max(target.x + 20, Math.min(target.x + target.width - 20, startX)) : tcx;
+    endX = (isNote || isCard) ? Math.max(target.x + 20, Math.min(target.x + target.width - 20, startX)) : tcx;
     endY = target.y + target.height + targetGap;
   }
 
@@ -131,21 +132,35 @@ function calculateConnectionPoints(
   } else if (edge?.arrowType === "elbow" || edge?.elbowed) {
     // 2. Elbow / Orthogonal Arrow: Stepped 90-degree right angles through clear corridor
     if (exitSide === "right" || exitSide === "left") {
-      const stepX = Math.round(relEndX * 0.5);
-      waypoints = [
-        [0, 0],
-        [stepX, 0],
-        [stepX, relEndY],
-        [relEndX, relEndY],
-      ];
+      if (Math.abs(relEndY) < 6) {
+        waypoints = [
+          [0, 0],
+          [relEndX, relEndY],
+        ];
+      } else {
+        const stepX = Math.round(relEndX * 0.5);
+        waypoints = [
+          [0, 0],
+          [stepX, 0],
+          [stepX, relEndY],
+          [relEndX, relEndY],
+        ];
+      }
     } else {
-      const stepY = Math.round(relEndY * 0.5);
-      waypoints = [
-        [0, 0],
-        [0, stepY],
-        [relEndX, stepY],
-        [relEndX, relEndY],
-      ];
+      if (Math.abs(relEndX) < 6) {
+        waypoints = [
+          [0, 0],
+          [relEndX, relEndY],
+        ];
+      } else {
+        const stepY = Math.round(relEndY * 0.5);
+        waypoints = [
+          [0, 0],
+          [0, stepY],
+          [relEndX, stepY],
+          [relEndX, relEndY],
+        ];
+      }
     }
   } else {
     // 3. Curved Arrow (Hand-drawn smooth spline):
@@ -248,10 +263,10 @@ export function generateExcalidrawElements(
     const groupId = clusterGroupMap.get(node.clusterId) ?? nextElementId("grp");
     const groupIds = [groupId];
 
-    if (node.type === "main-topic") {
+    if (node.type === "main-topic" || node.type === "header-pill") {
       const palette = node.colorTheme;
-      const strokeColor = palette?.stroke ?? "#1098ad";
-      const bgColor = palette?.fill ?? "#c5f6fa";
+      const strokeColor = defaultStroke;
+      const bgColor = palette?.fill ?? "#a5d8ff";
       const textColor = palette?.text ?? defaultText;
 
       const containerId = node.id;
@@ -434,6 +449,129 @@ export function generateExcalidrawElements(
         verticalAlign: "middle",
         containerId,
       });
+    } else if (node.type === "concept-card") {
+      const strokeColor = defaultStroke;
+      const bgColor = node.cardStyle === "tinted" ? (node.colorTheme?.fill ?? defaultBg) : defaultBg;
+      const textColor = defaultText;
+
+      const containerId = node.id;
+      const hasTitle = Boolean(node.title && node.title.trim().length > 0);
+      const titleTextId = hasTitle ? `${node.id}_title` : undefined;
+      const bodyTextId = `${node.id}_text`;
+
+      // Concept Card Container Box
+      elements.push({
+        id: containerId,
+        type: "rectangle",
+        x: Math.round(node.x),
+        y: Math.round(node.y),
+        width: Math.round(node.width),
+        height: Math.round(node.height),
+        angle: 0,
+        strokeColor,
+        backgroundColor: bgColor,
+        fillStyle: "solid",
+        strokeWidth: 1,
+        strokeStyle: node.style || "solid",
+        roughness: 0,
+        opacity: 100,
+        groupIds,
+        roundness: { type: 3 },
+        seed: nextSeed(),
+        version: 1,
+        versionNonce: nextSeed(),
+        isDeleted: false,
+        boundElements: getBoundElements(node.id, hasTitle ? undefined : bodyTextId),
+      });
+
+      if (hasTitle) {
+        // Prominent Bold Term Header
+        elements.push({
+          id: titleTextId!,
+          type: "text",
+          x: Math.round(node.x + 14),
+          y: Math.round(node.y + 10),
+          width: Math.round(node.width - 28),
+          height: 22,
+          angle: 0,
+          strokeColor: textColor,
+          backgroundColor: "transparent",
+          fillStyle: "solid",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 0,
+          opacity: 100,
+          groupIds,
+          roundness: null,
+          seed: nextSeed(),
+          version: 1,
+          versionNonce: nextSeed(),
+          isDeleted: false,
+          text: node.title!,
+          fontSize: 16,
+          fontFamily: node.fontFamily,
+          textAlign: "left",
+          verticalAlign: "top",
+        });
+
+        // Formatted Body / Description Text
+        elements.push({
+          id: bodyTextId,
+          type: "text",
+          x: Math.round(node.x + 14),
+          y: Math.round(node.y + 34),
+          width: Math.round(node.width - 28),
+          height: Math.max(20, Math.round(node.height - 40)),
+          angle: 0,
+          strokeColor: textColor,
+          backgroundColor: "transparent",
+          fillStyle: "solid",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 0,
+          opacity: 100,
+          groupIds,
+          roundness: null,
+          seed: nextSeed(),
+          version: 1,
+          versionNonce: nextSeed(),
+          isDeleted: false,
+          text: node.text ?? "",
+          fontSize: node.fontSize || 14,
+          fontFamily: node.fontFamily,
+          textAlign: "left",
+          verticalAlign: "top",
+        });
+      } else {
+        // Description only card
+        elements.push({
+          id: bodyTextId,
+          type: "text",
+          x: Math.round(node.x + 16),
+          y: Math.round(node.y + 12),
+          width: Math.round(node.width - 32),
+          height: Math.max(20, Math.round(node.height - 24)),
+          angle: 0,
+          strokeColor: textColor,
+          backgroundColor: "transparent",
+          fillStyle: "solid",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 0,
+          opacity: 100,
+          groupIds,
+          roundness: null,
+          seed: nextSeed(),
+          version: 1,
+          versionNonce: nextSeed(),
+          isDeleted: false,
+          text: node.text ?? "",
+          fontSize: node.fontSize || 15,
+          fontFamily: node.fontFamily,
+          textAlign: "left",
+          verticalAlign: "top",
+        });
+      }
     } else if (node.type === "note") {
       // Clean multiline prose text note (borderless handwritten text)
       elements.push({
@@ -574,7 +712,8 @@ export function generateExcalidrawElements(
 
     const arrowId = edge.id;
     const isSharp = edge.arrowType === "sharp";
-    const roundness = isSharp ? null : { type: 2 };
+    const isElbow = edge.arrowType === "elbow" || Boolean(edge.elbowed);
+    const roundness = isSharp || isElbow ? null : { type: 2 };
 
     const arrowElement: any = {
       id: arrowId,
@@ -593,7 +732,7 @@ export function generateExcalidrawElements(
       opacity: 100,
       groupIds,
       roundness,
-      elbowed: false, // Never set elbowed: true in Excalidraw; our waypoints handle all stepped angles
+      elbowed: isElbow,
       seed: nextSeed(),
       version: 1,
       versionNonce: nextSeed(),

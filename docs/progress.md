@@ -102,6 +102,15 @@
 - [x] **Search Query Throttling & In-Memory Folder Tree Caching**: 350ms debouncing and 3-minute folder tree cache in Google Drive backend.
 - [x] **Search Folder Navigation & Keyboard Ergonomics**: Folder selection reveals/expands in Explorer sidebar; <kbd>F2</kbd> shortcut renames active document or selected item.
 
+### Phase 11: Visual Notes Engine Overhaul (Human Study Whiteboard Generation)
+- [x] **2D Multi-Column Masonry Bin-Packing**: Shortest-column greedy bin packing distributing topics across 2–3 columns by default, producing natural 16:9 and 4:3 whiteboards instead of 15,000px 1D vertical ribbons.
+- [x] **Adaptive Tiered Tree Layout**: Dynamic column grid layout for subtopics replacing rigid 4-sector stars, supporting arbitrary subtopic counts (5, 8, 12+) with child leaf concept cards.
+- [x] **Pill Topic Headers & Authentic Excalidraw Pastel Palette**: Pill containers (`roundness: { type: 3 }`, height 72px) with `#1e1e1e` dark ink borders and official Excalidraw pastel fills (`#a5d8ff`, `#b2f2bb`, `#d0bfff`, `#ffc9c9`, `#fff4e6`, `#ffec99`, `#c5f6fa`, `#f3f0ff`).
+- [x] **Native Elbowed Arrows with Manhattan Routing**: `elbowed: true` arrows with 90-degree stepped waypoints and bidirectional node bindings (`startBinding`, `endBinding`), preserving clean Manhattan routing during canvas manipulation.
+- [x] **Indentation-Aware Markdown List & Bold-Term Definition Parsing**: Structured parsing for `- **Term**: Description` items into formatted concept cards with distinct bold headers and body text.
+- [x] **CLI & In-App UI Controls**: Added `--cols`, `--layout`, `--col-gap` CLI options and interactive Layout Mode / Columns dropdowns in `VisualNotesModal.tsx`.
+- [x] **Automated Test Suite**: 7 comprehensive unit tests with 93 assertions covering parser, 2D masonry aspect ratios, elbow connectors, and Excalidraw v2 scene generation.
+
 ---
 
 ## Current Status: Multi-Platform Hardening & Friction Removal (v1.3)

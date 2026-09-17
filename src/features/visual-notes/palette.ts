@@ -6,68 +6,77 @@ import type { TopicPalette } from "./types";
  * Main topic #2 is soft blue (#bae6fd / #bfdbfe).
  */
 export const LIGHT_PALETTES: Record<string, TopicPalette> = {
-  green: {
-    name: "green",
-    fill: "#c7f9cc", // Soft pastel green
-    stroke: "#2b8a3e",
-    text: "#1e1e1e",
-    accent: "#51cf66",
-    subtopicBg: "#ffffff",
-    noteText: "#212529",
-  },
   blue: {
     name: "blue",
-    fill: "#d0ebff", // Soft sky blue
-    stroke: "#1c7ed6",
+    fill: "#a5d8ff", // Excalidraw pastel blue
+    stroke: "#1e1e1e",
     text: "#1e1e1e",
-    accent: "#339af0",
+    accent: "#1971c2",
     subtopicBg: "#ffffff",
-    noteText: "#212529",
+    noteText: "#1e1e1e",
+  },
+  green: {
+    name: "green",
+    fill: "#b2f2bb", // Excalidraw pastel green
+    stroke: "#1e1e1e",
+    text: "#1e1e1e",
+    accent: "#2f9e44",
+    subtopicBg: "#ffffff",
+    noteText: "#1e1e1e",
   },
   lavender: {
     name: "lavender",
-    fill: "#e5dbff", // Soft purple / violet
-    stroke: "#7048e8",
+    fill: "#d0bfff", // Excalidraw pastel violet / lavender
+    stroke: "#1e1e1e",
     text: "#1e1e1e",
-    accent: "#845ef7",
+    accent: "#7048e8",
     subtopicBg: "#ffffff",
-    noteText: "#212529",
-  },
-  peach: {
-    name: "peach",
-    fill: "#ffe8cc", // Soft peach / orange
-    stroke: "#e8590c",
-    text: "#1e1e1e",
-    accent: "#ff922b",
-    subtopicBg: "#ffffff",
-    noteText: "#212529",
-  },
-  amber: {
-    name: "amber",
-    fill: "#ffec99", // Soft yellow / amber
-    stroke: "#f59f00",
-    text: "#1e1e1e",
-    accent: "#fcc419",
-    subtopicBg: "#ffffff",
-    noteText: "#212529",
+    noteText: "#1e1e1e",
   },
   rose: {
     name: "rose",
-    fill: "#fcc2d7", // Soft pink / rose
-    stroke: "#d6336c",
+    fill: "#ffc9c9", // Excalidraw pastel red / coral
+    stroke: "#1e1e1e",
     text: "#1e1e1e",
-    accent: "#f06595",
+    accent: "#e03131",
     subtopicBg: "#ffffff",
-    noteText: "#212529",
+    noteText: "#1e1e1e",
+  },
+  peach: {
+    name: "peach",
+    fill: "#fff4e6", // Excalidraw warm cream / peach
+    stroke: "#1e1e1e",
+    text: "#1e1e1e",
+    accent: "#f76707",
+    subtopicBg: "#ffffff",
+    noteText: "#1e1e1e",
+  },
+  amber: {
+    name: "amber",
+    fill: "#ffec99", // Excalidraw pastel yellow
+    stroke: "#1e1e1e",
+    text: "#1e1e1e",
+    accent: "#f59f00",
+    subtopicBg: "#ffffff",
+    noteText: "#1e1e1e",
   },
   cyan: {
     name: "cyan",
-    fill: "#c5f6fa", // Soft cyan
-    stroke: "#1098ad",
+    fill: "#c5f6fa", // Excalidraw pastel cyan
+    stroke: "#1e1e1e",
     text: "#1e1e1e",
-    accent: "#22b8cf",
+    accent: "#0c8599",
     subtopicBg: "#ffffff",
-    noteText: "#212529",
+    noteText: "#1e1e1e",
+  },
+  violet: {
+    name: "violet",
+    fill: "#f3f0ff", // Excalidraw soft lavender
+    stroke: "#1e1e1e",
+    text: "#1e1e1e",
+    accent: "#845ef7",
+    subtopicBg: "#ffffff",
+    noteText: "#1e1e1e",
   },
 };
 

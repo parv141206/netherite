@@ -1350,9 +1350,417 @@ function layoutTopicCluster(
 }
 
 /**
+ * Lays out an entire topic cluster using an adaptive tiered tree structure
+ * modeled after real human study whiteboards (e.g. mynotes.excalidraw).
+ *
+ * Header Pill at top-center ->
+ * Introductory Concept Card (if any) ->
+ * Multi-column Grid of Subtopics with child leaf concept cards and elbow connectors.
+ */
+function layoutTopicClusterTieredTree(
+  topic: TopicCluster,
+  clusterIndex: number,
+  centerX: number,
+  centerY: number,
+  options: Required<VisualNoteOptions>,
+): LayoutCluster {
+  const palette = getPaletteForTopic(clusterIndex, topic.color, options.theme);
+  const clusterId = topic.id;
+  const nodes: LayoutNode[] = [];
+  const edges: LayoutEdge[] = [];
+  const space = new SpaceManager();
+
+  function registerAndPlace(node: LayoutNode, padding = 20): void {
+    if (space.collides(node, padding)) {
+      const clearPos = space.findClearPosition(node, 1, 1, 15, 30, padding);
+      node.x = clearPos.x;
+      node.y = clearPos.y;
+    }
+    nodes.push(node);
+    space.register({
+      id: node.id,
+      minX: node.x,
+      minY: node.y,
+      maxX: node.x + node.width,
+      maxY: node.y + node.height,
+      padding,
+    });
+  }
+
+  // 1. Topic Header Pill
+  const titleText = topic.title || "Main Topic";
+  const pillW = Math.max(340, Math.min(820, titleText.length * 13 + 60));
+  const pillH = 72;
+  const headerPill: LayoutNode = {
+    id: topic.id,
+    type: "main-topic",
+    title: titleText,
+    x: centerX - pillW / 2,
+    y: centerY,
+    width: pillW,
+    height: pillH,
+    style: "solid",
+    colorTheme: palette,
+    fontFamily: 1,
+    fontSize: 22,
+    clusterId,
+    cardStyle: "pill",
+  };
+  registerAndPlace(headerPill, 26);
+
+  let currentY = headerPill.y + headerPill.height + 40;
+  let rootAnchorId = headerPill.id;
+
+  // 2. Topic Center Notes (Introductory Definition Card)
+  if (topic.centerNotes.length > 0) {
+    const rawText = topic.centerNotes.map((n) => n.text).join("\n\n");
+    const wrappedIntro = wrapText(rawText, Math.min(650, options.maxTextWidth + 150), 16, 1);
+    const introDim = measureTextBlock(wrappedIntro, 16, 1);
+    const introCardW = Math.max(380, Math.min(720, introDim.width + 40));
+    const introCardH = introDim.height + 32;
+
+    const introNode: LayoutNode = {
+      id: `${topic.id}-intro`,
+      type: "concept-card",
+      text: wrappedIntro,
+      x: centerX - introCardW / 2,
+      y: currentY,
+      width: introCardW,
+      height: introCardH,
+      style: "solid",
+      colorTheme: palette,
+      fontFamily: 1,
+      fontSize: 16,
+      clusterId,
+      parentId: headerPill.id,
+      cardStyle: "card",
+    };
+    registerAndPlace(introNode, 22);
+
+    edges.push({
+      id: `edge-${headerPill.id}-${introNode.id}`,
+      sourceId: headerPill.id,
+      targetId: introNode.id,
+      style: "solid",
+      arrowType: "elbow",
+      elbowed: true,
+      exitSide: "bottom",
+      entrySide: "top",
+      clusterId,
+      arrowhead: "arrow",
+    });
+
+    rootAnchorId = introNode.id;
+    currentY = introNode.y + introNode.height + 48;
+  }
+
+  // 3. Subtopics Tiered Grid Layout
+  const subtopics = topic.subtopics;
+  if (subtopics.length > 0) {
+    const cols = subtopics.length === 1 ? 1 : subtopics.length <= 4 ? 2 : 3;
+    const colWidth = 380;
+    const colHorizontalGap = 70;
+    const totalGridWidth = cols * colWidth + (cols - 1) * colHorizontalGap;
+    const gridStartX = centerX - totalGridWidth / 2;
+
+    const colCurrentY: number[] = new Array(cols).fill(currentY);
+
+    for (let i = 0; i < subtopics.length; i++) {
+      const sub = subtopics[i]!;
+      const colIdx = i % cols;
+      const subX = gridStartX + colIdx * (colWidth + colHorizontalGap);
+      const subY = colCurrentY[colIdx]!;
+
+      // Measure Subtopic Header
+      const subTitleW = measureContainerBox(sub.title, 18, 1, 24, 14, 220, 52);
+      const subNode: LayoutNode = {
+        id: sub.id,
+        type: "subtopic",
+        title: sub.title,
+        x: subX,
+        y: subY,
+        width: Math.max(colWidth - 40, subTitleW.width),
+        height: subTitleW.height,
+        style: sub.style || "solid",
+        colorTheme: palette,
+        fontFamily: 1,
+        fontSize: 18,
+        clusterId,
+        parentId: rootAnchorId,
+        cardStyle: "card",
+      };
+      registerAndPlace(subNode, 20);
+
+      edges.push({
+        id: `edge-${rootAnchorId}-${sub.id}`,
+        sourceId: rootAnchorId,
+        targetId: sub.id,
+        style: "solid",
+        arrowType: "elbow",
+        elbowed: true,
+        clusterId,
+        arrowhead: "arrow",
+      });
+
+      let subContentBottomY = subNode.y + subNode.height;
+
+      // Subtopic Notes / Bullet definitions
+      if (sub.notes.length > 0) {
+        const hasStructuredDefs = sub.notes.some((n) => n.boldTitle);
+
+        if (hasStructuredDefs) {
+          let leafY = subContentBottomY + 20;
+          for (const note of sub.notes) {
+            const leafTitle = note.boldTitle || "";
+            const leafDesc = note.description || note.text;
+            const wrappedDesc = wrapText(leafDesc, colWidth - 50, 14, 1);
+            const descDim = measureTextBlock(wrappedDesc, 14, 1);
+            const cardHeight = (leafTitle ? 32 : 0) + descDim.height + 24;
+
+            const leafNode: LayoutNode = {
+              id: note.id,
+              type: "concept-card",
+              title: leafTitle,
+              text: wrappedDesc,
+              x: subX + 10,
+              y: leafY,
+              width: colWidth - 20,
+              height: cardHeight,
+              style: "solid",
+              colorTheme: palette,
+              fontFamily: 1,
+              fontSize: 14,
+              clusterId,
+              parentId: sub.id,
+              cardStyle: "card",
+            };
+            registerAndPlace(leafNode, 14);
+
+            edges.push({
+              id: `edge-${sub.id}-${leafNode.id}`,
+              sourceId: sub.id,
+              targetId: leafNode.id,
+              style: "solid",
+              arrowType: "elbow",
+              elbowed: true,
+              clusterId,
+              arrowhead: "arrow",
+            });
+
+            leafY += cardHeight + 16;
+          }
+          subContentBottomY = leafY;
+        } else {
+          const noteText = wrapText(
+            sub.notes.map((n) => (n.isBullet ? `• ${n.text}` : n.text)).join("\n"),
+            colWidth - 40,
+            14,
+            1,
+          );
+          const noteDim = measureTextBlock(noteText, 14, 1);
+          const noteNode: LayoutNode = {
+            id: `${sub.id}-notes`,
+            type: "note",
+            text: noteText,
+            x: subX + 10,
+            y: subContentBottomY + 16,
+            width: noteDim.width + 20,
+            height: noteDim.height + 10,
+            style: "solid",
+            fontFamily: 1,
+            fontSize: 14,
+            clusterId,
+            parentId: sub.id,
+          };
+          registerAndPlace(noteNode, 14);
+
+          edges.push({
+            id: `edge-${sub.id}-${noteNode.id}`,
+            sourceId: sub.id,
+            targetId: noteNode.id,
+            style: "solid",
+            arrowType: "elbow",
+            elbowed: true,
+            clusterId,
+            arrowhead: "arrow",
+          });
+
+          subContentBottomY = noteNode.y + noteNode.height;
+        }
+      }
+
+      // Subtopic Diagrams / Code Blocks
+      if (sub.diagrams.length > 0) {
+        let diagY = subContentBottomY + 20;
+        for (const diag of sub.diagrams) {
+          const asciiDim = measureAsciiBlock(diag.code, 13, 16);
+          const diagNode: LayoutNode = {
+            id: diag.id,
+            type: "ascii-diagram",
+            text: diag.code,
+            title: diag.label,
+            x: subX,
+            y: diagY,
+            width: Math.max(colWidth, asciiDim.width),
+            height: asciiDim.height,
+            style: "dashed",
+            fontFamily: 3,
+            fontSize: 13,
+            clusterId,
+            parentId: sub.id,
+          };
+          registerAndPlace(diagNode, 18);
+
+          edges.push({
+            id: `edge-${sub.id}-${diag.id}`,
+            sourceId: sub.id,
+            targetId: diag.id,
+            label: diag.label,
+            style: "dashed",
+            arrowType: "elbow",
+            elbowed: true,
+            clusterId,
+            arrowhead: "arrow",
+          });
+
+          diagY += asciiDim.height + 24;
+        }
+        subContentBottomY = diagY;
+      }
+
+      // Subtopic Children (sub-subtopics / flows)
+      if (sub.children.length > 0) {
+        let childY = subContentBottomY + 20;
+        for (const child of sub.children) {
+          const childDim = measureContainerBox(child.title, 15, 1, 20, 12, 180, 42);
+          const childNode: LayoutNode = {
+            id: child.id,
+            type: child.isFlowStep ? "flow-step" : "sub-subtopic",
+            title: child.title,
+            x: subX + 15,
+            y: childY,
+            width: Math.max(colWidth - 30, childDim.width),
+            height: childDim.height,
+            style: child.style || "dashed",
+            colorTheme: palette,
+            fontFamily: 1,
+            fontSize: 15,
+            clusterId,
+            parentId: sub.id,
+            cardStyle: "dashed",
+          };
+          registerAndPlace(childNode, 16);
+
+          edges.push({
+            id: `edge-${sub.id}-${child.id}`,
+            sourceId: sub.id,
+            targetId: child.id,
+            style: "solid",
+            arrowType: "elbow",
+            elbowed: true,
+            clusterId,
+            arrowhead: "arrow",
+          });
+
+          childY += childDim.height + 16;
+
+          // Child notes
+          if (child.notes.length > 0) {
+            const noteText = wrapText(
+              child.notes.map((n) => (n.isBullet ? `• ${n.text}` : n.text)).join("\n"),
+              colWidth - 40,
+              14,
+              1,
+            );
+            const noteDim = measureTextBlock(noteText, 14, 1);
+            const childNoteNode: LayoutNode = {
+              id: `${child.id}-notes`,
+              type: "note",
+              text: noteText,
+              x: subX + 20,
+              y: childY,
+              width: noteDim.width + 10,
+              height: noteDim.height + 10,
+              style: "solid",
+              fontFamily: 1,
+              fontSize: 14,
+              clusterId,
+              parentId: child.id,
+            };
+            registerAndPlace(childNoteNode, 14);
+
+            edges.push({
+              id: `edge-${child.id}-${childNoteNode.id}`,
+              sourceId: child.id,
+              targetId: childNoteNode.id,
+              style: "dashed",
+              arrowType: "elbow",
+              elbowed: true,
+              clusterId,
+              arrowhead: "arrow",
+            });
+
+            childY += noteDim.height + 18;
+          }
+
+          // Child ASCII / Code Diagrams
+          if (child.diagrams.length > 0) {
+            for (const diag of child.diagrams) {
+              const asciiDim = measureAsciiBlock(diag.code, 13, 16);
+              const diagNode: LayoutNode = {
+                id: diag.id,
+                type: "ascii-diagram",
+                text: diag.code,
+                title: diag.label,
+                x: subX + 10,
+                y: childY,
+                width: Math.max(colWidth - 20, asciiDim.width),
+                height: asciiDim.height,
+                style: "dashed",
+                fontFamily: 3,
+                fontSize: 13,
+                clusterId,
+                parentId: child.id,
+              };
+              registerAndPlace(diagNode, 18);
+
+              edges.push({
+                id: `edge-${child.id}-${diag.id}`,
+                sourceId: child.id,
+                targetId: diag.id,
+                label: diag.label,
+                style: "dashed",
+                arrowType: "elbow",
+                elbowed: true,
+                clusterId,
+                arrowhead: "arrow",
+              });
+
+              childY += asciiDim.height + 24;
+            }
+          }
+        }
+        subContentBottomY = childY;
+      }
+
+      colCurrentY[colIdx] = subContentBottomY + 50;
+    }
+  }
+
+  const bounds = computeBoundingBox(nodes);
+  return {
+    id: clusterId,
+    bounds,
+    nodes,
+    edges,
+  };
+}
+
+/**
  * Main Layout Engine Entry Point.
  * Converts markdown AST into fully laid-out 2D coordinates.
- * Stacks multiple topics vertically with generous separation.
+ * Utilizes a 2D Multi-Column Masonry canvas packer to achieve an expansive
+ * landscape canvas (16:9 / 4:3) matching human study notes.
  */
 export function layoutVisualNotes(
   doc: VisualNoteDoc,
@@ -1360,44 +1768,124 @@ export function layoutVisualNotes(
 ): LayoutResult {
   const options: Required<VisualNoteOptions> = {
     theme: rawOptions?.theme ?? "light",
-    clusterGap: rawOptions?.clusterGap ?? 300,
+    clusterGap: rawOptions?.clusterGap ?? 240,
     roughness: rawOptions?.roughness ?? 1,
     defaultFontFamily: rawOptions?.defaultFontFamily ?? 1,
-    maxTextWidth: rawOptions?.maxTextWidth ?? 320,
+    maxTextWidth: rawOptions?.maxTextWidth ?? 340,
     asciiPadding: rawOptions?.asciiPadding ?? 16,
+    columns: rawOptions?.columns ?? 0,
+    layoutMode: rawOptions?.layoutMode ?? "grid",
+    colGap: rawOptions?.colGap ?? 320,
   };
 
   const clusters: LayoutCluster[] = [];
   const allNodes: LayoutNode[] = [];
   const allEdges: LayoutEdge[] = [];
 
-  let currentCenterY = 0;
-  const centerX = 0;
+  const numTopics = doc.topics.length;
+  if (numTopics === 0) {
+    return {
+      clusters: [],
+      nodes: [],
+      edges: [],
+      bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+    };
+  }
 
-  for (let c = 0; c < doc.topics.length; c++) {
+  // Multi-column determination:
+  // If user requested vertical layout: 1 col
+  // If 1 topic: 1 col
+  // If 2 to 4 topics: 2 cols
+  // If 5+ topics: 2 or 3 cols
+  let numCols = 1;
+  if (options.layoutMode === "vertical" || options.columns === 1) {
+    numCols = 1;
+  } else if (options.columns && options.columns > 1) {
+    numCols = options.columns;
+  } else if (numTopics >= 5) {
+    numCols = 3;
+  } else if (numTopics >= 2) {
+    numCols = 2;
+  }
+
+  // First pass: generate clusters locally at origin (0, 0)
+  const localClusters: LayoutCluster[] = [];
+  for (let c = 0; c < numTopics; c++) {
     const topic = doc.topics[c]!;
+    // Use tiered tree layout for rich multi-subtopic notes or grid mode
+    const cluster =
+      topic.subtopics.length >= 4 || options.layoutMode === "grid"
+        ? layoutTopicClusterTieredTree(topic, c, 0, 0, options)
+        : layoutTopicCluster(topic, c, 0, 0, options);
+    localClusters.push(cluster);
+  }
 
-    const cluster = layoutTopicCluster(topic, c, centerX, currentCenterY, options);
+  if (numCols === 1) {
+    // Single column vertical stack
+    let currentY = 0;
+    for (const cluster of localClusters) {
+      const clusterH = cluster.bounds.maxY - cluster.bounds.minY;
+      const deltaY = currentY - cluster.bounds.minY;
+      for (const n of cluster.nodes) n.y += deltaY;
+      cluster.bounds = computeBoundingBox(cluster.nodes);
+      clusters.push(cluster);
+      allNodes.push(...cluster.nodes);
+      allEdges.push(...cluster.edges);
+      currentY += clusterH + options.clusterGap;
+    }
+  } else {
+    // 2D Multi-Column Masonry Bin-Packing
+    const colHeights: number[] = new Array(numCols).fill(0);
+    const colWidths: number[] = new Array(numCols).fill(0);
 
-    if (clusters.length > 0) {
-      const prevCluster = clusters[clusters.length - 1]!;
-      const requiredTop = prevCluster.bounds.maxY + options.clusterGap;
+    // Track column assignment for each cluster
+    const clusterPlacements: { cluster: LayoutCluster; col: number; startY: number }[] = [];
 
-      if (cluster.bounds.minY < requiredTop) {
-        const deltaY = requiredTop - cluster.bounds.minY;
-        for (const n of cluster.nodes) {
-          n.y += deltaY;
+    for (const cluster of localClusters) {
+      const clusterW = cluster.bounds.maxX - cluster.bounds.minX;
+      const clusterH = cluster.bounds.maxY - cluster.bounds.minY;
+
+      // Find the column with minimum current height
+      let minCol = 0;
+      let minH = colHeights[0]!;
+      for (let i = 1; i < numCols; i++) {
+        if (colHeights[i]! < minH) {
+          minH = colHeights[i]!;
+          minCol = i;
         }
-        cluster.bounds = computeBoundingBox(cluster.nodes);
-        currentCenterY += deltaY;
       }
+
+      const startY = minH === 0 ? 0 : minH + options.clusterGap;
+      clusterPlacements.push({ cluster, col: minCol, startY });
+
+      colHeights[minCol] = startY + clusterH;
+      colWidths[minCol] = Math.max(colWidths[minCol]!, clusterW);
     }
 
-    clusters.push(cluster);
-    allNodes.push(...cluster.nodes);
-    allEdges.push(...cluster.edges);
+    // Now calculate actual X positions for each column
+    const colXPositions: number[] = new Array(numCols).fill(0);
+    let runningX = 0;
+    for (let i = 0; i < numCols; i++) {
+      colXPositions[i] = runningX;
+      runningX += (colWidths[i] || 600) + options.colGap;
+    }
 
-    currentCenterY = cluster.bounds.maxY + options.clusterGap + 350;
+    // Translate each cluster to its calculated (X, Y) slot
+    for (const { cluster, col, startY } of clusterPlacements) {
+      const targetX = colXPositions[col]!;
+      const deltaX = targetX - cluster.bounds.minX;
+      const deltaY = startY - cluster.bounds.minY;
+
+      for (const n of cluster.nodes) {
+        n.x += deltaX;
+        n.y += deltaY;
+      }
+      cluster.bounds = computeBoundingBox(cluster.nodes);
+
+      clusters.push(cluster);
+      allNodes.push(...cluster.nodes);
+      allEdges.push(...cluster.edges);
+    }
   }
 
   const overallBounds = computeBoundingBox(allNodes);

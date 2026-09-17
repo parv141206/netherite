@@ -15,12 +15,15 @@ Usage:
 
 Options:
   --theme <light|dark>    Canvas theme (default: light)
-  --gap <pixels>          Vertical gap between stacked topics (default: 180)
+  --cols <number>         Whiteboard layout columns (0: auto, 1, 2, 3, default: auto)
+  --layout <grid|radial>  Layout mode (default: grid)
+  --gap <pixels>          Vertical gap between stacked topics (default: 240)
+  --col-gap <pixels>      Horizontal gap between columns (default: 320)
   --roughness <0|1|2>     Excalidraw roughness (0: clean, 1: sketchy, default: 1)
   --help, -h              Show this help message
 
 Example:
-  bun run bin/markdown-to-excalidraw.ts notes.md diagram.excalidraw --theme light
+  bun run bin/markdown-to-excalidraw.ts notes.md diagram.excalidraw --cols 2 --theme light
 `);
     process.exit(0);
   }
@@ -28,7 +31,10 @@ Example:
   const inputFile = args[0]!;
   let outputFile: string | undefined;
   let theme: "light" | "dark" = "light";
-  let clusterGap = 180;
+  let clusterGap = 240;
+  let colGap = 320;
+  let columns = 0;
+  let layoutMode: "grid" | "radial" | "vertical" = "grid";
   let roughness = 1;
 
   for (let i = 1; i < args.length; i++) {
@@ -36,8 +42,17 @@ Example:
     if (arg === "--theme" && args[i + 1]) {
       theme = args[i + 1] === "dark" ? "dark" : "light";
       i++;
+    } else if (arg === "--cols" && args[i + 1]) {
+      columns = parseInt(args[i + 1]!, 10) || 0;
+      i++;
+    } else if (arg === "--layout" && args[i + 1]) {
+      layoutMode = args[i + 1] as any;
+      i++;
     } else if (arg === "--gap" && args[i + 1]) {
-      clusterGap = parseInt(args[i + 1]!, 10) || 180;
+      clusterGap = parseInt(args[i + 1]!, 10) || 240;
+      i++;
+    } else if (arg === "--col-gap" && args[i + 1]) {
+      colGap = parseInt(args[i + 1]!, 10) || 320;
       i++;
     } else if (arg === "--roughness" && args[i + 1]) {
       roughness = parseInt(args[i + 1]!, 10) || 1;
@@ -57,10 +72,13 @@ Example:
   console.log(`\x1b[34m[VisualNotes]\x1b[0m Reading markdown from: ${inputPath}`);
   const content = await readFile(inputPath, "utf-8");
 
-  console.log(`\x1b[34m[VisualNotes]\x1b[0m Generating Excalidraw visual diagram (theme: ${theme})...`);
+  console.log(`\x1b[34m[VisualNotes]\x1b[0m Generating Excalidraw visual diagram (theme: ${theme}, cols: ${columns || "auto"}, mode: ${layoutMode})...`);
   const scene = markdownToExcalidraw(content, {
     theme,
     clusterGap,
+    colGap,
+    columns,
+    layoutMode,
     roughness,
   });
 
