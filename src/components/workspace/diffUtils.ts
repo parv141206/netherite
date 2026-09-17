@@ -140,52 +140,73 @@ export function computeLineDiff(baseline: string, current: string): DiffResult {
   const m = midBase.length;
   const n = midCurr.length;
 
-  const dp: number[][] = Array.from({ length: m + 1 }, () =>
-    new Array<number>(n + 1).fill(0)
-  );
-
-  for (let i = 0; i < m; i++) {
-    for (let j = 0; j < n; j++) {
-      if (midBase[i] === midCurr[j]) {
-        dp[i + 1]![j + 1] = dp[i]![j]! + 1;
-      } else {
-        dp[i + 1]![j + 1] = Math.max(dp[i + 1]![j]!, dp[i]![j + 1]!);
-      }
-    }
-  }
-
   const midDiff: DiffLine[] = [];
-  let i = m;
-  let j = n;
   let additions = 0;
   let deletions = 0;
 
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && midBase[i - 1] === midCurr[j - 1]) {
-      midDiff.unshift({
-        type: "unchanged",
-        content: midBase[i - 1] ?? "",
-        lineNumBefore: start + i,
-        lineNumAfter: start + j,
-      });
-      i--;
-      j--;
-    } else if (j > 0 && (i === 0 || dp[i]![j - 1]! >= dp[i - 1]![j]!)) {
-      midDiff.unshift({
-        type: "added",
-        content: midCurr[j - 1] ?? "",
-        lineNumAfter: start + j,
-      });
-      additions++;
-      j--;
-    } else if (i > 0) {
-      midDiff.unshift({
+  // Safeguard: If middle modified matrix is excessively large (>250k cells), avoid main-thread freeze
+  if (m * n > 250_000) {
+    for (let k = 0; k < m; k++) {
+      midDiff.push({
         type: "removed",
-        content: midBase[i - 1] ?? "",
-        lineNumBefore: start + i,
+        content: midBase[k] ?? "",
+        lineNumBefore: start + k + 1,
       });
       deletions++;
-      i--;
+    }
+    for (let k = 0; k < n; k++) {
+      midDiff.push({
+        type: "added",
+        content: midCurr[k] ?? "",
+        lineNumAfter: start + k + 1,
+      });
+      additions++;
+    }
+  } else {
+    const dp: number[][] = Array.from({ length: m + 1 }, () =>
+      new Array<number>(n + 1).fill(0)
+    );
+
+    for (let i = 0; i < m; i++) {
+      for (let j = 0; j < n; j++) {
+        if (midBase[i] === midCurr[j]) {
+          dp[i + 1]![j + 1] = dp[i]![j]! + 1;
+        } else {
+          dp[i + 1]![j + 1] = Math.max(dp[i + 1]![j]!, dp[i]![j + 1]!);
+        }
+      }
+    }
+
+    let i = m;
+    let j = n;
+
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && midBase[i - 1] === midCurr[j - 1]) {
+        midDiff.unshift({
+          type: "unchanged",
+          content: midBase[i - 1] ?? "",
+          lineNumBefore: start + i,
+          lineNumAfter: start + j,
+        });
+        i--;
+        j--;
+      } else if (j > 0 && (i === 0 || dp[i]![j - 1]! >= dp[i - 1]![j]!)) {
+        midDiff.unshift({
+          type: "added",
+          content: midCurr[j - 1] ?? "",
+          lineNumAfter: start + j,
+        });
+        additions++;
+        j--;
+      } else if (i > 0) {
+        midDiff.unshift({
+          type: "removed",
+          content: midBase[i - 1] ?? "",
+          lineNumBefore: start + i,
+        });
+        deletions++;
+        i--;
+      }
     }
   }
 

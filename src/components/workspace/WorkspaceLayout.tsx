@@ -146,6 +146,7 @@ export function WorkspaceLayout({
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<"editor" | "calendar">("editor");
+  const [folderToExpand, setFolderToExpand] = useState<string | null>(null);
 
   // Global Search Dialog & Gemini AI Copilot Panel States
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
@@ -213,6 +214,9 @@ export function WorkspaceLayout({
 
   // Stable session tracking per tab to prevent component unmounting / flickering on ID promotion
   const tabSessionsRef = useRef<Record<string, string>>({});
+  // Strictly tracks which file owns the current noteContent in memory to isolate drafts across tabs
+  const contentFileIdRef = useRef<string | null>(initialNoteId || null);
+  const tabBarRef = useRef<HTMLDivElement | null>(null);
 
   const { data: serverMeta } = api.notes.getMetadata.useQuery(undefined, {
     enabled: !!session?.user,
@@ -529,6 +533,7 @@ export function WorkspaceLayout({
 
   useEffect(() => {
     if (!activeTabId) {
+      contentFileIdRef.current = null;
       setNoteContent("");
       setLastSavedContent("");
       setNoteTitle("");
@@ -549,6 +554,7 @@ export function WorkspaceLayout({
             localStorage.removeItem(`netherite_draft_${activeTabId}`);
           } catch {}
         } else {
+          contentFileIdRef.current = activeTabId;
           setNoteContent(draft);
           if (fetchedContent !== undefined) {
             setLastSavedContent(fetchedContent);
@@ -569,14 +575,18 @@ export function WorkspaceLayout({
           contentToSet = JSON.stringify(model, null, 2);
         } catch {}
       }
+      contentFileIdRef.current = activeTabId;
       setNoteContent(contentToSet);
       setLastSavedContent(contentToSet);
     }
   }, [fetchedContent, activeTabId, localNotes]);
 
-  // Continuous local draft backup on every edit
+  // Continuous local draft backup on every edit (Strictly isolated to active tab's file ID)
   useEffect(() => {
     if (!activeTabId || activeTabId.startsWith("temp-") || typeof window === "undefined") return;
+    // CRITICAL: Only write draft if the current noteContent in memory strictly belongs to this activeTabId!
+    if (contentFileIdRef.current !== activeTabId) return;
+
     const currentItem = localNotes.find((n) => n.id === activeTabId);
     const isDrawing =
       currentItem?.name.endsWith(".excalidraw") ||
@@ -1418,6 +1428,32 @@ export function WorkspaceLayout({
       setOpenTabIds([...openTabIds, fileId]);
     }
 
+    // 1. Flush any pending unsaved draft for the PREVIOUS file with its exact previous file ID
+    const prevFileId = contentFileIdRef.current;
+    if (
+      prevFileId &&
+      prevFileId !== fileId &&
+      !prevFileId.startsWith("temp-") &&
+      typeof window !== "undefined"
+    ) {
+      const prevItem = localNotes.find((n) => n.id === prevFileId);
+      const isPrevDrawing =
+        prevItem?.name.endsWith(".excalidraw") ||
+        prevItem?.mimeType === "application/vnd.excalidraw+json";
+      const isPrevUml = isUmlFile(prevItem);
+      const isCorrupted =
+        (isPrevDrawing && isEmptyExcalidraw(noteContent)) ||
+        (isPrevUml && isEmptyApollon(noteContent));
+
+      if (noteContent !== lastSavedContent && noteContent.length > 0 && !isCorrupted) {
+        try {
+          localStorage.setItem(`netherite_draft_${prevFileId}`, noteContent);
+        } catch {}
+      }
+    }
+
+    contentFileIdRef.current = fileId;
+
     const isDrawing =
       item?.name.endsWith(".excalidraw") ||
       item?.mimeType === "application/vnd.excalidraw+json";
@@ -1455,12 +1491,25 @@ export function WorkspaceLayout({
 
   const closeTab = (fileId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const isThisTabDirty = activeTabId === fileId && isDirty;
+    const hasDraft =
+      typeof window !== "undefined" &&
+      localStorage.getItem(`netherite_draft_${fileId}`) !== null;
+
+    if (isThisTabDirty || hasDraft) {
+      const confirmed = window.confirm(
+        "You have unsaved changes in this tab. Close tab anyway? (Your local draft will remain preserved)."
+      );
+      if (!confirmed) return;
+    }
+
     const closedIndex = openTabIds.indexOf(fileId);
     const updated = openTabIds.filter((id) => id !== fileId);
     setOpenTabIds(updated);
 
     if (activeTabId === fileId) {
       if (updated.length === 0) {
+        contentFileIdRef.current = null;
         setActiveTabId(undefined);
         setNoteContent("");
         setLastSavedContent("");
@@ -1560,8 +1609,25 @@ export function WorkspaceLayout({
     !isCurrentTikz &&
     !isCurrentImage;
 
-  const liveDiff = computeLineDiff(lastSavedContent, noteContent);
-  const isDirty = !isCurrentImage && liveDiff.hasChanges;
+  const isDirty =
+    !isCurrentImage &&
+    Boolean(activeTabId) &&
+    noteContent !== lastSavedContent &&
+    (noteContent.length > 0 || lastSavedContent.length > 0);
+
+  const [diffSummary, setDiffSummary] = useState<string>("0 diff");
+
+  useEffect(() => {
+    if (!isDirty) {
+      setDiffSummary("0 diff");
+      return;
+    }
+    const timer = setTimeout(() => {
+      const diff = computeLineDiff(lastSavedContent, noteContent);
+      setDiffSummary(diff.summary);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [isDirty, lastSavedContent, noteContent]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -1699,6 +1765,7 @@ export function WorkspaceLayout({
         }
         loadingNoteId={isDocumentLoading ? activeTabId : undefined}
         onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
+        folderToExpand={folderToExpand}
       />
 
       {/* Main Workspace Container */}
@@ -1713,7 +1780,7 @@ export function WorkspaceLayout({
           }
           isSaving={isSaving}
           isDirty={isDirty}
-          diffSummary={liveDiff.summary}
+          diffSummary={diffSummary}
           onOpenDiff={() => setIsDiffModalOpen(true)}
           onManualSync={handleOpenSyncModal}
           isSyncing={isSyncing}
@@ -1746,7 +1813,15 @@ export function WorkspaceLayout({
         {/* VS Code / Antigravity Style Tab Management Bar */}
         {(openTabIds.length > 0 || activeView === "calendar") && (
           <div className="h-9 border-b border-border bg-muted/30 flex items-center justify-between px-0 overflow-x-auto select-none shrink-0">
-            <div className="flex items-center h-full overflow-x-auto scrollbar-none">
+            <div
+              ref={tabBarRef}
+              onWheel={(e) => {
+                if (tabBarRef.current && e.deltaY !== 0) {
+                  tabBarRef.current.scrollLeft += e.deltaY;
+                }
+              }}
+              className="flex items-center h-full overflow-x-auto scrollbar-none"
+            >
               {/* Google Calendar Studio Tab */}
               <button
                 onClick={() => setActiveView(activeView === "calendar" ? "editor" : "calendar")}
@@ -1846,7 +1921,7 @@ export function WorkspaceLayout({
                 title="Inspect Browser Diff & Changelog"
               >
                 <GitCompare className="w-3.5 h-3.5" />
-                <span>{isDirty ? liveDiff.summary : "0 diff"}</span>
+                <span>{isDirty ? diffSummary : "0 diff"}</span>
               </button>
 
               <button
@@ -2258,9 +2333,17 @@ export function WorkspaceLayout({
             currentNoteTitle={currentNote?.name || noteTitle}
             currentNoteContent={noteContent}
             onInsertContent={(content) => {
+              if (!isCurrentMarkdown) {
+                showToast("Cannot insert markdown into a vector drawing or architecture model.");
+                return;
+              }
               setNoteContent((prev) => (prev ? `${prev}\n\n${content}` : content));
             }}
             onReplaceContent={(content) => {
+              if (!isCurrentMarkdown) {
+                showToast("Cannot replace canvas diagram structure with raw markdown.");
+                return;
+              }
               setNoteContent(content);
             }}
             onCreateNoteWithContent={async (title, content) => {
@@ -2347,7 +2430,7 @@ export function WorkspaceLayout({
           onOpenDiff={() => setIsDiffModalOpen(true)}
           onManualSync={handleOpenSyncModal}
           isSyncing={isSyncing}
-          diffSummary={liveDiff.summary}
+          diffSummary={diffSummary}
         />
       </div>
 
@@ -2382,7 +2465,7 @@ export function WorkspaceLayout({
         onClose={() => setIsSyncModalOpen(false)}
         noteTitle={currentNote?.name || "Untitled.md"}
         isDirty={isDirty}
-        diffSummary={liveDiff.summary}
+        diffSummary={diffSummary}
         isSyncing={isSyncing}
         onConfirmSync={executeSync}
       />
@@ -2432,6 +2515,10 @@ export function WorkspaceLayout({
         notes={localNotes}
         activeNoteId={activeTabId}
         onSelectNote={(id) => openFileInTab(id)}
+        onSelectFolder={(folderId) => {
+          setSidebarCollapsed(false);
+          setFolderToExpand(folderId);
+        }}
         onCreateNote={() => handleCreateFile()}
         onOpenCalendar={() => setActiveView("calendar")}
       />

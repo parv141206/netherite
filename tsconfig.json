@@ -62,5 +62,5 @@
     "**/*.js",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "generated", "android", "src-tauri", "app"]
+  "exclude": ["node_modules", "generated", "android", "src-tauri", "app", "**/*.test.ts"]
 }

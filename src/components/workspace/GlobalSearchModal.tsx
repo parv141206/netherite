@@ -24,6 +24,7 @@ interface GlobalSearchModalProps {
   notes: DriveItem[];
   activeNoteId?: string;
   onSelectNote: (id: string) => void;
+  onSelectFolder?: (id: string) => void;
   onCreateNote?: () => void;
   onOpenCalendar?: () => void;
 }
@@ -43,6 +44,7 @@ export function GlobalSearchModal({
   notes,
   activeNoteId,
   onSelectNote,
+  onSelectFolder,
   onCreateNote,
   onOpenCalendar,
 }: GlobalSearchModalProps) {
@@ -52,11 +54,11 @@ export function GlobalSearchModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Debounce query for server-side full text content search
+  // Debounce query for server-side full text content search (350ms to avoid API churn)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query.trim());
-    }, 250);
+    }, 350);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -221,6 +223,13 @@ export function GlobalSearchModal({
 
   // Selection handler with jump target persistence
   const handleCommitSelection = (item: SearchResultItem) => {
+    if (item.matchType === "folder") {
+      if (onSelectFolder) {
+        onSelectFolder(item.id);
+      }
+      onClose();
+      return;
+    }
     if (query.trim()) {
       sessionStorage.setItem("netherite_search_jump", query.trim());
     }

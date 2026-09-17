@@ -3,6 +3,8 @@ import { Readable } from "stream";
 
 // In-memory cache for folder IDs to eliminate redundant Drive queries (5 min TTL)
 const folderIdCache = new Map<string, { folderId: string; expiresAt: number }>();
+// In-memory cache for resolved Netherite folder tree IDs (3 min TTL)
+const folderTreeCache = new Map<string, { folderIds: string[]; expiresAt: number }>();
 
 function getCachedFolderId(key: string): string | null {
   const entry = folderIdCache.get(key);
@@ -19,6 +21,34 @@ function setCachedFolderId(key: string, folderId: string) {
     folderId,
     expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
   });
+}
+
+function getCachedFolderTree(key: string): string[] | null {
+  const entry = folderTreeCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    folderTreeCache.delete(key);
+    return null;
+  }
+  return entry.folderIds;
+}
+
+function setCachedFolderTree(key: string, folderIds: string[]) {
+  folderTreeCache.set(key, {
+    folderIds,
+    expiresAt: Date.now() + 3 * 60 * 1000, // 3 minutes
+  });
+}
+
+interface SessionLike {
+  user?: { id?: string };
+  accessToken?: string;
+  refreshToken?: string;
+}
+
+function getUserKey(session: unknown): string {
+  const s = session as SessionLike | null | undefined;
+  return s?.user?.id ?? s?.accessToken?.slice(-16) ?? "default";
 }
 
 export async function getDriveClient(session: any) {
@@ -43,7 +73,7 @@ export async function getDriveClient(session: any) {
 }
 
 export async function ensureNetheriteFolder(session: any): Promise<string> {
-  const cacheKey = `netherite-root-${session?.user?.id || session?.accessToken?.slice(-16) || "default"}`;
+  const cacheKey = `netherite-root-${getUserKey(session)}`;
   const cached = getCachedFolderId(cacheKey);
   if (cached) return cached;
 
@@ -77,7 +107,7 @@ export async function ensureNetheriteFolder(session: any): Promise<string> {
 }
 
 export async function ensureAssetsFolder(session: any): Promise<string> {
-  const cacheKey = `netherite-assets-${session?.user?.id || session?.accessToken?.slice(-16) || "default"}`;
+  const cacheKey = `netherite-assets-${getUserKey(session)}`;
   const cached = getCachedFolderId(cacheKey);
   if (cached) return cached;
 
@@ -519,6 +549,8 @@ export async function deepSyncAndRepairWorkspace(session: any) {
 }
 
 export async function createSubfolder(session: any, name: string, parentId?: string) {
+  folderTreeCache.delete(getUserKey(session));
+
   const drive = await getDriveClient(session);
   const rootId = parentId || (await ensureNetheriteFolder(session));
 
@@ -741,6 +773,8 @@ export async function renameNote(session: any, fileId: string, newName: string) 
 }
 
 export async function deleteNote(session: any, fileId: string) {
+  folderTreeCache.delete(getUserKey(session));
+
   const drive = await getDriveClient(session);
   await drive.files.update({
     fileId,
@@ -799,14 +833,20 @@ export async function uploadAsset(
 export async function getImageAsset(session: any, fileId: string) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
-    const meta = await drive.files.get({ fileId, fields: "id, name, mimeType" });
+    const meta = await drive.files.get({
+      fileId,
+      fields: "id, name, mimeType",
+    });
+
     const res = await drive.files.get(
       { fileId, alt: "media" },
       { responseType: "arraybuffer" }
     );
+
     const buffer = Buffer.from(res.data as ArrayBuffer);
-    const mimeType = meta.data.mimeType ?? "image/png";
     const base64 = buffer.toString("base64");
+    const mimeType = meta.data.mimeType ?? "image/png";
+
     return {
       id: fileId,
       name: meta.data.name ?? "image",
@@ -821,30 +861,37 @@ export async function searchNotesContent(session: any, query: string) {
     const drive = await getDriveClient(session);
     const rootFolderId = await ensureNetheriteFolder(session);
 
-    // 1. Fetch folders belonging to Netherite
-    const foldersRes = await drive.files.list({
-      q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
-      fields: "files(id, name, parents)",
-      pageSize: 1000,
-      spaces: "drive",
-    });
+    const userKey = getUserKey(session);
+    let parentIds = getCachedFolderTree(userKey);
 
-    const allFolders = foldersRes.data.files ?? [];
-    const netheriteFolderIds = new Set<string>([rootFolderId]);
+    if (!parentIds) {
+      // 1. Fetch folders belonging to Netherite
+      const foldersRes = await drive.files.list({
+        q: "trashed=false and mimeType='application/vnd.google-apps.folder'",
+        fields: "files(id, name, parents)",
+        pageSize: 1000,
+        spaces: "drive",
+      });
 
-    let added = true;
-    while (added) {
-      added = false;
-      for (const f of allFolders) {
-        if (!f.id || netheriteFolderIds.has(f.id)) continue;
-        if (f.parents?.some((p: string) => netheriteFolderIds.has(p))) {
-          netheriteFolderIds.add(f.id);
-          added = true;
+      const allFolders = foldersRes.data.files ?? [];
+      const netheriteFolderIds = new Set<string>([rootFolderId]);
+
+      let added = true;
+      while (added) {
+        added = false;
+        for (const f of allFolders) {
+          if (!f.id || netheriteFolderIds.has(f.id)) continue;
+          if (f.parents?.some((p: string) => netheriteFolderIds.has(p))) {
+            netheriteFolderIds.add(f.id);
+            added = true;
+          }
         }
       }
+
+      parentIds = Array.from(netheriteFolderIds);
+      setCachedFolderTree(userKey, parentIds);
     }
 
-    const parentIds = Array.from(netheriteFolderIds);
     const parentClause = parentIds.slice(0, 30).map((id) => `'${id}' in parents`).join(" or ");
     const sanitized = query.replace(/'/g, "\\'");
 

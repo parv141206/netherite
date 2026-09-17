@@ -202,6 +202,7 @@ interface SidebarProps {
   isCalendarActive?: boolean;
   onOpenGlobalSearch?: () => void;
   loadingNoteId?: string;
+  folderToExpand?: string | null;
 }
 
 export function Sidebar({
@@ -238,12 +239,22 @@ export function Sidebar({
   isCalendarActive = false,
   onOpenGlobalSearch,
   loadingNoteId,
+  folderToExpand,
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
     root: true,
   });
+
+  useEffect(() => {
+    if (folderToExpand) {
+      setExpandedFolders((prev) => ({
+        ...prev,
+        [folderToExpand]: true,
+      }));
+    }
+  }, [folderToExpand]);
 
   // Resizable Sidebar Width (saved in localStorage, strict minimum 280px)
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -399,12 +410,14 @@ export function Sidebar({
         return;
       }
 
-      if (e.key === "F2" && selectedIds.size === 1) {
-        e.preventDefault();
-        const singleId = Array.from(selectedIds)[0];
-        const current = notes.find((n) => n.id === singleId);
-        if (current) {
-          startInlineEditing(current.id, current.name);
+      if (e.key === "F2") {
+        const targetId = selectedIds.size === 1 ? Array.from(selectedIds)[0] : activeNoteId;
+        if (targetId) {
+          e.preventDefault();
+          const current = notes.find((n) => n.id === targetId);
+          if (current) {
+            startInlineEditing(current.id, current.name);
+          }
         }
       } else if (e.key === "Delete" || ((e.metaKey || e.ctrlKey) && e.key === "Backspace")) {
         const activeElem = document.activeElement;

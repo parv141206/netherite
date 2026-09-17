@@ -34,6 +34,13 @@ interface CalendarViewProps {
 
 type ViewMode = "month" | "week" | "day" | "agenda";
 
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -43,7 +50,7 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
 
   // Form State for Quick Event Creation
   const [newEventTitle, setNewEventTitle] = useState("");
-  const [newEventDate, setNewEventDate] = useState(() => new Date().toISOString().split("T")[0] || "");
+  const [newEventDate, setNewEventDate] = useState(() => formatLocalDate(new Date()));
   const [newEventStartTime, setNewEventStartTime] = useState("10:00");
   const [newEventEndTime, setNewEventEndTime] = useState("11:00");
   const [newEventLocation, setNewEventLocation] = useState("");
@@ -139,15 +146,15 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
         dayNumber: daysInPrevMonth - i,
         isCurrentMonth: false,
         isToday: false,
-        dateString: d.toISOString().split("T")[0]!,
+        dateString: formatLocalDate(d),
       });
     }
 
     // Current month days
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = formatLocalDate(new Date());
     for (let i = 1; i <= daysInCurrentMonth; i++) {
       const d = new Date(year, month, i);
-      const dateString = d.toISOString().split("T")[0]!;
+      const dateString = formatLocalDate(d);
       days.push({
         date: d,
         dayNumber: i,
@@ -167,7 +174,7 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
         dayNumber: i,
         isCurrentMonth: false,
         isToday: false,
-        dateString: d.toISOString().split("T")[0]!,
+        dateString: formatLocalDate(d),
       });
     }
 
@@ -177,7 +184,16 @@ export function CalendarView({ onOpenNote, onRefreshNotes, onClose }: CalendarVi
   // Filter events by day
   const getEventsForDay = (dateString: string) => {
     return events.filter((e) => {
-      const startDay = e.start.split("T")[0];
+      let startDay = "";
+      if (e.start.includes("T")) {
+        try {
+          startDay = formatLocalDate(new Date(e.start));
+        } catch {
+          startDay = e.start.split("T")[0] || "";
+        }
+      } else {
+        startDay = e.start;
+      }
       return startDay === dateString;
     });
   };

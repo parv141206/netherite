@@ -382,6 +382,21 @@ export function TikzCanvas({
     if (onChange) onChange(newCode);
   };
 
+  const handleKeyDownTextarea = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const target = e.currentTarget;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      const val = target.value;
+      const updated = val.substring(0, start) + "  " + val.substring(end);
+      handleCodeChange(updated);
+      requestAnimationFrame(() => {
+        target.selectionStart = target.selectionEnd = start + 2;
+      });
+    }
+  };
+
   const handleApplyTemplate = (template: TikzTemplate) => {
     handleCodeChange(template.code);
     setIsTemplatesOpen(false);
@@ -698,6 +713,7 @@ export function TikzCanvas({
             <textarea
               value={code}
               onChange={(e) => handleCodeChange(e.target.value)}
+              onKeyDown={handleKeyDownTextarea}
               placeholder="\\begin{tikzpicture}\n  \\node {Hello};\n\\end{tikzpicture}"
               spellCheck={false}
               className="flex-1 w-full p-4 font-mono text-xs sm:text-sm bg-transparent text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none leading-relaxed overflow-y-auto"

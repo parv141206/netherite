@@ -58,23 +58,28 @@ export function PdfExportModal({
   const [previewZoom, setPreviewZoom] = useState<number>(0.85);
   const [activeTab, setActiveTab] = useState<"preview" | "settings">("preview");
   const [renderedHtml, setRenderedHtml] = useState<string>("");
+  const [diagramSvg, setDiagramSvg] = useState<string>(svgContent || "");
   const [isGenerating, setIsGenerating] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const cleanTitle = fileName.replace(/\.[^/.]+$/, "") || "Document";
 
-  // Capture live rendered HTML if Markdown
+  // Capture live rendered HTML if Markdown, or live SVG if diagram
   useEffect(() => {
     if (!isOpen) return;
 
     if (fileType === "markdown") {
-      // If editor DOM is live in window, extract clean prose HTML
-      const proseEl = document.querySelector(".ProseMirror");
+      // If editor DOM is live in window, extract clean prose HTML (preferring active primary pane)
+      const proseEl =
+        document.querySelector("main .ProseMirror") ||
+        document.querySelector(".ProseMirror");
       if (proseEl) {
         // Clone and sanitize
         const clone = proseEl.cloneNode(true) as HTMLElement;
         // Clean out editing helpers
-        clone.querySelectorAll(".cm-editor, .ProseMirror-selectednode, [data-bubble-menu]").forEach((el) => el.remove());
+        clone
+          .querySelectorAll(".cm-editor, .ProseMirror-selectednode, [data-bubble-menu]")
+          .forEach((el) => el.remove());
         setRenderedHtml(clone.innerHTML);
       } else if (content) {
         // Fallback: simple basic formatting
@@ -85,8 +90,29 @@ export function PdfExportModal({
             .join("")
         );
       }
+    } else {
+      if (svgContent) {
+        setDiagramSvg(svgContent);
+      } else {
+        // Extract rendered SVG directly from the diagram canvas (Mermaid, TikZ, Apollon, Excalidraw)
+        const canvasSvg =
+          document.querySelector("main svg:not([class*='lucide'])") ||
+          document.querySelector(".mermaid-viewport svg") ||
+          document.querySelector(".excalidraw-svg") ||
+          document.querySelector("svg:not([class*='lucide'])");
+        if (canvasSvg) {
+          const clone = canvasSvg.cloneNode(true) as SVGElement;
+          clone.setAttribute(
+            "style",
+            "max-width: 100%; max-height: 85vh; width: auto; height: auto; display: block; margin: 0 auto;"
+          );
+          setDiagramSvg(clone.outerHTML);
+        } else if (content && (content.includes("<svg") || content.startsWith("<?xml"))) {
+          setDiagramSvg(content);
+        }
+      }
     }
-  }, [isOpen, fileType, content]);
+  }, [isOpen, fileType, content, svgContent]);
 
   if (!isOpen) return null;
 
@@ -329,9 +355,9 @@ export function PdfExportModal({
     ${
       fileType === "markdown"
         ? renderedHtml || `<div style="white-space: pre-wrap;">${content}</div>`
-        : svgContent
+        : (diagramSvg || svgContent)
         ? `<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-            ${svgContent}
+            ${diagramSvg || svgContent}
           </div>`
         : `<div style="text-align: center; padding: 40px;">No printable content available.</div>`
     }
@@ -765,10 +791,10 @@ export function PdfExportModal({
                     ) : (
                       <div className="whitespace-pre-wrap text-sm leading-relaxed">{content}</div>
                     )
-                  ) : svgContent ? (
+                  ) : (diagramSvg || svgContent) ? (
                     <div
                       className="w-full flex items-center justify-center py-6 [&>svg]:max-w-full [&>svg]:h-auto"
-                      dangerouslySetInnerHTML={{ __html: svgContent }}
+                      dangerouslySetInnerHTML={{ __html: diagramSvg || svgContent }}
                     />
                   ) : (
                     <div className="text-center py-12 text-muted-foreground text-sm">

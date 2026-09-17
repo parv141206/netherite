@@ -90,18 +90,29 @@
   - Created `/terms` covering sovereign ownership, zero-database architecture, and disclaimers.
   - Verified site ownership in Google Search Console via HTML meta tag, enabling **Production (External)** publishing status in Google Cloud Console.
 
+### Phase 10: Friction Elimination & Production Hardening
+- [x] **Tab-Switching Draft Isolation**: Eliminated cross-file draft overwriting via `contentFileIdRef` and pre-switch flush.
+- [x] **Main-Thread Performance Hardening**: Replaced synchronous unmemoized O(M*N) DP diff execution with instant string inequality dirty detection and debounced summary computation.
+- [x] **Diff DP Safeguard**: Guarded `computeLineDiff` against freezing on large 2000+ line files.
+- [x] **Universal Diagram PDF Export**: Direct rendered SVG extraction from Mermaid, TikZ, Apollon UML, and Excalidraw into print layout and preview.
+- [x] **Mermaid & TikZ Studio Ergonomics**: Asynchronous content sync from Google Drive and <kbd>Tab</kbd> key indentation support.
+- [x] **Timezone Rollover Fix**: Timezone-safe local calendar grid computation eliminating 1-day shifts in positive UTC offsets.
+- [x] **Excalidraw Viewport & Sidebar State Persistence**: Whiteboard zoom, pan coordinates, and engineering sidebar state persisted in `localStorage`.
+- [x] **Copilot Safety Guard**: Multi-modal file format gating preventing AI text insertion into `.apollon` and `.excalidraw` JSON documents.
+- [x] **Search Query Throttling & In-Memory Folder Tree Caching**: 350ms debouncing and 3-minute folder tree cache in Google Drive backend.
+- [x] **Search Folder Navigation & Keyboard Ergonomics**: Folder selection reveals/expands in Explorer sidebar; <kbd>F2</kbd> shortcut renames active document or selected item.
+
 ---
 
-## Current Status: Multi-Platform Production Ready (v1.2)
+## Current Status: Multi-Platform Hardening & Friction Removal (v1.3)
 
-Netherite is fully functional on Web (Next.js 15), Linux Desktop, Windows Desktop, and Android (Flutter), sharing the same zero-database Google Drive storage structure and monochromatic design language. Google OAuth is in Production mode.
+Netherite is undergoing comprehensive hardening to eliminate micro-frictions, race conditions, main-thread janks, and multi-modal edge cases.
 
 ---
 
 ## Future Roadmap & Explorations
 
-- [ ] **Apollon Integration**: Integrate the standalone Apollon modeling/diagramming repository into Netherite's workspace.
 - [ ] **Bi-directional Wikilinks & Graph View**: Inter-note `[[Note Title]]` link resolution and visual knowledge graph visualization.
 - [ ] **Offline PWA Support**: Full Service Worker caching to permit offline draft creation with automatic sync queue when reconnected.
-- [ ] **PDF Export with KaTeX**: Server-side or client-side print stylesheets tailored for publishing academic PDFs.
 - [ ] **Drive Trash Restoration**: Direct in-app interface to restore soft-deleted items from the user's Google Drive Trash.
+

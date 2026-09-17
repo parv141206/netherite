@@ -122,6 +122,13 @@ export default function ExcalidrawEditor({
       // Establish baseline signature directly from restored data
       initialSignatureRef.current = getDrawingSignature(restoredElements, restoredState);
 
+      const hasCustomCamera =
+        typeof rawAppState?.scrollX === "number" &&
+        typeof rawAppState?.scrollY === "number" &&
+        (rawAppState.scrollX !== 0 ||
+          rawAppState.scrollY !== 0 ||
+          (rawAppState.zoom && rawAppState.zoom.value !== 1));
+
       return {
         elements: restoredElements,
         appState: {
@@ -129,7 +136,7 @@ export default function ExcalidrawEditor({
           theme: isDarkTheme ? "dark" : "light",
         },
         files: rawFiles,
-        scrollToContent: true,
+        scrollToContent: !hasCustomCamera,
       };
     } catch (err) {
       console.warn("Could not parse drawing JSON content:", err);
@@ -153,11 +160,19 @@ export default function ExcalidrawEditor({
         if (nextApi.isDestroyed) {
           return;
         }
-        nextApi.toggleSidebar({
-          name: ENGINEERING_SIDEBAR_NAME,
-          tab: ENGINEERING_PALETTE_TAB,
-          force: true,
-        });
+        const savedPref =
+          typeof window !== "undefined"
+            ? localStorage.getItem("netherite_eng_sidebar_open")
+            : null;
+        // Keep canvas clean and wide by default; re-open only if user deliberately toggled it on
+        const shouldOpen = savedPref === "true";
+        if (shouldOpen) {
+          nextApi.toggleSidebar({
+            name: ENGINEERING_SIDEBAR_NAME,
+            tab: ENGINEERING_PALETTE_TAB,
+            force: true,
+          });
+        }
       });
     }
   }, []);
@@ -172,6 +187,11 @@ export default function ExcalidrawEditor({
         setElements(nextElements);
         setAppState(nextAppState);
       });
+
+      if (typeof window !== "undefined") {
+        const isSidebarOpen = nextAppState.openSidebar?.name === ENGINEERING_SIDEBAR_NAME;
+        localStorage.setItem("netherite_eng_sidebar_open", isSidebarOpen ? "true" : "false");
+      }
 
       const currentSig = getDrawingSignature(nextElements, nextAppState);
 

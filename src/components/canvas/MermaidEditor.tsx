@@ -210,6 +210,18 @@ export default function MermaidEditor({
     return DEFAULT_MERMAID_CODE;
   });
 
+  // Synchronize code if initialContent arrives asynchronously from Google Drive
+  useEffect(() => {
+    if (initialContent && initialContent.trim().length > 0) {
+      setCode((prev) => {
+        if (prev === DEFAULT_MERMAID_CODE || prev.trim() === "") {
+          return initialContent;
+        }
+        return prev;
+      });
+    }
+  }, [initialContent]);
+
   const [svgContent, setSvgContent] = useState<string>("");
   const [parseError, setParseError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState<boolean>(false);
@@ -316,6 +328,21 @@ export default function MermaidEditor({
     setCode(newCode);
     if (onChangeRef.current) {
       onChangeRef.current(newCode);
+    }
+  };
+
+  const handleKeyDownTextarea = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const target = e.currentTarget;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      const val = target.value;
+      const updated = val.substring(0, start) + "  " + val.substring(end);
+      handleCodeChange(updated);
+      requestAnimationFrame(() => {
+        target.selectionStart = target.selectionEnd = start + 2;
+      });
     }
   };
 
@@ -490,6 +517,7 @@ export default function MermaidEditor({
             <textarea
               value={code}
               onChange={(e) => handleCodeChange(e.target.value)}
+              onKeyDown={handleKeyDownTextarea}
               placeholder="Type your Mermaid diagram syntax here..."
               spellCheck={false}
               className="flex-1 w-full p-4 font-mono text-xs leading-relaxed bg-transparent text-foreground resize-none focus:outline-none select-text selection:bg-teal-500/30 overflow-y-auto"
