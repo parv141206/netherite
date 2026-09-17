@@ -31,13 +31,70 @@ export interface ExcalidrawSceneOutput {
 }
 
 /**
- * Calculates exit and entry boundary points between two nodes with deterministic facing.
+ * Calculates exact ray-box perimeter intersection.
+ * Finds the point where a ray from the box center towards (targetX, targetY)
+ * crosses the box perimeter with the given clearance gap.
+ */
+function getBoxBoundaryPoint(
+  node: LayoutNode,
+  targetX: number,
+  targetY: number,
+  gap = 2,
+  preferredSide?: "top" | "bottom" | "left" | "right",
+): { x: number; y: number } {
+  const cx = node.x + node.width / 2;
+  const cy = node.y + node.height / 2;
+  const dx = targetX - cx;
+  const dy = targetY - cy;
+
+  if (Math.abs(dx) < 1e-4 && Math.abs(dy) < 1e-4) {
+    return { x: cx, y: cy };
+  }
+
+  if (preferredSide === "left" || (!preferredSide && targetX < node.x)) {
+    const exitX = node.x - gap;
+    const exitY = Math.max(node.y + 4, Math.min(node.y + node.height - 4, cy + dy * ((node.x - cx) / dx)));
+    return { x: exitX, y: exitY };
+  }
+  if (preferredSide === "right" || (!preferredSide && targetX > node.x + node.width)) {
+    const exitX = node.x + node.width + gap;
+    const exitY = Math.max(node.y + 4, Math.min(node.y + node.height - 4, cy + dy * ((node.x + node.width - cx) / dx)));
+    return { x: exitX, y: exitY };
+  }
+  if (preferredSide === "top" || (!preferredSide && targetY < node.y)) {
+    const exitY = node.y - gap;
+    const exitX = Math.max(node.x + 4, Math.min(node.x + node.width - 4, cx + dx * ((node.y - cy) / dy)));
+    return { x: exitX, y: exitY };
+  }
+  if (preferredSide === "bottom" || (!preferredSide && targetY > node.y + node.height)) {
+    const exitY = node.y + node.height + gap;
+    const exitX = Math.max(node.x + 4, Math.min(node.x + node.width - 4, cx + dx * ((node.y + node.height - cy) / dy)));
+    return { x: exitX, y: exitY };
+  }
+
+  const halfW = node.width / 2 + gap;
+  const halfH = node.height / 2 + gap;
+
+  const tx = halfW / Math.abs(dx);
+  const ty = halfH / Math.abs(dy);
+  const t = Math.min(tx, ty);
+
+  return {
+    x: cx + t * dx,
+    y: cy + t * dy,
+  };
+}
+
+/**
+ * Calculates exit and entry boundary points between two nodes with clean radial line-of-sight
+ * and smart obstacle-avoiding curved spline routing.
  */
 function calculateConnectionPoints(
   source: LayoutNode,
   target: LayoutNode,
   edge?: LayoutEdge,
-  portFraction = 0.5,
+  _portFraction = 0.5,
+  allNodes: LayoutNode[] = [],
 ): {
   startX: number;
   startY: number;
@@ -45,162 +102,130 @@ function calculateConnectionPoints(
   endY: number;
   waypoints: [number, number][];
 } {
-  const scx = source.x + source.width / 2;
-  const scy = source.y + source.height / 2;
-  const tcx = target.x + target.width / 2;
-  const tcy = target.y + target.height / 2;
-
-  const dx = tcx - scx;
-  const dy = tcy - scy;
-
+  const gap = 3;
   const isNote = target.type === "note";
-  const isDiagram = target.type === "ascii-diagram";
-  const isCard = target.type === "concept-card";
-  const targetGap = isNote ? 14 : isDiagram ? 12 : 8;
-  const sourceGap = 2;
+  const endGap = isNote ? 4 : 6;
 
-  // Infer exit and entry sides if not explicitly specified on the edge
-  let exitSide: "left" | "right" | "top" | "bottom" =
-    edge?.exitSide ||
-    (Math.abs(dx) > Math.abs(dy) * 0.7
-      ? dx > 0
-        ? "right"
-        : "left"
-      : dy > 0
-      ? "bottom"
-      : "top");
+  let startX = source.x + source.width / 2;
+  let startY = source.y + source.height / 2;
+  let endX = target.x + target.width / 2;
+  let endY = target.y + target.height / 2;
 
-  let entrySide: "left" | "right" | "top" | "bottom" =
-    edge?.entrySide ||
-    (Math.abs(dx) > Math.abs(dy) * 0.7
-      ? dx > 0
-        ? "left"
-        : "right"
-      : dy > 0
-      ? "top"
-      : "bottom");
+  // 1. Determine Exit and Entry Sides
+  let exitSide = edge?.exitSide;
+  let entrySide = edge?.entrySide;
 
-  // Calculate startX, startY based on fractional port along the exit face
-  let startX = scx;
-  let startY = scy;
+  if (!exitSide || !entrySide) {
+    const scx = source.x + source.width / 2;
+    const scy = source.y + source.height / 2;
+    const tcx = target.x + target.width / 2;
+    const tcy = target.y + target.height / 2;
+    const dx = tcx - scx;
+    const dy = tcy - scy;
 
-  if (exitSide === "left") {
-    startX = source.x - sourceGap;
-    startY = source.y + source.height * portFraction;
-  } else if (exitSide === "right") {
-    startX = source.x + source.width + sourceGap;
-    startY = source.y + source.height * portFraction;
-  } else if (exitSide === "top") {
-    startX = source.x + source.width * portFraction;
-    startY = source.y - sourceGap;
-  } else {
-    // exitSide === "bottom"
-    startX = source.x + source.width * portFraction;
-    startY = source.y + source.height + sourceGap;
+    if (Math.abs(dy) > Math.abs(dx)) {
+      if (dy < 0) {
+        exitSide = exitSide || "top";
+        entrySide = entrySide || "bottom";
+      } else {
+        exitSide = exitSide || "bottom";
+        entrySide = entrySide || "top";
+      }
+    } else {
+      if (dx > 0) {
+        exitSide = exitSide || "right";
+        entrySide = entrySide || "left";
+      } else {
+        exitSide = exitSide || "left";
+        entrySide = entrySide || "right";
+      }
+    }
   }
 
-  // Calculate endX, endY with guaranteed boundary clearance
-  let endX = tcx;
-  let endY = tcy;
-
-  if (entrySide === "left") {
-    endX = target.x - targetGap;
-    endY = isNote ? target.y + Math.min(22, target.height / 2) : isDiagram ? target.y + 40 : tcy;
-  } else if (entrySide === "right") {
-    endX = target.x + target.width + targetGap;
-    endY = isNote ? target.y + Math.min(22, target.height / 2) : isDiagram ? target.y + 40 : tcy;
+  // 2. Exact Port Anchors
+  // Target entry point: squarely in the center of the target's entry face
+  if (entrySide === "bottom") {
+    endX = target.x + target.width / 2;
+    endY = target.y + target.height + endGap;
   } else if (entrySide === "top") {
-    endX = (isNote || isCard) ? Math.max(target.x + 20, Math.min(target.x + target.width - 20, startX)) : tcx;
-    endY = target.y - targetGap;
-  } else {
-    // entrySide === "bottom"
-    endX = (isNote || isCard) ? Math.max(target.x + 20, Math.min(target.x + target.width - 20, startX)) : tcx;
-    endY = target.y + target.height + targetGap;
+    endX = target.x + target.width / 2;
+    endY = target.y - endGap;
+  } else if (entrySide === "left") {
+    endX = target.x - endGap;
+    endY = target.y + target.height / 2;
+  } else if (entrySide === "right") {
+    endX = target.x + target.width + endGap;
+    endY = target.y + target.height / 2;
+  }
+
+  // Source exit point: on the exit face of the source, aligned with target's position
+  if (exitSide === "top") {
+    startY = source.y - gap;
+    startX = Math.max(source.x + 14, Math.min(source.x + source.width - 14, endX));
+  } else if (exitSide === "bottom") {
+    startY = source.y + source.height + gap;
+    startX = Math.max(source.x + 14, Math.min(source.x + source.width - 14, endX));
+  } else if (exitSide === "left") {
+    startX = source.x - gap;
+    startY = Math.max(source.y + 10, Math.min(source.y + source.height - 10, endY));
+  } else if (exitSide === "right") {
+    startX = source.x + source.width + gap;
+    startY = Math.max(source.y + 10, Math.min(source.y + source.height - 10, endY));
   }
 
   const relEndX = endX - startX;
   const relEndY = endY - startY;
+  const len = Math.hypot(relEndX, relEndY);
 
   let waypoints: [number, number][] = [];
 
-  if (edge?.arrowType === "sharp") {
-    // 1. Sharp / Straight Arrow: Direct 2-point vector
+  if (edge?.arrowType === "elbow" && edge?.elbowed) {
+    if (exitSide === "top" || exitSide === "bottom") {
+      const midY = Math.round(relEndY * 0.5);
+      waypoints = [
+        [0, 0],
+        [0, midY],
+        [relEndX, midY],
+        [relEndX, relEndY],
+      ];
+    } else {
+      const midX = Math.round(relEndX * 0.5);
+      waypoints = [
+        [0, 0],
+        [midX, 0],
+        [midX, relEndY],
+        [relEndX, relEndY],
+      ];
+    }
+  } else if (edge?.arrowType === "sharp") {
     waypoints = [
       [0, 0],
       [relEndX, relEndY],
     ];
-  } else if (edge?.arrowType === "elbow" || edge?.elbowed) {
-    // 2. Elbow / Orthogonal Arrow: Stepped 90-degree right angles through clear corridor
-    if (exitSide === "right" || exitSide === "left") {
-      if (Math.abs(relEndY) < 6) {
-        waypoints = [
-          [0, 0],
-          [relEndX, relEndY],
-        ];
-      } else {
-        const stepX = Math.round(relEndX * 0.5);
-        waypoints = [
-          [0, 0],
-          [stepX, 0],
-          [stepX, relEndY],
-          [relEndX, relEndY],
-        ];
-      }
-    } else {
-      if (Math.abs(relEndX) < 6) {
-        waypoints = [
-          [0, 0],
-          [relEndX, relEndY],
-        ];
-      } else {
-        const stepY = Math.round(relEndY * 0.5);
-        waypoints = [
-          [0, 0],
-          [0, stepY],
-          [relEndX, stepY],
-          [relEndX, relEndY],
-        ];
-      }
-    }
   } else {
-    // 3. Curved Arrow (Hand-drawn smooth spline):
-    // Control points are strictly monotonic fractions within [0, relEndX] x [0, relEndY].
-    // Eliminates orthogonal 90-degree corners that cause Catmull-Rom splines to balloon or loop.
-    if (
-      (exitSide === "left" || exitSide === "right") &&
-      (entrySide === "left" || entrySide === "right")
-    ) {
-      const p1X = Math.round(relEndX * 0.45);
-      const p1Y = Math.round(relEndY * 0.1);
-      const p2X = Math.round(relEndX * 0.55);
-      const p2Y = Math.round(relEndY * 0.9);
+    // Curved arrow: Smooth, natural curve respecting the flow direction
+    if (len < 15) {
       waypoints = [
         [0, 0],
-        [p1X, p1Y],
-        [p2X, p2Y],
-        [relEndX, relEndY],
-      ];
-    } else if (
-      (exitSide === "top" || exitSide === "bottom") &&
-      (entrySide === "top" || entrySide === "bottom")
-    ) {
-      const p1X = Math.round(relEndX * 0.1);
-      const p1Y = Math.round(relEndY * 0.45);
-      const p2X = Math.round(relEndX * 0.9);
-      const p2Y = Math.round(relEndY * 0.55);
-      waypoints = [
-        [0, 0],
-        [p1X, p1Y],
-        [p2X, p2Y],
         [relEndX, relEndY],
       ];
     } else {
-      // Perpendicular transitions (e.g. exit side to entry top)
-      const midX = Math.round(relEndX * 0.5);
-      const midY = Math.round(relEndY * 0.5);
+      let midRelX = relEndX * 0.5;
+      let midRelY = relEndY * 0.5;
+
+      if (exitSide === "top" || exitSide === "bottom") {
+        const lateralSpan = relEndX;
+        midRelX = lateralSpan * 0.45;
+        midRelY = relEndY * 0.5;
+      } else {
+        const verticalSpan = relEndY;
+        midRelX = relEndX * 0.5;
+        midRelY = verticalSpan * 0.45;
+      }
+
       waypoints = [
         [0, 0],
-        [midX, midY],
+        [Math.round(midRelX), Math.round(midRelY)],
         [relEndX, relEndY],
       ];
     }
@@ -270,9 +295,11 @@ export function generateExcalidrawElements(
       const textColor = palette?.text ?? defaultText;
 
       const containerId = node.id;
-      const textId = `${node.id}_text`;
+      const hasText = Boolean(node.text && node.text.trim().length > 0);
+      const titleTextId = `${node.id}_title`;
+      const bodyTextId = `${node.id}_text`;
 
-      // Main Topic Rounded Box
+      // Main Topic Hub Rounded Box
       elements.push({
         id: containerId,
         type: "rectangle",
@@ -289,43 +316,102 @@ export function generateExcalidrawElements(
         roughness,
         opacity: 100,
         groupIds,
-        roundness: { type: 3 }, // Adaptive radius
+        roundness: hasText ? { type: 2 } : { type: 3 }, // Rounded card if multiline, pill if single
         seed: nextSeed(),
         version: 1,
         versionNonce: nextSeed(),
         isDeleted: false,
-        boundElements: getBoundElements(node.id, textId),
+        boundElements: getBoundElements(node.id),
       });
 
-      // Centered Label Text
-      elements.push({
-        id: textId,
-        type: "text",
-        x: Math.round(node.x + 16),
-        y: Math.round(node.y + (node.height - 26) / 2),
-        width: Math.round(node.width - 32),
-        height: 26,
-        angle: 0,
-        strokeColor: textColor,
-        backgroundColor: "transparent",
-        fillStyle: "solid",
-        strokeWidth: 1,
-        strokeStyle: "solid",
-        roughness: 0,
-        opacity: 100,
-        groupIds,
-        roundness: null,
-        seed: nextSeed(),
-        version: 1,
-        versionNonce: nextSeed(),
-        isDeleted: false,
-        text: node.title ?? "",
-        fontSize: node.fontSize,
-        fontFamily: node.fontFamily,
-        textAlign: "center",
-        verticalAlign: "middle",
-        containerId,
-      });
+      if (!hasText) {
+        // Centered Label Text (Single Line Pill)
+        elements.push({
+          id: titleTextId,
+          type: "text",
+          x: Math.round(node.x),
+          y: Math.round(node.y + (node.height - 28) / 2),
+          width: Math.round(node.width),
+          height: 28,
+          angle: 0,
+          strokeColor: textColor,
+          backgroundColor: "transparent",
+          fillStyle: "solid",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 0,
+          opacity: 100,
+          groupIds,
+          roundness: null,
+          seed: nextSeed(),
+          version: 1,
+          versionNonce: nextSeed(),
+          isDeleted: false,
+          text: node.title ?? "",
+          fontSize: node.fontSize,
+          fontFamily: node.fontFamily,
+          textAlign: "center",
+          verticalAlign: "middle",
+        });
+      } else {
+        // Prominent Bold Header at Top
+        elements.push({
+          id: titleTextId,
+          type: "text",
+          x: Math.round(node.x + 20),
+          y: Math.round(node.y + 14),
+          width: Math.round(node.width - 40),
+          height: 28,
+          angle: 0,
+          strokeColor: textColor,
+          backgroundColor: "transparent",
+          fillStyle: "solid",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 0,
+          opacity: 100,
+          groupIds,
+          roundness: null,
+          seed: nextSeed(),
+          version: 1,
+          versionNonce: nextSeed(),
+          isDeleted: false,
+          text: node.title ?? "",
+          fontSize: node.fontSize,
+          fontFamily: node.fontFamily,
+          textAlign: "center",
+          verticalAlign: "top",
+        });
+
+        // Overview / Subtitle Text Body
+        elements.push({
+          id: bodyTextId,
+          type: "text",
+          x: Math.round(node.x + 24),
+          y: Math.round(node.y + 50),
+          width: Math.round(node.width - 48),
+          height: Math.max(20, Math.round(node.height - 58)),
+          angle: 0,
+          strokeColor: textColor,
+          backgroundColor: "transparent",
+          fillStyle: "solid",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 0,
+          opacity: 100,
+          groupIds,
+          roundness: null,
+          seed: nextSeed(),
+          version: 1,
+          versionNonce: nextSeed(),
+          isDeleted: false,
+          text: node.text ?? "",
+          fontSize: 14,
+          fontFamily: node.fontFamily,
+          textAlign: "center",
+          verticalAlign: "top",
+        });
+      }
     } else if (node.type === "subtopic") {
       const strokeColor = defaultStroke;
       const bgColor = defaultBg;
@@ -707,7 +793,7 @@ export function generateExcalidrawElements(
     const groupIds = [groupId];
 
     const portFraction = edgePortFraction.get(edge.id) ?? 0.5;
-    const conn = calculateConnectionPoints(source, target, edge, portFraction);
+    const conn = calculateConnectionPoints(source, target, edge, portFraction, layout.nodes);
     const strokeColor = defaultStroke;
 
     const arrowId = edge.id;

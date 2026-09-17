@@ -8,6 +8,7 @@ import { getPaletteForTopic } from "./palette";
 import { SpaceManager } from "./space-manager";
 import type {
   BoundingBox,
+  DiagramBlock,
   LayoutCluster,
   LayoutEdge,
   LayoutNode,
@@ -1350,14 +1351,123 @@ function layoutTopicCluster(
 }
 
 /**
- * Lays out an entire topic cluster using an adaptive tiered tree structure
- * modeled after real human study whiteboards (e.g. mynotes.excalidraw).
- *
- * Header Pill at top-center ->
- * Introductory Concept Card (if any) ->
- * Multi-column Grid of Subtopics with child leaf concept cards and elbow connectors.
+ * Resolves overlapping bounding boxes iteratively using rigid-body separation.
+ * Pushes intersecting nodes apart along the minimum penetration axis while preserving
+ * generous breathing room (padding) around every node.
  */
-function layoutTopicClusterTieredTree(
+export function resolveCollisionsPhysics(
+  nodes: LayoutNode[],
+  padding = 45,
+  maxIterations = 60,
+): void {
+  for (let iter = 0; iter < maxIterations; iter++) {
+    let hadCollision = false;
+
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i]!;
+        const b = nodes[j]!;
+
+        const acx = a.x + a.width / 2;
+        const acy = a.y + a.height / 2;
+        const bcx = b.x + b.width / 2;
+        const bcy = b.y + b.height / 2;
+
+        const reqDistX = (a.width + b.width) / 2 + padding;
+        const reqDistY = (a.height + b.height) / 2 + padding;
+
+        const dx = bcx - acx;
+        const dy = bcy - acy;
+
+        const overlapX = reqDistX - Math.abs(dx);
+        const overlapY = reqDistY - Math.abs(dy);
+
+        if (overlapX > 0 && overlapY > 0) {
+          hadCollision = true;
+
+          // Resolve along the axis of least displacement
+          if (overlapX < overlapY) {
+            const sign = dx >= 0 ? 1 : -1;
+            const push = (overlapX / 2) * sign;
+            if (a.type === "main-topic") {
+              b.x += push * 2;
+            } else if (b.type === "main-topic") {
+              a.x -= push * 2;
+            } else {
+              a.x -= push;
+              b.x += push;
+            }
+          } else {
+            const sign = dy >= 0 ? 1 : -1;
+            const push = (overlapY / 2) * sign;
+            if (a.type === "main-topic") {
+              b.y += push * 2;
+            } else if (b.type === "main-topic") {
+              a.y -= push * 2;
+            } else {
+              a.y -= push;
+              b.y += push;
+            }
+          }
+        }
+      }
+    }
+
+    if (!hadCollision) break;
+  }
+}
+
+/**
+ * Calculates the exact distance from the center of an axis-aligned box
+ * to its perimeter along a ray at angle `angle`.
+ */
+export function getBoxRadialRadius(width: number, height: number, angle: number): number {
+  const cos = Math.abs(Math.cos(angle));
+  const sin = Math.abs(Math.sin(angle));
+  const halfW = width / 2;
+  const halfH = height / 2;
+
+  const tX = cos > 1e-6 ? halfW / cos : Infinity;
+  const tY = sin > 1e-6 ? halfH / sin : Infinity;
+  return Math.min(tX, tY);
+}
+
+/**
+ * Calculates the exact minimum center-to-center clearance distance between two
+ * axis-aligned boxes along a ray at angle `angle` to guarantee zero overlap with `gap`.
+ */
+export function getBoxesClearanceDistance(
+  w1: number,
+  h1: number,
+  w2: number,
+  h2: number,
+  angle: number,
+  gap = 40,
+): number {
+  const cos = Math.abs(Math.cos(angle));
+  const sin = Math.abs(Math.sin(angle));
+  const reqX = (w1 + w2) / 2 + gap;
+  const reqY = (h1 + h2) / 2 + gap;
+  const dX = cos > 1e-4 ? reqX / cos : Infinity;
+  const dY = sin > 1e-4 ? reqY / sin : Infinity;
+  return Math.min(dX, dY);
+}
+
+/**
+ * Lays out an entire topic cluster as an organic Floral Radial Tree using a 2-Pass Engine:
+ * - Pass 1: Analyzes and pre-measures all subtopics, branches, flows, and diagrams to compute exact subtree weights.
+ * - Pass 2: Generates a tight, snug floral halo around the hub using exact perimeter ray-box intersections.
+ */
+/**
+ * Lays out an entire topic cluster using a 4-Directional Mind Map Tree Engine:
+ * - Center: Main Topic Hub Box
+ * - North Sector (Top): Conceptual subtopics & branches fanning cleanly UPWARD
+ * - South Sector (Bottom): Flow pipelines, architectural diagrams & branches extending DOWNWARD
+ * - East Sector (Right): Category branches and leaves extending RIGHTWARD
+ * - West Sector (Left): Category branches and leaves extending LEFTWARD
+ * Guaranteed ZERO box overlap, ZERO arrow cuts, and clean human whiteboard readability.
+ */
+function layoutTopicClusterFloral(
   topic: TopicCluster,
   clusterIndex: number,
   centerX: number,
@@ -1368,384 +1478,775 @@ function layoutTopicClusterTieredTree(
   const clusterId = topic.id;
   const nodes: LayoutNode[] = [];
   const edges: LayoutEdge[] = [];
-  const space = new SpaceManager();
 
-  function registerAndPlace(node: LayoutNode, padding = 20): void {
-    if (space.collides(node, padding)) {
-      const clearPos = space.findClearPosition(node, 1, 1, 15, 30, padding);
-      node.x = clearPos.x;
-      node.y = clearPos.y;
-    }
-    nodes.push(node);
-    space.register({
-      id: node.id,
-      minX: node.x,
-      minY: node.y,
-      maxX: node.x + node.width,
-      maxY: node.y + node.height,
-      padding,
-    });
+  // ==========================================
+  // 1. TOPIC HUB (CENTER)
+  // ==========================================
+  const titleText = topic.title || "Main Topic";
+  const hasIntro = topic.centerNotes.length > 0;
+  const rawIntro = hasIntro ? topic.centerNotes.map((n) => n.text).join("\n\n") : "";
+
+  let hubW = Math.max(380, Math.min(850, titleText.length * 15 + 70));
+  let hubH = 68;
+  let wrappedIntro = "";
+
+  if (hasIntro) {
+    hubW = Math.max(hubW, Math.min(740, options.maxTextWidth + 240));
+    wrappedIntro = wrapText(rawIntro, hubW - 60, 14, 1);
+    const introDim = measureTextBlock(wrappedIntro, 14, 1);
+    hubH = Math.max(85, 52 + introDim.height + 24);
   }
 
-  // 1. Topic Header Pill
-  const titleText = topic.title || "Main Topic";
-  const pillW = Math.max(340, Math.min(820, titleText.length * 13 + 60));
-  const pillH = 72;
-  const headerPill: LayoutNode = {
+  const hubNode: LayoutNode = {
     id: topic.id,
     type: "main-topic",
     title: titleText,
-    x: centerX - pillW / 2,
-    y: centerY,
-    width: pillW,
-    height: pillH,
+    text: wrappedIntro || undefined,
+    x: centerX - hubW / 2,
+    y: centerY - hubH / 2,
+    width: hubW,
+    height: hubH,
     style: "solid",
     colorTheme: palette,
     fontFamily: 1,
     fontSize: 22,
     clusterId,
-    cardStyle: "pill",
+    cardStyle: hasIntro ? "card" : "pill",
   };
-  registerAndPlace(headerPill, 26);
+  nodes.push(hubNode);
 
-  let currentY = headerPill.y + headerPill.height + 40;
-  let rootAnchorId = headerPill.id;
+  const subtopics = topic.subtopics;
+  const numSubtopics = subtopics.length;
 
-  // 2. Topic Center Notes (Introductory Definition Card)
-  if (topic.centerNotes.length > 0) {
-    const rawText = topic.centerNotes.map((n) => n.text).join("\n\n");
-    const wrappedIntro = wrapText(rawText, Math.min(650, options.maxTextWidth + 150), 16, 1);
-    const introDim = measureTextBlock(wrappedIntro, 16, 1);
-    const introCardW = Math.max(380, Math.min(720, introDim.width + 40));
-    const introCardH = introDim.height + 32;
-
-    const introNode: LayoutNode = {
-      id: `${topic.id}-intro`,
-      type: "concept-card",
-      text: wrappedIntro,
-      x: centerX - introCardW / 2,
-      y: currentY,
-      width: introCardW,
-      height: introCardH,
-      style: "solid",
-      colorTheme: palette,
-      fontFamily: 1,
-      fontSize: 16,
-      clusterId,
-      parentId: headerPill.id,
-      cardStyle: "card",
-    };
-    registerAndPlace(introNode, 22);
-
-    edges.push({
-      id: `edge-${headerPill.id}-${introNode.id}`,
-      sourceId: headerPill.id,
-      targetId: introNode.id,
-      style: "solid",
-      arrowType: "elbow",
-      elbowed: true,
-      exitSide: "bottom",
-      entrySide: "top",
-      clusterId,
-      arrowhead: "arrow",
-    });
-
-    rootAnchorId = introNode.id;
-    currentY = introNode.y + introNode.height + 48;
+  if (numSubtopics === 0) {
+    const bounds = computeBoundingBox(nodes);
+    return { id: clusterId, bounds, nodes, edges };
   }
 
-  // 3. Subtopics Tiered Grid Layout
-  const subtopics = topic.subtopics;
-  if (subtopics.length > 0) {
-    const cols = subtopics.length === 1 ? 1 : subtopics.length <= 4 ? 2 : 3;
-    const colWidth = 380;
-    const colHorizontalGap = 70;
-    const totalGridWidth = cols * colWidth + (cols - 1) * colHorizontalGap;
-    const gridStartX = centerX - totalGridWidth / 2;
+  // ==========================================
+  // 2. SECTOR ASSIGNMENT
+  // ==========================================
+  type Sector = "top" | "bottom" | "right" | "left";
+  const sectorAssignments: { sub: SubtopicNode; sector: Sector }[] = [];
 
-    const colCurrentY: number[] = new Array(cols).fill(currentY);
+  // Categorize subtopics by priority
+  if (numSubtopics === 1) {
+    sectorAssignments.push({ sub: subtopics[0]!, sector: "bottom" });
+  } else if (numSubtopics === 2) {
+    sectorAssignments.push({ sub: subtopics[0]!, sector: "bottom" });
+    sectorAssignments.push({ sub: subtopics[1]!, sector: "top" });
+  } else if (numSubtopics === 3) {
+    // Find bottom subtopic (diagrams or flows)
+    let bottomIdx = subtopics.findIndex(
+      (s) => s.diagrams.length > 0 || s.children.some((c) => c.diagrams.length > 0 || c.isFlowStep),
+    );
+    if (bottomIdx === -1) bottomIdx = 0;
 
-    for (let i = 0; i < subtopics.length; i++) {
-      const sub = subtopics[i]!;
-      const colIdx = i % cols;
-      const subX = gridStartX + colIdx * (colWidth + colHorizontalGap);
-      const subY = colCurrentY[colIdx]!;
+    const remaining = subtopics.filter((_, i) => i !== bottomIdx);
+    sectorAssignments.push({ sub: subtopics[bottomIdx]!, sector: "bottom" });
+    sectorAssignments.push({ sub: remaining[0]!, sector: "right" });
+    sectorAssignments.push({ sub: remaining[1]!, sector: "left" });
+  } else {
+    // 4+ Subtopics: map to bottom, top, right, left
+    const assigned = new Set<string>();
+    for (const sub of subtopics) {
+      if (sub.diagrams.length > 0 || sub.children.some((c) => c.diagrams.length > 0 || c.isFlowStep)) {
+        sectorAssignments.push({ sub, sector: "bottom" });
+        assigned.add(sub.id);
+        break;
+      }
+    }
+    const remaining = subtopics.filter((s) => !assigned.has(s.id));
+    const sectors: Sector[] = ["top", "right", "left", "bottom"];
+    let sIdx = 0;
+    for (const sub of remaining) {
+      const sector = sectors[sIdx % sectors.length]!;
+      sectorAssignments.push({ sub, sector });
+      sIdx++;
+    }
+  }
 
-      // Measure Subtopic Header
-      const subTitleW = measureContainerBox(sub.title, 18, 1, 24, 14, 220, 52);
+  // Helper: Format and dynamically measure any hierarchy node (subtopic, branch, leaf)
+  const formatCardNode = (
+    n: SubtopicNode,
+    defaultMinW: number,
+    defaultMaxW: number,
+  ): { title: string; text?: string; width: number; height: number; hasNotes: boolean } => {
+    const hasNotes = n.notes.length > 0;
+    if (!hasNotes) {
+      const w = Math.max(defaultMinW, Math.min(defaultMaxW, n.title.length * 10 + 36));
+      return { title: n.title, width: w, height: 44, hasNotes: false };
+    }
+
+    const lines: string[] = [];
+    for (const note of n.notes) {
+      if (note.boldTitle) {
+        lines.push(`• ${note.boldTitle}: ${note.description || note.text}`);
+      } else if (note.isBullet) {
+        lines.push(`• ${note.text}`);
+      } else {
+        lines.push(note.text);
+      }
+    }
+    const raw = lines.join("\n\n");
+    const cardW = Math.max(defaultMinW, Math.min(defaultMaxW, options.maxTextWidth));
+    const wrapped = wrapText(raw, cardW - 28, 13, 1);
+    const textDim = measureTextBlock(wrapped, 13, 1);
+    const cardH = Math.max(56, textDim.height + 46);
+
+    return {
+      title: n.title,
+      text: wrapped,
+      width: cardW,
+      height: cardH,
+      hasNotes: true,
+    };
+  };
+
+  // ==========================================
+  // 3. SECTOR RENDERING
+  // ==========================================
+  for (const { sub, sector } of sectorAssignments) {
+    const subCard = formatCardNode(sub, 280, 380);
+    const allChildren = sub.children;
+    const numChildren = allChildren.length;
+
+    // ------------------------------------------------------------------------
+    // SECTOR: TOP (North -> expands UP)
+    // ------------------------------------------------------------------------
+    if (sector === "top") {
+      const subCenterX = centerX;
+      const subCenterY = centerY - hubH / 2 - 50 - subCard.height / 2;
+
       const subNode: LayoutNode = {
         id: sub.id,
-        type: "subtopic",
-        title: sub.title,
-        x: subX,
-        y: subY,
-        width: Math.max(colWidth - 40, subTitleW.width),
-        height: subTitleW.height,
+        type: subCard.hasNotes ? "concept-card" : "subtopic",
+        title: subCard.title,
+        text: subCard.text,
+        x: subCenterX - subCard.width / 2,
+        y: subCenterY - subCard.height / 2,
+        width: subCard.width,
+        height: subCard.height,
         style: sub.style || "solid",
         colorTheme: palette,
         fontFamily: 1,
-        fontSize: 18,
+        fontSize: subCard.hasNotes ? 14 : 17,
         clusterId,
-        parentId: rootAnchorId,
+        parentId: hubNode.id,
         cardStyle: "card",
       };
-      registerAndPlace(subNode, 20);
+      nodes.push(subNode);
 
       edges.push({
-        id: `edge-${rootAnchorId}-${sub.id}`,
-        sourceId: rootAnchorId,
+        id: `edge-${hubNode.id}-${sub.id}`,
+        sourceId: hubNode.id,
         targetId: sub.id,
         style: "solid",
-        arrowType: "elbow",
-        elbowed: true,
+        arrowType: "curved",
+        exitSide: "top",
+        entrySide: "bottom",
         clusterId,
         arrowhead: "arrow",
       });
 
-      let subContentBottomY = subNode.y + subNode.height;
+      if (numChildren > 0) {
+        const leafGapX = 36;
+        const branchProfiles = allChildren.map((c) => {
+          const cCard = formatCardNode(c, 200, 290);
+          const leafCards = c.children.map((l) => formatCardNode(l, 200, 270));
+          const numLeaves = leafCards.length;
+          const totalLeavesW = leafCards.reduce((sum, lc) => sum + lc.width, 0) + Math.max(0, numLeaves - 1) * leafGapX;
+          const subtreeW = Math.max(cCard.width, totalLeavesW);
+          return { child: c, cCard, leafCards, numLeaves, subtreeW };
+        });
 
-      // Subtopic Notes / Bullet definitions
-      if (sub.notes.length > 0) {
-        const hasStructuredDefs = sub.notes.some((n) => n.boldTitle);
+        const totalRowW = branchProfiles.reduce((sum, b) => sum + b.subtreeW, 0) + (numChildren - 1) * 48;
+        let curX = centerX - totalRowW / 2;
 
-        if (hasStructuredDefs) {
-          let leafY = subContentBottomY + 20;
-          for (const note of sub.notes) {
-            const leafTitle = note.boldTitle || "";
-            const leafDesc = note.description || note.text;
-            const wrappedDesc = wrapText(leafDesc, colWidth - 50, 14, 1);
-            const descDim = measureTextBlock(wrappedDesc, 14, 1);
-            const cardHeight = (leafTitle ? 32 : 0) + descDim.height + 24;
+        for (const bp of branchProfiles) {
+          const branchCenterX = curX + bp.subtreeW / 2;
+          curX += bp.subtreeW + 48;
 
-            const leafNode: LayoutNode = {
-              id: note.id,
-              type: "concept-card",
-              title: leafTitle,
-              text: wrappedDesc,
-              x: subX + 10,
-              y: leafY,
-              width: colWidth - 20,
-              height: cardHeight,
-              style: "solid",
-              colorTheme: palette,
-              fontFamily: 1,
-              fontSize: 14,
-              clusterId,
-              parentId: sub.id,
-              cardStyle: "card",
-            };
-            registerAndPlace(leafNode, 14);
+          const branchX = branchCenterX - bp.cCard.width / 2;
+          const branchY = subCenterY - subCard.height / 2 - 50 - bp.cCard.height;
 
-            edges.push({
-              id: `edge-${sub.id}-${leafNode.id}`,
-              sourceId: sub.id,
-              targetId: leafNode.id,
-              style: "solid",
-              arrowType: "elbow",
-              elbowed: true,
-              clusterId,
-              arrowhead: "arrow",
-            });
-
-            leafY += cardHeight + 16;
-          }
-          subContentBottomY = leafY;
-        } else {
-          const noteText = wrapText(
-            sub.notes.map((n) => (n.isBullet ? `• ${n.text}` : n.text)).join("\n"),
-            colWidth - 40,
-            14,
-            1,
-          );
-          const noteDim = measureTextBlock(noteText, 14, 1);
-          const noteNode: LayoutNode = {
-            id: `${sub.id}-notes`,
-            type: "note",
-            text: noteText,
-            x: subX + 10,
-            y: subContentBottomY + 16,
-            width: noteDim.width + 20,
-            height: noteDim.height + 10,
-            style: "solid",
+          const childNode: LayoutNode = {
+            id: bp.child.id,
+            type: bp.cCard.hasNotes ? "concept-card" : (bp.child.isFlowStep ? "flow-step" : "sub-subtopic"),
+            title: bp.cCard.title,
+            text: bp.cCard.text,
+            x: branchX,
+            y: branchY,
+            width: bp.cCard.width,
+            height: bp.cCard.height,
+            style: bp.child.style || (bp.child.isFlowStep ? "solid" : "dashed"),
+            colorTheme: palette,
             fontFamily: 1,
             fontSize: 14,
             clusterId,
-            parentId: sub.id,
+            parentId: subNode.id,
+            cardStyle: bp.cCard.hasNotes ? "card" : (bp.child.isFlowStep ? "card" : "dashed"),
           };
-          registerAndPlace(noteNode, 14);
+          nodes.push(childNode);
 
           edges.push({
-            id: `edge-${sub.id}-${noteNode.id}`,
-            sourceId: sub.id,
-            targetId: noteNode.id,
+            id: `edge-${subNode.id}-${bp.child.id}`,
+            sourceId: subNode.id,
+            targetId: bp.child.id,
             style: "solid",
-            arrowType: "elbow",
-            elbowed: true,
+            arrowType: "curved",
+            exitSide: "top",
+            entrySide: "bottom",
             clusterId,
             arrowhead: "arrow",
           });
 
-          subContentBottomY = noteNode.y + noteNode.height;
-        }
-      }
+          // Leaves arranged directly above this branch
+          const maxLeafH = bp.leafCards.reduce((max, lc) => Math.max(max, lc.height), 44);
+          const leafRowBottomY = branchY - 50;
+          let topY = branchY;
 
-      // Subtopic Diagrams / Code Blocks
-      if (sub.diagrams.length > 0) {
-        let diagY = subContentBottomY + 20;
-        for (const diag of sub.diagrams) {
-          const asciiDim = measureAsciiBlock(diag.code, 13, 16);
-          const diagNode: LayoutNode = {
-            id: diag.id,
-            type: "ascii-diagram",
-            text: diag.code,
-            title: diag.label,
-            x: subX,
-            y: diagY,
-            width: Math.max(colWidth, asciiDim.width),
-            height: asciiDim.height,
-            style: "dashed",
-            fontFamily: 3,
-            fontSize: 13,
-            clusterId,
-            parentId: sub.id,
-          };
-          registerAndPlace(diagNode, 18);
+          const totalLeavesWidth = bp.leafCards.reduce((sum, lc) => sum + lc.width, 0) + Math.max(0, bp.numLeaves - 1) * leafGapX;
+          let leafCurX = branchCenterX - totalLeavesWidth / 2;
 
-          edges.push({
-            id: `edge-${sub.id}-${diag.id}`,
-            sourceId: sub.id,
-            targetId: diag.id,
-            label: diag.label,
-            style: "dashed",
-            arrowType: "elbow",
-            elbowed: true,
-            clusterId,
-            arrowhead: "arrow",
-          });
+          for (let lIdx = 0; lIdx < bp.numLeaves; lIdx++) {
+            const leaf = bp.child.children[lIdx]!;
+            const lc = bp.leafCards[lIdx]!;
+            const leafX = leafCurX;
+            leafCurX += lc.width + leafGapX;
+            const leafY = leafRowBottomY - lc.height;
 
-          diagY += asciiDim.height + 24;
-        }
-        subContentBottomY = diagY;
-      }
+            topY = Math.min(topY, leafY);
 
-      // Subtopic Children (sub-subtopics / flows)
-      if (sub.children.length > 0) {
-        let childY = subContentBottomY + 20;
-        for (const child of sub.children) {
-          const childDim = measureContainerBox(child.title, 15, 1, 20, 12, 180, 42);
-          const childNode: LayoutNode = {
-            id: child.id,
-            type: child.isFlowStep ? "flow-step" : "sub-subtopic",
-            title: child.title,
-            x: subX + 15,
-            y: childY,
-            width: Math.max(colWidth - 30, childDim.width),
-            height: childDim.height,
-            style: child.style || "dashed",
-            colorTheme: palette,
-            fontFamily: 1,
-            fontSize: 15,
-            clusterId,
-            parentId: sub.id,
-            cardStyle: "dashed",
-          };
-          registerAndPlace(childNode, 16);
-
-          edges.push({
-            id: `edge-${sub.id}-${child.id}`,
-            sourceId: sub.id,
-            targetId: child.id,
-            style: "solid",
-            arrowType: "elbow",
-            elbowed: true,
-            clusterId,
-            arrowhead: "arrow",
-          });
-
-          childY += childDim.height + 16;
-
-          // Child notes
-          if (child.notes.length > 0) {
-            const noteText = wrapText(
-              child.notes.map((n) => (n.isBullet ? `• ${n.text}` : n.text)).join("\n"),
-              colWidth - 40,
-              14,
-              1,
-            );
-            const noteDim = measureTextBlock(noteText, 14, 1);
-            const childNoteNode: LayoutNode = {
-              id: `${child.id}-notes`,
-              type: "note",
-              text: noteText,
-              x: subX + 20,
-              y: childY,
-              width: noteDim.width + 10,
-              height: noteDim.height + 10,
-              style: "solid",
+            const leafNode: LayoutNode = {
+              id: leaf.id,
+              type: lc.hasNotes ? "concept-card" : "sub-subtopic",
+              title: lc.title,
+              text: lc.text,
+              x: leafX,
+              y: leafY,
+              width: lc.width,
+              height: lc.height,
+              style: leaf.style || "dashed",
+              colorTheme: palette,
               fontFamily: 1,
-              fontSize: 14,
+              fontSize: 13,
               clusterId,
-              parentId: child.id,
+              parentId: bp.child.id,
+              cardStyle: lc.hasNotes ? "card" : "dashed",
             };
-            registerAndPlace(childNoteNode, 14);
+            nodes.push(leafNode);
 
             edges.push({
-              id: `edge-${child.id}-${childNoteNode.id}`,
-              sourceId: child.id,
-              targetId: childNoteNode.id,
-              style: "dashed",
-              arrowType: "elbow",
-              elbowed: true,
+              id: `edge-${bp.child.id}-${leaf.id}`,
+              sourceId: bp.child.id,
+              targetId: leaf.id,
+              style: "solid",
+              arrowType: "curved",
+              exitSide: "top",
+              entrySide: "bottom",
               clusterId,
               arrowhead: "arrow",
             });
-
-            childY += noteDim.height + 18;
           }
 
-          // Child ASCII / Code Diagrams
-          if (child.diagrams.length > 0) {
-            for (const diag of child.diagrams) {
+          // Branch diagrams (placed directly above leaves)
+          if (bp.child.diagrams.length > 0) {
+            let lastAnchor = bp.child.id;
+            let curDiagY = topY - 24;
+            for (const diag of bp.child.diagrams) {
+              const asciiDim = measureAsciiBlock(diag.code, 13, 16);
+              curDiagY -= asciiDim.height + 20;
+              const diagNode: LayoutNode = {
+                id: diag.id,
+                type: "ascii-diagram",
+                text: diag.code,
+                title: diag.label,
+                x: branchCenterX - asciiDim.width / 2,
+                y: curDiagY,
+                width: asciiDim.width,
+                height: asciiDim.height,
+                style: "dashed",
+                fontFamily: 3,
+                fontSize: 13,
+                clusterId,
+                parentId: lastAnchor,
+              };
+              nodes.push(diagNode);
+              edges.push({
+                id: `edge-${lastAnchor}-${diag.id}`,
+                sourceId: lastAnchor,
+                targetId: diag.id,
+                style: "dashed",
+                arrowType: "curved",
+                exitSide: "top",
+                entrySide: "bottom",
+                clusterId,
+                arrowhead: "arrow",
+              });
+              lastAnchor = diag.id;
+            }
+          }
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // SECTOR: BOTTOM (South -> expands DOWN)
+    // ------------------------------------------------------------------------
+    else if (sector === "bottom") {
+      const subCenterX = centerX;
+      const subCenterY = centerY + hubH / 2 + 50 + subCard.height / 2;
+
+      const subNode: LayoutNode = {
+        id: sub.id,
+        type: subCard.hasNotes ? "concept-card" : "subtopic",
+        title: subCard.title,
+        text: subCard.text,
+        x: subCenterX - subCard.width / 2,
+        y: subCenterY - subCard.height / 2,
+        width: subCard.width,
+        height: subCard.height,
+        style: sub.style || "solid",
+        colorTheme: palette,
+        fontFamily: 1,
+        fontSize: subCard.hasNotes ? 14 : 17,
+        clusterId,
+        parentId: hubNode.id,
+        cardStyle: "card",
+      };
+      nodes.push(subNode);
+
+      edges.push({
+        id: `edge-${hubNode.id}-${sub.id}`,
+        sourceId: hubNode.id,
+        targetId: sub.id,
+        style: "solid",
+        arrowType: "curved",
+        exitSide: "bottom",
+        entrySide: "top",
+        clusterId,
+        arrowhead: "arrow",
+      });
+
+      if (numChildren > 0) {
+        const leafGapX = 36;
+        const branchProfiles = allChildren.map((c) => {
+          const cCard = formatCardNode(c, 200, 290);
+          const leafCards = c.children.map((l) => formatCardNode(l, 200, 270));
+          const numLeaves = leafCards.length;
+          const totalLeavesW = leafCards.reduce((sum, lc) => sum + lc.width, 0) + Math.max(0, numLeaves - 1) * leafGapX;
+          const subtreeW = Math.max(cCard.width, totalLeavesW);
+          return { child: c, cCard, leafCards, numLeaves, subtreeW };
+        });
+
+        const totalRowW = branchProfiles.reduce((sum, b) => sum + b.subtreeW, 0) + (numChildren - 1) * 48;
+        let curX = centerX - totalRowW / 2;
+
+        for (const bp of branchProfiles) {
+          const branchCenterX = curX + bp.subtreeW / 2;
+          curX += bp.subtreeW + 48;
+
+          const branchX = branchCenterX - bp.cCard.width / 2;
+          const branchY = subCenterY + subCard.height / 2 + 50;
+
+          const childNode: LayoutNode = {
+            id: bp.child.id,
+            type: bp.cCard.hasNotes ? "concept-card" : (bp.child.isFlowStep ? "flow-step" : "sub-subtopic"),
+            title: bp.cCard.title,
+            text: bp.cCard.text,
+            x: branchX,
+            y: branchY,
+            width: bp.cCard.width,
+            height: bp.cCard.height,
+            style: bp.child.style || (bp.child.isFlowStep ? "solid" : "dashed"),
+            colorTheme: palette,
+            fontFamily: 1,
+            fontSize: 14,
+            clusterId,
+            parentId: subNode.id,
+            cardStyle: bp.cCard.hasNotes ? "card" : (bp.child.isFlowStep ? "card" : "dashed"),
+          };
+          nodes.push(childNode);
+
+          edges.push({
+            id: `edge-${subNode.id}-${bp.child.id}`,
+            sourceId: subNode.id,
+            targetId: bp.child.id,
+            style: "solid",
+            arrowType: "curved",
+            exitSide: "bottom",
+            entrySide: "top",
+            clusterId,
+            arrowhead: "arrow",
+          });
+
+          // Leaves arranged directly below this branch
+          let bottomY = branchY + bp.cCard.height;
+          const leafRowTopY = branchY + bp.cCard.height + 50;
+
+          const totalLeavesWidth = bp.leafCards.reduce((sum, lc) => sum + lc.width, 0) + Math.max(0, bp.numLeaves - 1) * leafGapX;
+          let leafCurX = branchCenterX - totalLeavesWidth / 2;
+
+          for (let lIdx = 0; lIdx < bp.numLeaves; lIdx++) {
+            const leaf = bp.child.children[lIdx]!;
+            const lc = bp.leafCards[lIdx]!;
+            const leafX = leafCurX;
+            leafCurX += lc.width + leafGapX;
+            const leafY = leafRowTopY;
+
+            bottomY = Math.max(bottomY, leafY + lc.height);
+
+            const leafNode: LayoutNode = {
+              id: leaf.id,
+              type: lc.hasNotes ? "concept-card" : "sub-subtopic",
+              title: lc.title,
+              text: lc.text,
+              x: leafX,
+              y: leafY,
+              width: lc.width,
+              height: lc.height,
+              style: leaf.style || "dashed",
+              colorTheme: palette,
+              fontFamily: 1,
+              fontSize: 13,
+              clusterId,
+              parentId: bp.child.id,
+              cardStyle: lc.hasNotes ? "card" : "dashed",
+            };
+            nodes.push(leafNode);
+
+            edges.push({
+              id: `edge-${bp.child.id}-${leaf.id}`,
+              sourceId: bp.child.id,
+              targetId: leaf.id,
+              style: "solid",
+              arrowType: "curved",
+              exitSide: "bottom",
+              entrySide: "top",
+              clusterId,
+              arrowhead: "arrow",
+            });
+          }
+
+          // Diagrams / flow steps (placed directly below leaves)
+          if (bp.child.diagrams.length > 0) {
+            let lastAnchor = bp.child.id;
+            let curDiagY = bottomY + 24;
+            for (const diag of bp.child.diagrams) {
               const asciiDim = measureAsciiBlock(diag.code, 13, 16);
               const diagNode: LayoutNode = {
                 id: diag.id,
                 type: "ascii-diagram",
                 text: diag.code,
                 title: diag.label,
-                x: subX + 10,
-                y: childY,
-                width: Math.max(colWidth - 20, asciiDim.width),
+                x: branchCenterX - asciiDim.width / 2,
+                y: curDiagY,
+                width: asciiDim.width,
                 height: asciiDim.height,
                 style: "dashed",
                 fontFamily: 3,
                 fontSize: 13,
                 clusterId,
-                parentId: child.id,
+                parentId: lastAnchor,
               };
-              registerAndPlace(diagNode, 18);
-
+              nodes.push(diagNode);
               edges.push({
-                id: `edge-${child.id}-${diag.id}`,
-                sourceId: child.id,
+                id: `edge-${lastAnchor}-${diag.id}`,
+                sourceId: lastAnchor,
                 targetId: diag.id,
-                label: diag.label,
                 style: "dashed",
-                arrowType: "elbow",
-                elbowed: true,
+                arrowType: "curved",
+                exitSide: "bottom",
+                entrySide: "top",
                 clusterId,
                 arrowhead: "arrow",
               });
-
-              childY += asciiDim.height + 24;
+              lastAnchor = diag.id;
+              curDiagY += asciiDim.height + 24;
             }
           }
         }
-        subContentBottomY = childY;
       }
+    }
 
-      colCurrentY[colIdx] = subContentBottomY + 50;
+    // ------------------------------------------------------------------------
+    // SECTOR: RIGHT (East -> expands RIGHTWARD)
+    // ------------------------------------------------------------------------
+    else if (sector === "right") {
+      const subCenterX = centerX + hubW / 2 + 60 + subCard.width / 2;
+      const subCenterY = centerY;
+
+      const subNode: LayoutNode = {
+        id: sub.id,
+        type: subCard.hasNotes ? "concept-card" : "subtopic",
+        title: subCard.title,
+        text: subCard.text,
+        x: subCenterX - subCard.width / 2,
+        y: subCenterY - subCard.height / 2,
+        width: subCard.width,
+        height: subCard.height,
+        style: sub.style || "solid",
+        colorTheme: palette,
+        fontFamily: 1,
+        fontSize: subCard.hasNotes ? 14 : 17,
+        clusterId,
+        parentId: hubNode.id,
+        cardStyle: "card",
+      };
+      nodes.push(subNode);
+
+      edges.push({
+        id: `edge-${hubNode.id}-${sub.id}`,
+        sourceId: hubNode.id,
+        targetId: sub.id,
+        style: "solid",
+        arrowType: "curved",
+        exitSide: "right",
+        entrySide: "left",
+        clusterId,
+        arrowhead: "arrow",
+      });
+
+      if (numChildren > 0) {
+        const leafGapY = 28;
+        const branchProfiles = allChildren.map((c) => {
+          const cCard = formatCardNode(c, 200, 290);
+          const leafCards = c.children.map((l) => formatCardNode(l, 200, 270));
+          const numLeaves = leafCards.length;
+          const totalLeavesH = leafCards.reduce((sum, lc) => sum + lc.height, 0) + Math.max(0, numLeaves - 1) * leafGapY;
+          const subtreeH = Math.max(cCard.height, totalLeavesH);
+          return { child: c, cCard, leafCards, numLeaves, subtreeH };
+        });
+
+        const totalColH = branchProfiles.reduce((sum, b) => sum + b.subtreeH, 0) + (numChildren - 1) * 36;
+        let curY = centerY - totalColH / 2;
+
+        for (const bp of branchProfiles) {
+          const branchCenterY = curY + bp.subtreeH / 2;
+          curY += bp.subtreeH + 36;
+
+          const branchX = subCenterX + subCard.width / 2 + 50;
+          const branchY = branchCenterY - bp.cCard.height / 2;
+
+          const childNode: LayoutNode = {
+            id: bp.child.id,
+            type: bp.cCard.hasNotes ? "concept-card" : (bp.child.isFlowStep ? "flow-step" : "sub-subtopic"),
+            title: bp.cCard.title,
+            text: bp.cCard.text,
+            x: branchX,
+            y: branchY,
+            width: bp.cCard.width,
+            height: bp.cCard.height,
+            style: bp.child.style || "solid",
+            colorTheme: palette,
+            fontFamily: 1,
+            fontSize: 14,
+            clusterId,
+            parentId: subNode.id,
+            cardStyle: bp.cCard.hasNotes ? "card" : "card",
+          };
+          nodes.push(childNode);
+
+          edges.push({
+            id: `edge-${subNode.id}-${bp.child.id}`,
+            sourceId: subNode.id,
+            targetId: bp.child.id,
+            style: "solid",
+            arrowType: "curved",
+            exitSide: "right",
+            entrySide: "left",
+            clusterId,
+            arrowhead: "arrow",
+          });
+
+          // Leaves arranged directly to the right of this branch
+          const totalLeavesHeight = bp.leafCards.reduce((sum, lc) => sum + lc.height, 0) + Math.max(0, bp.numLeaves - 1) * leafGapY;
+          let leafCurY = branchCenterY - totalLeavesHeight / 2;
+          const leafColX = branchX + bp.cCard.width + 50;
+
+          for (let lIdx = 0; lIdx < bp.numLeaves; lIdx++) {
+            const leaf = bp.child.children[lIdx]!;
+            const lc = bp.leafCards[lIdx]!;
+            const leafX = leafColX;
+            const leafY = leafCurY;
+            leafCurY += lc.height + leafGapY;
+
+            const leafNode: LayoutNode = {
+              id: leaf.id,
+              type: lc.hasNotes ? "concept-card" : "sub-subtopic",
+              title: lc.title,
+              text: lc.text,
+              x: leafX,
+              y: leafY,
+              width: lc.width,
+              height: lc.height,
+              style: leaf.style || "dashed",
+              colorTheme: palette,
+              fontFamily: 1,
+              fontSize: 13,
+              clusterId,
+              parentId: bp.child.id,
+              cardStyle: lc.hasNotes ? "card" : "dashed",
+            };
+            nodes.push(leafNode);
+
+            edges.push({
+              id: `edge-${bp.child.id}-${leaf.id}`,
+              sourceId: bp.child.id,
+              targetId: leaf.id,
+              style: "solid",
+              arrowType: "curved",
+              exitSide: "right",
+              entrySide: "left",
+              clusterId,
+              arrowhead: "arrow",
+            });
+          }
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // SECTOR: LEFT (West -> expands LEFTWARD)
+    // ------------------------------------------------------------------------
+    else if (sector === "left") {
+      const subCenterX = centerX - hubW / 2 - 60 - subCard.width / 2;
+      const subCenterY = centerY;
+
+      const subNode: LayoutNode = {
+        id: sub.id,
+        type: subCard.hasNotes ? "concept-card" : "subtopic",
+        title: subCard.title,
+        text: subCard.text,
+        x: subCenterX - subCard.width / 2,
+        y: subCenterY - subCard.height / 2,
+        width: subCard.width,
+        height: subCard.height,
+        style: sub.style || "solid",
+        colorTheme: palette,
+        fontFamily: 1,
+        fontSize: subCard.hasNotes ? 14 : 17,
+        clusterId,
+        parentId: hubNode.id,
+        cardStyle: "card",
+      };
+      nodes.push(subNode);
+
+      edges.push({
+        id: `edge-${hubNode.id}-${sub.id}`,
+        sourceId: hubNode.id,
+        targetId: sub.id,
+        style: "solid",
+        arrowType: "curved",
+        exitSide: "left",
+        entrySide: "right",
+        clusterId,
+        arrowhead: "arrow",
+      });
+
+      if (numChildren > 0) {
+        const leafGapY = 28;
+        const branchProfiles = allChildren.map((c) => {
+          const cCard = formatCardNode(c, 200, 290);
+          const leafCards = c.children.map((l) => formatCardNode(l, 200, 270));
+          const numLeaves = leafCards.length;
+          const totalLeavesH = leafCards.reduce((sum, lc) => sum + lc.height, 0) + Math.max(0, numLeaves - 1) * leafGapY;
+          const subtreeH = Math.max(cCard.height, totalLeavesH);
+          return { child: c, cCard, leafCards, numLeaves, subtreeH };
+        });
+
+        const totalColH = branchProfiles.reduce((sum, b) => sum + b.subtreeH, 0) + (numChildren - 1) * 36;
+        let curY = centerY - totalColH / 2;
+
+        for (const bp of branchProfiles) {
+          const branchCenterY = curY + bp.subtreeH / 2;
+          curY += bp.subtreeH + 36;
+
+          const branchX = subCenterX - subCard.width / 2 - 50 - bp.cCard.width;
+          const branchY = branchCenterY - bp.cCard.height / 2;
+
+          const childNode: LayoutNode = {
+            id: bp.child.id,
+            type: bp.cCard.hasNotes ? "concept-card" : (bp.child.isFlowStep ? "flow-step" : "sub-subtopic"),
+            title: bp.cCard.title,
+            text: bp.cCard.text,
+            x: branchX,
+            y: branchY,
+            width: bp.cCard.width,
+            height: bp.cCard.height,
+            style: bp.child.style || "solid",
+            colorTheme: palette,
+            fontFamily: 1,
+            fontSize: 14,
+            clusterId,
+            parentId: subNode.id,
+            cardStyle: bp.cCard.hasNotes ? "card" : "card",
+          };
+          nodes.push(childNode);
+
+          edges.push({
+            id: `edge-${subNode.id}-${bp.child.id}`,
+            sourceId: subNode.id,
+            targetId: bp.child.id,
+            style: "solid",
+            arrowType: "curved",
+            exitSide: "left",
+            entrySide: "right",
+            clusterId,
+            arrowhead: "arrow",
+          });
+
+          // Leaves arranged directly to the left of this branch
+          const totalLeavesHeight = bp.leafCards.reduce((sum, lc) => sum + lc.height, 0) + Math.max(0, bp.numLeaves - 1) * leafGapY;
+          let leafCurY = branchCenterY - totalLeavesHeight / 2;
+          const leafColRightX = branchX - 50;
+
+          for (let lIdx = 0; lIdx < bp.numLeaves; lIdx++) {
+            const leaf = bp.child.children[lIdx]!;
+            const lc = bp.leafCards[lIdx]!;
+            const leafX = leafColRightX - lc.width;
+            const leafY = leafCurY;
+            leafCurY += lc.height + leafGapY;
+
+            const leafNode: LayoutNode = {
+              id: leaf.id,
+              type: lc.hasNotes ? "concept-card" : "sub-subtopic",
+              title: lc.title,
+              text: lc.text,
+              x: leafX,
+              y: leafY,
+              width: lc.width,
+              height: lc.height,
+              style: leaf.style || "dashed",
+              colorTheme: palette,
+              fontFamily: 1,
+              fontSize: 13,
+              clusterId,
+              parentId: bp.child.id,
+              cardStyle: lc.hasNotes ? "card" : "dashed",
+            };
+            nodes.push(leafNode);
+
+            edges.push({
+              id: `edge-${bp.child.id}-${leaf.id}`,
+              sourceId: bp.child.id,
+              targetId: leaf.id,
+              style: "solid",
+              arrowType: "curved",
+              exitSide: "left",
+              entrySide: "right",
+              clusterId,
+              arrowhead: "arrow",
+            });
+          }
+        }
+      }
     }
   }
+
+  // Bounded gentle relaxation
+  resolveCollisionsPhysics(nodes, 20, 40);
 
   const bounds = computeBoundingBox(nodes);
   return {
@@ -1757,10 +2258,130 @@ function layoutTopicClusterTieredTree(
 }
 
 /**
+ * Packs multiple topic clusters into an organic 2D constellation (like Obsidian's graph view)
+ * using shortest-column masonry bin-packing, tight inter-cluster gaps, and origin normalization.
+ */
+function packClusterConstellation(
+  clusters: LayoutCluster[],
+  options: Required<VisualNoteOptions>,
+): {
+  allNodes: LayoutNode[];
+  allEdges: LayoutEdge[];
+  bounds: BoundingBox;
+} {
+  const numClusters = clusters.length;
+  if (numClusters === 0) {
+    return { allNodes: [], allEdges: [], bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 } };
+  }
+
+  let numCols = 2;
+  if (options.layoutMode === "vertical" || options.columns === 1) {
+    numCols = 1;
+  } else if (options.columns && options.columns > 1) {
+    numCols = options.columns;
+  } else if (numClusters >= 5) {
+    numCols = 3;
+  } else if (numClusters === 1) {
+    numCols = 1;
+  }
+
+  const colGap = options.colGap ?? 140;
+  const rowGap = options.clusterGap ?? 120;
+
+  if (numCols === 1) {
+    let currentY = 40;
+    const allNodes: LayoutNode[] = [];
+    const allEdges: LayoutEdge[] = [];
+    for (const cluster of clusters) {
+      const clusterH = cluster.bounds.maxY - cluster.bounds.minY;
+      const deltaY = currentY - cluster.bounds.minY;
+      const deltaX = 40 - cluster.bounds.minX;
+      for (const n of cluster.nodes) {
+        n.x += deltaX;
+        n.y += deltaY;
+      }
+      cluster.bounds = computeBoundingBox(cluster.nodes);
+      allNodes.push(...cluster.nodes);
+      allEdges.push(...cluster.edges);
+      currentY += clusterH + rowGap;
+    }
+    return { allNodes, allEdges, bounds: computeBoundingBox(allNodes) };
+  }
+
+  // 2D Column Masonry Packing
+  // 1. Assign each cluster to a column: col = i % numCols
+  const colClusters: LayoutCluster[][] = Array.from({ length: numCols }, () => []);
+  for (let i = 0; i < numClusters; i++) {
+    const col = i % numCols;
+    colClusters[col]!.push(clusters[i]!);
+  }
+
+  // 2. Measure actual max width of each column
+  const colWidths: number[] = new Array(numCols).fill(0);
+  for (let c = 0; c < numCols; c++) {
+    for (const cluster of colClusters[c]!) {
+      const cW = cluster.bounds.maxX - cluster.bounds.minX;
+      colWidths[c] = Math.max(colWidths[c]!, cW);
+    }
+  }
+
+  // 3. Compute starting X for each column
+  const colX: number[] = new Array(numCols).fill(40);
+  let curX = 40;
+  for (let c = 0; c < numCols; c++) {
+    colX[c] = curX;
+    curX += colWidths[c]! + colGap;
+  }
+
+  // 4. Position clusters in their columns
+  const allNodes: LayoutNode[] = [];
+  const allEdges: LayoutEdge[] = [];
+
+  for (let c = 0; c < numCols; c++) {
+    let curY = 40;
+    const targetX = colX[c]!;
+    for (const cluster of colClusters[c]!) {
+      const cH = cluster.bounds.maxY - cluster.bounds.minY;
+      const targetY = curY;
+
+      const deltaX = targetX - cluster.bounds.minX;
+      const deltaY = targetY - cluster.bounds.minY;
+
+      for (const n of cluster.nodes) {
+        n.x += deltaX;
+        n.y += deltaY;
+      }
+      cluster.bounds = computeBoundingBox(cluster.nodes);
+      allNodes.push(...cluster.nodes);
+      allEdges.push(...cluster.edges);
+
+      curY += cH + rowGap;
+    }
+  }
+
+  // 5. Canvas Origin Normalization: Shift everything so minX = 40, minY = 40
+  const totalBounds = computeBoundingBox(allNodes);
+  const shiftOriginX = 40 - totalBounds.minX;
+  const shiftOriginY = 40 - totalBounds.minY;
+  if (shiftOriginX !== 0 || shiftOriginY !== 0) {
+    for (const n of allNodes) {
+      n.x += shiftOriginX;
+      n.y += shiftOriginY;
+    }
+  }
+
+  return {
+    allNodes,
+    allEdges,
+    bounds: computeBoundingBox(allNodes),
+  };
+}
+
+/**
  * Main Layout Engine Entry Point.
  * Converts markdown AST into fully laid-out 2D coordinates.
- * Utilizes a 2D Multi-Column Masonry canvas packer to achieve an expansive
- * landscape canvas (16:9 / 4:3) matching human study notes.
+ * Generates an organic floral radial tree for each topic cluster and packs
+ * multi-topic whiteboards into an expansive 2D constellation (like Obsidian's graph view).
  */
 export function layoutVisualNotes(
   doc: VisualNoteDoc,
@@ -1768,19 +2389,15 @@ export function layoutVisualNotes(
 ): LayoutResult {
   const options: Required<VisualNoteOptions> = {
     theme: rawOptions?.theme ?? "light",
-    clusterGap: rawOptions?.clusterGap ?? 240,
+    clusterGap: rawOptions?.clusterGap ?? 120,
     roughness: rawOptions?.roughness ?? 1,
     defaultFontFamily: rawOptions?.defaultFontFamily ?? 1,
     maxTextWidth: rawOptions?.maxTextWidth ?? 340,
     asciiPadding: rawOptions?.asciiPadding ?? 16,
     columns: rawOptions?.columns ?? 0,
-    layoutMode: rawOptions?.layoutMode ?? "grid",
-    colGap: rawOptions?.colGap ?? 320,
+    layoutMode: rawOptions?.layoutMode ?? "floral",
+    colGap: rawOptions?.colGap ?? 140,
   };
-
-  const clusters: LayoutCluster[] = [];
-  const allNodes: LayoutNode[] = [];
-  const allEdges: LayoutEdge[] = [];
 
   const numTopics = doc.topics.length;
   if (numTopics === 0) {
@@ -1792,108 +2409,21 @@ export function layoutVisualNotes(
     };
   }
 
-  // Multi-column determination:
-  // If user requested vertical layout: 1 col
-  // If 1 topic: 1 col
-  // If 2 to 4 topics: 2 cols
-  // If 5+ topics: 2 or 3 cols
-  let numCols = 1;
-  if (options.layoutMode === "vertical" || options.columns === 1) {
-    numCols = 1;
-  } else if (options.columns && options.columns > 1) {
-    numCols = options.columns;
-  } else if (numTopics >= 5) {
-    numCols = 3;
-  } else if (numTopics >= 2) {
-    numCols = 2;
-  }
-
-  // First pass: generate clusters locally at origin (0, 0)
+  // Generate each topic cluster organically as a floral radial tree
   const localClusters: LayoutCluster[] = [];
   for (let c = 0; c < numTopics; c++) {
     const topic = doc.topics[c]!;
-    // Use tiered tree layout for rich multi-subtopic notes or grid mode
-    const cluster =
-      topic.subtopics.length >= 4 || options.layoutMode === "grid"
-        ? layoutTopicClusterTieredTree(topic, c, 0, 0, options)
-        : layoutTopicCluster(topic, c, 0, 0, options);
+    const cluster = layoutTopicClusterFloral(topic, c, 0, 0, options);
     localClusters.push(cluster);
   }
 
-  if (numCols === 1) {
-    // Single column vertical stack
-    let currentY = 0;
-    for (const cluster of localClusters) {
-      const clusterH = cluster.bounds.maxY - cluster.bounds.minY;
-      const deltaY = currentY - cluster.bounds.minY;
-      for (const n of cluster.nodes) n.y += deltaY;
-      cluster.bounds = computeBoundingBox(cluster.nodes);
-      clusters.push(cluster);
-      allNodes.push(...cluster.nodes);
-      allEdges.push(...cluster.edges);
-      currentY += clusterH + options.clusterGap;
-    }
-  } else {
-    // 2D Multi-Column Masonry Bin-Packing
-    const colHeights: number[] = new Array(numCols).fill(0);
-    const colWidths: number[] = new Array(numCols).fill(0);
-
-    // Track column assignment for each cluster
-    const clusterPlacements: { cluster: LayoutCluster; col: number; startY: number }[] = [];
-
-    for (const cluster of localClusters) {
-      const clusterW = cluster.bounds.maxX - cluster.bounds.minX;
-      const clusterH = cluster.bounds.maxY - cluster.bounds.minY;
-
-      // Find the column with minimum current height
-      let minCol = 0;
-      let minH = colHeights[0]!;
-      for (let i = 1; i < numCols; i++) {
-        if (colHeights[i]! < minH) {
-          minH = colHeights[i]!;
-          minCol = i;
-        }
-      }
-
-      const startY = minH === 0 ? 0 : minH + options.clusterGap;
-      clusterPlacements.push({ cluster, col: minCol, startY });
-
-      colHeights[minCol] = startY + clusterH;
-      colWidths[minCol] = Math.max(colWidths[minCol]!, clusterW);
-    }
-
-    // Now calculate actual X positions for each column
-    const colXPositions: number[] = new Array(numCols).fill(0);
-    let runningX = 0;
-    for (let i = 0; i < numCols; i++) {
-      colXPositions[i] = runningX;
-      runningX += (colWidths[i] || 600) + options.colGap;
-    }
-
-    // Translate each cluster to its calculated (X, Y) slot
-    for (const { cluster, col, startY } of clusterPlacements) {
-      const targetX = colXPositions[col]!;
-      const deltaX = targetX - cluster.bounds.minX;
-      const deltaY = startY - cluster.bounds.minY;
-
-      for (const n of cluster.nodes) {
-        n.x += deltaX;
-        n.y += deltaY;
-      }
-      cluster.bounds = computeBoundingBox(cluster.nodes);
-
-      clusters.push(cluster);
-      allNodes.push(...cluster.nodes);
-      allEdges.push(...cluster.edges);
-    }
-  }
-
-  const overallBounds = computeBoundingBox(allNodes);
+  // Pack clusters into an expansive 2D constellation
+  const packed = packClusterConstellation(localClusters, options);
 
   return {
-    clusters,
-    nodes: allNodes,
-    edges: allEdges,
-    bounds: overallBounds,
+    clusters: localClusters,
+    nodes: packed.allNodes,
+    edges: packed.allEdges,
+    bounds: packed.bounds,
   };
 }

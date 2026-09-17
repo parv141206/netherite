@@ -172,6 +172,6 @@ export interface VisualNoteOptions {
   maxTextWidth?: number; // wrapping width for prose notes (default 340)
   asciiPadding?: number; // padding for ascii diagram blocks (default 16)
   columns?: number; // 1 (vertical), 2 (balanced 2-col), 3 (3-col) - default auto/2
-  layoutMode?: "grid" | "tree" | "vertical" | "radial"; // default "grid"
+  layoutMode?: "grid" | "tree" | "vertical" | "radial" | "floral"; // default "floral"
   colGap?: number; // horizontal gap between columns (default 360)
 }

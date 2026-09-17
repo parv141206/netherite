@@ -16,7 +16,7 @@ Usage:
 Options:
   --theme <light|dark>    Canvas theme (default: light)
   --cols <number>         Whiteboard layout columns (0: auto, 1, 2, 3, default: auto)
-  --layout <grid|radial>  Layout mode (default: grid)
+  --layout <floral|grid|radial>  Layout mode (default: floral)
   --gap <pixels>          Vertical gap between stacked topics (default: 240)
   --col-gap <pixels>      Horizontal gap between columns (default: 320)
   --roughness <0|1|2>     Excalidraw roughness (0: clean, 1: sketchy, default: 1)
@@ -34,7 +34,7 @@ Example:
   let clusterGap = 240;
   let colGap = 320;
   let columns = 0;
-  let layoutMode: "grid" | "radial" | "vertical" = "grid";
+  let layoutMode: "floral" | "grid" | "radial" | "vertical" = "floral";
   let roughness = 1;
 
   for (let i = 1; i < args.length; i++) {

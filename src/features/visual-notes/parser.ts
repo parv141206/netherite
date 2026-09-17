@@ -108,6 +108,7 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
   let currentTopic: TopicCluster | null = null;
   let currentSubtopic: SubtopicNode | null = null;
   let currentChild: SubtopicNode | null = null; // sub-subtopic or flow step
+  let currentGrandchild: SubtopicNode | null = null; // level 4 (####) sub-branch
 
   let inCodeBlock = false;
   let codeBuffer: string[] = [];
@@ -144,7 +145,9 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
           label: codeLabel || undefined,
         };
 
-        if (currentChild) {
+        if (currentGrandchild) {
+          currentGrandchild.diagrams.push(diagram);
+        } else if (currentChild) {
           currentChild.diagrams.push(diagram);
         } else if (currentSubtopic) {
           currentSubtopic.diagrams.push(diagram);
@@ -206,6 +209,7 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
       topics.push(currentTopic);
       currentSubtopic = null;
       currentChild = null;
+      currentGrandchild = null;
       continue;
     }
 
@@ -227,6 +231,7 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
       };
       topic.subtopics.push(currentSubtopic);
       currentChild = null;
+      currentGrandchild = null;
       continue;
     }
 
@@ -249,41 +254,8 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
       }
 
       currentChild = {
-        id: uniqueId("flow"),
-        title: tags.cleanedText || "Flow Step",
-        style: tags.style || "dashed", // default to dashed rounded box matching user sketch
-        color: tags.color,
-        positionHint: tags.positionHint,
-        isFlowStep: tags.isFlow,
-        notes: [],
-        children: [],
-        diagrams: [],
-      };
-      currentSubtopic.children.push(currentChild);
-      continue;
-    }
-
-    // Level 4 Heading: Deep Concept / Sub-branch
-    if (line.startsWith("#### ")) {
-      const headingText = line.slice(5).trim();
-      const tags = extractDirectives(headingText);
-
-      if (!currentSubtopic) {
-        const topic = ensureTopic();
-        currentSubtopic = {
-          id: uniqueId("sub"),
-          title: "Sub Topic",
-          style: "solid",
-          notes: [],
-          children: [],
-          diagrams: [],
-        };
-        topic.subtopics.push(currentSubtopic);
-      }
-
-      currentChild = {
-        id: uniqueId("flow"),
-        title: tags.cleanedText || "Concept",
+        id: uniqueId("branch"),
+        title: tags.cleanedText || "Branch",
         style: tags.style || "dashed",
         color: tags.color,
         positionHint: tags.positionHint,
@@ -293,6 +265,48 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
         diagrams: [],
       };
       currentSubtopic.children.push(currentChild);
+      currentGrandchild = null;
+      continue;
+    }
+
+    // Level 4 Heading: Deep Concept / Sub-branch
+    if (line.startsWith("#### ")) {
+      const headingText = line.slice(5).trim();
+      const tags = extractDirectives(headingText);
+
+      const leaf: SubtopicNode = {
+        id: uniqueId("leaf"),
+        title: tags.cleanedText || "Concept",
+        style: tags.style || "dashed",
+        color: tags.color,
+        positionHint: tags.positionHint,
+        isFlowStep: tags.isFlow,
+        notes: [],
+        children: [],
+        diagrams: [],
+      };
+
+      if (currentChild) {
+        currentChild.children.push(leaf);
+        currentGrandchild = leaf;
+      } else if (currentSubtopic) {
+        currentSubtopic.children.push(leaf);
+        currentChild = leaf;
+        currentGrandchild = null;
+      } else {
+        const topic = ensureTopic();
+        currentSubtopic = {
+          id: uniqueId("sub"),
+          title: "Sub Topic",
+          style: "solid",
+          notes: [],
+          children: [leaf],
+          diagrams: [],
+        };
+        topic.subtopics.push(currentSubtopic);
+        currentChild = leaf;
+        currentGrandchild = null;
+      }
       continue;
     }
 
@@ -322,7 +336,9 @@ export function parseMarkdownNotes(markdown: string): VisualNoteDoc {
         children: [],
       };
 
-      if (currentChild) {
+      if (currentGrandchild) {
+        currentGrandchild.notes.push(noteItem);
+      } else if (currentChild) {
         currentChild.notes.push(noteItem);
       } else if (currentSubtopic) {
         currentSubtopic.notes.push(noteItem);
