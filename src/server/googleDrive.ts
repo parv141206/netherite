@@ -644,6 +644,67 @@ export async function saveNote(session: any, fileId: string, content: string) {
   });
 }
 
+export async function getResumableUploadSession(session: any, fileId: string) {
+  const drive = await getDriveClient(session);
+  const meta = await drive.files.get({ fileId, fields: "id, name, mimeType" });
+  const isDrawing =
+    meta.data.name?.endsWith(".excalidraw") ||
+    meta.data.mimeType === "application/vnd.excalidraw+json";
+  const isUml =
+    meta.data.name?.endsWith(".apollon") ||
+    meta.data.name?.endsWith(".uml") ||
+    meta.data.mimeType === "application/vnd.apollon+json";
+
+  const mimeType = isDrawing
+    ? "application/vnd.excalidraw+json"
+    : isUml
+    ? "application/vnd.apollon+json"
+    : "text/markdown";
+
+  const s = session as SessionLike | null | undefined;
+  const accessToken = s?.accessToken;
+  const refreshToken = s?.refreshToken;
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.AUTH_GOOGLE_ID,
+    process.env.AUTH_GOOGLE_SECRET
+  );
+  oauth2Client.setCredentials({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  const tokenRes = await oauth2Client.getAccessToken();
+  const validToken = tokenRes.token ?? accessToken;
+
+  if (!validToken) {
+    throw new Error("Missing access token for Google Drive upload");
+  }
+
+  const res = await fetch(
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${validToken}`,
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Type": mimeType,
+      },
+      body: JSON.stringify({
+        mimeType,
+      }),
+    }
+  );
+
+  const uploadUrl = res.headers.get("location");
+  if (!uploadUrl) {
+    const errText = await res.text();
+    throw new Error(`Failed to initiate Google Drive upload session: ${res.status} ${errText}`);
+  }
+
+  return { uploadUrl, mimeType };
+}
+
 export async function createNote(
   session: any,
   name: string,

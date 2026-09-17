@@ -16,6 +16,7 @@ import {
   getImageAsset,
   searchNotesContent,
   deepSyncAndRepairWorkspace,
+  getResumableUploadSession,
 } from "~/server/googleDrive";
 
 export const notesRouter = createTRPCRouter({
@@ -83,6 +84,12 @@ export const notesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await saveNote(ctx.session, input.id, input.content);
       return { success: true };
+    }),
+
+  getResumableUploadUrl: protectedProcedure
+    .input(z.object({ fileId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await getResumableUploadSession(ctx.session, input.fileId);
     }),
 
   rename: protectedProcedure

@@ -16,6 +16,7 @@ import { DiffSidebar } from "./DiffSidebar";
 import { SyncModal } from "./SyncModal";
 import { MobileBottomBar } from "./MobileBottomBar";
 import { computeLineDiff, saveChangelogEntry, clearChangelog, type ChangelogEntry } from "./diffUtils";
+import { optimizeExcalidrawJson, optimizeMarkdownImages } from "~/lib/imageOptimization";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
@@ -464,13 +465,13 @@ export function WorkspaceLayout({
 
   const saveMutation = api.notes.save.useMutation({
     onMutate: () => setIsSaving(true),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       setIsSaving(false);
-      setLastSavedContent(noteContent);
-      if (activeTabId) {
-        saveBackupSnapshot(activeTabId, noteContent);
+      if (variables.id === activeTabId) {
+        setLastSavedContent(variables.content);
+        saveBackupSnapshot(variables.id, variables.content);
         if (typeof window !== "undefined") {
-          localStorage.removeItem(`netherite_draft_${activeTabId}`);
+          localStorage.removeItem(`netherite_draft_${variables.id}`);
         }
       }
     },
@@ -511,6 +512,7 @@ export function WorkspaceLayout({
     },
   });
   const uploadAssetMutation = api.notes.uploadAsset.useMutation();
+  const getResumableUploadUrlMutation = api.notes.getResumableUploadUrl.useMutation();
 
   const deepSyncMutation = api.notes.deepSync.useMutation({
     onSuccess: (res) => {
@@ -702,6 +704,129 @@ export function WorkspaceLayout({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Unified, robust document save pipeline with automatic base64 optimization and direct Google Drive fallback
+  const saveDocument = async (fileId: string, rawContent: string, item?: DriveItem): Promise<boolean> => {
+    if (!fileId || fileId.startsWith("temp-") || !session?.user) return false;
+
+    let contentToSave = rawContent;
+    const isDrawing =
+      item?.name?.endsWith(".excalidraw") ||
+      item?.mimeType === "application/vnd.excalidraw+json" ||
+      contentToSave.includes('"type":"excalidraw"') ||
+      contentToSave.includes('"type": "excalidraw"');
+
+    // Automatically optimize any embedded base64 images (e.g. pasted from excalidraw.com or clipboard)
+    try {
+      if (isDrawing) {
+        const opt = await optimizeExcalidrawJson(contentToSave);
+        if (opt.wasOptimized) {
+          contentToSave = opt.content;
+          if (fileId === activeTabId) {
+            setNoteContent(contentToSave);
+          } else if (fileId === splitTabId) {
+            setSplitNoteContent(contentToSave);
+          }
+        }
+      } else {
+        const opt = await optimizeMarkdownImages(contentToSave);
+        if (opt.wasOptimized) {
+          contentToSave = opt.content;
+          if (fileId === activeTabId) {
+            setNoteContent(contentToSave);
+          } else if (fileId === splitTabId) {
+            setSplitNoteContent(contentToSave);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Base64 optimization error on save:", err);
+    }
+
+    setIsSaving(true);
+
+    // If payload is larger than 3.5 MB, use direct Google Drive resumable upload to bypass Vercel 4.5 MB limit
+    const payloadBytes = new Blob([contentToSave]).size;
+    const isLargePayload = payloadBytes >= 3.5 * 1024 * 1024;
+
+    if (isLargePayload) {
+      try {
+        showToast("Saving large document directly to Google Drive…");
+        const sessionRes = await getResumableUploadUrlMutation.mutateAsync({ fileId });
+        if (sessionRes?.uploadUrl) {
+          const uploadRes = await fetch(sessionRes.uploadUrl, {
+            method: "PUT",
+            headers: {
+              "Content-Type": sessionRes.mimeType || "application/octet-stream",
+            },
+            body: contentToSave,
+          });
+
+          if (uploadRes.ok) {
+            setIsSaving(false);
+            if (fileId === activeTabId) {
+              setLastSavedContent(contentToSave);
+              saveBackupSnapshot(fileId, contentToSave);
+              if (typeof window !== "undefined") {
+                localStorage.removeItem(`netherite_draft_${fileId}`);
+              }
+            }
+            showToast("Saved to Google Drive");
+            return true;
+          }
+        }
+      } catch (err: any) {
+        console.warn("Direct upload encountered issue, attempting standard save:", err);
+      }
+    }
+
+    // Standard tRPC save for normal payloads (or fallback)
+    try {
+      await saveMutation.mutateAsync({ id: fileId, content: contentToSave });
+      return true;
+    } catch (err: any) {
+      // If tRPC failed with 413 or payload error, recover via direct Google Drive upload
+      const errMsg = String(err?.message || err || "");
+      if (
+        errMsg.includes("413") ||
+        errMsg.includes("Request En") ||
+        errMsg.includes("Too Large") ||
+        errMsg.includes("Unexpected token 'R'")
+      ) {
+        try {
+          showToast("Payload exceeded Vercel limit. Uploading directly to Google Drive…");
+          const sessionRes = await getResumableUploadUrlMutation.mutateAsync({ fileId });
+          if (sessionRes?.uploadUrl) {
+            const uploadRes = await fetch(sessionRes.uploadUrl, {
+              method: "PUT",
+              headers: {
+                "Content-Type": sessionRes.mimeType || "application/octet-stream",
+              },
+              body: contentToSave,
+            });
+
+            if (uploadRes.ok) {
+              setIsSaving(false);
+              if (fileId === activeTabId) {
+                setLastSavedContent(contentToSave);
+                saveBackupSnapshot(fileId, contentToSave);
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem(`netherite_draft_${fileId}`);
+                }
+              }
+              showToast("Saved to Google Drive");
+              return true;
+            }
+          }
+        } catch (directErr) {
+          console.error("Direct upload fallback failed:", directErr);
+        }
+      }
+      setIsSaving(false);
+      showToast(`Save failed: ${errMsg.slice(0, 100)}`);
+      return false;
+    }
+  };
+
   const handleManualSave = async () => {
     if (!activeTabId || !session?.user || activeTabId.startsWith("temp-") || isLoadingContent) return;
 
@@ -770,7 +895,7 @@ export function WorkspaceLayout({
     }
 
     const diff = computeLineDiff(lastSavedContent, contentToSave);
-    if (!diff.hasChanges && !saveMutation.isPending) return;
+    if (!diff.hasChanges && !saveMutation.isPending && !isSaving) return;
 
     const logEntry: ChangelogEntry = {
       id: `log-${Date.now()}`,
@@ -785,7 +910,7 @@ export function WorkspaceLayout({
     };
     saveChangelogEntry(logEntry);
 
-    saveMutation.mutate({ id: activeTabId, content: contentToSave });
+    await saveDocument(activeTabId, contentToSave, currentNoteItem);
   };
 
   // 100% INSTANT OPTIMISTIC FILE CREATION (0ms response time, zero blink!)
@@ -2208,7 +2333,7 @@ export function WorkspaceLayout({
                           onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
                           onSave={() => {
                             if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
                             }
                           }}
                         />
@@ -2229,7 +2354,7 @@ export function WorkspaceLayout({
                           onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
                           onSave={() => {
                             if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
                             }
                           }}
                         />
@@ -2250,7 +2375,7 @@ export function WorkspaceLayout({
                           onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
                           onSave={() => {
                             if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
                             }
                           }}
                         />
@@ -2271,7 +2396,7 @@ export function WorkspaceLayout({
                           onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
                           onSave={() => {
                             if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
                             }
                           }}
                         />
@@ -2291,7 +2416,7 @@ export function WorkspaceLayout({
                         onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
                         onSave={() => {
                           if (splitTabId && !splitTabId.startsWith("temp-")) {
-                            saveMutation.mutate({ id: splitTabId, content: splitNoteContent });
+                            saveDocument(splitTabId, splitNoteContent, currentSplitNote);
                           }
                         }}
                         onImageUpload={handleImageUpload}
