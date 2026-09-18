@@ -23,10 +23,13 @@ import {
 import {
   computeLineDiff,
   computeApollonSemanticDiff,
+  computeExcalidrawSemanticDiff,
   loadChangelog,
   type ChangelogEntry,
   type DiffLine,
   type SemanticChange,
+  type DrawingSemanticChange,
+  type DrawingDiffSummary,
 } from "./diffUtils";
 
 interface DiffSidebarProps {
@@ -58,10 +61,24 @@ export function DiffSidebar({
   onDiscardAndSync,
   isSyncing = false,
 }: DiffSidebarProps) {
-  const [activeTab, setActiveTab] = useState<"diff" | "semantic" | "history">("diff");
+  const isDrawing = useMemo(() => {
+    return noteTitle.endsWith(".excalidraw");
+  }, [noteTitle]);
+
+  const [activeTab, setActiveTab] = useState<"diff" | "semantic" | "visual" | "history">(
+    noteTitle.endsWith(".excalidraw") ? "visual" : "diff"
+  );
   const [diffDisplayMode, setDiffDisplayMode] = useState<"compact" | "full">("compact");
   const [expandedBlocks, setExpandedBlocks] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
+
+  React.useEffect(() => {
+    if (isDrawing) {
+      setActiveTab("visual");
+    } else if (activeTab === "visual") {
+      setActiveTab("diff");
+    }
+  }, [noteId, isDrawing]);
 
   const diff = useMemo(() => {
     if (!isOpen) {
@@ -76,6 +93,21 @@ export function DiffSidebar({
     }
     return computeLineDiff(baselineContent, currentContent);
   }, [isOpen, baselineContent, currentContent]);
+
+  const drawingDiff = useMemo<DrawingDiffSummary>(() => {
+    if (!isOpen || !isDrawing) {
+      return {
+        hasChanges: false,
+        addedCount: 0,
+        removedCount: 0,
+        modifiedCount: 0,
+        totalChanges: 0,
+        changes: [],
+        summaryText: "0 changes",
+      };
+    }
+    return computeExcalidrawSemanticDiff(baselineContent, currentContent);
+  }, [isOpen, isDrawing, baselineContent, currentContent]);
 
   const semanticChanges = useMemo(() => {
     if (!isOpen) return [];
@@ -94,6 +126,8 @@ export function DiffSidebar({
       semanticChanges.length > 0
     );
   }, [noteTitle, semanticChanges.length]);
+
+  const hasChanges = isDrawing ? drawingDiff.hasChanges : diff.hasChanges;
 
   // Group unchanged lines for compact view with fold bars
   const displayItems = useMemo<DiffDisplayItem[]>(() => {
@@ -218,7 +252,29 @@ export function DiffSidebar({
       {/* Status & Stats Pill Banner */}
       <div className="px-3 py-2 border-b border-border/40 bg-muted/10 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
-          {diff.hasChanges ? (
+          {isDrawing ? (
+            drawingDiff.hasChanges ? (
+              <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                <span className="text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                  +{drawingDiff.addedCount}
+                </span>
+                <span className="text-rose-500 font-bold bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">
+                  -{drawingDiff.removedCount}
+                </span>
+                <span className="text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  ~{drawingDiff.modifiedCount}
+                </span>
+                <span className="text-muted-foreground text-[10px]">
+                  ({drawingDiff.totalChanges} {drawingDiff.totalChanges === 1 ? "shape" : "shapes"})
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-emerald-500 font-medium text-[11px]">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>In sync with Google Drive</span>
+              </div>
+            )
+          ) : diff.hasChanges ? (
             <div className="flex items-center gap-1.5 font-mono text-[11px]">
               <span className="text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                 +{diff.additions}
@@ -238,42 +294,73 @@ export function DiffSidebar({
           )}
         </div>
 
-        {/* View Mode Toggle */}
-        <button
-          onClick={() => setDiffDisplayMode((m) => (m === "compact" ? "full" : "compact"))}
-          className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border/40 cursor-pointer"
-          title="Toggle collapsed unchanged lines"
-        >
-          {diffDisplayMode === "compact" ? "Folded" : "Full"}
-        </button>
+        {/* View Mode Toggle for Raw Diff */}
+        {activeTab === "diff" && (
+          <button
+            onClick={() => setDiffDisplayMode((m) => (m === "compact" ? "full" : "compact"))}
+            className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border/40 cursor-pointer"
+            title="Toggle collapsed unchanged lines"
+          >
+            {diffDisplayMode === "compact" ? "Folded" : "Full"}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
       <div className="flex items-center border-b border-border/60 bg-muted/30 p-1 gap-1 text-xs">
-        <button
-          onClick={() => setActiveTab("diff")}
-          className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === "diff"
-              ? "bg-background text-foreground shadow-2xs"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Code2 className="w-3 h-3" />
-          <span>Unified Diff</span>
-        </button>
+        {isDrawing ? (
+          <>
+            <button
+              onClick={() => setActiveTab("visual")}
+              className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === "visual"
+                  ? "bg-background text-foreground shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-indigo-400" />
+              <span>Visual Changes</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("diff")}
+              className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === "diff"
+                  ? "bg-background text-foreground shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Code2 className="w-3 h-3" />
+              <span>Raw JSON</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setActiveTab("diff")}
+              className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === "diff"
+                  ? "bg-background text-foreground shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Code2 className="w-3 h-3" />
+              <span>Unified Diff</span>
+            </button>
 
-        {isUml && (
-          <button
-            onClick={() => setActiveTab("semantic")}
-            className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === "semantic"
-                ? "bg-background text-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Sparkles className="w-3 h-3 text-purple-400" />
-            <span>UML Model</span>
-          </button>
+            {isUml && (
+              <button
+                onClick={() => setActiveTab("semantic")}
+                className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeTab === "semantic"
+                    ? "bg-background text-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Sparkles className="w-3 h-3 text-purple-400" />
+                <span>UML Model</span>
+              </button>
+            )}
+          </>
         )}
 
         <button
@@ -291,8 +378,85 @@ export function DiffSidebar({
 
       {/* Diff Body Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 text-xs font-mono">
+        {activeTab === "visual" && (
+          <div className="space-y-2 p-1 font-sans">
+            {!drawingDiff.hasChanges ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500/70" />
+                <p className="text-xs font-sans font-medium text-foreground">No visual modifications.</p>
+                <p className="text-[11px] font-sans text-muted-foreground/70">
+                  Your Excalidraw canvas matches the saved version in Google Drive.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="px-2.5 py-1.5 bg-muted/40 rounded-lg text-[11px] text-muted-foreground flex items-center justify-between border border-border/40">
+                  <span>Visual diagram diff ({drawingDiff.changes.length})</span>
+                  <button
+                    onClick={() => setActiveTab("diff")}
+                    className="text-[10px] text-primary hover:underline cursor-pointer"
+                  >
+                    View raw JSON
+                  </button>
+                </div>
+                {drawingDiff.changes.map((change) => {
+                  const isAdd = change.action === "added";
+                  const isDel = change.action === "removed";
+                  return (
+                    <div
+                      key={change.id}
+                      className="p-2.5 rounded-lg border border-border/60 bg-muted/20 space-y-1.5 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5 font-semibold text-foreground truncate min-w-0">
+                          <span
+                            className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
+                              isAdd
+                                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                : isDel
+                                ? "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+                                : "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                            }`}
+                          >
+                            {isAdd ? "+" : isDel ? "-" : "~"}
+                          </span>
+                          <span className="truncate">{change.title}</span>
+                        </div>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase shrink-0">
+                          {change.elementType}
+                        </span>
+                      </div>
+                      {change.details && change.details.length > 0 && (
+                        <ul className="text-[11px] text-muted-foreground space-y-0.5 pl-5 list-disc list-outside">
+                          {change.details.map((detail, dIdx) => (
+                            <li key={dIdx} className="font-mono text-[10.5px]">
+                              {detail}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "diff" && (
           <div className="space-y-0.5">
+            {isDrawing && (
+              <div className="mb-2 p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[11px] font-sans flex items-center justify-between">
+                <span className="text-muted-foreground">Showing raw serialized JSON.</span>
+                <button
+                  onClick={() => setActiveTab("visual")}
+                  className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>Switch to Visual</span>
+                </button>
+              </div>
+            )}
             {!diff.hasChanges ? (
               <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground space-y-2">
                 <CheckCircle2 className="w-8 h-8 text-emerald-500/70" />
@@ -405,7 +569,7 @@ export function DiffSidebar({
       <div className="p-3 border-t border-border/80 bg-muted/30 flex flex-col gap-2 font-sans select-none">
         <button
           onClick={onSaveToDrive}
-          disabled={isSaving || !diff.hasChanges}
+          disabled={isSaving || !hasChanges}
           className="w-full py-2 px-3 rounded-xl bg-foreground text-background font-semibold text-xs flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-40 transition-all shadow-sm cursor-pointer"
         >
           {isSaving ? (
@@ -421,7 +585,7 @@ export function DiffSidebar({
           )}
         </button>
 
-        {diff.hasChanges && onDiscardAndSync && (
+        {hasChanges && onDiscardAndSync && (
           <button
             onClick={onDiscardAndSync}
             disabled={isSyncing}

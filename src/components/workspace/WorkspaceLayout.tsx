@@ -15,7 +15,13 @@ import { DiffModal } from "./DiffModal";
 import { DiffSidebar } from "./DiffSidebar";
 import { SyncModal } from "./SyncModal";
 import { MobileBottomBar } from "./MobileBottomBar";
-import { computeLineDiff, saveChangelogEntry, clearChangelog, type ChangelogEntry } from "./diffUtils";
+import {
+  computeLineDiff,
+  computeExcalidrawSemanticDiff,
+  saveChangelogEntry,
+  clearChangelog,
+  type ChangelogEntry,
+} from "./diffUtils";
 import { optimizeExcalidrawJson, optimizeMarkdownImages } from "~/lib/imageOptimization";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
@@ -152,6 +158,23 @@ export function WorkspaceLayout({
   // Global Search Dialog & Gemini AI Copilot Panel States
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [zenMode, setZenMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_zen_mode") === "true";
+    }
+    return false;
+  });
+
+  const handleToggleZenMode = () => {
+    setZenMode((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("netherite_zen_mode", String(next));
+      }
+      return next;
+    });
+  };
+
   const [isDiffSidebarOpen, setIsDiffSidebarOpen] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("netherite_diff_sidebar_open") === "true";
@@ -180,11 +203,19 @@ export function WorkspaceLayout({
       } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "d") {
         e.preventDefault();
         toggleDiffSidebar();
+      } else if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        handleToggleZenMode();
+      } else if (e.key === "Escape" && zenMode) {
+        setZenMode(false);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("netherite_zen_mode", "false");
+        }
       }
     };
     window.addEventListener("keydown", handleGlobalShortcuts);
     return () => window.removeEventListener("keydown", handleGlobalShortcuts);
-  }, []);
+  }, [zenMode]);
 
   // Local Optimistic Notes State for 0ms Latency
   const [localNotes, setLocalNotes] = useState<DriveItem[]>(() => {
@@ -1748,11 +1779,16 @@ export function WorkspaceLayout({
       return;
     }
     const timer = setTimeout(() => {
-      const diff = computeLineDiff(lastSavedContent, noteContent);
-      setDiffSummary(diff.summary);
+      if (isCurrentDrawing) {
+        const dDiff = computeExcalidrawSemanticDiff(lastSavedContent, noteContent);
+        setDiffSummary(dDiff.summaryText);
+      } else {
+        const diff = computeLineDiff(lastSavedContent, noteContent);
+        setDiffSummary(diff.summary);
+      }
     }, 250);
     return () => clearTimeout(timer);
-  }, [isDirty, lastSavedContent, noteContent]);
+  }, [isDirty, isCurrentDrawing, lastSavedContent, noteContent]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -1933,10 +1969,12 @@ export function WorkspaceLayout({
           isCopilotOpen={isCopilotOpen}
           onToggleCopilot={() => setIsCopilotOpen((prev) => !prev)}
           onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
+          zenMode={zenMode}
+          onToggleZenMode={handleToggleZenMode}
         />
 
-        {/* VS Code / Antigravity Style Tab Management Bar */}
-        {(openTabIds.length > 0 || activeView === "calendar") && (
+        {/* VS Code / Antigravity Style Tab Management Bar (Hidden in Zen Mode) */}
+        {!zenMode && (openTabIds.length > 0 || activeView === "calendar") && (
           <div className="h-9 border-b border-border bg-muted/30 flex items-center justify-between px-0 overflow-x-auto select-none shrink-0">
             <div
               ref={tabBarRef}

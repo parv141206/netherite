@@ -20,10 +20,13 @@ import {
 import {
   computeLineDiff,
   computeApollonSemanticDiff,
+  computeExcalidrawSemanticDiff,
   loadChangelog,
   type ChangelogEntry,
   type DiffLine,
   type SemanticChange,
+  type DrawingSemanticChange,
+  type DrawingDiffSummary,
 } from "./diffUtils";
 
 interface DiffModalProps {
@@ -55,10 +58,15 @@ export function DiffModal({
   onDiscardAndSync,
   isSyncing = false,
 }: DiffModalProps) {
+  const isDrawing = useMemo(() => {
+    return noteTitle.endsWith(".excalidraw");
+  }, [noteTitle]);
+
   const [activeView, setActiveView] = useState<"diff" | "history">("diff");
   const [diffDisplayMode, setDiffDisplayMode] = useState<"compact" | "full">("compact");
   const [expandedBlocks, setExpandedBlocks] = useState<Set<string>>(new Set());
   const [isSemanticExpanded, setIsSemanticExpanded] = useState<boolean>(true);
+  const [showRawExcalidrawDiff, setShowRawExcalidrawDiff] = useState<boolean>(false);
 
   const diff = useMemo(() => {
     if (!isOpen) {
@@ -73,6 +81,21 @@ export function DiffModal({
     }
     return computeLineDiff(baselineContent, currentContent);
   }, [isOpen, baselineContent, currentContent]);
+
+  const drawingDiff = useMemo<DrawingDiffSummary>(() => {
+    if (!isOpen || !isDrawing) {
+      return {
+        hasChanges: false,
+        addedCount: 0,
+        removedCount: 0,
+        modifiedCount: 0,
+        totalChanges: 0,
+        changes: [],
+        summaryText: "0 changes",
+      };
+    }
+    return computeExcalidrawSemanticDiff(baselineContent, currentContent);
+  }, [isOpen, isDrawing, baselineContent, currentContent]);
 
   const semanticChanges = useMemo(() => {
     if (!isOpen) return [];
@@ -91,6 +114,8 @@ export function DiffModal({
       semanticChanges.length > 0
     );
   }, [noteTitle, semanticChanges.length]);
+
+  const hasChanges = isDrawing ? drawingDiff.hasChanges : diff.hasChanges;
 
   const isMermaid = useMemo(() => {
     return noteTitle.endsWith(".mmd") || noteTitle.endsWith(".mermaid");
@@ -205,6 +230,11 @@ export function DiffModal({
                 <span className="font-semibold text-sm text-foreground truncate">
                   Changes & Diff: {noteTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "")}
                 </span>
+                {isDrawing && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium border border-indigo-500/20 shrink-0">
+                    Excalidraw Canvas
+                  </span>
+                )}
                 {isUml && (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 font-medium border border-sky-500/20 shrink-0">
                     Apollon UML
@@ -215,7 +245,17 @@ export function DiffModal({
                     Mermaid Diagram
                   </span>
                 )}
-                {diff.hasChanges ? (
+                {isDrawing ? (
+                  drawingDiff.hasChanges ? (
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20 shrink-0">
+                      {drawingDiff.summaryText}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 flex items-center gap-1 shrink-0">
+                      <CheckCircle2 className="w-3 h-3" /> Up to date
+                    </span>
+                  )
+                ) : diff.hasChanges ? (
                   <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20 shrink-0">
                     {diff.summary}
                   </span>
@@ -267,7 +307,7 @@ export function DiffModal({
             </div>
 
             {/* Line Diff Filter (Compact / Changes Only vs Full File) */}
-            {activeView === "diff" && diff.hasChanges && (
+            {activeView === "diff" && !isDrawing && diff.hasChanges && (
               <div className="flex items-center p-0.5 bg-background/60 border border-border/50 rounded-lg text-[11px]">
                 <button
                   onClick={() => setDiffDisplayMode("compact")}
@@ -297,7 +337,7 @@ export function DiffModal({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            {diff.hasChanges && onDiscardAndSync && (
+            {hasChanges && onDiscardAndSync && (
               <button
                 onClick={() => {
                   onDiscardAndSync();
@@ -315,9 +355,9 @@ export function DiffModal({
               onClick={() => {
                 onSaveToDrive();
               }}
-              disabled={isSaving || !diff.hasChanges}
+              disabled={isSaving || !hasChanges}
               className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
-                diff.hasChanges
+                hasChanges
                   ? "bg-foreground text-background hover:opacity-90 shadow-sm active:scale-95"
                   : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
               }`}
@@ -332,14 +372,142 @@ export function DiffModal({
         <div className="flex-1 overflow-y-auto p-4 bg-background min-h-[350px]">
           {activeView === "diff" ? (
             <div className="space-y-3">
-              {!diff.hasChanges ? (
+              {!hasChanges ? (
                 <div className="h-64 flex flex-col items-center justify-center text-muted-foreground text-center">
                   <CheckCircle2 className="w-10 h-10 text-emerald-500 mb-2 opacity-80" />
                   <p className="font-semibold text-foreground text-sm">No Unsaved Diffs</p>
                   <p className="text-xs text-muted-foreground max-w-sm mt-1">
-                    Your local diagram edits are identical to the Google Drive baseline.
+                    {isDrawing
+                      ? "Your local canvas edits are identical to the Google Drive baseline."
+                      : "Your local diagram edits are identical to the Google Drive baseline."}
                   </p>
                 </div>
+              ) : isDrawing ? (
+                <>
+                  {/* Semantic Visual Canvas Changes Card for Excalidraw */}
+                  <div className="border border-border/80 rounded-xl overflow-hidden bg-card shadow-2xs">
+                    <div className="px-4 py-2.5 bg-muted/40 flex items-center justify-between text-xs font-medium">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                        <span className="font-semibold text-foreground">
+                          Visual Canvas Changes ({drawingDiff.changes.length})
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 font-mono text-[11px]">
+                        <span className="text-emerald-500 font-bold">+{drawingDiff.addedCount}</span>
+                        <span className="text-rose-500 font-bold">-{drawingDiff.removedCount}</span>
+                        <span className="text-amber-500 font-bold">~{drawingDiff.modifiedCount}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 divide-y divide-border/30 max-h-72 overflow-y-auto">
+                      {drawingDiff.changes.map((change) => {
+                        const isAdd = change.action === "added";
+                        const isDel = change.action === "removed";
+
+                        return (
+                          <div
+                            key={change.id}
+                            className="py-2 first:pt-0 last:pb-0 flex items-start justify-between text-xs gap-3"
+                          >
+                            <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                              <span
+                                className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 ${
+                                  isAdd
+                                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                    : isDel
+                                    ? "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+                                    : "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                                }`}
+                              >
+                                {isAdd ? "+" : isDel ? "-" : "~"}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <span className="font-medium text-foreground">
+                                  {change.title}
+                                </span>
+                                {change.details && change.details.length > 0 && (
+                                  <ul className="text-[11px] font-mono text-muted-foreground mt-1 space-y-0.5 list-disc list-inside">
+                                    {change.details.map((detail, dIdx) => (
+                                      <li key={dIdx}>{detail}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground shrink-0">
+                              {change.elementType}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Collapsible raw JSON diff for Excalidraw */}
+                  <div className="border border-border rounded-xl overflow-hidden bg-card">
+                    <button
+                      onClick={() => setShowRawExcalidrawDiff(!showRawExcalidrawDiff)}
+                      className="w-full px-3.5 py-2 bg-muted/60 text-[11px] text-muted-foreground flex justify-between items-center cursor-pointer hover:bg-muted/80 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 font-mono text-xs">
+                        <Code2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="font-semibold text-foreground">Raw Serialized JSON (Advanced)</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[11px]">
+                        <span>{showRawExcalidrawDiff ? "Hide JSON" : "Show JSON"}</span>
+                        {showRawExcalidrawDiff ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                      </div>
+                    </button>
+                    {showRawExcalidrawDiff && (
+                      <div className="divide-y divide-border/20 max-h-[380px] overflow-y-auto font-mono text-xs">
+                        {displayItems.map((item, idx) => {
+                          if (item.type === "collapsed") {
+                            return (
+                              <div
+                                key={item.key}
+                                onClick={() => toggleBlockExpand(item.key)}
+                                className="py-1.5 px-4 bg-muted/20 hover:bg-muted/50 text-[11px] font-mono text-muted-foreground/80 flex items-center justify-center gap-2 cursor-pointer transition-colors border-y border-border/30 select-none"
+                              >
+                                <ChevronDown className="w-3 h-3" />
+                                <span>
+                                  ··· Expand {item.count} unchanged line{item.count > 1 ? "s" : ""} ···
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          const line = item.line;
+                          const isAdded = line.type === "added";
+                          const isRemoved = line.type === "removed";
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`flex items-start text-xs py-0.5 px-2 select-text transition-colors ${
+                                isAdded
+                                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium"
+                                  : isRemoved
+                                  ? "bg-rose-500/10 text-rose-700 dark:text-rose-300 font-medium"
+                                  : "text-muted-foreground hover:bg-muted/20"
+                              }`}
+                            >
+                              <span className="w-8 shrink-0 text-right pr-3 select-none text-[10px] text-muted-foreground/50 font-mono">
+                                {line.lineNumBefore || line.lineNumAfter || ""}
+                              </span>
+                              <span className="w-4 shrink-0 select-none text-center font-bold">
+                                {isAdded ? "+" : isRemoved ? "-" : " "}
+                              </span>
+                              <pre className="font-mono flex-1 whitespace-pre-wrap break-all leading-tight">
+                                {line.content || " "}
+                              </pre>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <>
                   {/* Semantic Diagram Changes Card (When available for UML diagrams) */}

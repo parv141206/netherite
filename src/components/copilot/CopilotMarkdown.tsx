@@ -5,6 +5,7 @@ import { Copy, Check, ArrowDownToLine, Workflow, Code2, AlertCircle, Activity } 
 import { useTheme } from "~/components/ThemeProvider";
 import { renderMermaidQueued, postProcessSvg } from "~/components/editor/mermaidQueue";
 import { renderTikzQueued } from "~/components/editor/tikzQueue";
+import { formatTableAsMarkdown, formatTableAsAscii } from "~/components/editor/tableUtils";
 
 interface CopilotMarkdownProps {
   content: string;
@@ -285,34 +286,105 @@ function CopilotCodeBlock({
 
 // Markdown Table Renderer
 function MarkdownTable({ rows }: { rows: string[][] }) {
+  const [copiedTop, setCopiedTop] = useState<"md" | "ascii" | null>(null);
+  const [copiedBottom, setCopiedBottom] = useState<"md" | "ascii" | null>(null);
+
   if (rows.length === 0) return null;
-  const header = rows[0];
+  const header = rows[0] || [];
   const body = rows.slice(1);
 
+  const handleCopy = (format: "md" | "ascii", pos: "top" | "bottom") => {
+    const text = format === "md" ? formatTableAsMarkdown(rows) : formatTableAsAscii(rows);
+    if (!text) return;
+    void navigator.clipboard.writeText(text);
+    if (pos === "top") {
+      setCopiedTop(format);
+      setTimeout(() => setCopiedTop(null), 1800);
+    } else {
+      setCopiedBottom(format);
+      setTimeout(() => setCopiedBottom(null), 1800);
+    }
+  };
+
+  const renderToolbar = (pos: "top" | "bottom") => {
+    const copied = pos === "top" ? copiedTop : copiedBottom;
+    return (
+      <div className={`flex items-center justify-between py-1 px-1 text-[11px] select-none opacity-50 hover:opacity-100 transition-opacity ${pos === "top" ? "mb-1" : "mt-1"}`}>
+        <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/60">
+          <span>Table</span>
+          <span className="opacity-50">•</span>
+          <span className="capitalize text-[9px] opacity-70">{pos}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => handleCopy("md", pos)}
+            className="px-2 py-0.5 text-[10px] font-mono rounded-md border border-border/40 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+            title="Copy table as Markdown"
+          >
+            {copied === "md" ? (
+              <>
+                <Check className="w-3 h-3 text-emerald-500" />
+                <span className="text-emerald-500 font-semibold">Copied MD!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3 text-muted-foreground" />
+                <span>Copy MD</span>
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleCopy("ascii", pos)}
+            className="px-2 py-0.5 text-[10px] font-mono rounded-md border border-border/40 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+            title="Copy table as ASCII"
+          >
+            {copied === "ascii" ? (
+              <>
+                <Check className="w-3 h-3 text-emerald-500" />
+                <span className="text-emerald-500 font-semibold">Copied ASCII!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3 text-muted-foreground" />
+                <span>Copy ASCII</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="my-3 overflow-x-auto rounded-lg border border-border/70 text-xs">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-muted/50 border-b border-border/60">
-            {header.map((cell, idx) => (
-              <th key={idx} className="px-3 py-2 font-semibold text-foreground border-r border-border/40 last:border-r-0">
-                {cell.trim()}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border/40">
-          {body.map((row, rIdx) => (
-            <tr key={rIdx} className="hover:bg-muted/20 transition-colors">
-              {row.map((cell, cIdx) => (
-                <td key={cIdx} className="px-3 py-1.5 text-foreground/90 border-r border-border/30 last:border-r-0">
+    <div className="my-3 text-xs group">
+      {renderToolbar("top")}
+      <div className="overflow-x-auto rounded-lg border border-border/70">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-muted/50 border-b border-border/60">
+              {header.map((cell, idx) => (
+                <th key={idx} className="px-3 py-2 font-semibold text-foreground border-r border-border/40 last:border-r-0">
                   {cell.trim()}
-                </td>
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border/40">
+            {body.map((row, rIdx) => (
+              <tr key={rIdx} className="hover:bg-muted/20 transition-colors">
+                {row.map((cell, cIdx) => (
+                  <td key={cIdx} className="px-3 py-1.5 text-foreground/90 border-r border-border/30 last:border-r-0">
+                    {cell.trim()}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {renderToolbar("bottom")}
     </div>
   );
 }

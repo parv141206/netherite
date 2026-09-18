@@ -505,14 +505,36 @@ ul[data-type="taskList"] li label input[type="checkbox"]:checked::before {
 }
 
 /* Tables */
+.ProseMirror .netherite-table-wrapper {
+  margin: 1.5rem 0;
+  position: relative;
+}
+
 .ProseMirror table {
   border-collapse: collapse;
   table-layout: fixed;
   width: 100%;
-  margin: 1.5rem 0;
+  margin: 0.25rem 0;
   overflow: hidden;
   border-radius: var(--radius-md);
   border: 1px solid var(--md-table-border, var(--border));
+}
+
+.netherite-table-toolbar {
+  opacity: 0.45;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.netherite-table-wrapper:hover .netherite-table-toolbar,
+.netherite-table-toolbar:hover,
+.netherite-table-wrapper:focus-within .netherite-table-toolbar {
+  opacity: 1;
+}
+
+@media print {
+  .netherite-table-toolbar {
+    display: none !important;
+  }
 }
 
 .ProseMirror td,

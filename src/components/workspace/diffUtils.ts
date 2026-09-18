@@ -34,6 +34,26 @@ export interface SemanticChange {
   description: string;
 }
 
+export interface DrawingSemanticChange {
+  id: string;
+  elementType: string;
+  action: "added" | "removed" | "modified";
+  title: string;
+  description: string;
+  label?: string;
+  details?: string[];
+}
+
+export interface DrawingDiffSummary {
+  hasChanges: boolean;
+  totalChanges: number;
+  addedCount: number;
+  removedCount: number;
+  modifiedCount: number;
+  summaryText: string;
+  changes: DrawingSemanticChange[];
+}
+
 /**
  * Attempts to normalize JSON documents to canonical 2-space indented format
  * to prevent whitespace or key ordering differences from showing as false diffs.
@@ -443,6 +463,215 @@ export function computeApollonSemanticDiff(
     return changes;
   } catch {
     return [];
+  }
+}
+
+/**
+ * Computes high-level semantic differences between two Excalidraw whiteboards.
+ * Identifies added, removed, and modified shapes, text edits, color changes, and moves,
+ * instead of exploding into raw JSON line diffs.
+ */
+export function computeExcalidrawSemanticDiff(
+  baselineStr: string,
+  currentStr: string
+): DrawingDiffSummary {
+  const emptyResult: DrawingDiffSummary = {
+    hasChanges: false,
+    totalChanges: 0,
+    addedCount: 0,
+    removedCount: 0,
+    modifiedCount: 0,
+    summaryText: "0 shapes",
+    changes: [],
+  };
+
+  if (!baselineStr && !currentStr) return emptyResult;
+  if (baselineStr === currentStr) return emptyResult;
+
+  try {
+    const parseDoc = (str: string) => {
+      if (!str || typeof str !== "string" || !str.trim()) {
+        return { elements: [] as any[], appState: {} as any };
+      }
+      const parsed = JSON.parse(str);
+      const elements = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.elements)
+        ? parsed.elements
+        : [];
+      return {
+        elements: elements.filter((e: any) => e && !e.isDeleted),
+        appState: parsed?.appState || {},
+      };
+    };
+
+    const baseDoc = parseDoc(baselineStr);
+    const currDoc = parseDoc(currentStr);
+
+    const baseElements = new Map<string, any>(baseDoc.elements.map((e: any) => [e.id, e]));
+    const currElements = new Map<string, any>(currDoc.elements.map((e: any) => [e.id, e]));
+
+    const getElementLabel = (el: any, elementsMap: Map<string, any>): string => {
+      if (el.text && typeof el.text === "string" && el.text.trim()) {
+        return el.text.trim();
+      }
+      if (Array.isArray(el.boundElements)) {
+        for (const b of el.boundElements) {
+          if (b && b.type === "text" && elementsMap.has(b.id)) {
+            const boundTextNode = elementsMap.get(b.id);
+            if (boundTextNode?.text?.trim()) {
+              return boundTextNode.text.trim();
+            }
+          }
+        }
+      }
+      return "";
+    };
+
+    const formatType = (type: string) => {
+      if (!type) return "Shape";
+      return type.charAt(0).toUpperCase() + type.slice(1);
+    };
+
+    const changes: DrawingSemanticChange[] = [];
+    let addedCount = 0;
+    let removedCount = 0;
+    let modifiedCount = 0;
+
+    // 1. Added elements
+    for (const [id, currEl] of currElements) {
+      if (!baseElements.has(id)) {
+        addedCount++;
+        const label = getElementLabel(currEl, currElements);
+        const typeName = formatType(currEl.type);
+        changes.push({
+          id: `add-${id}`,
+          elementType: currEl.type || "shape",
+          action: "added",
+          title: `Added ${typeName}${label ? `: "${label}"` : ""}`,
+          description: `Created new ${currEl.type || "element"} at (${Math.round(currEl.x)}, ${Math.round(currEl.y)})`,
+          label: label || undefined,
+        });
+      }
+    }
+
+    // 2. Removed elements
+    for (const [id, baseEl] of baseElements) {
+      if (!currElements.has(id)) {
+        removedCount++;
+        const label = getElementLabel(baseEl, baseElements);
+        const typeName = formatType(baseEl.type);
+        changes.push({
+          id: `del-${id}`,
+          elementType: baseEl.type || "shape",
+          action: "removed",
+          title: `Removed ${typeName}${label ? `: "${label}"` : ""}`,
+          description: `Deleted ${baseEl.type || "element"}`,
+          label: label || undefined,
+        });
+      }
+    }
+
+    // 3. Modified elements
+    for (const [id, currEl] of currElements) {
+      const baseEl = baseElements.get(id);
+      if (!baseEl) continue;
+
+      const details: string[] = [];
+      const baseLabel = getElementLabel(baseEl, baseElements);
+      const currLabel = getElementLabel(currEl, currElements);
+
+      // Text change
+      if (baseLabel !== currLabel) {
+        details.push(
+          baseLabel
+            ? `Text: "${baseLabel}" → "${currLabel}"`
+            : `Label added: "${currLabel}"`
+        );
+      }
+
+      // Position change (tolerance of 2px to ignore subpixel noise)
+      const dx = Math.round(currEl.x - baseEl.x);
+      const dy = Math.round(currEl.y - baseEl.y);
+      if (Math.abs(dx) >= 2 || Math.abs(dy) >= 2) {
+        details.push(
+          `Moved to (${Math.round(currEl.x)}, ${Math.round(currEl.y)}) [${dx >= 0 ? `+${dx}` : dx}, ${dy >= 0 ? `+${dy}` : dy}]`
+        );
+      }
+
+      // Dimension change
+      const dw = Math.round(currEl.width - baseEl.width);
+      const dh = Math.round(currEl.height - baseEl.height);
+      if (Math.abs(dw) >= 2 || Math.abs(dh) >= 2) {
+        details.push(
+          `Resized: ${Math.round(currEl.width)}×${Math.round(currEl.height)}`
+        );
+      }
+
+      // Color changes
+      if (baseEl.strokeColor !== currEl.strokeColor) {
+        details.push(`Stroke: ${baseEl.strokeColor} → ${currEl.strokeColor}`);
+      }
+      if (baseEl.backgroundColor !== currEl.backgroundColor) {
+        details.push(
+          `Fill: ${baseEl.backgroundColor || "none"} → ${currEl.backgroundColor || "none"}`
+        );
+      }
+
+      if (details.length > 0) {
+        modifiedCount++;
+        const label = currLabel || baseLabel;
+        const typeName = formatType(currEl.type);
+        changes.push({
+          id: `mod-${id}`,
+          elementType: currEl.type || "shape",
+          action: "modified",
+          title: `Modified ${typeName}${label ? `: "${label}"` : ""}`,
+          description: details.join(" • "),
+          label: label || undefined,
+          details,
+        });
+      }
+    }
+
+    // 4. Background color change
+    if (
+      baseDoc.appState.viewBackgroundColor &&
+      currDoc.appState.viewBackgroundColor &&
+      baseDoc.appState.viewBackgroundColor !== currDoc.appState.viewBackgroundColor
+    ) {
+      modifiedCount++;
+      changes.push({
+        id: "mod-bg-color",
+        elementType: "canvas",
+        action: "modified",
+        title: "Canvas Background Changed",
+        description: `Color: ${baseDoc.appState.viewBackgroundColor} → ${currDoc.appState.viewBackgroundColor}`,
+      });
+    }
+
+    const totalChanges = addedCount + removedCount + modifiedCount;
+    let summaryText = "0 shapes";
+    if (totalChanges > 0) {
+      const parts: string[] = [];
+      if (addedCount > 0) parts.push(`+${addedCount}`);
+      if (removedCount > 0) parts.push(`-${removedCount}`);
+      if (modifiedCount > 0) parts.push(`~${modifiedCount}`);
+      summaryText = `${parts.join(" ")} shapes`;
+    }
+
+    return {
+      hasChanges: totalChanges > 0,
+      totalChanges,
+      addedCount,
+      removedCount,
+      modifiedCount,
+      summaryText,
+      changes,
+    };
+  } catch (err) {
+    console.warn("Error computing Excalidraw semantic diff:", err);
+    return emptyResult;
   }
 }
 

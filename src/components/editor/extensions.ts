@@ -19,6 +19,7 @@ import { ImageUploadExtension } from "./ImageUploadExtension";
 
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { CodeBlockView } from "./CodeBlockView";
+import { NetheriteTableView } from "./NetheriteTableView";
 
 const lowlight = createLowlight(all);
 
@@ -92,8 +93,15 @@ export function buildExtensions(uploadFn?: (file: File) => void) {
     TaskItem.configure({
       nested: true,
     }),
-    Table.configure({
+    Table.extend({
+      addNodeView() {
+        return ({ node, view, HTMLAttributes }) => {
+          return new NetheriteTableView(node, this.options.cellMinWidth, view, HTMLAttributes);
+        };
+      },
+    }).configure({
       resizable: true,
+      View: NetheriteTableView,
     }),
     TableRow,
     TableCell,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Excalidraw,
   Footer,
@@ -16,13 +16,14 @@ import type {
   ExcalidrawInitialDataState,
 } from "@excalidraw/excalidraw/types";
 
-import {
-  ENGINEERING_PALETTE_TAB,
-  ENGINEERING_SIDEBAR_NAME,
-  EngineeringSidebar,
-  EngineeringSidebarTrigger,
-} from "@/features/engineering-canvas/engineering-sidebar";
-import { EngineeringBottomPanel } from "@/features/engineering-canvas/engineering-bottom-panel";
+// Engineering sidebar and bottom panel - preserved for future use but disabled per user request
+// import {
+//   ENGINEERING_PALETTE_TAB,
+//   ENGINEERING_SIDEBAR_NAME,
+//   EngineeringSidebar,
+//   EngineeringSidebarTrigger,
+// } from "@/features/engineering-canvas/engineering-sidebar";
+// import { EngineeringBottomPanel } from "@/features/engineering-canvas/engineering-bottom-panel";
 import engineeringStyles from "@/features/engineering-canvas/engineering-sidebar.module.scss";
 import { useTheme } from "~/components/ThemeProvider";
 import { Sparkles } from "lucide-react";
@@ -45,11 +46,10 @@ export default function ExcalidrawEditor({
   const activeTheme = propTheme ?? (isDark ? "dark" : "light");
 
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
-  const [elements, setElements] = useState<readonly ExcalidrawElement[]>([]);
-  const [appState, setAppState] = useState<AppState | null>(null);
-  const [sidebarDocked, setSidebarDocked] = useState(false);
+  const elementsRef = useRef<readonly ExcalidrawElement[]>([]);
+  const appStateRef = useRef<AppState | null>(null);
+  // const [sidebarDocked, setSidebarDocked] = useState(false);
   const [isVisualNotesModalOpen, setIsVisualNotesModalOpen] = useState(false);
-  const [, startSidebarTransition] = useTransition();
 
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
@@ -59,28 +59,65 @@ export default function ExcalidrawEditor({
 
   // Track the baseline signature to prevent initial mount / layout from dirtying the note
   const initialSignatureRef = useRef<string | null>(null);
+  const lastLoadedContentRef = useRef<string>(initialContent);
+  const initialDataRef = useRef<ExcalidrawInitialDataState | null>(null);
 
+  const pendingSaveArgsRef = useRef<{
+    elements: readonly ExcalidrawElement[];
+    appState: AppState;
+    files: BinaryFiles;
+  } | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fast signature using version numbers and counts instead of 1000+ string allocations
   const getDrawingSignature = (
     nextElements: readonly ExcalidrawElement[],
     nextAppState?: Partial<AppState> | null
   ) => {
-    const elemSig = nextElements
-      .filter((e) => !e.isDeleted)
-      .map((e: any) =>
-        `${e.id}:${e.type}:${Math.round(e.x)}:${Math.round(e.y)}:${Math.round(e.width)}:${Math.round(e.height)}:${e.strokeColor ?? ""}:${e.backgroundColor ?? ""}:${e.text ?? ""}`
-      )
-      .join(";");
+    let vSum = 0;
+    let count = 0;
+    for (let i = 0; i < nextElements.length; i++) {
+      const el = nextElements[i];
+      if (el && !el.isDeleted) {
+        vSum = (vSum + el.version + el.versionNonce) | 0;
+        count++;
+      }
+    }
     const bgSig = nextAppState?.viewBackgroundColor ? `|bg:${nextAppState.viewBackgroundColor}` : "";
-    return `${elemSig}${bgSig}`;
+    return `${count}:${vSum}${bgSig}`;
   };
+
+  const flushPendingChange = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    if (pendingSaveArgsRef.current && onChangeRef.current) {
+      const { elements, appState, files } = pendingSaveArgsRef.current;
+      pendingSaveArgsRef.current = null;
+      try {
+        const serialized = serializeAsJSON(elements, appState, files, "local");
+        lastLoadedContentRef.current = serialized;
+        onChangeRef.current(serialized);
+      } catch (e) {
+        console.error("Failed to serialize drawing elements:", e);
+      }
+    }
+  }, []);
 
   // Parse initial content safely with official Excalidraw restoration
   const initialData = useMemo<ExcalidrawInitialDataState>(() => {
     const isDarkTheme = activeTheme === "dark";
 
+    // If cached initialData is already valid for current content, avoid re-parsing
+    if (initialDataRef.current && initialContent === lastLoadedContentRef.current) {
+      return initialDataRef.current;
+    }
+    lastLoadedContentRef.current = initialContent;
+
     if (!initialContent || (typeof initialContent === "string" && initialContent.trim() === "")) {
       initialSignatureRef.current = "";
-      return {
+      const emptyData: ExcalidrawInitialDataState = {
         elements: [],
         appState: {
           theme: isDarkTheme ? "dark" : "light",
@@ -88,6 +125,8 @@ export default function ExcalidrawEditor({
         },
         files: {},
       };
+      initialDataRef.current = emptyData;
+      return emptyData;
     }
 
     try {
@@ -129,7 +168,7 @@ export default function ExcalidrawEditor({
           rawAppState.scrollY !== 0 ||
           (rawAppState.zoom && rawAppState.zoom.value !== 1));
 
-      return {
+      const constructed: ExcalidrawInitialDataState = {
         elements: restoredElements,
         appState: {
           ...restoredState,
@@ -138,10 +177,12 @@ export default function ExcalidrawEditor({
         files: rawFiles,
         scrollToContent: !hasCustomCamera,
       };
+      initialDataRef.current = constructed;
+      return constructed;
     } catch (err) {
       console.warn("Could not parse drawing JSON content:", err);
       initialSignatureRef.current = "";
-      return {
+      const fallback: ExcalidrawInitialDataState = {
         elements: [],
         appState: {
           theme: isDarkTheme ? "dark" : "light",
@@ -149,13 +190,17 @@ export default function ExcalidrawEditor({
         },
         files: {},
       };
+      initialDataRef.current = fallback;
+      return fallback;
     }
   }, [initialContent, activeTheme]);
 
   const handleApi = useCallback((nextApi: ExcalidrawImperativeAPI | null) => {
     setApi(nextApi);
     if (nextApi) {
-      setAppState(nextApi.getAppState());
+      appStateRef.current = nextApi.getAppState();
+      // Engineering sidebar auto-open disabled per user request
+      /*
       requestAnimationFrame(() => {
         if (nextApi.isDestroyed) {
           return;
@@ -164,7 +209,6 @@ export default function ExcalidrawEditor({
           typeof window !== "undefined"
             ? localStorage.getItem("netherite_eng_sidebar_open")
             : null;
-        // Keep canvas clean and wide by default; re-open only if user deliberately toggled it on
         const shouldOpen = savedPref === "true";
         if (shouldOpen) {
           nextApi.toggleSidebar({
@@ -174,6 +218,7 @@ export default function ExcalidrawEditor({
           });
         }
       });
+      */
     }
   }, []);
 
@@ -183,15 +228,8 @@ export default function ExcalidrawEditor({
       nextAppState: AppState,
       nextFiles: BinaryFiles
     ) => {
-      startSidebarTransition(() => {
-        setElements(nextElements);
-        setAppState(nextAppState);
-      });
-
-      if (typeof window !== "undefined") {
-        const isSidebarOpen = nextAppState.openSidebar?.name === ENGINEERING_SIDEBAR_NAME;
-        localStorage.setItem("netherite_eng_sidebar_open", isSidebarOpen ? "true" : "false");
-      }
+      elementsRef.current = nextElements;
+      appStateRef.current = nextAppState;
 
       const currentSig = getDrawingSignature(nextElements, nextAppState);
 
@@ -206,24 +244,41 @@ export default function ExcalidrawEditor({
         return;
       }
 
-      // Record new signature baseline and dispatch user change
+      // Record new signature baseline
       initialSignatureRef.current = currentSig;
 
-      if (onChangeRef.current) {
-        try {
-          const serialized = serializeAsJSON(
-            nextElements,
-            nextAppState,
-            nextFiles,
-            "local"
-          );
-          onChangeRef.current(serialized);
-        } catch (e) {
-          console.error("Failed to serialize drawing elements:", e);
-        }
+      // Queue debounced serialization to eliminate drag lag on large diagrams
+      pendingSaveArgsRef.current = {
+        elements: nextElements,
+        appState: nextAppState,
+        files: nextFiles,
+      };
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
+
+      debounceTimerRef.current = setTimeout(() => {
+        debounceTimerRef.current = null;
+        if (pendingSaveArgsRef.current && onChangeRef.current) {
+          const { elements, appState, files } = pendingSaveArgsRef.current;
+          pendingSaveArgsRef.current = null;
+          try {
+            const serialized = serializeAsJSON(
+              elements,
+              appState,
+              files,
+              "local"
+            );
+            lastLoadedContentRef.current = serialized;
+            onChangeRef.current(serialized);
+          } catch (e) {
+            console.error("Failed to serialize drawing elements:", e);
+          }
+        }
+      }, 300);
     },
-    [startSidebarTransition]
+    []
   );
 
   // Sync theme changes to Excalidraw appState when user toggles dark/light mode
@@ -240,12 +295,13 @@ export default function ExcalidrawEditor({
     }
   }, [api, activeTheme]);
 
-  // Global Ctrl+S handler for sketch canvas
+  // Global Ctrl+S handler for sketch canvas (immediately flushes any pending debounced change)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
         e.stopPropagation();
+        flushPendingChange();
         if (onSaveRef.current) {
           onSaveRef.current();
         }
@@ -254,9 +310,10 @@ export default function ExcalidrawEditor({
 
     window.addEventListener("keydown", handleKeyDown, { capture: true });
     return () => {
+      flushPendingChange();
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
     };
-  }, []);
+  }, [flushPendingChange]);
 
   return (
     <div
@@ -282,7 +339,8 @@ export default function ExcalidrawEditor({
               <Sparkles className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Visual Notes</span>
             </button>
-            <EngineeringSidebarTrigger />
+            {/* Custom engineering components sidebar trigger commented out per user request */}
+            {/* <EngineeringSidebarTrigger /> */}
           </div>
         )}
         UIOptions={{
@@ -291,6 +349,8 @@ export default function ExcalidrawEditor({
           },
         }}
       >
+        {/* Custom engineering components sidebar & bottom panel commented out per user request */}
+        {/*
         <EngineeringSidebar
           api={api}
           docked={sidebarDocked}
@@ -299,10 +359,11 @@ export default function ExcalidrawEditor({
         <Footer>
           <EngineeringBottomPanel
             api={api}
-            elements={elements}
-            appState={appState}
+            elements={elementsRef.current}
+            appState={appStateRef.current}
           />
         </Footer>
+        */}
       </Excalidraw>
       <VisualNotesModal
         isOpen={isVisualNotesModalOpen}
