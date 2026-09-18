@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import {
   Excalidraw,
-  Footer,
   restoreElements,
   restoreAppState,
   serializeAsJSON,
@@ -15,32 +14,28 @@ import type {
   ExcalidrawImperativeAPI,
   ExcalidrawInitialDataState,
 } from "@excalidraw/excalidraw/types";
-
-// Engineering sidebar and bottom panel - preserved for future use but disabled per user request
-// import {
-//   ENGINEERING_PALETTE_TAB,
-//   ENGINEERING_SIDEBAR_NAME,
-//   EngineeringSidebar,
-//   EngineeringSidebarTrigger,
-// } from "@/features/engineering-canvas/engineering-sidebar";
-// import { EngineeringBottomPanel } from "@/features/engineering-canvas/engineering-bottom-panel";
+import type { DrawingCanvasHandle } from "./DrawingCanvas";
 import engineeringStyles from "@/features/engineering-canvas/engineering-sidebar.module.scss";
 import { useTheme } from "~/components/ThemeProvider";
 import { Sparkles } from "lucide-react";
 import { VisualNotesModal } from "./VisualNotesModal";
 
 interface ExcalidrawEditorProps {
+  fileId?: string;
   initialContent?: string;
   theme?: "light" | "dark";
   onChange?: (content: string) => void;
   onSave?: () => void;
+  editorRef?: React.Ref<DrawingCanvasHandle>;
 }
 
 export default function ExcalidrawEditor({
+  fileId,
   initialContent = "",
   theme: propTheme,
   onChange,
   onSave,
+  editorRef,
 }: ExcalidrawEditorProps) {
   const { isDark } = useTheme();
   const activeTheme = propTheme ?? (isDark ? "dark" : "light");
@@ -48,8 +43,11 @@ export default function ExcalidrawEditor({
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   const elementsRef = useRef<readonly ExcalidrawElement[]>([]);
   const appStateRef = useRef<AppState | null>(null);
-  // const [sidebarDocked, setSidebarDocked] = useState(false);
+  const filesRef = useRef<BinaryFiles>({});
   const [isVisualNotesModalOpen, setIsVisualNotesModalOpen] = useState(false);
+
+  const fileIdRef = useRef<string | undefined>(fileId);
+  fileIdRef.current = fileId;
 
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
@@ -68,42 +66,132 @@ export default function ExcalidrawEditor({
     files: BinaryFiles;
   } | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const shellRef = useRef<HTMLDivElement | null>(null);
 
-  // Fast signature using version numbers and counts instead of 1000+ string allocations
+  // Fast signature using version numbers, counts, and update timestamps
   const getDrawingSignature = (
     nextElements: readonly ExcalidrawElement[],
     nextAppState?: Partial<AppState> | null
   ) => {
     let vSum = 0;
     let count = 0;
+    let lastModified = 0;
     for (let i = 0; i < nextElements.length; i++) {
       const el = nextElements[i];
       if (el && !el.isDeleted) {
-        vSum = (vSum + el.version + el.versionNonce) | 0;
+        vSum = (vSum * 31 + el.version + el.versionNonce) | 0;
+        if (el.updated && el.updated > lastModified) {
+          lastModified = el.updated;
+        }
         count++;
       }
     }
     const bgSig = nextAppState?.viewBackgroundColor ? `|bg:${nextAppState.viewBackgroundColor}` : "";
-    return `${count}:${vSum}${bgSig}`;
+    return `${count}:${vSum}:${lastModified}${bgSig}`;
   };
 
-  const flushPendingChange = useCallback(() => {
+  const serializeCurrentScene = useCallback(() => {
+    let elements: readonly ExcalidrawElement[] = elementsRef.current;
+    let appState: AppState | null = appStateRef.current;
+    let files: BinaryFiles = filesRef.current;
+
+    if (api && !api.isDestroyed) {
+      try {
+        const liveElements = api.getSceneElements();
+        if (liveElements && liveElements.length > 0) {
+          elements = liveElements;
+        }
+        const liveState = api.getAppState();
+        if (liveState) {
+          appState = liveState;
+        }
+        const liveFiles = api.getFiles();
+        if (liveFiles) {
+          files = liveFiles;
+        }
+      } catch (e) {
+        console.warn("Failed to read live scene from Excalidraw API:", e);
+      }
+    }
+
+    if (pendingSaveArgsRef.current) {
+      if (pendingSaveArgsRef.current.elements?.length) {
+        elements = pendingSaveArgsRef.current.elements;
+      }
+      if (pendingSaveArgsRef.current.appState) {
+        appState = pendingSaveArgsRef.current.appState;
+      }
+      if (pendingSaveArgsRef.current.files) {
+        files = pendingSaveArgsRef.current.files;
+      }
+    }
+
+    if ((!elements || elements.length === 0) && initialDataRef.current?.elements?.length) {
+      elements = initialDataRef.current.elements;
+    }
+
+    if (!appState) {
+      appState = {
+        theme: activeTheme,
+        viewBackgroundColor: activeTheme === "dark" ? "#121212" : "#ffffff",
+      } as AppState;
+    }
+
+    try {
+      return serializeAsJSON(elements || [], appState, files || {}, "local");
+    } catch (e) {
+      console.error("Failed to serialize Excalidraw scene:", e);
+      return null;
+    }
+  }, [api, activeTheme]);
+
+  // Synchronous flush that writes directly to localStorage draft and snapshot history
+  const flush = useCallback(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
     }
-    if (pendingSaveArgsRef.current && onChangeRef.current) {
-      const { elements, appState, files } = pendingSaveArgsRef.current;
-      pendingSaveArgsRef.current = null;
+    pendingSaveArgsRef.current = null;
+
+    const serialized = serializeCurrentScene();
+    if (!serialized) return null;
+
+    lastLoadedContentRef.current = serialized;
+
+    const id = fileIdRef.current;
+    if (id && typeof window !== "undefined") {
       try {
-        const serialized = serializeAsJSON(elements, appState, files, "local");
-        lastLoadedContentRef.current = serialized;
-        onChangeRef.current(serialized);
-      } catch (e) {
-        console.error("Failed to serialize drawing elements:", e);
+        localStorage.setItem(`netherite_draft_${id}`, serialized);
+
+        // Versioned snapshot backup
+        const snapKey = `netherite_snapshot_${id}`;
+        const existing = localStorage.getItem(snapKey);
+        const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
+        if (list.length === 0 || list[0]?.content !== serialized) {
+          list.unshift({ timestamp: Date.now(), content: serialized });
+          if (list.length > 10) list.length = 10;
+          localStorage.setItem(snapKey, JSON.stringify(list));
+        }
+      } catch (err) {
+        console.warn("Failed to write Excalidraw draft directly to localStorage:", err);
       }
     }
-  }, []);
+
+    if (onChangeRef.current) {
+      onChangeRef.current(serialized);
+    }
+    return serialized;
+  }, [serializeCurrentScene]);
+
+  // Expose imperative handle to parent (WorkspaceLayout)
+  useImperativeHandle(
+    editorRef,
+    () => ({
+      flush,
+      getSerializedScene: serializeCurrentScene,
+    }),
+    [flush, serializeCurrentScene]
+  );
 
   // Parse initial content safely with official Excalidraw restoration
   const initialData = useMemo<ExcalidrawInitialDataState>(() => {
@@ -116,7 +204,7 @@ export default function ExcalidrawEditor({
     lastLoadedContentRef.current = initialContent;
 
     if (!initialContent || (typeof initialContent === "string" && initialContent.trim() === "")) {
-      initialSignatureRef.current = "";
+      initialSignatureRef.current = "0:0:0";
       const emptyData: ExcalidrawInitialDataState = {
         elements: [],
         appState: {
@@ -181,7 +269,7 @@ export default function ExcalidrawEditor({
       return constructed;
     } catch (err) {
       console.warn("Could not parse drawing JSON content:", err);
-      initialSignatureRef.current = "";
+      initialSignatureRef.current = "0:0:0";
       const fallback: ExcalidrawInitialDataState = {
         elements: [],
         appState: {
@@ -199,26 +287,6 @@ export default function ExcalidrawEditor({
     setApi(nextApi);
     if (nextApi) {
       appStateRef.current = nextApi.getAppState();
-      // Engineering sidebar auto-open disabled per user request
-      /*
-      requestAnimationFrame(() => {
-        if (nextApi.isDestroyed) {
-          return;
-        }
-        const savedPref =
-          typeof window !== "undefined"
-            ? localStorage.getItem("netherite_eng_sidebar_open")
-            : null;
-        const shouldOpen = savedPref === "true";
-        if (shouldOpen) {
-          nextApi.toggleSidebar({
-            name: ENGINEERING_SIDEBAR_NAME,
-            tab: ENGINEERING_PALETTE_TAB,
-            force: true,
-          });
-        }
-      });
-      */
     }
   }, []);
 
@@ -230,16 +298,17 @@ export default function ExcalidrawEditor({
     ) => {
       elementsRef.current = nextElements;
       appStateRef.current = nextAppState;
+      filesRef.current = nextFiles;
 
       const currentSig = getDrawingSignature(nextElements, nextAppState);
 
-      // On initial mount / scene setup, establish the baseline signature and do not fire onChange
+      // On initial mount / scene setup, establish baseline signature
       if (initialSignatureRef.current === null) {
         initialSignatureRef.current = currentSig;
         return;
       }
 
-      // If nothing has actually changed in document elements or document properties, ignore event
+      // If nothing has actually changed in document elements or properties, ignore event
       if (currentSig === initialSignatureRef.current) {
         return;
       }
@@ -247,7 +316,6 @@ export default function ExcalidrawEditor({
       // Record new signature baseline
       initialSignatureRef.current = currentSig;
 
-      // Queue debounced serialization to eliminate drag lag on large diagrams
       pendingSaveArgsRef.current = {
         elements: nextElements,
         appState: nextAppState,
@@ -258,9 +326,10 @@ export default function ExcalidrawEditor({
         clearTimeout(debounceTimerRef.current);
       }
 
+      // Fast 150ms debounce for UI responsiveness + local draft persistence
       debounceTimerRef.current = setTimeout(() => {
         debounceTimerRef.current = null;
-        if (pendingSaveArgsRef.current && onChangeRef.current) {
+        if (pendingSaveArgsRef.current) {
           const { elements, appState, files } = pendingSaveArgsRef.current;
           pendingSaveArgsRef.current = null;
           try {
@@ -271,12 +340,21 @@ export default function ExcalidrawEditor({
               "local"
             );
             lastLoadedContentRef.current = serialized;
-            onChangeRef.current(serialized);
+
+            // Immediately persist to draft storage
+            const id = fileIdRef.current;
+            if (id && typeof window !== "undefined") {
+              localStorage.setItem(`netherite_draft_${id}`, serialized);
+            }
+
+            if (onChangeRef.current) {
+              onChangeRef.current(serialized);
+            }
           } catch (e) {
             console.error("Failed to serialize drawing elements:", e);
           }
         }
-      }, 300);
+      }, 150);
     },
     []
   );
@@ -295,7 +373,69 @@ export default function ExcalidrawEditor({
     }
   }, [api, activeTheme]);
 
-  const shellRef = useRef<HTMLDivElement | null>(null);
+  // Flush immediately on pointer release (mouse up / finger lift after drawing a stroke or moving a shape)
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return;
+
+    const handlePointerRelease = () => {
+      if (pendingSaveArgsRef.current) {
+        flush();
+      }
+    };
+
+    shell.addEventListener("pointerup", handlePointerRelease, { passive: true });
+    shell.addEventListener("touchend", handlePointerRelease, { passive: true });
+
+    return () => {
+      shell.removeEventListener("pointerup", handlePointerRelease);
+      shell.removeEventListener("touchend", handlePointerRelease);
+    };
+  }, [flush]);
+
+  // Synchronous flush on unmount: write directly to localStorage for this specific fileId
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      const serialized = serializeCurrentScene();
+      const id = fileIdRef.current;
+      if (serialized && id && typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`netherite_draft_${id}`, serialized);
+          const snapKey = `netherite_snapshot_${id}`;
+          const existing = localStorage.getItem(snapKey);
+          const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
+          if (list.length === 0 || list[0]?.content !== serialized) {
+            list.unshift({ timestamp: Date.now(), content: serialized });
+            if (list.length > 10) list.length = 10;
+            localStorage.setItem(snapKey, JSON.stringify(list));
+          }
+        } catch {}
+      }
+    };
+  }, [serializeCurrentScene]);
+
+  // Flush on beforeunload and visibility change (page hidden)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      flush();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flush();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [flush]);
 
   // Global Ctrl+S handler for sketch canvas (scoped to when canvas is focused/hovered)
   useEffect(() => {
@@ -310,7 +450,7 @@ export default function ExcalidrawEditor({
 
         e.preventDefault();
         e.stopPropagation();
-        flushPendingChange();
+        flush();
         if (onSaveRef.current) {
           onSaveRef.current();
         }
@@ -319,10 +459,9 @@ export default function ExcalidrawEditor({
 
     window.addEventListener("keydown", handleKeyDown, { capture: true });
     return () => {
-      flushPendingChange();
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
     };
-  }, [flushPendingChange]);
+  }, [flush]);
 
   return (
     <div
@@ -356,23 +495,7 @@ export default function ExcalidrawEditor({
             loadScene: false, // keep everything native in Netherite
           },
         }}
-      >
-        {/* Custom engineering components sidebar & bottom panel commented out per user request */}
-        {/*
-        <EngineeringSidebar
-          api={api}
-          docked={sidebarDocked}
-          onDock={setSidebarDocked}
-        />
-        <Footer>
-          <EngineeringBottomPanel
-            api={api}
-            elements={elementsRef.current}
-            appState={appStateRef.current}
-          />
-        </Footer>
-        */}
-      </Excalidraw>
+      />
       <VisualNotesModal
         isOpen={isVisualNotesModalOpen}
         onClose={() => setIsVisualNotesModalOpen(false)}

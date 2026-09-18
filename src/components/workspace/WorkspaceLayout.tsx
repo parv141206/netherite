@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Sidebar, type DriveItem } from "./Sidebar";
 import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
-import { DrawingCanvas } from "~/components/canvas/DrawingCanvas";
+import { DrawingCanvas, type DrawingCanvasHandle } from "~/components/canvas/DrawingCanvas";
 import { UmlCanvas } from "~/components/canvas/UmlCanvas";
 import { MermaidCanvas } from "~/components/canvas/MermaidCanvas";
 import { TikzCanvas } from "~/components/canvas/TikzCanvas";
@@ -657,6 +657,89 @@ export function WorkspaceLayout({
     } catch {}
   };
 
+  const activeEditorRef = useRef<any>(null);
+  const activeCanvasRef = useRef<DrawingCanvasHandle | null>(null);
+  const activeSplitCanvasRef = useRef<DrawingCanvasHandle | null>(null);
+
+  // Robust draft recovery helper: recovers from direct draft, snapshot history, or contaminated tab draft
+  const recoverLatestDraftOrSnapshot = useCallback(
+    (fileId: string, isDrawing: boolean): string | null => {
+      if (typeof window === "undefined" || !fileId) return null;
+
+      // 1. Direct local draft
+      const directDraft = localStorage.getItem(`netherite_draft_${fileId}`);
+      if (directDraft && (!isDrawing || !isEmptyExcalidraw(directDraft))) {
+        return directDraft;
+      }
+
+      // 2. Snapshot history
+      try {
+        const snapKey = `netherite_snapshot_${fileId}`;
+        const snapData = localStorage.getItem(snapKey);
+        if (snapData) {
+          const list: Array<{ timestamp: number; content: string }> = JSON.parse(snapData);
+          if (Array.isArray(list) && list.length > 0) {
+            for (const item of list) {
+              if (item?.content && (!isDrawing || !isEmptyExcalidraw(item.content))) {
+                return item.content;
+              }
+            }
+          }
+        }
+      } catch {}
+
+      // 3. For drawings, check if drawing draft was accidentally saved under another tab's key during tab switch
+      if (isDrawing) {
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("netherite_draft_") && key !== `netherite_draft_${fileId}`) {
+              const candidate = localStorage.getItem(key);
+              if (
+                candidate &&
+                (candidate.includes('"type":"excalidraw"') || candidate.includes('"type": "excalidraw"'))
+              ) {
+                if (!isEmptyExcalidraw(candidate)) {
+                  const ownerId = key.replace("netherite_draft_", "");
+                  const ownerItem = localNotes.find((n) => n.id === ownerId);
+                  if (ownerItem && (ownerItem.name.endsWith(".md") || ownerItem.mimeType === "text/markdown")) {
+                    console.info("Recovered Excalidraw drawing draft from contaminated tab:", ownerId);
+                    localStorage.removeItem(key);
+                    localStorage.setItem(`netherite_draft_${fileId}`, candidate);
+                    return candidate;
+                  }
+                }
+              }
+            }
+          }
+        } catch {}
+      }
+
+      return null;
+    },
+    [localNotes]
+  );
+
+  // Synchronous flush on window unload or tab hidden
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      activeCanvasRef.current?.flush();
+      activeSplitCanvasRef.current?.flush();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        activeCanvasRef.current?.flush();
+        activeSplitCanvasRef.current?.flush();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   useEffect(() => {
     if (!activeTabId) {
       contentFileIdRef.current = null;
@@ -671,24 +754,16 @@ export function WorkspaceLayout({
       currentItem?.mimeType === "application/vnd.excalidraw+json";
     const isUml = isUmlFile(currentItem);
 
-    if (typeof window !== "undefined") {
-      const draft = localStorage.getItem(`netherite_draft_${activeTabId}`);
-      if (draft !== null) {
-        // If it is a drawing/uml and the draft is empty, it was poisoned; purge it!
-        if ((isDrawing && isEmptyExcalidraw(draft)) || (isUml && isEmptyApollon(draft))) {
-          try {
-            localStorage.removeItem(`netherite_draft_${activeTabId}`);
-          } catch {}
-        } else {
-          contentFileIdRef.current = activeTabId;
-          setNoteContent(draft);
-          if (fetchedContent !== undefined) {
-            setLastSavedContent(fetchedContent);
-          }
-          return;
-        }
+    const recovered = recoverLatestDraftOrSnapshot(activeTabId, isDrawing);
+    if (recovered) {
+      contentFileIdRef.current = activeTabId;
+      setNoteContent(recovered);
+      if (fetchedContent !== undefined) {
+        setLastSavedContent(fetchedContent);
       }
+      return;
     }
+
     if (fetchedContent !== undefined) {
       let contentToSet = fetchedContent;
       if (isUml && contentToSet.trim().startsWith("{")) {
@@ -705,7 +780,7 @@ export function WorkspaceLayout({
       setNoteContent(contentToSet);
       setLastSavedContent(contentToSet);
     }
-  }, [fetchedContent, activeTabId, localNotes]);
+  }, [fetchedContent, activeTabId, localNotes, recoverLatestDraftOrSnapshot]);
 
   // Continuous local draft backup on every edit (Strictly isolated to active tab's file ID)
   useEffect(() => {
@@ -730,15 +805,32 @@ export function WorkspaceLayout({
     if (noteContent !== lastSavedContent && noteContent.length > 0) {
       try {
         localStorage.setItem(`netherite_draft_${activeTabId}`, noteContent);
+        saveBackupSnapshot(activeTabId, noteContent);
       } catch {}
     }
   }, [noteContent, lastSavedContent, activeTabId, localNotes]);
 
+  // Split Pane Note Content Loading (With Draft Support)
   useEffect(() => {
+    if (!splitTabId) return;
+    if (typeof window !== "undefined") {
+      const draft = localStorage.getItem(`netherite_draft_${splitTabId}`);
+      if (draft !== null) {
+        const currentItem = localNotes.find((n) => n.id === splitTabId);
+        const isDrawing =
+          currentItem?.name.endsWith(".excalidraw") ||
+          currentItem?.mimeType === "application/vnd.excalidraw+json";
+        const isUml = isUmlFile(currentItem);
+        if ((!isDrawing || !isEmptyExcalidraw(draft)) && (!isUml || !isEmptyApollon(draft))) {
+          setSplitNoteContent(draft);
+          return;
+        }
+      }
+    }
     if (fetchedSplitContent !== undefined) {
       setSplitNoteContent(fetchedSplitContent);
     }
-  }, [fetchedSplitContent, splitTabId]);
+  }, [fetchedSplitContent, splitTabId, localNotes]);
 
   useEffect(() => {
     if (activeTabId && localNotes.length > 0) {
@@ -750,7 +842,6 @@ export function WorkspaceLayout({
   }, [activeTabId, localNotes]);
 
   const pendingImagesRef = useRef<Map<string, File>>(new Map());
-  const activeEditorRef = useRef<any>(null);
 
   // Manual save ONLY: No background autosave timer and NO mutation on keystroke/cleanup!
   const unsavedRef = useRef(false);
@@ -1676,6 +1767,28 @@ export function WorkspaceLayout({
     const item = localNotes.find((n) => n.id === fileId);
     if (item?.mimeType === "application/vnd.google-apps.folder") return;
 
+    // 0. Synchronously flush the currently active drawing canvas before switching tabs
+    if (activeCanvasRef.current) {
+      try {
+        const flushed = activeCanvasRef.current.flush();
+        if (flushed && contentFileIdRef.current) {
+          localStorage.setItem(`netherite_draft_${contentFileIdRef.current}`, flushed);
+          saveBackupSnapshot(contentFileIdRef.current, flushed);
+        }
+      } catch (e) {
+        console.warn("Canvas flush failed:", e);
+      }
+    }
+    if (activeSplitCanvasRef.current) {
+      try {
+        const flushedSplit = activeSplitCanvasRef.current.flush();
+        if (flushedSplit && splitTabId) {
+          localStorage.setItem(`netherite_draft_${splitTabId}`, flushedSplit);
+          saveBackupSnapshot(splitTabId, flushedSplit);
+        }
+      } catch (e) {}
+    }
+
     if (!tabSessionsRef.current[fileId]) {
       tabSessionsRef.current[fileId] = `session-${fileId}`;
     }
@@ -1704,6 +1817,7 @@ export function WorkspaceLayout({
       if (noteContent !== lastSavedContent && noteContent.length > 0 && !isCorrupted) {
         try {
           localStorage.setItem(`netherite_draft_${prevFileId}`, noteContent);
+          saveBackupSnapshot(prevFileId, noteContent);
         } catch {}
       }
     }
@@ -1717,32 +1831,29 @@ export function WorkspaceLayout({
 
     // Hydrate note content immediately from localStorage draft or query cache
     let contentToSet = "";
-    if (typeof window !== "undefined") {
-      const draft = localStorage.getItem(`netherite_draft_${fileId}`);
-      if (draft !== null) {
-        if ((isDrawing && isEmptyExcalidraw(draft)) || (isUml && isEmptyApollon(draft))) {
-          try {
-            localStorage.removeItem(`netherite_draft_${fileId}`);
-          } catch {}
-        } else {
-          contentToSet = draft;
-        }
+    let isDraftLoaded = false;
+    const recovered = recoverLatestDraftOrSnapshot(fileId, isDrawing);
+    if (recovered) {
+      contentToSet = recovered;
+      isDraftLoaded = true;
+    }
+
+    const cached = utils.notes.get.getData({ id: fileId });
+    const cloudContent = typeof cached === "string" ? cached : "";
+    if (!contentToSet && cloudContent) {
+      if ((!isDrawing || !isEmptyExcalidraw(cloudContent)) && (!isUml || !isEmptyApollon(cloudContent))) {
+        contentToSet = cloudContent;
       }
     }
-    if (!contentToSet) {
-      const cached = utils.notes.get.getData({ id: fileId });
-      if (
-        typeof cached === "string" &&
-        (!isDrawing || !isEmptyExcalidraw(cached)) &&
-        (!isUml || !isEmptyApollon(cached))
-      ) {
-        contentToSet = cached;
-      }
-    }
+
     setNoteContent(contentToSet);
-    setLastSavedContent(contentToSet);
+    setLastSavedContent(isDraftLoaded ? cloudContent : contentToSet);
     setActiveTabId(fileId);
     setActiveView("editor");
+
+    if (isDraftLoaded && isDrawing) {
+      showToast("Restored your Excalidraw whiteboard draft");
+    }
   };
 
   const closeTab = (fileId: string, e: React.MouseEvent) => {
@@ -2162,6 +2273,22 @@ export function WorkspaceLayout({
                     onDragEnd={() => setDraggedTabId(null)}
                     onClick={() => {
                       if (isSplitView && activePane === "split") {
+                        if (activeSplitCanvasRef.current) {
+                          try {
+                            const flushed = activeSplitCanvasRef.current.flush();
+                            if (flushed && splitTabId) {
+                              localStorage.setItem(`netherite_draft_${splitTabId}`, flushed);
+                              saveBackupSnapshot(splitTabId, flushed);
+                            }
+                          } catch {}
+                        }
+                        if (splitTabId && splitNoteContent) {
+                          localStorage.setItem(`netherite_draft_${splitTabId}`, splitNoteContent);
+                        }
+                        const targetDraft = localStorage.getItem(`netherite_draft_${tabId}`);
+                        if (targetDraft) {
+                          setSplitNoteContent(targetDraft);
+                        }
                         setSplitTabId(tabId);
                       } else {
                         openFileInTab(tabId);
@@ -2496,11 +2623,15 @@ export function WorkspaceLayout({
                       />
                     ) : (
                       <DrawingCanvas
+                        ref={activeCanvasRef}
+                        fileId={activeTabId}
                         key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
                         initialContent={noteContent}
                         theme={isDark ? "dark" : "light"}
                         onChange={(updatedContent) => {
-                          setNoteContent(updatedContent);
+                          if (contentFileIdRef.current === activeTabId) {
+                            setNoteContent(updatedContent);
+                          }
                           if (activeTabId && typeof window !== "undefined") {
                             localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
                           }
@@ -2717,10 +2848,17 @@ export function WorkspaceLayout({
                         />
                       ) : (
                         <DrawingCanvas
+                          ref={activeSplitCanvasRef}
+                          fileId={splitTabId}
                           key={splitTabId || "split-drawing"}
                           initialContent={splitNoteContent}
                           theme={isDark ? "dark" : "light"}
-                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                          onChange={(updatedContent) => {
+                            setSplitNoteContent(updatedContent);
+                            if (splitTabId && typeof window !== "undefined") {
+                              localStorage.setItem(`netherite_draft_${splitTabId}`, updatedContent);
+                            }
+                          }}
                           onSave={() => {
                             if (splitTabId && !splitTabId.startsWith("temp-")) {
                               saveDocument(splitTabId, splitNoteContent, currentSplitNote);
@@ -2741,7 +2879,12 @@ export function WorkspaceLayout({
                         title={currentSplitNote?.name || "Split Document.md"}
                         editorFont={editorFont}
                         textOnlyClipboard={textOnlyClipboard}
-                        onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
+                        onChange={(updatedContent) => {
+                          setSplitNoteContent(updatedContent);
+                          if (splitTabId && typeof window !== "undefined") {
+                            localStorage.setItem(`netherite_draft_${splitTabId}`, updatedContent);
+                          }
+                        }}
                         onSave={() => {
                           if (splitTabId && !splitTabId.startsWith("temp-")) {
                             saveDocument(splitTabId, splitNoteContent, currentSplitNote);

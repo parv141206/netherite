@@ -1,7 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { forwardRef } from "react";
 import { MacFileLoader } from "~/components/ui/MacFileLoader";
+
+export interface DrawingCanvasHandle {
+  flush: () => string | null;
+  getSerializedScene: () => string | null;
+}
 
 const ExcalidrawEditor = dynamic(() => import("./ExcalidrawEditor"), {
   ssr: false,
@@ -15,31 +21,34 @@ const ExcalidrawEditor = dynamic(() => import("./ExcalidrawEditor"), {
 });
 
 interface DrawingCanvasProps {
+  fileId?: string;
   initialContent?: string;
   theme?: "light" | "dark";
   onChange?: (content: string) => void;
   onSave?: () => void;
 }
 
-export function DrawingCanvas({
-  initialContent,
-  theme,
-  onChange,
-  onSave,
-}: DrawingCanvasProps) {
-  return (
-    <section
-      className="h-full w-full overflow-hidden"
-      aria-label="Drawing canvas"
-      data-excalidraw-container="true"
-      data-canvas-container="true"
-    >
-      <ExcalidrawEditor
-        initialContent={initialContent}
-        theme={theme}
-        onChange={onChange}
-        onSave={onSave}
-      />
-    </section>
-  );
-}
+export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
+  function DrawingCanvas(
+    { fileId, initialContent, theme, onChange, onSave },
+    ref
+  ) {
+    return (
+      <section
+        className="h-full w-full overflow-hidden"
+        aria-label="Drawing canvas"
+        data-excalidraw-container="true"
+        data-canvas-container="true"
+      >
+        <ExcalidrawEditor
+          editorRef={ref}
+          fileId={fileId}
+          initialContent={initialContent}
+          theme={theme}
+          onChange={onChange}
+          onSave={onSave}
+        />
+      </section>
+    );
+  }
+);
