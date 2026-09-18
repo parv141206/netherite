@@ -893,22 +893,29 @@ export function WorkspaceLayout({
               hasNewUploads = true;
 
               // Update TipTap editor image node src from blobUrl to driveUrl
-              if (activeEditorRef.current) {
-                const editor = activeEditorRef.current;
-                const { tr } = editor.state;
-                let found = false;
-                editor.state.doc.descendants((node: any, pos: number) => {
-                  if (node.type.name === "image" && node.attrs.src === blobUrl) {
-                    tr.setNodeMarkup(pos, undefined, {
-                      ...node.attrs,
-                      src: res.url,
-                    });
-                    found = true;
+              if (
+                activeEditorRef.current &&
+                !activeEditorRef.current.isDestroyed &&
+                activeEditorRef.current.view &&
+                activeEditorRef.current.state
+              ) {
+                try {
+                  const editor = activeEditorRef.current;
+                  const { tr } = editor.state;
+                  let found = false;
+                  editor.state.doc.descendants((node: any, pos: number) => {
+                    if (node.type.name === "image" && node.attrs.src === blobUrl) {
+                      tr.setNodeMarkup(pos, undefined, {
+                        ...node.attrs,
+                        src: res.url,
+                      });
+                      found = true;
+                    }
+                  });
+                  if (found) {
+                    editor.view.dispatch(tr);
                   }
-                });
-                if (found) {
-                  editor.view.dispatch(tr);
-                }
+                } catch {}
               }
             }
           } catch (err) {
@@ -1864,9 +1871,22 @@ export function WorkspaceLayout({
         setLastSavedContent(cleanContent);
         setContentRevision((r) => r + 1);
 
-        if (activeEditorRef.current) {
-          activeEditorRef.current.commands.setContent(cleanContent, { emitUpdate: false });
+        if (
+          activeEditorRef.current &&
+          !activeEditorRef.current.isDestroyed &&
+          activeEditorRef.current.view
+        ) {
+          try {
+            activeEditorRef.current.commands?.setContent(cleanContent, { emitUpdate: false });
+          } catch {}
         }
+      }
+
+      if (isSplitView && splitTabId && !splitTabId.startsWith("temp-")) {
+        await utils.notes.get.invalidate({ id: splitTabId });
+        const freshSplit = await utils.notes.get.fetch({ id: splitTabId }, { staleTime: 0 });
+        const cleanSplit = typeof freshSplit === "string" ? freshSplit : "";
+        setSplitNoteContent(cleanSplit);
       }
 
       setIsSyncModalOpen(false);

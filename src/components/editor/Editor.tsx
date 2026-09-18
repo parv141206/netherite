@@ -423,6 +423,11 @@ export function Editor({
     if (editor && onEditorReady) {
       onEditorReady(editor);
     }
+    return () => {
+      if (onEditorReady) {
+        onEditorReady(null);
+      }
+    };
   }, [editor, onEditorReady]);
 
   // Jump, scroll, and luminous flash-highlight search term if opened from Global Search

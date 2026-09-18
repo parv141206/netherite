@@ -121,8 +121,10 @@ export function CodeBlockView({
 
       if (newCode !== rawCode && typeof getPos === "function") {
         const pos = getPos();
-        if (typeof pos === "number" && editor) {
-          editor.commands.focus(pos + 1);
+        if (typeof pos === "number" && editor && !editor.isDestroyed) {
+          try {
+            editor.commands?.focus(pos + 1);
+          } catch {}
         }
       }
     },
@@ -177,10 +179,12 @@ export function CodeBlockView({
   const enterEditMode = useCallback(() => {
     setMode("edit");
     setTimeout(() => {
-      if (typeof getPos === "function" && editor) {
+      if (typeof getPos === "function" && editor && !editor.isDestroyed) {
         const pos = getPos();
         if (typeof pos === "number") {
-          editor.commands.focus(pos + 1);
+          try {
+            editor.commands?.focus(pos + 1);
+          } catch {}
         }
       }
     }, 40);
