@@ -295,10 +295,19 @@ export default function ExcalidrawEditor({
     }
   }, [api, activeTheme]);
 
-  // Global Ctrl+S handler for sketch canvas (immediately flushes any pending debounced change)
+  const shellRef = useRef<HTMLDivElement | null>(null);
+
+  // Global Ctrl+S handler for sketch canvas (scoped to when canvas is focused/hovered)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        const activeEl = document.activeElement;
+        const target = e.target as HTMLElement | null;
+        const isInside =
+          (target && shellRef.current?.contains(target)) ||
+          (activeEl && shellRef.current?.contains(activeEl));
+        if (!isInside) return;
+
         e.preventDefault();
         e.stopPropagation();
         flushPendingChange();
@@ -317,6 +326,9 @@ export default function ExcalidrawEditor({
 
   return (
     <div
+      ref={shellRef}
+      data-excalidraw-container="true"
+      data-canvas-container="true"
       className={`${engineeringStyles.editorShell} ${
         activeTheme === "dark" ? "theme--dark" : ""
       }`}
@@ -328,20 +340,16 @@ export default function ExcalidrawEditor({
         theme={activeTheme}
         onExcalidrawAPI={handleApi}
         onChange={handleChange}
-        renderTopRightUI={() => (
-          <div className="flex items-center gap-1.5 mr-1">
-            <button
-              type="button"
-              onClick={() => setIsVisualNotesModalOpen(true)}
-              title="Generate Visual Notes from Markdown"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer shadow-sm active:scale-95"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Visual Notes</span>
-            </button>
-            {/* Custom engineering components sidebar trigger commented out per user request */}
-            {/* <EngineeringSidebarTrigger /> */}
-          </div>
+        renderCustomToolbarButton={() => (
+          <button
+            type="button"
+            onClick={() => setIsVisualNotesModalOpen(true)}
+            title="Generate Visual Notes from Markdown"
+            aria-label="Visual Notes"
+            className="ToolIcon_type_button flex items-center justify-center w-8 h-8 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-500 active:scale-95 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
         )}
         UIOptions={{
           canvasActions: {

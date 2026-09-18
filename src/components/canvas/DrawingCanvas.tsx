@@ -28,7 +28,12 @@ export function DrawingCanvas({
   onSave,
 }: DrawingCanvasProps) {
   return (
-    <section className="h-full w-full overflow-hidden" aria-label="Drawing canvas">
+    <section
+      className="h-full w-full overflow-hidden"
+      aria-label="Drawing canvas"
+      data-excalidraw-container="true"
+      data-canvas-container="true"
+    >
       <ExcalidrawEditor
         initialContent={initialContent}
         theme={theme}

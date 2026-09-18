@@ -846,6 +846,9 @@ export interface ExcalidrawProps {
     isMobile: boolean,
     appState: UIAppState,
   ) => JSX.Element | null;
+  renderCustomToolbarButton?: (
+    appState: UIAppState,
+  ) => React.ReactNode;
   langCode?: Language["code"];
   viewModeEnabled?: boolean;
   /**

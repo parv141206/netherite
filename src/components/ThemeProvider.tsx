@@ -287,12 +287,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const isCanvasOrDiagram = (target: HTMLElement | null) =>
+      !!target?.closest?.(
+        ".excalidraw, [data-excalidraw-container], [data-canvas-container], [data-mermaid-container], [data-tikz-container], [data-uml-container]"
+      );
+
     const preventPageZoomWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         const target = e.target as HTMLElement | null;
-        // Don't prevent zoom if inside a component that handles its own zoom (like Mermaid diagrams or editor font scaler)
-        const isInsideMermaid = target?.closest?.("[data-mermaid-container]");
-        if (isInsideMermaid) return;
+        // Don't prevent zoom if inside a component that handles its own zoom (like Excalidraw, diagrams, or editor font scaler)
+        if (isCanvasOrDiagram(target)) return;
 
         const isInsideEditor = target?.closest?.("[data-editor-container]");
         if (!isInsideEditor) {
@@ -302,6 +306,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     const preventGesture = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (isCanvasOrDiagram(target)) return;
       e.preventDefault();
     };
 
@@ -310,8 +316,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         (e.ctrlKey || e.metaKey) &&
         (e.key === "=" || e.key === "+" || e.key === "-" || e.key === "_" || e.key === "0")
       ) {
-        const isInsideEditor = (e.target as HTMLElement | null)?.closest?.("[data-editor-container]");
-        if (!isInsideEditor) {
+        const target = e.target as HTMLElement | null;
+        const isInsideEditor = target?.closest?.("[data-editor-container]");
+        if (!isInsideEditor && !isCanvasOrDiagram(target)) {
           e.preventDefault();
         }
       }

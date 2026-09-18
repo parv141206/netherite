@@ -505,10 +505,17 @@ export function Editor({
     return () => clearTimeout(timer);
   }, [editor, initialContent, isLoading]);
 
-  // Keyboard shortcut Ctrl+S / Cmd+S for save
+  // Keyboard shortcut Ctrl+S / Cmd+S for save (isolated to active editor)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        const activeEl = document.activeElement;
+        const target = e.target as HTMLElement | null;
+        const isContained =
+          (activeEl && editorContainerRef.current?.contains(activeEl)) ||
+          (target && editorContainerRef.current?.contains(target));
+        if (!isContained) return;
+
         e.preventDefault();
         if (onSave) onSave();
       }
@@ -539,19 +546,26 @@ export function Editor({
       zoomTimeoutRef.current = setTimeout(() => setShowZoomBadge(false), 1500);
     };
 
+    const isCanvasOrEmbedded = (target: HTMLElement | null) =>
+      !!target?.closest?.(
+        "[data-mermaid-container], [data-excalidraw-container], .excalidraw, [data-canvas-container], [data-tikz-container], [data-uml-container]"
+      );
+
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement | null;
-      const isMermaid = !!target?.closest?.("[data-mermaid-container]");
+      // If the event target is not within this editor's container, completely ignore it
+      if (!target || !container.contains(target)) {
+        return;
+      }
+
+      if (isCanvasOrEmbedded(target)) {
+        // Allow event to reach canvas/diagram container's listener without adjusting editor font size
+        return;
+      }
 
       if (e.ctrlKey || e.metaKey) {
-        // ALWAYS prevent Chrome's native browser zoom across the entire window/editor
+        // ALWAYS prevent Chrome's native browser zoom inside the editor container
         e.preventDefault();
-
-        if (isMermaid) {
-          // Allow event to reach Mermaid container's listener without adjusting editor font size
-          return;
-        }
-
         e.stopPropagation();
         e.stopImmediatePropagation();
 
@@ -574,7 +588,7 @@ export function Editor({
 
     const handleTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target?.closest?.("[data-mermaid-container]")) {
+      if (!target || !container.contains(target) || isCanvasOrEmbedded(target)) {
         return;
       }
 
@@ -589,7 +603,7 @@ export function Editor({
 
     const handleTouchMove = (e: TouchEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target?.closest?.("[data-mermaid-container]")) {
+      if (!target || !container.contains(target) || isCanvasOrEmbedded(target)) {
         return;
       }
       if (e.touches.length === 2 && initialDist > 0 && e.touches[0] && e.touches[1]) {
@@ -607,12 +621,16 @@ export function Editor({
     };
 
     const handleGestureStart = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || !container.contains(target) || isCanvasOrEmbedded(target)) return;
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
     };
 
     const handleGestureChange = (e: any) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || !container.contains(target) || isCanvasOrEmbedded(target)) return;
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -624,6 +642,13 @@ export function Editor({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
+        const activeEl = document.activeElement;
+        const target = e.target as HTMLElement | null;
+        const isContained =
+          (activeEl && container.contains(activeEl)) ||
+          (target && container.contains(target));
+        if (!isContained) return;
+
         if (e.key === "=" || e.key === "+") {
           e.preventDefault();
           e.stopPropagation();

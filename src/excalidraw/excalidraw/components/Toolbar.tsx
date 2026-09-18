@@ -300,6 +300,16 @@ export const Toolbar = ({
           activeTool={activeTool}
           setAppState={setAppState}
         />
+
+        {app.props.renderCustomToolbarButton && (
+          <>
+            <div
+              className="App-toolbar__divider"
+              style={{ marginLeft: "0.25rem" }}
+            />
+            {app.props.renderCustomToolbarButton(appState)}
+          </>
+        )}
       </Stack.Row>
     </Island>
   );

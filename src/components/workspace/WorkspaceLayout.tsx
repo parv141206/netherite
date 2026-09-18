@@ -51,6 +51,7 @@ import {
   Activity,
   Loader2,
   Calendar,
+  ArrowLeftRight,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { AppleSpinner } from "~/components/ui/AppleSpinner";
@@ -348,6 +349,7 @@ export function WorkspaceLayout({
 
   const [isSplitView, setIsSplitView] = useState<boolean>(false);
   const [splitTabId, setSplitTabId] = useState<string | undefined>(undefined);
+  const [activePane, setActivePane] = useState<"primary" | "split">("primary");
 
   // Drag & Drop Feedback State
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
@@ -1765,6 +1767,20 @@ export function WorkspaceLayout({
     !isCurrentTikz &&
     !isCurrentImage;
 
+  const isSplitDrawing =
+    currentSplitNote?.name?.endsWith(".excalidraw") ||
+    currentSplitNote?.mimeType === "application/vnd.excalidraw+json";
+  const isSplitUml = isUmlFile(currentSplitNote);
+  const isSplitMermaid = isMermaidFile(currentSplitNote);
+  const isSplitTikz = isTikzFile(currentSplitNote);
+  const isSplitMarkdown =
+    Boolean(currentSplitNote) &&
+    !isSplitDrawing &&
+    !isSplitUml &&
+    !isSplitMermaid &&
+    !isSplitTikz &&
+    !isSplitImage;
+
   const isDirty =
     !isCurrentImage &&
     Boolean(activeTabId) &&
@@ -1890,7 +1906,16 @@ export function WorkspaceLayout({
         userSession={session}
         notes={localNotes}
         activeNoteId={activeTabId}
-        onSelectNote={(id) => openFileInTab(id)}
+        onSelectNote={(id) => {
+          if (isSplitView && activePane === "split") {
+            if (!openTabIds.includes(id)) {
+              setOpenTabIds((prev) => [...prev, id]);
+            }
+            setSplitTabId(id);
+          } else {
+            openFileInTab(id);
+          }
+        }}
         onCreateNote={handleCreateFile}
         onCreateDrawing={handleCreateDrawing}
         onCreateUml={handleOpenCreateDiagramModal}
@@ -1935,6 +1960,8 @@ export function WorkspaceLayout({
           noteTitle={
             activeView === "calendar"
               ? "Google Calendar Studio"
+              : isSplitView && activePane === "split" && currentSplitNote
+              ? currentSplitNote.name
               : activeTabId && currentNote
               ? currentNote.name
               : ""
@@ -1949,13 +1976,22 @@ export function WorkspaceLayout({
           onToggleDiff={toggleDiffSidebar}
           isSplitView={isSplitView}
           onToggleSplitView={() => {
-            setIsSplitView(!isSplitView);
-            if (!splitTabId && localNotes.length > 1) {
+            const next = !isSplitView;
+            setIsSplitView(next);
+            if (!next) {
+              setActivePane("primary");
+            } else if (!splitTabId && localNotes.length > 1) {
               const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
               if (other) setSplitTabId(other.id);
             }
           }}
-          onSave={handleManualSave}
+          onSave={() => {
+            if (isSplitView && activePane === "split" && splitTabId && !splitTabId.startsWith("temp-")) {
+              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+            } else {
+              handleManualSave();
+            }
+          }}
           onExportMarkdown={handleExportMarkdown}
           onExportPdf={() => setIsPdfModalOpen(true)}
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -2001,9 +2037,11 @@ export function WorkspaceLayout({
 
               {openTabIds.map((tabId) => {
                 const note = localNotes.find((n) => n.id === tabId);
-                const isActive = activeView === "editor" && activeTabId === tabId;
-                const hasLocalDiff = isActive ? isDirty : false;
-                const isTabLoading = isActive && isDocumentLoading;
+                const isPrimaryActive = activeView === "editor" && activeTabId === tabId;
+                const isSplitTab = isSplitView && splitTabId === tabId;
+                const isActive = isSplitView ? (activePane === "split" ? isSplitTab : isPrimaryActive) : isPrimaryActive;
+                const hasLocalDiff = isPrimaryActive ? isDirty : false;
+                const isTabLoading = isPrimaryActive && isDocumentLoading;
 
                 return (
                   <div
@@ -2011,10 +2049,18 @@ export function WorkspaceLayout({
                     draggable
                     onDragStart={() => setDraggedTabId(tabId)}
                     onDragEnd={() => setDraggedTabId(null)}
-                    onClick={() => openFileInTab(tabId)}
+                    onClick={() => {
+                      if (isSplitView && activePane === "split") {
+                        setSplitTabId(tabId);
+                      } else {
+                        openFileInTab(tabId);
+                      }
+                    }}
                     className={`group flex items-center gap-2 px-3.5 h-full text-xs cursor-pointer border-r border-border/70 transition-all ${
                       isActive
                         ? "bg-card text-foreground font-medium border-t-2 border-t-foreground shadow-2xs"
+                        : isSplitTab
+                        ? "bg-muted/30 text-foreground font-medium border-t-2 border-t-primary/50"
                         : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
                     }`}
                   >
@@ -2034,6 +2080,11 @@ export function WorkspaceLayout({
                     <span className="truncate max-w-[130px]">
                       {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "")}
                     </span>
+                    {isSplitView && isSplitTab && (
+                      <span className="text-[9px] px-1 py-0.2 rounded bg-primary/10 text-primary font-mono scale-90 shrink-0">
+                        Split
+                      </span>
+                    )}
                     <div className="flex items-center ml-1">
                       {hasLocalDiff ? (
                         <button
@@ -2050,7 +2101,7 @@ export function WorkspaceLayout({
                           className="w-4 h-4 flex items-center justify-center rounded hover:bg-accent text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Close"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
@@ -2089,8 +2140,11 @@ export function WorkspaceLayout({
 
               <button
                 onClick={() => {
-                  setIsSplitView(!isSplitView);
-                  if (!splitTabId && localNotes.length > 1) {
+                  const next = !isSplitView;
+                  setIsSplitView(next);
+                  if (!next) {
+                    setActivePane("primary");
+                  } else if (!splitTabId && localNotes.length > 1) {
                     const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
                     if (other) setSplitTabId(other.id);
                   }
@@ -2208,7 +2262,52 @@ export function WorkspaceLayout({
             ) : (
               <>
                 {/* Primary Pane */}
-                <div className="h-full w-full overflow-hidden flex flex-col">
+                <div
+                  data-pane="primary"
+                  data-active-pane={activePane === "primary"}
+                  onPointerDown={() => {
+                    if (isSplitView && activePane !== "primary") setActivePane("primary");
+                  }}
+                  onFocusCapture={() => {
+                    if (isSplitView && activePane !== "primary") setActivePane("primary");
+                  }}
+                  className={`h-full w-full overflow-hidden flex flex-col relative transition-all duration-150 ${
+                    isSplitView
+                      ? activePane === "primary"
+                        ? "ring-1 ring-primary/40 rounded-lg shadow-xs"
+                        : "opacity-95 hover:opacity-100"
+                      : ""
+                  }`}
+                >
+                  {isSplitView && (
+                    <div className="h-8 border-b border-border/70 bg-muted/20 flex items-center justify-between px-3 shrink-0 select-none text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isCurrentDrawing ? (
+                          <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                        ) : isCurrentUml ? (
+                          <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
+                        ) : isCurrentMermaid ? (
+                          <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                        ) : isCurrentTikz ? (
+                          <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                        ) : (
+                          <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="font-medium text-foreground truncate max-w-[180px]">
+                          {currentNote?.name || "Main Document"}
+                        </span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors ${
+                            activePane === "primary"
+                              ? "bg-primary/15 text-primary border border-primary/25 font-semibold"
+                              : "bg-muted/80 text-muted-foreground"
+                          }`}
+                        >
+                          {activePane === "primary" ? "Active" : "Primary"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   {isCurrentImage ? (
                     <ImageViewer
                       key={activeTabId}
@@ -2344,12 +2443,77 @@ export function WorkspaceLayout({
                 {/* Secondary Split Pane */}
                 {isSplitView && (
                   <div
-                    className={`h-full w-full overflow-hidden flex flex-col rounded-xl transition-all ${
+                    data-pane="split"
+                    data-active-pane={activePane === "split"}
+                    onPointerDown={() => {
+                      if (isSplitView && activePane !== "split") setActivePane("split");
+                    }}
+                    onFocusCapture={() => {
+                      if (isSplitView && activePane !== "split") setActivePane("split");
+                    }}
+                    className={`h-full w-full overflow-hidden flex flex-col relative rounded-xl transition-all duration-150 ${
                       isOverSplitTarget
                         ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                        : ""
+                        : activePane === "split"
+                        ? "ring-1 ring-primary/40 shadow-xs"
+                        : "opacity-95 hover:opacity-100"
                     }`}
                   >
+                    <div className="h-8 border-b border-border/70 bg-muted/20 flex items-center justify-between px-3 shrink-0 select-none text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isSplitDrawing ? (
+                          <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                        ) : isSplitUml ? (
+                          <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
+                        ) : isSplitMermaid ? (
+                          <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                        ) : isSplitTikz ? (
+                          <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                        ) : (
+                          <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="font-medium text-foreground truncate max-w-[180px]">
+                          {currentSplitNote?.name || "Split Document"}
+                        </span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors ${
+                            activePane === "split"
+                              ? "bg-primary/15 text-primary border border-primary/25 font-semibold"
+                              : "bg-muted/80 text-muted-foreground"
+                          }`}
+                        >
+                          {activePane === "split" ? "Active" : "Split"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (splitTabId && activeTabId) {
+                              const prevPrimary = activeTabId;
+                              openFileInTab(splitTabId);
+                              setSplitTabId(prevPrimary);
+                            }
+                          }}
+                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                          title="Swap Panes"
+                        >
+                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSplitView(false);
+                            setActivePane("primary");
+                          }}
+                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                          title="Close Split View"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                     {isSplitImage ? (
                       <ImageViewer
                         key={splitTabId || "split-image"}
@@ -2581,8 +2745,11 @@ export function WorkspaceLayout({
           onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
           showOutline={isCurrentMarkdown}
           onToggleSplitView={() => {
-            setIsSplitView(!isSplitView);
-            if (!splitTabId && localNotes.length > 1) {
+            const next = !isSplitView;
+            setIsSplitView(next);
+            if (!next) {
+              setActivePane("primary");
+            } else if (!splitTabId && localNotes.length > 1) {
               const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
               if (other) setSplitTabId(other.id);
             }
@@ -2591,7 +2758,13 @@ export function WorkspaceLayout({
           isOutlineOpen={isOutlineOpen}
           isDirty={isDirty}
           isSaving={isSaving}
-          onSave={handleManualSave}
+          onSave={() => {
+            if (isSplitView && activePane === "split" && splitTabId && !splitTabId.startsWith("temp-")) {
+              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+            } else {
+              handleManualSave();
+            }
+          }}
           onOpenDiff={() => setIsDiffModalOpen(true)}
           onManualSync={handleOpenSyncModal}
           isSyncing={isSyncing}
