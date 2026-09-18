@@ -675,6 +675,45 @@ export function computeExcalidrawSemanticDiff(
   }
 }
 
+/**
+ * Fast and accurate check if two Excalidraw documents are semantically equivalent.
+ * Ignores viewport offsets (scrollX, scrollY), zoom differences, element selection IDs,
+ * and internal nonces, comparing only actual visible elements and canvas properties.
+ */
+export function areExcalidrawScenesEquivalent(strA: string, strB: string): boolean {
+  if (strA === strB) return true;
+  if (!strA && !strB) return true;
+  if (!strA || !strB) {
+    const nonEmpty = strA || strB;
+    try {
+      const parsed = JSON.parse(nonEmpty);
+      const elements = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.elements)
+        ? parsed.elements
+        : [];
+      return elements.filter((e: any) => e && !e.isDeleted).length === 0;
+    } catch {
+      return false;
+    }
+  }
+
+  const diff = computeExcalidrawSemanticDiff(strA, strB);
+  return !diff.hasChanges;
+}
+
+export function isDocumentContentEquivalent(
+  isDrawing: boolean,
+  contentA: string,
+  contentB: string
+): boolean {
+  if (contentA === contentB) return true;
+  if (isDrawing) {
+    return areExcalidrawScenesEquivalent(contentA, contentB);
+  }
+  return contentA.trim() === contentB.trim();
+}
+
 const CHANGELOG_KEY_PREFIX = "netherite_changelog_";
 
 export function loadChangelog(noteId: string): ChangelogEntry[] {

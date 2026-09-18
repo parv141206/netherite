@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Sidebar, type DriveItem } from "./Sidebar";
 import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
@@ -18,11 +18,18 @@ import { MobileBottomBar } from "./MobileBottomBar";
 import {
   computeLineDiff,
   computeExcalidrawSemanticDiff,
+  areExcalidrawScenesEquivalent,
+  isDocumentContentEquivalent,
   saveChangelogEntry,
   clearChangelog,
   type ChangelogEntry,
 } from "./diffUtils";
 import { optimizeExcalidrawJson, optimizeMarkdownImages } from "~/lib/imageOptimization";
+import {
+  syncSingleNoteToDevice,
+  CLOUD_AUTOSAVE_CADENCE_KEY,
+  type CloudCadence,
+} from "~/lib/localDeviceSync";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
@@ -464,6 +471,27 @@ export function WorkspaceLayout({
   const [contentRevision, setContentRevision] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Cloud Auto-Save Cadence (GCP Free Tier Safe)
+  const [cloudCadence, setCloudCadence] = useState<CloudCadence>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem(CLOUD_AUTOSAVE_CADENCE_KEY) as CloudCadence) || "30s";
+    }
+    return "30s";
+  });
+
+  useEffect(() => {
+    const handleCadenceChange = (e: any) => {
+      if (e?.detail) {
+        setCloudCadence(e.detail);
+      } else if (typeof window !== "undefined") {
+        const saved = (localStorage.getItem(CLOUD_AUTOSAVE_CADENCE_KEY) as CloudCadence) || "30s";
+        setCloudCadence(saved);
+      }
+    };
+    window.addEventListener("netherite_cloud_cadence_changed", handleCadenceChange);
+    return () => window.removeEventListener("netherite_cloud_cadence_changed", handleCadenceChange);
+  }, []);
+
   // Native Android Hardware Back Button Handling via Capacitor
   useCapacitorBackButton({
     closeModals: () => {
@@ -574,6 +602,131 @@ export function WorkspaceLayout({
     isSplitView &&
     (isLoadingSplitContent || (isFetchingSplitContent && fetchedSplitContent === undefined));
 
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((current) => (current === msg ? null : current));
+    }, 3500);
+  }, []);
+
+  const currentNote = localNotes.find((n) => n.id === activeTabId);
+  const currentSplitNote = localNotes.find((n) => n.id === splitTabId);
+  const isCurrentImage =
+    currentNote?.mimeType?.startsWith("image/") ||
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNote?.name || "");
+  const isSplitImage =
+    currentSplitNote?.mimeType?.startsWith("image/") ||
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentSplitNote?.name || "");
+
+  const isCurrentDrawing =
+    currentNote?.name?.endsWith(".excalidraw") ||
+    currentNote?.mimeType === "application/vnd.excalidraw+json";
+  const isCurrentUml = isUmlFile(currentNote);
+  const isCurrentMermaid = isMermaidFile(currentNote);
+  const isCurrentTikz = isTikzFile(currentNote);
+  const isCurrentMarkdown =
+    Boolean(currentNote) &&
+    !isCurrentDrawing &&
+    !isCurrentUml &&
+    !isCurrentMermaid &&
+    !isCurrentTikz &&
+    !isCurrentImage;
+
+  const isSplitDrawing =
+    currentSplitNote?.name?.endsWith(".excalidraw") ||
+    currentSplitNote?.mimeType === "application/vnd.excalidraw+json";
+  const isSplitUml = isUmlFile(currentSplitNote);
+  const isSplitMermaid = isMermaidFile(currentSplitNote);
+  const isSplitTikz = isTikzFile(currentSplitNote);
+  const isSplitMarkdown =
+    Boolean(currentSplitNote) &&
+    !isSplitDrawing &&
+    !isSplitUml &&
+    !isSplitMermaid &&
+    !isSplitTikz &&
+    !isSplitImage;
+
+  const isDirty = useMemo(() => {
+    if (isCurrentImage || !activeTabId) return false;
+    if (noteContent === lastSavedContent) return false;
+    if (!noteContent && !lastSavedContent) return false;
+
+    if (isCurrentDrawing) {
+      return !areExcalidrawScenesEquivalent(lastSavedContent, noteContent);
+    }
+    return noteContent !== lastSavedContent;
+  }, [isCurrentImage, activeTabId, noteContent, lastSavedContent, isCurrentDrawing]);
+
+  const [diffSummary, setDiffSummary] = useState<string>("0 diff");
+
+  useEffect(() => {
+    if (!isDirty) {
+      setDiffSummary(isCurrentDrawing ? "0 shapes" : "0 diff");
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (isCurrentDrawing) {
+        const dDiff = computeExcalidrawSemanticDiff(lastSavedContent, noteContent);
+        setDiffSummary(dDiff.summaryText);
+      } else {
+        const diff = computeLineDiff(lastSavedContent, noteContent);
+        setDiffSummary(diff.summary);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [isDirty, isCurrentDrawing, lastSavedContent, noteContent]);
+
+  // Efficient background cloud auto-save engine:
+  // When isDirty is true and user pauses typing/drawing, auto-sync to Google Drive
+  // Default is 30 seconds (GCP quota-friendly, user-requested 30s / 1m).
+  // Instant saves still occur on tab switch, window blur, or Ctrl+S.
+  useEffect(() => {
+    if (
+      !isDirty ||
+      isSaving ||
+      !activeTabId ||
+      activeTabId.startsWith("temp-") ||
+      !session?.user ||
+      isDocumentLoading ||
+      cloudCadence === "manual"
+    ) {
+      return;
+    }
+
+    const currentItem = localNotes.find((n) => n.id === activeTabId);
+    if (
+      currentItem?.mimeType?.startsWith("image/") ||
+      /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentItem?.name || "")
+    ) {
+      return;
+    }
+
+    const delayMs =
+      cloudCadence === "1m"
+        ? 60000
+        : cloudCadence === "10s"
+        ? 10000
+        : 30000; // default 30s
+
+    const timer = setTimeout(() => {
+      if (noteContent && (noteContent.length > 0 || lastSavedContent.length > 0)) {
+        void saveDocument(activeTabId, noteContent, currentItem);
+      }
+    }, delayMs);
+
+    return () => clearTimeout(timer);
+  }, [
+    isDirty,
+    isSaving,
+    activeTabId,
+    noteContent,
+    lastSavedContent,
+    session?.user,
+    isDocumentLoading,
+    localNotes,
+    cloudCadence,
+  ]);
+
   const saveBackupSnapshot = (noteId: string, content: string) => {
     if (!noteId || !content || typeof window === "undefined") return;
     try {
@@ -587,17 +740,40 @@ export function WorkspaceLayout({
     } catch {}
   };
 
+  const onSaveCompleted = useCallback(
+    (fileId: string, savedContent: string) => {
+      setIsSaving(false);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`netherite_cache_${fileId}`, savedContent);
+        localStorage.setItem(`netherite_saved_at_${fileId}`, String(Date.now()));
+        localStorage.removeItem(`netherite_draft_${fileId}`);
+      }
+      utils.notes.get.setData({ id: fileId }, savedContent);
+      utils.notes.list.setData(undefined, (old: any) => {
+        if (!old || !Array.isArray(old)) return old;
+        return old.map((it: any) =>
+          it.id === fileId ? { ...it, modifiedTime: new Date().toISOString() } : it
+        );
+      });
+
+      if (fileId === activeTabId) {
+        setLastSavedContent(savedContent);
+        saveBackupSnapshot(fileId, savedContent);
+      }
+      if (fileId === splitTabId) {
+        saveBackupSnapshot(fileId, savedContent);
+      }
+
+      // Asynchronously mirror to local device directory handle if enabled
+      void syncSingleNoteToDevice(fileId, savedContent, localNotes);
+    },
+    [activeTabId, splitTabId, utils, localNotes]
+  );
+
   const saveMutation = api.notes.save.useMutation({
     onMutate: () => setIsSaving(true),
     onSuccess: (_, variables) => {
-      setIsSaving(false);
-      if (variables.id === activeTabId) {
-        setLastSavedContent(variables.content);
-        saveBackupSnapshot(variables.id, variables.content);
-        if (typeof window !== "undefined") {
-          localStorage.removeItem(`netherite_draft_${variables.id}`);
-        }
-      }
+      onSaveCompleted(variables.id, variables.content);
     },
     onError: () => setIsSaving(false),
   });
@@ -661,63 +837,73 @@ export function WorkspaceLayout({
   const activeCanvasRef = useRef<DrawingCanvasHandle | null>(null);
   const activeSplitCanvasRef = useRef<DrawingCanvasHandle | null>(null);
 
-  // Robust draft recovery helper: recovers from direct draft, snapshot history, or contaminated tab draft
-  const recoverLatestDraftOrSnapshot = useCallback(
-    (fileId: string, isDrawing: boolean): string | null => {
-      if (typeof window === "undefined" || !fileId) return null;
-
-      // 1. Direct local draft
-      const directDraft = localStorage.getItem(`netherite_draft_${fileId}`);
-      if (directDraft && (!isDrawing || !isEmptyExcalidraw(directDraft))) {
-        return directDraft;
-      }
-
-      // 2. Snapshot history
-      try {
-        const snapKey = `netherite_snapshot_${fileId}`;
-        const snapData = localStorage.getItem(snapKey);
-        if (snapData) {
-          const list: Array<{ timestamp: number; content: string }> = JSON.parse(snapData);
-          if (Array.isArray(list) && list.length > 0) {
-            for (const item of list) {
-              if (item?.content && (!isDrawing || !isEmptyExcalidraw(item.content))) {
-                return item.content;
-              }
+  // One-time startup scrubber: clean up phantom drafts that match saved/cached content or are empty
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const keysToScrub: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("netherite_draft_")) {
+          const fileId = key.replace("netherite_draft_", "");
+          const draftVal = localStorage.getItem(key);
+          if (!draftVal || !draftVal.trim()) {
+            keysToScrub.push(key);
+            continue;
+          }
+          const cacheVal = localStorage.getItem(`netherite_cache_${fileId}`);
+          if (cacheVal) {
+            const isDrawing =
+              draftVal.includes('"type":"excalidraw"') || draftVal.includes('"type": "excalidraw"');
+            if (isDocumentContentEquivalent(isDrawing, cacheVal, draftVal)) {
+              keysToScrub.push(key);
             }
           }
         }
-      } catch {}
+      }
+      keysToScrub.forEach((k) => localStorage.removeItem(k));
+      if (keysToScrub.length > 0) {
+        console.info(`[Netherite] Cleaned up ${keysToScrub.length} phantom drafts on startup.`);
+      }
+    } catch (e) {
+      console.warn("Draft scrubber error:", e);
+    }
+  }, []);
 
-      // 3. For drawings, check if drawing draft was accidentally saved under another tab's key during tab switch
-      if (isDrawing) {
+  /**
+   * Retrieves an unsaved local draft ONLY if it exists and is genuinely modified
+   * compared to the cached/cloud version. Cleans up phantom identical drafts automatically.
+   */
+  const getUnsavedDraft = useCallback(
+    (fileId: string, isDrawing: boolean, baselineContent?: string): string | null => {
+      if (typeof window === "undefined" || !fileId) return null;
+
+      const directDraft = localStorage.getItem(`netherite_draft_${fileId}`);
+      if (!directDraft || !directDraft.trim()) return null;
+
+      if (isDrawing && isEmptyExcalidraw(directDraft)) {
         try {
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith("netherite_draft_") && key !== `netherite_draft_${fileId}`) {
-              const candidate = localStorage.getItem(key);
-              if (
-                candidate &&
-                (candidate.includes('"type":"excalidraw"') || candidate.includes('"type": "excalidraw"'))
-              ) {
-                if (!isEmptyExcalidraw(candidate)) {
-                  const ownerId = key.replace("netherite_draft_", "");
-                  const ownerItem = localNotes.find((n) => n.id === ownerId);
-                  if (ownerItem && (ownerItem.name.endsWith(".md") || ownerItem.mimeType === "text/markdown")) {
-                    console.info("Recovered Excalidraw drawing draft from contaminated tab:", ownerId);
-                    localStorage.removeItem(key);
-                    localStorage.setItem(`netherite_draft_${fileId}`, candidate);
-                    return candidate;
-                  }
-                }
-              }
-            }
-          }
+          localStorage.removeItem(`netherite_draft_${fileId}`);
         } catch {}
+        return null;
       }
 
-      return null;
+      const baseline =
+        baselineContent ??
+        (utils.notes.get.getData({ id: fileId }) as string | undefined) ??
+        localStorage.getItem(`netherite_cache_${fileId}`) ??
+        "";
+
+      if (baseline && isDocumentContentEquivalent(isDrawing, baseline, directDraft)) {
+        try {
+          localStorage.removeItem(`netherite_draft_${fileId}`);
+        } catch {}
+        return null;
+      }
+
+      return directDraft;
     },
-    [localNotes]
+    [utils]
   );
 
   // Synchronous flush on window unload or tab hidden
@@ -754,18 +940,27 @@ export function WorkspaceLayout({
       currentItem?.mimeType === "application/vnd.excalidraw+json";
     const isUml = isUmlFile(currentItem);
 
-    const recovered = recoverLatestDraftOrSnapshot(activeTabId, isDrawing);
-    if (recovered) {
+    const localCache =
+      typeof window !== "undefined" ? localStorage.getItem(`netherite_cache_${activeTabId}`) : null;
+    const baseline = fetchedContent !== undefined ? fetchedContent : localCache;
+
+    const unsavedDraft = getUnsavedDraft(activeTabId, isDrawing, baseline ?? undefined);
+    if (unsavedDraft) {
       contentFileIdRef.current = activeTabId;
-      setNoteContent(recovered);
+      setNoteContent(unsavedDraft);
       if (fetchedContent !== undefined) {
         setLastSavedContent(fetchedContent);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`netherite_cache_${activeTabId}`, fetchedContent);
+        }
+      } else if (localCache) {
+        setLastSavedContent(localCache);
       }
       return;
     }
 
-    if (fetchedContent !== undefined) {
-      let contentToSet = fetchedContent;
+    if (baseline !== null && baseline !== undefined) {
+      let contentToSet = baseline;
       if (isUml && contentToSet.trim().startsWith("{")) {
         try {
           const parsed = JSON.parse(contentToSet);
@@ -779,13 +974,15 @@ export function WorkspaceLayout({
       contentFileIdRef.current = activeTabId;
       setNoteContent(contentToSet);
       setLastSavedContent(contentToSet);
+      if (typeof window !== "undefined" && fetchedContent !== undefined) {
+        localStorage.setItem(`netherite_cache_${activeTabId}`, contentToSet);
+      }
     }
-  }, [fetchedContent, activeTabId, localNotes, recoverLatestDraftOrSnapshot]);
+  }, [fetchedContent, activeTabId, localNotes, getUnsavedDraft]);
 
   // Continuous local draft backup on every edit (Strictly isolated to active tab's file ID)
   useEffect(() => {
     if (!activeTabId || activeTabId.startsWith("temp-") || typeof window === "undefined") return;
-    // CRITICAL: Only write draft if the current noteContent in memory strictly belongs to this activeTabId!
     if (contentFileIdRef.current !== activeTabId) return;
 
     const currentItem = localNotes.find((n) => n.id === activeTabId);
@@ -802,35 +999,46 @@ export function WorkspaceLayout({
       return;
     }
 
-    if (noteContent !== lastSavedContent && noteContent.length > 0) {
+    if (isDirty && noteContent.length > 0) {
       try {
         localStorage.setItem(`netherite_draft_${activeTabId}`, noteContent);
         saveBackupSnapshot(activeTabId, noteContent);
       } catch {}
+    } else if (!isDirty) {
+      try {
+        localStorage.removeItem(`netherite_draft_${activeTabId}`);
+      } catch {}
     }
-  }, [noteContent, lastSavedContent, activeTabId, localNotes]);
+  }, [noteContent, lastSavedContent, activeTabId, localNotes, isDirty]);
 
-  // Split Pane Note Content Loading (With Draft Support)
+  // Split Pane Note Content Loading (With Clean Draft & Cache Support)
   useEffect(() => {
     if (!splitTabId) return;
-    if (typeof window !== "undefined") {
-      const draft = localStorage.getItem(`netherite_draft_${splitTabId}`);
-      if (draft !== null) {
-        const currentItem = localNotes.find((n) => n.id === splitTabId);
-        const isDrawing =
-          currentItem?.name.endsWith(".excalidraw") ||
-          currentItem?.mimeType === "application/vnd.excalidraw+json";
-        const isUml = isUmlFile(currentItem);
-        if ((!isDrawing || !isEmptyExcalidraw(draft)) && (!isUml || !isEmptyApollon(draft))) {
-          setSplitNoteContent(draft);
-          return;
-        }
+    const currentItem = localNotes.find((n) => n.id === splitTabId);
+    const isDrawing =
+      currentItem?.name.endsWith(".excalidraw") ||
+      currentItem?.mimeType === "application/vnd.excalidraw+json";
+
+    const localCache =
+      typeof window !== "undefined" ? localStorage.getItem(`netherite_cache_${splitTabId}`) : null;
+    const baseline = fetchedSplitContent !== undefined ? fetchedSplitContent : localCache;
+
+    const unsavedDraft = getUnsavedDraft(splitTabId, isDrawing, baseline ?? undefined);
+    if (unsavedDraft) {
+      setSplitNoteContent(unsavedDraft);
+      if (fetchedSplitContent !== undefined && typeof window !== "undefined") {
+        localStorage.setItem(`netherite_cache_${splitTabId}`, fetchedSplitContent);
+      }
+      return;
+    }
+
+    if (baseline !== null && baseline !== undefined) {
+      setSplitNoteContent(baseline);
+      if (fetchedSplitContent !== undefined && typeof window !== "undefined") {
+        localStorage.setItem(`netherite_cache_${splitTabId}`, baseline);
       }
     }
-    if (fetchedSplitContent !== undefined) {
-      setSplitNoteContent(fetchedSplitContent);
-    }
-  }, [fetchedSplitContent, splitTabId, localNotes]);
+  }, [fetchedSplitContent, splitTabId, localNotes, getUnsavedDraft]);
 
   useEffect(() => {
     if (activeTabId && localNotes.length > 0) {
@@ -977,14 +1185,7 @@ export function WorkspaceLayout({
           });
 
           if (uploadRes.ok) {
-            setIsSaving(false);
-            if (fileId === activeTabId) {
-              setLastSavedContent(contentToSave);
-              saveBackupSnapshot(fileId, contentToSave);
-              if (typeof window !== "undefined") {
-                localStorage.removeItem(`netherite_draft_${fileId}`);
-              }
-            }
+            onSaveCompleted(fileId, contentToSave);
             showToast("Saved to Google Drive");
             return true;
           }
@@ -1020,14 +1221,7 @@ export function WorkspaceLayout({
             });
 
             if (uploadRes.ok) {
-              setIsSaving(false);
-              if (fileId === activeTabId) {
-                setLastSavedContent(contentToSave);
-                saveBackupSnapshot(fileId, contentToSave);
-                if (typeof window !== "undefined") {
-                  localStorage.removeItem(`netherite_draft_${fileId}`);
-                }
-              }
+              onSaveCompleted(fileId, contentToSave);
               showToast("Saved to Google Drive");
               return true;
             }
@@ -1767,25 +1961,43 @@ export function WorkspaceLayout({
     const item = localNotes.find((n) => n.id === fileId);
     if (item?.mimeType === "application/vnd.google-apps.folder") return;
 
-    // 0. Synchronously flush the currently active drawing canvas before switching tabs
-    if (activeCanvasRef.current) {
-      try {
-        const flushed = activeCanvasRef.current.flush();
-        if (flushed && contentFileIdRef.current) {
-          localStorage.setItem(`netherite_draft_${contentFileIdRef.current}`, flushed);
-          saveBackupSnapshot(contentFileIdRef.current, flushed);
+    // 0. Handle unsaved changes for the PREVIOUS file before switching tabs
+    const prevFileId = contentFileIdRef.current;
+    if (prevFileId && prevFileId !== fileId && !prevFileId.startsWith("temp-")) {
+      const prevItem = localNotes.find((n) => n.id === prevFileId);
+      const isPrevDrawing =
+        prevItem?.name.endsWith(".excalidraw") ||
+        prevItem?.mimeType === "application/vnd.excalidraw+json";
+
+      let flushed: string | null = null;
+      if (activeCanvasRef.current) {
+        try {
+          flushed = activeCanvasRef.current.flush();
+        } catch (e) {
+          console.warn("Canvas flush failed:", e);
         }
-      } catch (e) {
-        console.warn("Canvas flush failed:", e);
+      }
+
+      const contentToPersist = flushed ?? noteContent;
+      const isPrevModified = !isDocumentContentEquivalent(isPrevDrawing, lastSavedContent, contentToPersist);
+
+      if (isPrevModified && contentToPersist && typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`netherite_draft_${prevFileId}`, contentToPersist);
+          saveBackupSnapshot(prevFileId, contentToPersist);
+        } catch {}
+        // Trigger background auto-save to Drive so work is never lost
+        void saveDocument(prevFileId, contentToPersist, prevItem);
+      } else if (!isPrevModified && typeof window !== "undefined") {
+        try {
+          localStorage.removeItem(`netherite_draft_${prevFileId}`);
+        } catch {}
       }
     }
+
     if (activeSplitCanvasRef.current) {
       try {
-        const flushedSplit = activeSplitCanvasRef.current.flush();
-        if (flushedSplit && splitTabId) {
-          localStorage.setItem(`netherite_draft_${splitTabId}`, flushedSplit);
-          saveBackupSnapshot(splitTabId, flushedSplit);
-        }
+        activeSplitCanvasRef.current.flush();
       } catch (e) {}
     }
 
@@ -1797,31 +2009,6 @@ export function WorkspaceLayout({
       setOpenTabIds([...openTabIds, fileId]);
     }
 
-    // 1. Flush any pending unsaved draft for the PREVIOUS file with its exact previous file ID
-    const prevFileId = contentFileIdRef.current;
-    if (
-      prevFileId &&
-      prevFileId !== fileId &&
-      !prevFileId.startsWith("temp-") &&
-      typeof window !== "undefined"
-    ) {
-      const prevItem = localNotes.find((n) => n.id === prevFileId);
-      const isPrevDrawing =
-        prevItem?.name.endsWith(".excalidraw") ||
-        prevItem?.mimeType === "application/vnd.excalidraw+json";
-      const isPrevUml = isUmlFile(prevItem);
-      const isCorrupted =
-        (isPrevDrawing && isEmptyExcalidraw(noteContent)) ||
-        (isPrevUml && isEmptyApollon(noteContent));
-
-      if (noteContent !== lastSavedContent && noteContent.length > 0 && !isCorrupted) {
-        try {
-          localStorage.setItem(`netherite_draft_${prevFileId}`, noteContent);
-          saveBackupSnapshot(prevFileId, noteContent);
-        } catch {}
-      }
-    }
-
     contentFileIdRef.current = fileId;
 
     const isDrawing =
@@ -1829,39 +2016,38 @@ export function WorkspaceLayout({
       item?.mimeType === "application/vnd.excalidraw+json";
     const isUml = isUmlFile(item);
 
-    // Hydrate note content immediately from localStorage draft or query cache
-    let contentToSet = "";
-    let isDraftLoaded = false;
-    const recovered = recoverLatestDraftOrSnapshot(fileId, isDrawing);
-    if (recovered) {
-      contentToSet = recovered;
-      isDraftLoaded = true;
-    }
+    const localCache =
+      typeof window !== "undefined" ? localStorage.getItem(`netherite_cache_${fileId}`) : null;
+    const queryCached = utils.notes.get.getData({ id: fileId });
+    const baseline = (typeof queryCached === "string" ? queryCached : null) ?? localCache ?? "";
 
-    const cached = utils.notes.get.getData({ id: fileId });
-    const cloudContent = typeof cached === "string" ? cached : "";
-    if (!contentToSet && cloudContent) {
-      if ((!isDrawing || !isEmptyExcalidraw(cloudContent)) && (!isUml || !isEmptyApollon(cloudContent))) {
-        contentToSet = cloudContent;
-      }
+    // Hydrate note content: check for a genuine unsaved draft
+    const unsavedDraft = getUnsavedDraft(fileId, isDrawing, baseline);
+    let contentToSet = "";
+    let baselineToSet = "";
+
+    if (unsavedDraft) {
+      contentToSet = unsavedDraft;
+      baselineToSet = baseline;
+    } else {
+      contentToSet = baseline;
+      baselineToSet = baseline;
     }
 
     setNoteContent(contentToSet);
-    setLastSavedContent(isDraftLoaded ? cloudContent : contentToSet);
+    setLastSavedContent(baselineToSet);
     setActiveTabId(fileId);
     setActiveView("editor");
-
-    if (isDraftLoaded && isDrawing) {
-      showToast("Restored your Excalidraw whiteboard draft");
-    }
   };
 
   const closeTab = (fileId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const item = localNotes.find((n) => n.id === fileId);
+    const isDrawing =
+      item?.name.endsWith(".excalidraw") ||
+      item?.mimeType === "application/vnd.excalidraw+json";
     const isThisTabDirty = activeTabId === fileId && isDirty;
-    const hasDraft =
-      typeof window !== "undefined" &&
-      localStorage.getItem(`netherite_draft_${fileId}`) !== null;
+    const hasDraft = Boolean(getUnsavedDraft(fileId, isDrawing));
 
     if (isThisTabDirty || hasDraft) {
       const confirmed = window.confirm(
@@ -1948,79 +2134,7 @@ export function WorkspaceLayout({
 
   const documentHeadings = getHeadings(noteContent);
 
-  // Unauthenticated Landing Page
-  if (!session?.user) {
-    return <LandingPage />;
-  }
 
-  const currentNote = localNotes.find((n) => n.id === activeTabId);
-  const currentSplitNote = localNotes.find((n) => n.id === splitTabId);
-  const isCurrentImage =
-    currentNote?.mimeType?.startsWith("image/") ||
-    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNote?.name || "");
-  const isSplitImage =
-    currentSplitNote?.mimeType?.startsWith("image/") ||
-    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentSplitNote?.name || "");
-
-  const isCurrentDrawing =
-    currentNote?.name?.endsWith(".excalidraw") ||
-    currentNote?.mimeType === "application/vnd.excalidraw+json";
-  const isCurrentUml = isUmlFile(currentNote);
-  const isCurrentMermaid = isMermaidFile(currentNote);
-  const isCurrentTikz = isTikzFile(currentNote);
-  const isCurrentMarkdown =
-    Boolean(currentNote) &&
-    !isCurrentDrawing &&
-    !isCurrentUml &&
-    !isCurrentMermaid &&
-    !isCurrentTikz &&
-    !isCurrentImage;
-
-  const isSplitDrawing =
-    currentSplitNote?.name?.endsWith(".excalidraw") ||
-    currentSplitNote?.mimeType === "application/vnd.excalidraw+json";
-  const isSplitUml = isUmlFile(currentSplitNote);
-  const isSplitMermaid = isMermaidFile(currentSplitNote);
-  const isSplitTikz = isTikzFile(currentSplitNote);
-  const isSplitMarkdown =
-    Boolean(currentSplitNote) &&
-    !isSplitDrawing &&
-    !isSplitUml &&
-    !isSplitMermaid &&
-    !isSplitTikz &&
-    !isSplitImage;
-
-  const isDirty =
-    !isCurrentImage &&
-    Boolean(activeTabId) &&
-    noteContent !== lastSavedContent &&
-    (noteContent.length > 0 || lastSavedContent.length > 0);
-
-  const [diffSummary, setDiffSummary] = useState<string>("0 diff");
-
-  useEffect(() => {
-    if (!isDirty) {
-      setDiffSummary("0 diff");
-      return;
-    }
-    const timer = setTimeout(() => {
-      if (isCurrentDrawing) {
-        const dDiff = computeExcalidrawSemanticDiff(lastSavedContent, noteContent);
-        setDiffSummary(dDiff.summaryText);
-      } else {
-        const diff = computeLineDiff(lastSavedContent, noteContent);
-        setDiffSummary(diff.summary);
-      }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [isDirty, isCurrentDrawing, lastSavedContent, noteContent]);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage((current) => (current === msg ? null : current));
-    }, 3500);
-  };
 
   const handleOpenSyncModal = () => {
     const hasLocalDraft =
@@ -2120,6 +2234,11 @@ export function WorkspaceLayout({
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  // Unauthenticated Landing Page
+  if (!session?.user) {
+    return <LandingPage />;
+  }
 
   return (
     <div className="h-screen w-screen flex bg-background text-foreground overflow-hidden">
@@ -2273,22 +2392,39 @@ export function WorkspaceLayout({
                     onDragEnd={() => setDraggedTabId(null)}
                     onClick={() => {
                       if (isSplitView && activePane === "split") {
-                        if (activeSplitCanvasRef.current) {
-                          try {
-                            const flushed = activeSplitCanvasRef.current.flush();
-                            if (flushed && splitTabId) {
-                              localStorage.setItem(`netherite_draft_${splitTabId}`, flushed);
-                              saveBackupSnapshot(splitTabId, flushed);
-                            }
-                          } catch {}
+                        if (splitTabId && splitTabId !== tabId && !splitTabId.startsWith("temp-")) {
+                          const prevSplitItem = localNotes.find((n) => n.id === splitTabId);
+                          const isPrevSplitDrawing =
+                            prevSplitItem?.name.endsWith(".excalidraw") ||
+                            prevSplitItem?.mimeType === "application/vnd.excalidraw+json";
+                          let flushed: string | null = null;
+                          if (activeSplitCanvasRef.current) {
+                            try {
+                              flushed = activeSplitCanvasRef.current.flush();
+                            } catch {}
+                          }
+                          const contentToPersist = flushed ?? splitNoteContent;
+                          const cached = localStorage.getItem(`netherite_cache_${splitTabId}`) || "";
+                          const isModified = !isDocumentContentEquivalent(isPrevSplitDrawing, cached, contentToPersist);
+                          if (isModified && contentToPersist) {
+                            localStorage.setItem(`netherite_draft_${splitTabId}`, contentToPersist);
+                            saveBackupSnapshot(splitTabId, contentToPersist);
+                            void saveDocument(splitTabId, contentToPersist, prevSplitItem);
+                          } else {
+                            localStorage.removeItem(`netherite_draft_${splitTabId}`);
+                          }
                         }
-                        if (splitTabId && splitNoteContent) {
-                          localStorage.setItem(`netherite_draft_${splitTabId}`, splitNoteContent);
-                        }
-                        const targetDraft = localStorage.getItem(`netherite_draft_${tabId}`);
-                        if (targetDraft) {
-                          setSplitNoteContent(targetDraft);
-                        }
+
+                        const targetItem = localNotes.find((n) => n.id === tabId);
+                        const isTargetDrawing =
+                          targetItem?.name.endsWith(".excalidraw") ||
+                          targetItem?.mimeType === "application/vnd.excalidraw+json";
+                        const targetDraft = getUnsavedDraft(tabId, isTargetDrawing);
+                        const cached =
+                          utils.notes.get.getData({ id: tabId }) ||
+                          localStorage.getItem(`netherite_cache_${tabId}`) ||
+                          "";
+                        setSplitNoteContent(targetDraft ?? (typeof cached === "string" ? cached : ""));
                         setSplitTabId(tabId);
                       } else {
                         openFileInTab(tabId);
@@ -2627,13 +2763,11 @@ export function WorkspaceLayout({
                         fileId={activeTabId}
                         key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
                         initialContent={noteContent}
+                        lastSavedContent={lastSavedContent}
                         theme={isDark ? "dark" : "light"}
                         onChange={(updatedContent) => {
                           if (contentFileIdRef.current === activeTabId) {
                             setNoteContent(updatedContent);
-                          }
-                          if (activeTabId && typeof window !== "undefined") {
-                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
                           }
                         }}
                         onSave={handleManualSave}
@@ -2852,16 +2986,18 @@ export function WorkspaceLayout({
                           fileId={splitTabId}
                           key={splitTabId || "split-drawing"}
                           initialContent={splitNoteContent}
+                          lastSavedContent={
+                            (typeof window !== "undefined" && splitTabId
+                              ? localStorage.getItem(`netherite_cache_${splitTabId}`)
+                              : null) || (splitTabId ? (utils.notes.get.getData({ id: splitTabId }) as string | undefined) : "") || ""
+                          }
                           theme={isDark ? "dark" : "light"}
                           onChange={(updatedContent) => {
                             setSplitNoteContent(updatedContent);
-                            if (splitTabId && typeof window !== "undefined") {
-                              localStorage.setItem(`netherite_draft_${splitTabId}`, updatedContent);
-                            }
                           }}
                           onSave={() => {
                             if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+                              void saveDocument(splitTabId, splitNoteContent, currentSplitNote);
                             }
                           }}
                         />

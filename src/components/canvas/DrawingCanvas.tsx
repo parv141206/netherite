@@ -23,6 +23,7 @@ const ExcalidrawEditor = dynamic(() => import("./ExcalidrawEditor"), {
 interface DrawingCanvasProps {
   fileId?: string;
   initialContent?: string;
+  lastSavedContent?: string;
   theme?: "light" | "dark";
   onChange?: (content: string) => void;
   onSave?: () => void;
@@ -30,7 +31,7 @@ interface DrawingCanvasProps {
 
 export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
   function DrawingCanvas(
-    { fileId, initialContent, theme, onChange, onSave },
+    { fileId, initialContent, lastSavedContent, theme, onChange, onSave },
     ref
   ) {
     return (
@@ -44,6 +45,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
           editorRef={ref}
           fileId={fileId}
           initialContent={initialContent}
+          lastSavedContent={lastSavedContent}
           theme={theme}
           onChange={onChange}
           onSave={onSave}

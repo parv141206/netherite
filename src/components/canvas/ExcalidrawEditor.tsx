@@ -17,12 +17,14 @@ import type {
 import type { DrawingCanvasHandle } from "./DrawingCanvas";
 import engineeringStyles from "@/features/engineering-canvas/engineering-sidebar.module.scss";
 import { useTheme } from "~/components/ThemeProvider";
+import { areExcalidrawScenesEquivalent } from "~/components/workspace/diffUtils";
 import { Sparkles } from "lucide-react";
 import { VisualNotesModal } from "./VisualNotesModal";
 
 interface ExcalidrawEditorProps {
   fileId?: string;
   initialContent?: string;
+  lastSavedContent?: string;
   theme?: "light" | "dark";
   onChange?: (content: string) => void;
   onSave?: () => void;
@@ -32,6 +34,7 @@ interface ExcalidrawEditorProps {
 export default function ExcalidrawEditor({
   fileId,
   initialContent = "",
+  lastSavedContent,
   theme: propTheme,
   onChange,
   onSave,
@@ -48,6 +51,9 @@ export default function ExcalidrawEditor({
 
   const fileIdRef = useRef<string | undefined>(fileId);
   fileIdRef.current = fileId;
+
+  const lastSavedContentRef = useRef<string | undefined>(lastSavedContent);
+  lastSavedContentRef.current = lastSavedContent;
 
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
@@ -160,20 +166,31 @@ export default function ExcalidrawEditor({
 
     const id = fileIdRef.current;
     if (id && typeof window !== "undefined") {
-      try {
-        localStorage.setItem(`netherite_draft_${id}`, serialized);
+      const baseline = lastSavedContentRef.current || "";
+      const isEquivalent = areExcalidrawScenesEquivalent(baseline, serialized);
 
-        // Versioned snapshot backup
-        const snapKey = `netherite_snapshot_${id}`;
-        const existing = localStorage.getItem(snapKey);
-        const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
-        if (list.length === 0 || list[0]?.content !== serialized) {
-          list.unshift({ timestamp: Date.now(), content: serialized });
-          if (list.length > 10) list.length = 10;
-          localStorage.setItem(snapKey, JSON.stringify(list));
+      if (isEquivalent) {
+        // Document is clean and matches saved baseline: ensure no phantom draft exists
+        try {
+          localStorage.removeItem(`netherite_draft_${id}`);
+        } catch {}
+      } else {
+        // Document actually has unsaved modifications: persist draft + snapshot safely
+        try {
+          localStorage.setItem(`netherite_draft_${id}`, serialized);
+
+          // Versioned snapshot backup
+          const snapKey = `netherite_snapshot_${id}`;
+          const existing = localStorage.getItem(snapKey);
+          const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
+          if (list.length === 0 || list[0]?.content !== serialized) {
+            list.unshift({ timestamp: Date.now(), content: serialized });
+            if (list.length > 10) list.length = 10;
+            localStorage.setItem(snapKey, JSON.stringify(list));
+          }
+        } catch (err) {
+          console.warn("Failed to write Excalidraw draft directly to localStorage:", err);
         }
-      } catch (err) {
-        console.warn("Failed to write Excalidraw draft directly to localStorage:", err);
       }
     }
 
@@ -341,10 +358,19 @@ export default function ExcalidrawEditor({
             );
             lastLoadedContentRef.current = serialized;
 
-            // Immediately persist to draft storage
+            // Manage draft storage: only store if actually modified from baseline
             const id = fileIdRef.current;
             if (id && typeof window !== "undefined") {
-              localStorage.setItem(`netherite_draft_${id}`, serialized);
+              const baseline = lastSavedContentRef.current || "";
+              if (areExcalidrawScenesEquivalent(baseline, serialized)) {
+                try {
+                  localStorage.removeItem(`netherite_draft_${id}`);
+                } catch {}
+              } else {
+                try {
+                  localStorage.setItem(`netherite_draft_${id}`, serialized);
+                } catch {}
+              }
             }
 
             if (onChangeRef.current) {
@@ -393,7 +419,7 @@ export default function ExcalidrawEditor({
     };
   }, [flush]);
 
-  // Synchronous flush on unmount: write directly to localStorage for this specific fileId
+  // Synchronous flush on unmount: write directly to localStorage for this specific fileId ONLY if modified!
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -403,17 +429,24 @@ export default function ExcalidrawEditor({
       const serialized = serializeCurrentScene();
       const id = fileIdRef.current;
       if (serialized && id && typeof window !== "undefined") {
-        try {
-          localStorage.setItem(`netherite_draft_${id}`, serialized);
-          const snapKey = `netherite_snapshot_${id}`;
-          const existing = localStorage.getItem(snapKey);
-          const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
-          if (list.length === 0 || list[0]?.content !== serialized) {
-            list.unshift({ timestamp: Date.now(), content: serialized });
-            if (list.length > 10) list.length = 10;
-            localStorage.setItem(snapKey, JSON.stringify(list));
-          }
-        } catch {}
+        const baseline = lastSavedContentRef.current || "";
+        if (areExcalidrawScenesEquivalent(baseline, serialized)) {
+          try {
+            localStorage.removeItem(`netherite_draft_${id}`);
+          } catch {}
+        } else {
+          try {
+            localStorage.setItem(`netherite_draft_${id}`, serialized);
+            const snapKey = `netherite_snapshot_${id}`;
+            const existing = localStorage.getItem(snapKey);
+            const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
+            if (list.length === 0 || list[0]?.content !== serialized) {
+              list.unshift({ timestamp: Date.now(), content: serialized });
+              if (list.length > 10) list.length = 10;
+              localStorage.setItem(snapKey, JSON.stringify(list));
+            }
+          } catch {}
+        }
       }
     };
   }, [serializeCurrentScene]);

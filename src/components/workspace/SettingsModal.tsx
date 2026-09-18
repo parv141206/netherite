@@ -22,8 +22,22 @@ import {
   Key,
   ExternalLink,
   ClipboardCopy,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import JSZip from "jszip";
+import {
+  isFileSystemAccessSupported,
+  storeDeviceDirectoryHandle,
+  getStoredDeviceDirectoryHandle,
+  removeStoredDeviceDirectoryHandle,
+  verifyHandlePermission,
+  performFullWorkspaceSyncToDevice,
+  LOCAL_DEVICE_SYNC_ENABLED_KEY,
+  LOCAL_DEVICE_FOLDER_NAME_KEY,
+  CLOUD_AUTOSAVE_CADENCE_KEY,
+  type CloudCadence,
+} from "~/lib/localDeviceSync";
 import { api } from "~/trpc/react";
 import {
   useTheme,
@@ -81,6 +95,140 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cloud Auto-Save Cadence (GCP Free Tier Safe)
+  const [cloudCadence, setCloudCadence] = useState<CloudCadence>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem(CLOUD_AUTOSAVE_CADENCE_KEY) as CloudCadence) || "30s";
+    }
+    return "30s";
+  });
+
+  const handleSetCloudCadence = (cadence: CloudCadence) => {
+    setCloudCadence(cadence);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CLOUD_AUTOSAVE_CADENCE_KEY, cadence);
+      window.dispatchEvent(new CustomEvent("netherite_cloud_cadence_changed", { detail: cadence }));
+    }
+  };
+
+  // Local Device Storage Sync
+  const [isDeviceSyncSupported] = useState(() => isFileSystemAccessSupported());
+  const [isDeviceSyncEnabled, setIsDeviceSyncEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(LOCAL_DEVICE_SYNC_ENABLED_KEY) === "true";
+    }
+    return false;
+  });
+  const [deviceFolderName, setDeviceFolderName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(LOCAL_DEVICE_FOLDER_NAME_KEY) || "";
+    }
+    return "";
+  });
+  const [showOverwriteWarning, setShowOverwriteWarning] = useState(false);
+  const [isDeviceSyncing, setIsDeviceSyncing] = useState(false);
+  const [deviceSyncProgress, setDeviceSyncProgress] = useState<string | null>(null);
+
+  const handleStartDeviceFolderPick = async () => {
+    setShowOverwriteWarning(false);
+    try {
+      if (typeof window === "undefined" || !("showDirectoryPicker" in window)) {
+        alert("File System Access API is not supported in this browser.");
+        return;
+      }
+      const dirHandle = await (window as any).showDirectoryPicker({
+        mode: "readwrite",
+      });
+      if (!dirHandle) return;
+
+      setIsDeviceSyncing(true);
+      setDeviceSyncProgress("Connecting local folder...");
+
+      await storeDeviceDirectoryHandle(dirHandle);
+      setIsDeviceSyncEnabled(true);
+      setDeviceFolderName(dirHandle.name);
+
+      if (notesData && notesData.length > 0) {
+        setDeviceSyncProgress(`Starting full sync to "${dirHandle.name}"...`);
+        const { successCount, errorCount } = await performFullWorkspaceSyncToDevice(
+          dirHandle,
+          notesData,
+          async (id) => {
+            const c = await utils.notes.get.fetch({ id });
+            return c ?? "";
+          },
+          (curr, total, name) => {
+            setDeviceSyncProgress(`Writing to disk (${curr}/${total}): ${name}`);
+          }
+        );
+        setDeviceSyncProgress(
+          `Sync complete: ${successCount} files written to disk${errorCount > 0 ? ` (${errorCount} failed)` : ""}`
+        );
+      } else {
+        setDeviceSyncProgress("Folder connected and ready for saves.");
+      }
+      setTimeout(() => setDeviceSyncProgress(null), 4000);
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        console.error("Local device folder pick error:", err);
+        alert(`Could not link folder: ${err?.message || "Unknown error"}`);
+      }
+      setDeviceSyncProgress(null);
+    } finally {
+      setIsDeviceSyncing(false);
+    }
+  };
+
+  const handleDeviceFullSync = async () => {
+    try {
+      const dirHandle = await getStoredDeviceDirectoryHandle();
+      if (!dirHandle) {
+        setShowOverwriteWarning(true);
+        return;
+      }
+      const hasPerm = await verifyHandlePermission(dirHandle, true);
+      if (!hasPerm) {
+        alert("Permission to write to local directory was denied or revoked.");
+        return;
+      }
+      if (!notesData || notesData.length === 0) {
+        alert("No documents found in workspace to sync.");
+        return;
+      }
+      setIsDeviceSyncing(true);
+      setDeviceSyncProgress(`Syncing workspace to "${dirHandle.name}"...`);
+      const { successCount, errorCount } = await performFullWorkspaceSyncToDevice(
+        dirHandle,
+        notesData,
+        async (id) => {
+          const c = await utils.notes.get.fetch({ id });
+          return c ?? "";
+        },
+        (curr, total, name) => {
+          setDeviceSyncProgress(`Writing to disk (${curr}/${total}): ${name}`);
+        }
+      );
+      setDeviceSyncProgress(
+        `Sync complete: ${successCount} files updated on disk${errorCount > 0 ? ` (${errorCount} errors)` : ""}`
+      );
+      setTimeout(() => setDeviceSyncProgress(null), 4000);
+    } catch (err: any) {
+      console.error("Sync error:", err);
+      alert(`Sync failed: ${err?.message || "Unknown error"}`);
+      setDeviceSyncProgress(null);
+    } finally {
+      setIsDeviceSyncing(false);
+    }
+  };
+
+  const handleDisconnectDeviceSync = async () => {
+    await removeStoredDeviceDirectoryHandle();
+    setIsDeviceSyncEnabled(false);
+    setDeviceFolderName("");
+    setDeviceSyncProgress("Local folder disconnected. Files on disk were preserved.");
+    setTimeout(() => setDeviceSyncProgress(null), 3000);
+  };
 
   const getRelativePath = (file: any, filesMap: Map<string, any>) => {
     const parts: string[] = [file.name];
@@ -521,6 +669,43 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
                   </p>
                 </div>
 
+                {/* Cloud Auto-Save Cadence */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-foreground block">
+                      Cloud Auto-Save Cadence (Google Drive)
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      GCP Free Tier Safe
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Controls how frequently idle edits are sent to Google Drive. Local drafts and disk files are saved continuously regardless, so you never lose data.
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    {[
+                      { id: "30s", label: "30s (Default)", desc: "Quota friendly" },
+                      { id: "1m", label: "1 min", desc: "Ultra conservative" },
+                      { id: "10s", label: "10s", desc: "Frequent" },
+                      { id: "manual", label: "Tab Switch / Manual", desc: "Zero idle requests" },
+                    ].map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => handleSetCloudCadence(c.id as CloudCadence)}
+                        className={`p-2 rounded-lg border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                          cloudCadence === c.id
+                            ? "border-foreground bg-accent font-semibold text-foreground"
+                            : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                        }`}
+                      >
+                        <span className="text-xs">{c.label}</span>
+                        <span className="text-[10px] opacity-70 mt-0.5">{c.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {userSession?.user && (
                   <div className="p-4 rounded-xl border border-border/60 bg-card space-y-2 shadow-2xs">
                     <span className="font-semibold text-xs text-foreground block">
@@ -668,6 +853,105 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
             {/* 5. BACKUP & RESTORE TAB */}
             {activeTab === "backup" && (
               <div className="space-y-5">
+                {/* Local Device Storage Sync */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <HardDrive className="w-4 h-4 text-foreground" />
+                      <div>
+                        <span className="font-semibold text-xs text-foreground block">
+                          Local Device Storage Sync
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Mirror workspace directly to a physical folder on your computer's disk
+                        </span>
+                      </div>
+                    </div>
+                    {isDeviceSyncSupported ? (
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={isDeviceSyncEnabled}
+                        onClick={() => {
+                          if (isDeviceSyncEnabled) {
+                            void handleDisconnectDeviceSync();
+                          } else {
+                            setShowOverwriteWarning(true);
+                          }
+                        }}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          isDeviceSyncEnabled ? "bg-foreground" : "bg-muted-foreground/30"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-xs transition duration-200 ease-in-out ${
+                            isDeviceSyncEnabled ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono">
+                        Not Supported
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Saves your markdown notes, Excalidraw whiteboards, and diagrams directly into an actual folder on your hard drive via the File System Access API. Zero risk of browser cache eviction or 5MB storage caps.
+                  </p>
+
+                  {isDeviceSyncEnabled && (
+                    <div className="pt-2 border-t border-border/50 space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span className="text-muted-foreground font-sans">Synced Folder:</span>
+                          <span className="font-mono font-medium text-foreground bg-muted px-2 py-0.5 rounded text-[11px]">
+                            {deviceFolderName || "Selected Directory"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => void handleDeviceFullSync()}
+                            disabled={isDeviceSyncing}
+                            className="px-2.5 py-1 rounded-md border border-border hover:bg-muted text-foreground text-[11px] font-medium transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${isDeviceSyncing ? "animate-spin" : ""}`} />
+                            <span>Sync All Now</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowOverwriteWarning(true)}
+                            disabled={isDeviceSyncing}
+                            className="px-2.5 py-1 rounded-md border border-border hover:bg-muted text-foreground text-[11px] font-medium transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            Change Folder
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDisconnectDeviceSync()}
+                            disabled={isDeviceSyncing}
+                            className="px-2.5 py-1 rounded-md border border-destructive/40 text-destructive hover:bg-destructive/10 text-[11px] font-medium transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {deviceSyncProgress && (
+                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border text-[11px] font-mono text-foreground flex items-center gap-2">
+                      {isDeviceSyncing ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      )}
+                      <span className="truncate">{deviceSyncProgress}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
                   <span className="font-semibold text-xs text-foreground block">
                     Workspace Archive (.zip)
@@ -758,6 +1042,58 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
           </div>
         </div>
       </div>
+
+      {/* Overwrite Warning Confirmation Modal */}
+      {showOverwriteWarning && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeviceSyncing) {
+              setShowOverwriteWarning(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm text-foreground">
+                  Overwrite Warning: Local Device Sync
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Enabling Local Device Storage will link a physical folder on your computer and mirror your Netherite notes and whiteboards into it.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+              ⚠️ <strong>Files with matching names will be overwritten</strong> with your current Netherite workspace state during sync. We strongly recommend selecting an empty folder (e.g. <code>~/Documents/Netherite</code>).
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowOverwriteWarning(false)}
+                disabled={isDeviceSyncing}
+                className="px-3.5 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-medium text-foreground transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleStartDeviceFolderPick()}
+                disabled={isDeviceSyncing}
+                className="px-3.5 py-1.5 rounded-lg bg-foreground text-background text-xs font-semibold hover:opacity-90 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                {isDeviceSyncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Folder className="w-3.5 h-3.5" />}
+                <span>Confirm & Pick Folder</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
