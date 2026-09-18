@@ -24,8 +24,11 @@ import {
   FileCode,
   Layers,
   CheckCircle2,
+  Terminal,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import { useTheme } from "~/components/ThemeProvider";
+import { mermaidToAscii } from "~/lib/mermaidToAscii";
 import { MermaidExportModal } from "./MermaidExportModal";
 
 interface MermaidEditorProps {
@@ -227,6 +230,16 @@ export default function MermaidEditor({
   const [isRendering, setIsRendering] = useState<boolean>(false);
   const [layoutMode, setLayoutMode] = useState<"split" | "preview" | "code">("split");
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  const [copiedAscii, setCopiedAscii] = useState<boolean>(false);
+
+  const handleCopyAscii = () => {
+    const ascii = mermaidToAscii(code);
+    navigator.clipboard.writeText(ascii).then(() => {
+      setCopiedAscii(true);
+      toast.success("Mermaid diagram copied as ASCII art!");
+      setTimeout(() => setCopiedAscii(false), 2000);
+    });
+  };
 
   // Pan and zoom states for preview
   const [zoom, setZoom] = useState<number>(1);
@@ -488,6 +501,20 @@ export default function MermaidEditor({
               <Eye className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* Copy ASCII Button */}
+          <button
+            onClick={handleCopyAscii}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-xl bg-card hover:bg-accent border border-border/60 text-foreground shadow-xs transition-all cursor-pointer"
+            title="Copy Diagram as ASCII Art"
+          >
+            {copiedAscii ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+            )}
+            <span>{copiedAscii ? "Copied ASCII!" : "Copy ASCII"}</span>
+          </button>
 
           {/* Export Button */}
           <button

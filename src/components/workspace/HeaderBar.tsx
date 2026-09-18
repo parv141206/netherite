@@ -231,6 +231,57 @@ export function HeaderBar({
   const isMermaid = noteTitle.endsWith(".mmd") || noteTitle.endsWith(".mermaid");
   const cleanTitle = noteTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
 
+  // Zen Mode: render as a compact floating pill at top right instead of full-width header bar
+  if (zenMode) {
+    return (
+      <aside
+        aria-label="Zen mode floating controls"
+        className="fixed top-3 right-4 z-40 flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-background/85 backdrop-blur-md border border-border/70 shadow-lg select-none text-xs animate-in fade-in slide-in-from-top-2 duration-200"
+      >
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-1 hover:bg-accent/70 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            title="Toggle Sidebar"
+          >
+            <Menu className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        <div className="flex items-center gap-1.5 min-w-0 max-w-[200px]">
+          {isDrawing ? (
+            <Palette className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+          ) : isUml ? (
+            <Network className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+          ) : isMermaid ? (
+            <Workflow className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          ) : (
+            <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          )}
+          <span className="truncate font-medium text-foreground text-xs">
+            {cleanTitle || "Zen Mode"}
+          </span>
+        </div>
+
+        <div className="h-3 w-px bg-border/80 shrink-0" />
+
+        {onToggleZenMode && (
+          <button
+            onClick={onToggleZenMode}
+            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent/80 hover:bg-accent text-foreground text-[11px] font-medium transition-colors cursor-pointer"
+            title="Exit Zen Mode (Esc or Ctrl+Alt+Z)"
+          >
+            <Minimize2 className="w-3 h-3 text-primary" />
+            <span>Exit Zen</span>
+            <kbd className="text-[9px] font-mono px-1 py-0.2 bg-muted border border-border/50 rounded text-muted-foreground">
+              Esc
+            </kbd>
+          </button>
+        )}
+      </aside>
+    );
+  }
+
   return (
     <header
       className="h-11 border-b border-border/40 bg-background/80 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between gap-3 sticky top-0 z-40 select-none shrink-0"

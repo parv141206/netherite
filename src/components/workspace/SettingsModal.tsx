@@ -246,474 +246,516 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
   };
 
 
+  const [activeTab, setActiveTab] = useState<
+    "appearance" | "editor" | "drive" | "copilot" | "backup" | "shortcuts"
+  >("appearance");
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-        {/* Modal Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <HardDrive className="w-5 h-5 text-foreground" />
-            <h2 className="font-bold text-base text-foreground">Workspace Settings</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="p-6 space-y-6 text-sm overflow-y-auto">
-          {/* Storage Section */}
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-3xl h-[600px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-150">
+        {/* Left Sidebar (Apple Settings style) */}
+        <div className="w-full md:w-56 border-b md:border-b-0 md:border-r border-border bg-muted/25 p-3 flex flex-col justify-between shrink-0 select-none">
           <div className="space-y-3">
-            <label className="font-semibold text-xs text-muted-foreground uppercase tracking-wider block">
-              Google Drive Storage Folder
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Folder className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={folderPath}
-                  onChange={(e) => setFolderPath(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                />
+            <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-foreground/70" />
+                <span className="font-semibold text-xs text-foreground tracking-tight">
+                  Settings
+                </span>
               </div>
               <button
-                onClick={() => alert(`Drive storage path saved: ${folderPath}`)}
-                className="px-3 py-2 bg-foreground text-background text-xs font-semibold rounded-lg hover:opacity-90 transition-all"
+                onClick={onClose}
+                className="md:hidden p-1 rounded-md hover:bg-muted text-muted-foreground"
               >
-                Save
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              All markdown files and uploads will be stored inside this folder on your personal Google Drive.
-            </p>
-          </div>
 
-          {/* Theme Mode Section */}
-          <div className="space-y-3">
-            <label className="font-semibold text-xs text-muted-foreground uppercase tracking-wider block">
-              Interface Mode
-            </label>
-            <div className="grid grid-cols-3 gap-3">
+            <nav className="space-y-0.5">
               {[
-                { id: "light", label: "Light", icon: Sun },
-                { id: "dark", label: "Dark", icon: Moon },
-                { id: "system", label: "System", icon: Monitor },
+                { id: "appearance", label: "Appearance", icon: Monitor },
+                { id: "editor", label: "Editor & Fonts", icon: Type },
+                { id: "drive", label: "Google Drive", icon: HardDrive },
+                { id: "copilot", label: "AI & Copilot", icon: Sparkles },
+                { id: "backup", label: "Backup & Restore", icon: Archive },
+                { id: "shortcuts", label: "Shortcuts", icon: Terminal },
               ].map((item) => {
                 const Icon = item.icon;
-                const active = theme === item.id;
+                const isActive = activeTab === item.id;
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setTheme(item.id as any)}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
-                      active
-                        ? "border-foreground bg-accent font-semibold text-foreground"
-                        : "border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                    onClick={() => setActiveTab(item.id as any)}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left ${
+                      isActive
+                        ? "bg-foreground text-background shadow-2xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span className="text-xs">{item.label}</span>
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{item.label}</span>
                   </button>
                 );
               })}
-            </div>
+            </nav>
           </div>
 
-          {/* Markdown Reading Themes Section (7 Themes x Light & Dark = 14 styles) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="font-semibold text-xs text-muted-foreground uppercase tracking-wider block">
-                Markdown Document Theme (14 Styles)
-              </label>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                Supports Light & Dark Modes
-              </span>
+          {/* User badge at bottom of sidebar */}
+          {userSession?.user && (
+            <div className="pt-2 border-t border-border/50 px-2 flex items-center gap-2 text-xs">
+              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                {userSession.user.name?.[0] || "U"}
+              </div>
+              <div className="min-w-0">
+                <div className="font-medium text-foreground text-[11px] truncate">
+                  {userSession.user.name || "Connected User"}
+                </div>
+                <div className="text-[10px] text-muted-foreground truncate">
+                  {userSession.user.email}
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {MD_THEMES.map((t) => {
-                const isCurrent = mdTheme === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setMdTheme(t.id)}
-                    className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
-                      isCurrent
-                        ? "border-primary bg-primary/10 shadow-sm"
-                        : "border-border hover:border-foreground/20 hover:bg-accent/40"
-                    }`}
-                  >
-                    <div
-                      className="w-3.5 h-3.5 rounded-full shrink-0 mt-0.5 border border-black/10 shadow-xs"
-                      style={{ backgroundColor: t.previewColor }}
-                    />
-                    <div className="min-w-0">
-                      <div className="text-xs font-semibold text-foreground truncate">
-                        {t.name}
+          )}
+        </div>
+
+        {/* Right Content Panel */}
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background">
+          {/* Header */}
+          <div className="px-6 py-3.5 border-b border-border/70 flex items-center justify-between shrink-0 bg-card">
+            <h3 className="font-semibold text-xs text-foreground uppercase tracking-wider">
+              {activeTab === "appearance" && "Appearance & Themes"}
+              {activeTab === "editor" && "Editor & Typography"}
+              {activeTab === "drive" && "Google Drive Storage"}
+              {activeTab === "copilot" && "Google Gemini AI & MCP"}
+              {activeTab === "backup" && "Workspace Backup & Restore"}
+              {activeTab === "shortcuts" && "Keyboard Shortcuts"}
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              title="Close Settings (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Tab Body */}
+          <div className="flex-1 p-6 space-y-5 overflow-y-auto text-xs">
+            {/* 1. APPEARANCE TAB */}
+            {activeTab === "appearance" && (
+              <div className="space-y-5">
+                {/* Interface Theme */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <span className="font-semibold text-xs text-foreground block">
+                    Interface Theme
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "light", label: "Light", icon: Sun },
+                      { id: "dark", label: "Dark", icon: Moon },
+                      { id: "system", label: "System", icon: Monitor },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const active = theme === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setTheme(item.id as any)}
+                          className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border transition-all cursor-pointer ${
+                            active
+                              ? "border-foreground bg-accent font-semibold text-foreground"
+                              : "border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span className="text-xs">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Markdown Reading Theme */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-foreground block">
+                      Markdown Document Theme
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      14 Curated Styles
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                    {MD_THEMES.map((t) => {
+                      const isCurrent = mdTheme === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => setMdTheme(t.id)}
+                          className={`flex items-start gap-2 p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                            isCurrent
+                              ? "border-foreground bg-accent font-medium text-foreground"
+                              : "border-border/60 hover:bg-muted/30 text-muted-foreground"
+                          }`}
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full shrink-0 mt-0.5 border border-black/10 shadow-2xs"
+                            style={{ backgroundColor: t.previewColor }}
+                          />
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-foreground truncate">
+                              {t.name}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground truncate">
+                              {t.tagline}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 2. EDITOR TAB */}
+            {activeTab === "editor" && (
+              <div className="space-y-5">
+                {/* Global Typography */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-foreground block">
+                      Workspace Typography
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Google Fonts</span>
+                  </div>
+                  <div className="relative">
+                    <Type className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+                    <select
+                      value={globalFont}
+                      onChange={(e) => setGlobalFont(e.target.value as any)}
+                      className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                    >
+                      {GLOBAL_FONTS.map((font) => (
+                        <option key={font.id} value={font.id}>
+                          {font.name} ({font.category})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-lg border border-border/40 text-xs font-dynamic-editor text-foreground">
+                    Sphinx of black quartz, judge my vow. 0123456789
+                  </div>
+                </div>
+
+                {/* Plain Text Clipboard Copy */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-muted text-foreground">
+                        <ClipboardCopy className="w-3.5 h-3.5" />
                       </div>
-                      <div className="text-[10px] text-muted-foreground line-clamp-1 leading-tight mt-0.5">
-                        {t.tagline}
+                      <div>
+                        <div className="font-semibold text-xs text-foreground">
+                          Text-Only Clipboard Copy
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          Copies pure clean text instead of Markdown syntax (#, **, etc.)
+                        </div>
                       </div>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Global Typography Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="font-semibold text-xs text-muted-foreground uppercase tracking-wider block">
-                Global Font Settings (Google Fonts)
-              </label>
-              <span className="text-[10px] text-muted-foreground">Persisted Across Workspace</span>
-            </div>
-            <div className="relative">
-              <Type className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
-              <select
-                value={globalFont}
-                onChange={(e) => setGlobalFont(e.target.value as any)}
-                className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                {GLOBAL_FONTS.map((font) => (
-                  <option key={font.id} value={font.id}>
-                    {font.name} — {font.category}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="p-3 bg-accent/30 rounded-xl border border-border/50 text-xs font-dynamic-editor text-foreground">
-              Preview: The quick brown fox jumps over the lazy dog. 1234567890
-            </div>
-          </div>
-
-          {/* Clipboard & Copy Preferences Section */}
-          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                  <ClipboardCopy className="w-4 h-4" />
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={textOnlyClipboard}
+                      onClick={() => setTextOnlyClipboard(!textOnlyClipboard)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        textOnlyClipboard ? "bg-foreground" : "bg-muted-foreground/30"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-xs transition duration-200 ease-in-out ${
+                          textOnlyClipboard ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-semibold text-xs text-foreground flex items-center gap-2">
-                    <span>Plain Text Clipboard Copy</span>
-                    {textOnlyClipboard && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-medium">
-                        Active
+              </div>
+            )}
+
+            {/* 3. GOOGLE DRIVE TAB */}
+            {activeTab === "drive" && (
+              <div className="space-y-5">
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <span className="font-semibold text-xs text-foreground block">
+                    Target Storage Folder
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Folder className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={folderPath}
+                        onChange={(e) => setFolderPath(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={() => alert(`Drive storage path saved: ${folderPath}`)}
+                      className="px-3 py-2 bg-foreground text-background text-xs font-semibold rounded-lg hover:opacity-90 transition-all cursor-pointer"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    All markdown notes, Excalidraw whiteboards, and diagrams are synced inside this folder on Google Drive.
+                  </p>
+                </div>
+
+                {userSession?.user && (
+                  <div className="p-4 rounded-xl border border-border/60 bg-card space-y-2 shadow-2xs">
+                    <span className="font-semibold text-xs text-foreground block">
+                      Connected Google Account
+                    </span>
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <div>
+                        <div className="font-medium text-foreground">{userSession.user.name}</div>
+                        <div className="text-[11px] text-muted-foreground">{userSession.user.email}</div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-mono text-[10px]">
+                        Active Sync
                       </span>
-                    )}
+                    </div>
                   </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Copy plain text instead of Markdown syntax (# headings, **bold**, etc.)
+                )}
+              </div>
+            )}
+
+            {/* 4. AI & COPILOT TAB */}
+            {activeTab === "copilot" && (
+              <div className="space-y-5">
+                {/* Official Gemini API Key */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-foreground block">
+                      Google Gemini AI Key
+                    </span>
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium"
+                    >
+                      <span>Get API Key</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Key className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+                      <input
+                        type="password"
+                        placeholder="AIzaSy..."
+                        value={geminiKey}
+                        onChange={(e) => setGeminiKey(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-xs font-mono text-foreground focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          localStorage.setItem("netherite_gemini_api_key", geminiKey.trim());
+                          localStorage.setItem("netherite_gemini_model", geminiModel);
+                          setGeminiSaved(true);
+                          setTimeout(() => setGeminiSaved(false), 2000);
+                        }
+                      }}
+                      className="px-3 py-2 bg-foreground text-background text-xs font-medium rounded-lg hover:opacity-90 transition-all cursor-pointer shrink-0"
+                    >
+                      {geminiSaved ? "Saved" : "Save Key"}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    {[
+                      { id: "gemini-2.5-flash", name: "2.5 Flash" },
+                      { id: "gemini-1.5-flash", name: "1.5 Flash" },
+                      { id: "gemini-1.5-pro", name: "1.5 Pro" },
+                    ].map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => {
+                          setGeminiModel(m.id);
+                          if (typeof window !== "undefined") {
+                            localStorage.setItem("netherite_gemini_model", m.id);
+                          }
+                        }}
+                        className={`py-1.5 px-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                          geminiModel === m.id
+                            ? "border-foreground bg-accent font-semibold text-foreground"
+                            : "border-border text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {m.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Model Context Protocol (MCP) */}
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-foreground block">
+                      Model Context Protocol (MCP)
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      Claude Desktop & CLI
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Connect AI assistants (Claude, Cursor, Antigravity) to read and write your notes and drawings directly.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        const config = {
+                          mcpServers: {
+                            netherite: {
+                              command: "bun",
+                              args: ["run", "src/mcp/cli.ts"],
+                              env: {
+                                NETHERITE_GOOGLE_REFRESH_TOKEN: userSession?.refreshToken || "",
+                              },
+                            },
+                          },
+                        };
+                        navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+                        setCopiedMcp("claude");
+                        setTimeout(() => setCopiedMcp(null), 2000);
+                      }}
+                      className="p-2 rounded-lg border border-border hover:bg-muted flex items-center justify-center gap-1.5 text-xs font-medium text-foreground transition-all cursor-pointer"
+                    >
+                      {copiedMcp === "claude" ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedMcp === "claude" ? "Copied!" : "Claude Desktop JSON"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText("bun run mcp");
+                        setCopiedMcp("cli");
+                        setTimeout(() => setCopiedMcp(null), 2000);
+                      }}
+                      className="p-2 rounded-lg border border-border hover:bg-muted flex items-center justify-center gap-1.5 text-xs font-medium text-foreground transition-all cursor-pointer"
+                    >
+                      {copiedMcp === "cli" ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Terminal className="w-3.5 h-3.5" />}
+                      <span>{copiedMcp === "cli" ? "Copied!" : "Copy CLI Command"}</span>
+                    </button>
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* Toggle Switch */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={textOnlyClipboard}
-                onClick={() => setTextOnlyClipboard(!textOnlyClipboard)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-ring ${
-                  textOnlyClipboard ? "bg-primary" : "bg-muted-foreground/30"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-xs ring-0 transition duration-200 ease-in-out ${
-                    textOnlyClipboard ? "translate-x-4" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
+            {/* 5. BACKUP & RESTORE TAB */}
+            {activeTab === "backup" && (
+              <div className="space-y-5">
+                <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                  <span className="font-semibold text-xs text-foreground block">
+                    Workspace Archive (.zip)
+                  </span>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Export your complete workspace as a standard ZIP archive containing all markdown notes, Excalidraw whiteboards, and diagrams.
+                  </p>
 
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              When enabled, copying selected content from your documents will copy normal plain text instead of Markdown formatting (e.g. <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]"># Heading</code> &rarr; <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]">Heading</code>, and <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]">**Bold**</code> &rarr; <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]">Bold</code>).
-            </p>
-          </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImportZip}
+                    accept=".zip,application/zip"
+                    className="hidden"
+                  />
 
-          {/* AI & MCP Server Section */}
-          <div className="space-y-3 p-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                    <span>Model Context Protocol (MCP)</span>
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleExportWorkspace}
+                      disabled={isExporting || isImporting}
+                      className="p-2.5 rounded-lg border border-border hover:bg-muted flex items-center justify-center gap-1.5 text-xs font-medium text-foreground transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-muted-foreground" />}
+                      <span>Export (.zip)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isExporting || isImporting}
+                      className="p-2.5 rounded-lg border border-border hover:bg-muted flex items-center justify-center gap-1.5 text-xs font-medium text-foreground transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-muted-foreground" />}
+                      <span>Import (.zip)</span>
+                    </button>
                   </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Connect AI assistants (Claude Desktop, Cursor, Antigravity) to your Drive notes
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Enables agents to autonomously author Markdown with KaTeX math, Apollon 13 UML models, Excalidraw whiteboards, and Mermaid diagrams directly into your Google Drive.
-            </p>
-
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                onClick={() => {
-                  const cwd = typeof window !== "undefined" ? window.location.origin : "";
-                  const config = {
-                    mcpServers: {
-                      netherite: {
-                        command: "bun",
-                        args: ["run", "src/mcp/cli.ts"],
-                        env: {
-                          NETHERITE_GOOGLE_REFRESH_TOKEN: userSession?.refreshToken || "",
-                        },
-                      },
-                    },
-                  };
-                  navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-                  setCopiedMcp("claude");
-                  setTimeout(() => setCopiedMcp(null), 2500);
-                }}
-                className="flex items-center justify-center gap-2 p-2 rounded-lg border border-border/70 hover:border-foreground/30 bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer"
-              >
-                {copiedMcp === "claude" ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-500" />
-                    <span className="text-emerald-500 font-semibold text-[11px]">Copied Config!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-[11px]">Claude Desktop JSON</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  const cmd = "bun run mcp";
-                  navigator.clipboard.writeText(cmd);
-                  setCopiedMcp("cli");
-                  setTimeout(() => setCopiedMcp(null), 2500);
-                }}
-                className="flex items-center justify-center gap-2 p-2 rounded-lg border border-border/70 hover:border-foreground/30 bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer"
-              >
-                {copiedMcp === "cli" ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-500" />
-                    <span className="text-emerald-500 font-semibold text-[11px]">Copied Command!</span>
-                  </>
-                ) : (
-                  <>
-                    <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-[11px]">Copy CLI Command</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Export & Import Section */}
-          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <Archive className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="font-semibold text-xs text-foreground">
-                    Workspace Backup & Migration
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Export your Netherite folder as a .zip or restore into any Google account
-                  </div>
+                  {(exportProgress || importProgress) && (
+                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border text-[11px] font-mono text-foreground flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span className="truncate">{exportProgress || importProgress}</span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Preserves folder structures, Markdown documents, Excalidraw whiteboards, Apollon UML schemas, and Mermaid charts.
-            </p>
-
-            {/* Hidden file input for zip upload */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImportZip}
-              accept=".zip,application/zip"
-              className="hidden"
-            />
-
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleExportWorkspace}
-                disabled={isExporting || isImporting}
-                className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
-              >
-                {isExporting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                    <span className="text-[11px]">Exporting…</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-[11px]">Export Workspace (.zip)</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isExporting || isImporting}
-                className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border bg-card hover:bg-accent text-xs font-medium text-foreground transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
-              >
-                {isImporting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                    <span className="text-[11px]">Importing…</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-[11px]">Import Backup (.zip)</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {(exportProgress || importProgress) && (
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-background/80 border border-border text-xs text-foreground font-mono animate-in fade-in duration-150">
-                {isExporting || isImporting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
-                ) : (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                )}
-                <span className="text-[11px] truncate">
-                  {exportProgress || importProgress}
+            {/* 6. SHORTCUTS TAB */}
+            {activeTab === "shortcuts" && (
+              <div className="p-4 rounded-xl border border-border/60 bg-card space-y-3 shadow-2xs">
+                <span className="font-semibold text-xs text-foreground block">
+                  Keyboard Shortcuts
                 </span>
+                <div className="space-y-2 font-mono text-[11px]">
+                  {[
+                    { key: "Ctrl + S", desc: "Save note or whiteboard" },
+                    { key: "Ctrl + Alt + Z", desc: "Toggle Zen Mode" },
+                    { key: "Ctrl + K", desc: "Open Global Search" },
+                    { key: "Ctrl + J", desc: "Toggle Gemini AI Copilot" },
+                    { key: "Ctrl + Shift + D", desc: "Toggle Diff & Changelog" },
+                    { key: "Ctrl + N", desc: "Create New Note" },
+                    { key: "Esc", desc: "Exit Zen Mode / Close dialogs" },
+                  ].map((s) => (
+                    <div
+                      key={s.key}
+                      className="flex items-center justify-between py-1 border-b border-border/30 last:border-0"
+                    >
+                      <span className="text-muted-foreground font-sans">{s.desc}</span>
+                      <kbd className="px-2 py-0.5 rounded bg-muted border border-border/70 text-foreground font-semibold text-[10px]">
+                        {s.key}
+                      </kbd>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Google Gemini AI Copilot Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="font-semibold text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                <span>Google Gemini AI Copilot</span>
-              </label>
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
-              >
-                <span>Get official key</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-
-            <div className="p-3.5 bg-muted/40 border border-border/80 rounded-xl space-y-3">
-              <div>
-                <label className="text-[11px] text-muted-foreground font-medium block mb-1">
-                  Official Gemini API Key
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Key className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
-                    <input
-                      type="password"
-                      placeholder="AIzaSy..."
-                      value={geminiKey}
-                      onChange={(e) => setGeminiKey(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (typeof window !== "undefined") {
-                        localStorage.setItem("netherite_gemini_api_key", geminiKey.trim());
-                        localStorage.setItem("netherite_gemini_model", geminiModel);
-                        setGeminiSaved(true);
-                        setTimeout(() => setGeminiSaved(false), 2000);
-                      }
-                    }}
-                    className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
-                  >
-                    {geminiSaved ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Saved</span>
-                      </>
-                    ) : (
-                      <span>Save Key</span>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                {[
-                  { id: "gemini-2.5-flash", name: "2.5 Flash" },
-                  { id: "gemini-1.5-flash", name: "1.5 Flash" },
-                  { id: "gemini-1.5-pro", name: "1.5 Pro" },
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setGeminiModel(m.id);
-                      if (typeof window !== "undefined") {
-                        localStorage.setItem("netherite_gemini_model", m.id);
-                      }
-                    }}
-                    className={`py-1.5 px-2 rounded-lg border text-xs font-medium transition-all ${
-                      geminiModel === m.id
-                        ? "border-purple-500 bg-purple-500/15 text-purple-600 dark:text-purple-300 font-semibold"
-                        : "border-border text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {m.name}
-                  </button>
-                ))}
-              </div>
-
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
-                Client-side encrypted in localStorage. Direct connection to Google Gemini endpoints. 100% legal, no risk of account ban.
-              </p>
-            </div>
+          {/* Footer */}
+          <div className="px-6 py-3 border-t border-border/70 bg-card flex justify-end shrink-0">
+            <button
+              onClick={onClose}
+              className="px-4 py-1.5 bg-foreground text-background text-xs font-medium rounded-lg hover:opacity-90 transition-all cursor-pointer"
+            >
+              Done
+            </button>
           </div>
-
-          {/* Account Details */}
-          <div className="p-3 bg-muted rounded-xl border border-border flex items-center justify-between text-xs">
-            <div>
-              <div className="font-semibold text-foreground">
-                {userSession?.user?.name || "Connected User"}
-              </div>
-              <div className="text-muted-foreground">{userSession?.user?.email}</div>
-            </div>
-            <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded font-mono text-[10px]">
-              Connected
-            </span>
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="p-4 border-t border-border flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-foreground text-background text-xs font-semibold rounded-lg hover:opacity-90 transition-all"
-          >
-            Done
-          </button>
         </div>
       </div>
     </div>

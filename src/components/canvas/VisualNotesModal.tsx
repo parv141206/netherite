@@ -160,23 +160,20 @@ export function VisualNotesModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+      <div className="relative w-full max-w-3xl max-h-[88vh] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 dark:border-neutral-800">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Sparkles className="w-5 h-5" />
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/70 bg-muted/20">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-muted text-foreground/80 border border-border/60">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-foreground tracking-tight">
                 Visual Notes Engine
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-medium">
-                  Markdown → Excalidraw
-                </span>
               </h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                Automatic radial cluster layout, dashed flow boxes, branching notes &amp; collision-free ASCII diagrams
+              <p className="text-[11px] text-muted-foreground">
+                Convert markdown structure into whiteboard elements
               </p>
             </div>
           </div>
@@ -184,158 +181,148 @@ export function VisualNotesModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            title="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Live Metrics Bar */}
-        <div className="flex items-center gap-3 px-6 py-2.5 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800 text-xs">
-          <span className="text-neutral-500 font-medium">Detected Structure:</span>
-          <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold">
-            {docStats.topics} Topic{docStats.topics === 1 ? "" : "s"}
-          </span>
-          <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-semibold">
-            {docStats.subtopics} Subtopics &amp; Flows
-          </span>
-          <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-semibold">
-            {docStats.notes} Notes
-          </span>
-          {docStats.diagrams > 0 && (
-            <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-semibold">
-              {docStats.diagrams} ASCII / Code Diagram
-            </span>
-          )}
+        {/* Minimal Monochromatic Structure Bar */}
+        <div className="flex items-center justify-between px-5 py-2 bg-muted/30 border-b border-border/50 text-xs font-mono select-none">
+          <div className="flex items-center gap-2 text-muted-foreground text-[11px]">
+            <span className="text-foreground font-medium">{docStats.topics} {docStats.topics === 1 ? "topic" : "topics"}</span>
+            <span>·</span>
+            <span>{docStats.subtopics} subtopics</span>
+            <span>·</span>
+            <span>{docStats.notes} notes</span>
+            {docStats.diagrams > 0 && (
+              <>
+                <span>·</span>
+                <span>{docStats.diagrams} diagrams</span>
+              </>
+            )}
+          </div>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-1.5 font-sans">
             <button
               type="button"
               onClick={() => setShowPrompt(!showPrompt)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs transition-colors ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
                 showPrompt
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                  ? "bg-foreground text-background font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
-              title="Copy AI Prompt to convert your raw notes into Netherite Visual Notes without losing data"
+              title="View AI conversion prompt"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{showPrompt ? "Hide AI Prompt" : "AI Conversion Prompt"}</span>
+              <Sparkles className="w-3 h-3" />
+              <span>AI Prompt</span>
             </button>
-
-            <span className="text-neutral-400 ml-1">Presets:</span>
+            <span className="text-border">|</span>
             <button
               type="button"
               onClick={() => setMarkdown(CN_STUDY_TEMPLATE)}
-              className="px-2 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-medium transition-colors"
-              title="Load full Computer Networks notes (IPv4, TCP, UDP)"
+              className="px-2 py-0.5 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              title="Load Computer Networks notes template"
             >
-              CN Study Guide
+              Study Guide
             </button>
             <button
               type="button"
               onClick={() => setMarkdown(REFERENCE_SKETCH_TEMPLATE)}
-              className="px-2 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-medium transition-colors"
-              title="Load original reference sketch template"
+              className="px-2 py-0.5 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              title="Load reference sketch layout template"
             >
-              Reference Layout
+              Reference
             </button>
           </div>
         </div>
 
         {/* Collapsible AI Prompt Drawer */}
         {showPrompt && (
-          <div className="mx-6 mt-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="mx-5 mt-3 p-3.5 rounded-xl border border-border/70 bg-muted/20 flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                  AI Conversion Prompt (ChatGPT / Claude / Gemini / DeepSeek)
-                </span>
-              </div>
+              <span className="text-xs font-medium text-foreground">
+                AI Conversion Prompt
+              </span>
               <button
                 type="button"
                 onClick={handleCopyPrompt}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-foreground text-background text-[11px] font-medium transition-all hover:opacity-90 cursor-pointer"
               >
-                {promptCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{promptCopied ? "Copied Prompt!" : "Copy Full Prompt"}</span>
+                {promptCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                <span>{promptCopied ? "Copied" : "Copy Prompt"}</span>
               </button>
             </div>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              Paste this prompt into your favorite AI along with your raw notes. It guarantees <strong>100% preservation of all content, numerical data, formulas, and schematics</strong> while structuring the markdown into <code># Topic</code>, <code>## Subtopic</code>, <code>### [flow]</code>, and <code>#### Concept</code> tags.
-            </p>
-            <div className="relative">
-              <pre className="max-h-36 overflow-y-auto p-3 text-[11px] font-mono leading-relaxed rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 select-all whitespace-pre-wrap">
-                {VISUAL_NOTES_CONVERSION_PROMPT}
-              </pre>
-            </div>
+            <pre className="max-h-28 overflow-y-auto p-2.5 text-[11px] font-mono leading-relaxed rounded-lg bg-background border border-border text-foreground/90 select-all whitespace-pre-wrap">
+              {VISUAL_NOTES_CONVERSION_PROMPT}
+            </pre>
           </div>
         )}
 
         {/* Body Editor */}
-        <div className="flex-1 min-h-[360px] p-6 flex flex-col gap-3 overflow-hidden">
-          <div className="flex items-center justify-between text-xs text-neutral-500">
+        <div className="flex-1 min-h-[300px] p-5 flex flex-col gap-2.5 overflow-hidden">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
             <span>Markdown Notes Source</span>
-            <span className="text-neutral-400">
-              Supports <code># Topic [color: green]</code>, <code>## Subtopic</code>, <code>### [flow] Step</code>, <code>#### Concept</code>, bullets &amp; <code>```ascii</code>
+            <span className="font-mono text-[10px] text-muted-foreground/70">
+              # Topic · ## Subtopic · ### [flow] · #### Concept · ```ascii
             </span>
           </div>
 
           <textarea
             value={markdown}
             onChange={(e) => setMarkdown(e.target.value)}
-            className="flex-1 w-full p-4 font-mono text-xs leading-relaxed rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none"
-            placeholder="Paste or write hierarchical markdown notes here..."
+            className="flex-1 w-full p-3.5 font-mono text-xs leading-relaxed rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+            placeholder="Write or paste hierarchical markdown notes here..."
           />
 
           {/* Options Strip */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-neutral-500">Theme:</span>
+          <div className="flex items-center justify-between pt-1 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground text-[11px]">Theme:</span>
                 <select
                   value={theme}
                   onChange={(e) => setTheme(e.target.value as any)}
-                  className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium"
+                  className="px-2 py-1 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none"
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-neutral-500">Style:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground text-[11px]">Style:</span>
                 <select
                   value={roughness}
                   onChange={(e) => setRoughness(Number(e.target.value))}
-                  className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium"
+                  className="px-2 py-1 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none"
                 >
-                  <option value={1}>Sketchy (Hand-drawn)</option>
-                  <option value={0}>Crisp (Architectural)</option>
+                  <option value={1}>Sketchy</option>
+                  <option value={0}>Architectural</option>
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-neutral-500">Layout:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground text-[11px]">Layout:</span>
                 <select
                   value={layoutMode}
                   onChange={(e) => setLayoutMode(e.target.value as any)}
-                  className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium"
+                  className="px-2 py-1 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none"
                 >
-                  <option value="grid">2D Whiteboard (Masonry)</option>
+                  <option value="grid">2D Whiteboard</option>
                   <option value="radial">Radial Mindmap</option>
-                  <option value="vertical">Single Column</option>
+                  <option value="vertical">Column</option>
                 </select>
               </div>
 
               {layoutMode === "grid" && (
-                <div className="flex items-center gap-2">
-                  <span className="text-neutral-500">Columns:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground text-[11px]">Columns:</span>
                   <select
                     value={columns}
                     onChange={(e) => setColumns(Number(e.target.value))}
-                    className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium"
+                    className="px-2 py-1 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none"
                   >
                     <option value={0}>Auto</option>
                     <option value={1}>1 Col</option>
@@ -349,36 +336,35 @@ export function VisualNotesModal({
             <button
               type="button"
               onClick={handleCopyJson}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs text-neutral-700 dark:text-neutral-300 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:bg-muted text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? "Copied JSON!" : "Copy Excalidraw JSON"}</span>
+              {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+              <span>{copied ? "Copied" : "Copy JSON"}</span>
             </button>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
-          <div className="flex items-center gap-2 text-xs text-neutral-400">
-            <HelpCircle className="w-4 h-4" />
-            <span>Arrows, coordinates, and spacing are handled with automatic zero-overlap math.</span>
-          </div>
+        <div className="flex items-center justify-between px-5 py-3 border-t border-border/70 bg-muted/20">
+          <span className="text-[11px] text-muted-foreground/70">
+            Auto-spaced layout engine
+          </span>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => handleApplyToCanvas(false)}
-              className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-semibold text-neutral-800 dark:text-neutral-200 transition-colors"
+              className="px-3.5 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-medium text-foreground transition-colors cursor-pointer"
             >
               Append to Canvas
             </button>
             <button
               type="button"
               onClick={() => handleApplyToCanvas(true)}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-foreground text-background hover:opacity-90 text-xs font-medium transition-all shadow-xs cursor-pointer"
             >
               <span>Generate on Canvas</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

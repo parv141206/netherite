@@ -176,21 +176,10 @@ export function WorkspaceLayout({
     });
   };
 
-  const [isDiffSidebarOpen, setIsDiffSidebarOpen] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("netherite_diff_sidebar_open") === "true";
-    }
-    return false;
-  });
+  const [isDiffSidebarOpen, setIsDiffSidebarOpen] = useState<boolean>(false);
 
   const toggleDiffSidebar = () => {
-    setIsDiffSidebarOpen((prev) => {
-      const next = !prev;
-      if (typeof window !== "undefined") {
-        localStorage.setItem("netherite_diff_sidebar_open", String(next));
-      }
-      return next;
-    });
+    setIsDiffSidebarOpen((prev) => !prev);
   };
 
   useEffect(() => {
@@ -285,6 +274,15 @@ export function WorkspaceLayout({
 
   // Multi-Tab & Split View State: strictly ensure folders and dotfiles are never opened as notes
   const [openTabIds, setOpenTabIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("netherite_open_tabs");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
     const firstFile = (initialNotes || []).find(
       (n) => n.mimeType !== "application/vnd.google-apps.folder" && !n.name?.startsWith(".") && Boolean(n.id)
     );
@@ -300,6 +298,10 @@ export function WorkspaceLayout({
   });
 
   const [activeTabId, setActiveTabId] = useState<string | undefined>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_active_tab");
+      if (saved) return saved;
+    }
     const firstFile = (initialNotes || []).find(
       (n) => n.mimeType !== "application/vnd.google-apps.folder" && !n.name?.startsWith(".") && Boolean(n.id)
     );
@@ -347,9 +349,98 @@ export function WorkspaceLayout({
     }
   }, [localNotes, activeTabId]);
 
-  const [isSplitView, setIsSplitView] = useState<boolean>(false);
-  const [splitTabId, setSplitTabId] = useState<string | undefined>(undefined);
-  const [activePane, setActivePane] = useState<"primary" | "split">("primary");
+  const [isSplitView, setIsSplitView] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_split_view") === "true";
+    }
+    return false;
+  });
+  const [splitTabId, setSplitTabId] = useState<string | undefined>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_split_tab") || undefined;
+    }
+    return undefined;
+  });
+  const [activePane, setActivePane] = useState<"primary" | "split">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_active_pane");
+      if (saved === "primary" || saved === "split") return saved;
+    }
+    return "primary";
+  });
+
+  const [splitRatio, setSplitRatio] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_split_ratio");
+      if (saved) {
+        const num = parseFloat(saved);
+        if (!isNaN(num) && num >= 0.2 && num <= 0.8) return num;
+      }
+    }
+    return 0.5;
+  });
+  const [isResizingSplit, setIsResizingSplit] = useState<boolean>(false);
+  const workspaceSplitContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Sync workspace tab and split state to localStorage for seamless refresh
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("netherite_open_tabs", JSON.stringify(openTabIds));
+    }
+  }, [openTabIds]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (activeTabId) {
+        localStorage.setItem("netherite_active_tab", activeTabId);
+      } else {
+        localStorage.removeItem("netherite_active_tab");
+      }
+    }
+  }, [activeTabId]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("netherite_split_view", String(isSplitView));
+      if (splitTabId) {
+        localStorage.setItem("netherite_split_tab", splitTabId);
+      } else {
+        localStorage.removeItem("netherite_split_tab");
+      }
+      localStorage.setItem("netherite_active_pane", activePane);
+    }
+  }, [isSplitView, splitTabId, activePane]);
+
+  const handleSplitResizeStart = (e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsResizingSplit(true);
+    const container = workspaceSplitContainerRef.current;
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const currentX = moveEvent.clientX;
+      const offset = currentX - containerRect.left;
+      const ratio = Math.max(0.2, Math.min(0.8, offset / containerWidth));
+      setSplitRatio(ratio);
+    };
+
+    const handlePointerUp = () => {
+      setIsResizingSplit(false);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      if (typeof window !== "undefined") {
+        setSplitRatio((finalRatio) => {
+          localStorage.setItem("netherite_split_ratio", String(finalRatio));
+          return finalRatio;
+        });
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  };
 
   // Drag & Drop Feedback State
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
@@ -2101,9 +2192,7 @@ export function WorkspaceLayout({
                       {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "")}
                     </span>
                     {isSplitView && isSplitTab && (
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-primary/10 text-primary font-mono scale-90 shrink-0">
-                        Split
-                      </span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" title="Open in Split Pane" />
                     )}
                     <div className="flex items-center ml-1">
                       {hasLocalDiff ? (
@@ -2197,8 +2286,9 @@ export function WorkspaceLayout({
         ) : (
           <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden pb-22 sm:pb-0">
             <main
+            ref={workspaceSplitContainerRef}
             className={`flex-1 overflow-hidden bg-background ${
-              isSplitView ? "grid grid-cols-2 divide-x divide-border/60" : "flex flex-col"
+              isSplitView ? "flex flex-row relative" : "flex flex-col"
             }`}
             onDragOver={(e) => {
               e.preventDefault();
@@ -2285,18 +2375,15 @@ export function WorkspaceLayout({
                 <div
                   data-pane="primary"
                   data-active-pane={activePane === "primary"}
+                  style={isSplitView ? { width: `${splitRatio * 100}%` } : { width: "100%" }}
                   onPointerDown={() => {
                     if (isSplitView && activePane !== "primary") setActivePane("primary");
                   }}
                   onFocusCapture={() => {
                     if (isSplitView && activePane !== "primary") setActivePane("primary");
                   }}
-                  className={`h-full w-full overflow-hidden flex flex-col relative transition-all duration-150 ${
-                    isSplitView
-                      ? activePane === "primary"
-                        ? "ring-1 ring-primary/40 rounded-lg shadow-xs"
-                        : "opacity-95 hover:opacity-100"
-                      : ""
+                  className={`h-full overflow-hidden flex flex-col relative shrink-0 ${
+                    isResizingSplit ? "pointer-events-none select-none" : ""
                   }`}
                 >
                   {isSplitView && (
@@ -2317,14 +2404,13 @@ export function WorkspaceLayout({
                           {currentNote?.name || "Main Document"}
                         </span>
                         <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors ${
+                          className={`w-2 h-2 rounded-full shrink-0 transition-all duration-200 ${
                             activePane === "primary"
-                              ? "bg-primary/15 text-primary border border-primary/25 font-semibold"
-                              : "bg-muted/80 text-muted-foreground"
+                              ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]"
+                              : "bg-muted-foreground/30"
                           }`}
-                        >
-                          {activePane === "primary" ? "Active" : "Primary"}
-                        </span>
+                          title={activePane === "primary" ? "Active pane" : "Inactive pane"}
+                        />
                       </div>
                     </div>
                   )}
@@ -2460,23 +2546,42 @@ export function WorkspaceLayout({
                   )}
                 </div>
 
+                {/* Center Draggable Resizer */}
+                {isSplitView && (
+                  <div
+                    role="separator"
+                    aria-orientation="vertical"
+                    tabIndex={0}
+                    onPointerDown={handleSplitResizeStart}
+                    className={`w-1.5 hover:w-2 -mx-[3px] z-30 cursor-col-resize flex items-center justify-center group relative select-none transition-all ${
+                      isResizingSplit ? "w-2 bg-primary/30" : "bg-transparent hover:bg-primary/20"
+                    }`}
+                    title="Drag to resize split view width"
+                  >
+                    <div
+                      className={`w-[1px] h-full transition-colors ${
+                        isResizingSplit ? "bg-primary" : "bg-border/80 group-hover:bg-primary/80"
+                      }`}
+                    />
+                  </div>
+                )}
+
                 {/* Secondary Split Pane */}
                 {isSplitView && (
                   <div
                     data-pane="split"
                     data-active-pane={activePane === "split"}
+                    style={{ width: `${(1 - splitRatio) * 100}%` }}
                     onPointerDown={() => {
-                      if (isSplitView && activePane !== "split") setActivePane("split");
+                      if (activePane !== "split") setActivePane("split");
                     }}
                     onFocusCapture={() => {
-                      if (isSplitView && activePane !== "split") setActivePane("split");
+                      if (activePane !== "split") setActivePane("split");
                     }}
-                    className={`h-full w-full overflow-hidden flex flex-col relative rounded-xl transition-all duration-150 ${
-                      isOverSplitTarget
-                        ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                        : activePane === "split"
-                        ? "ring-1 ring-primary/40 shadow-xs"
-                        : "opacity-95 hover:opacity-100"
+                    className={`h-full overflow-hidden flex flex-col relative shrink-0 ${
+                      isResizingSplit ? "pointer-events-none select-none" : ""
+                    } ${
+                      isOverSplitTarget ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : ""
                     }`}
                   >
                     <div className="h-8 border-b border-border/70 bg-muted/20 flex items-center justify-between px-3 shrink-0 select-none text-xs">
@@ -2496,14 +2601,13 @@ export function WorkspaceLayout({
                           {currentSplitNote?.name || "Split Document"}
                         </span>
                         <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors ${
+                          className={`w-2 h-2 rounded-full shrink-0 transition-all duration-200 ${
                             activePane === "split"
-                              ? "bg-primary/15 text-primary border border-primary/25 font-semibold"
-                              : "bg-muted/80 text-muted-foreground"
+                              ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]"
+                              : "bg-muted-foreground/30"
                           }`}
-                        >
-                          {activePane === "split" ? "Active" : "Split"}
-                        </span>
+                          title={activePane === "split" ? "Active pane" : "Inactive pane"}
+                        />
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0">

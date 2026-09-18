@@ -9,7 +9,9 @@ import {
   FileCode,
   Image as ImageIcon,
   Sparkles,
+  Terminal,
 } from "lucide-react";
+import { mermaidToAscii } from "~/lib/mermaidToAscii";
 
 interface MermaidExportModalProps {
   isOpen: boolean;
@@ -28,7 +30,7 @@ export function MermaidExportModal({
   diagramTitle,
   isDark,
 }: MermaidExportModalProps) {
-  const [copiedType, setCopiedType] = useState<"svg" | "code" | null>(null);
+  const [copiedType, setCopiedType] = useState<"svg" | "code" | "ascii" | null>(null);
   const [isExportingPng, setIsExportingPng] = useState(false);
 
   if (!isOpen) return null;
@@ -140,6 +142,19 @@ export function MermaidExportModal({
     }
   };
 
+  // Copy ASCII Diagram
+  const handleCopyAscii = async () => {
+    if (!mermaidCode) return;
+    try {
+      const ascii = mermaidToAscii(mermaidCode);
+      await navigator.clipboard.writeText(ascii);
+      setCopiedType("ascii");
+      setTimeout(() => setCopiedType(null), 2500);
+    } catch (err) {
+      console.error("Failed to copy ascii:", err);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150"
@@ -210,21 +225,21 @@ export function MermaidExportModal({
             <Download className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
           </button>
 
-          <div className="pt-2 border-t border-border/40 grid grid-cols-2 gap-2">
+          <div className="pt-2 border-t border-border/40 grid grid-cols-3 gap-2">
             {/* Copy SVG */}
             <button
               onClick={handleCopySvg}
-              className="px-3 py-2.5 rounded-xl border border-border/60 hover:bg-muted/40 flex items-center justify-center gap-2 text-xs font-medium text-foreground transition-all cursor-pointer"
+              className="px-2.5 py-2.5 rounded-xl border border-border/60 hover:bg-muted/40 flex items-center justify-center gap-1.5 text-xs font-medium text-foreground transition-all cursor-pointer"
             >
               {copiedType === "svg" ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-500 font-semibold">Copied SVG!</span>
+                  <span className="text-emerald-500 font-semibold">Copied!</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>Copy SVG</span>
+                  <span>SVG</span>
                 </>
               )}
             </button>
@@ -232,17 +247,36 @@ export function MermaidExportModal({
             {/* Copy Code */}
             <button
               onClick={handleCopyCode}
-              className="px-3 py-2.5 rounded-xl border border-border/60 hover:bg-muted/40 flex items-center justify-center gap-2 text-xs font-medium text-foreground transition-all cursor-pointer"
+              className="px-2.5 py-2.5 rounded-xl border border-border/60 hover:bg-muted/40 flex items-center justify-center gap-1.5 text-xs font-medium text-foreground transition-all cursor-pointer"
             >
               {copiedType === "code" ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-500 font-semibold">Copied Code!</span>
+                  <span className="text-emerald-500 font-semibold">Copied!</span>
                 </>
               ) : (
                 <>
                   <FileCode className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>Copy Code</span>
+                  <span>Code</span>
+                </>
+              )}
+            </button>
+
+            {/* Copy ASCII */}
+            <button
+              onClick={handleCopyAscii}
+              className="px-2.5 py-2.5 rounded-xl border border-border/60 hover:bg-muted/40 flex items-center justify-center gap-1.5 text-xs font-medium text-foreground transition-all cursor-pointer"
+              title="Copy clean ASCII art diagram"
+            >
+              {copiedType === "ascii" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-emerald-500 font-semibold">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>ASCII</span>
                 </>
               )}
             </button>

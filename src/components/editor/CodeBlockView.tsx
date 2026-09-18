@@ -21,8 +21,11 @@ import {
   X,
   Minimize2,
   Activity,
+  Terminal,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import { useTheme } from "~/components/ThemeProvider";
+import { mermaidToAscii } from "~/lib/mermaidToAscii";
 import { renderMermaidQueued, postProcessSvg } from "./mermaidQueue";
 import { renderTikzQueued } from "./tikzQueue";
 
@@ -73,6 +76,7 @@ export function CodeBlockView({
   const [svgContent, setSvgContent] = useState<string>("");
   const [parseError, setParseError] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
+  const [copiedAscii, setCopiedAscii] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Diagram Customization State
@@ -257,6 +261,17 @@ export function CodeBlockView({
       navigator.clipboard.writeText(rawCode).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }, [rawCode]);
+
+  const handleCopyAscii = useCallback(() => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      const ascii = mermaidToAscii(rawCode);
+      navigator.clipboard.writeText(ascii).then(() => {
+        setCopiedAscii(true);
+        toast.success("Mermaid diagram copied as ASCII art!");
+        setTimeout(() => setCopiedAscii(false), 2000);
       });
     }
   }, [rawCode]);
@@ -558,6 +573,22 @@ export function CodeBlockView({
                   <span>Export</span>
                 </button>
 
+                {isMermaid && (
+                  <button
+                    type="button"
+                    onClick={handleCopyAscii}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                    title="Copy as ASCII Diagram"
+                  >
+                    {copiedAscii ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Terminal className="w-3.5 h-3.5" />
+                    )}
+                    <span>Copy ASCII</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setIsFullscreen(false)}
@@ -792,6 +823,22 @@ export function CodeBlockView({
                   <Copy className="w-3.5 h-3.5" />
                 )}
               </button>
+
+              {/* Copy as ASCII Art */}
+              {isMermaid && (
+                <button
+                  type="button"
+                  onClick={handleCopyAscii}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Copy as ASCII Diagram"
+                >
+                  {copiedAscii ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Terminal className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              )}
 
               {/* Edit Code */}
               <button
