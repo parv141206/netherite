@@ -21,6 +21,7 @@ import {
   Sparkles,
   Key,
   ExternalLink,
+  ClipboardCopy,
 } from "lucide-react";
 import JSZip from "jszip";
 import { api } from "~/trpc/react";
@@ -46,6 +47,8 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
     setMdTheme,
     globalFont,
     setGlobalFont,
+    textOnlyClipboard,
+    setTextOnlyClipboard,
   } = useTheme();
   const [folderPath, setFolderPath] = useState("Netherite");
   const [copiedMcp, setCopiedMcp] = useState<"claude" | "cli" | null>(null);
@@ -388,6 +391,51 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
             <div className="p-3 bg-accent/30 rounded-xl border border-border/50 text-xs font-dynamic-editor text-foreground">
               Preview: The quick brown fox jumps over the lazy dog. 1234567890
             </div>
+          </div>
+
+          {/* Clipboard & Copy Preferences Section */}
+          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                  <ClipboardCopy className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-foreground flex items-center gap-2">
+                    <span>Plain Text Clipboard Copy</span>
+                    {textOnlyClipboard && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-medium">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Copy plain text instead of Markdown syntax (# headings, **bold**, etc.)
+                  </div>
+                </div>
+              </div>
+
+              {/* Toggle Switch */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={textOnlyClipboard}
+                onClick={() => setTextOnlyClipboard(!textOnlyClipboard)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-ring ${
+                  textOnlyClipboard ? "bg-primary" : "bg-muted-foreground/30"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-xs ring-0 transition duration-200 ease-in-out ${
+                    textOnlyClipboard ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              When enabled, copying selected content from your documents will copy normal plain text instead of Markdown formatting (e.g. <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]"># Heading</code> &rarr; <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]">Heading</code>, and <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]">**Bold**</code> &rarr; <code className="px-1 py-0.5 rounded bg-background border border-border font-mono text-[10px]">Bold</code>).
+            </p>
           </div>
 
           {/* AI & MCP Server Section */}

@@ -209,6 +209,8 @@ interface ThemeContextType {
   setMdTheme: (mdTheme: MdThemeId) => void;
   globalFont: GlobalFontId;
   setGlobalFont: (font: GlobalFontId) => void;
+  textOnlyClipboard: boolean;
+  setTextOnlyClipboard: (enabled: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -218,6 +220,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState<boolean>(true);
   const [mdTheme, setMdThemeState] = useState<MdThemeId>("netherite");
   const [globalFont, setGlobalFontState] = useState<GlobalFontId>("system");
+  const [textOnlyClipboard, setTextOnlyClipboardState] = useState<boolean>(false);
 
   // Load saved preferences on client mount
   useEffect(() => {
@@ -230,6 +233,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
       const savedGlobalFont = (localStorage.getItem("netherite_global_font") as GlobalFontId) || "system";
       setGlobalFontState(savedGlobalFont);
+
+      const savedTextOnly = localStorage.getItem("netherite_text_only_clipboard") === "true";
+      setTextOnlyClipboardState(savedTextOnly);
     } catch {}
   }, []);
 
@@ -344,6 +350,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setGlobalFontState(newFont);
   };
 
+  const setTextOnlyClipboard = (enabled: boolean) => {
+    setTextOnlyClipboardState(enabled);
+    try {
+      localStorage.setItem("netherite_text_only_clipboard", String(enabled));
+    } catch {}
+  };
+
   return (
     <ThemeContext.Provider
       value={{
@@ -354,6 +367,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setMdTheme,
         globalFont,
         setGlobalFont,
+        textOnlyClipboard,
+        setTextOnlyClipboard,
       }}
     >
       {children}

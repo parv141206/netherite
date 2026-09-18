@@ -122,7 +122,7 @@ export function WorkspaceLayout({
   initialContent = "",
   initialMetadata,
 }: WorkspaceLayoutProps) {
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, textOnlyClipboard } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return window.innerWidth < 768;
@@ -2278,6 +2278,7 @@ export function WorkspaceLayout({
                       title={currentNote?.name || "Untitled.md"}
                       editorFont={editorFont}
                       isLoading={false}
+                      textOnlyClipboard={textOnlyClipboard}
                       onTitleChange={(newTitle) => {
                         if (activeTabId) {
                           handleRenameFile(activeTabId, newTitle);
@@ -2413,6 +2414,7 @@ export function WorkspaceLayout({
                         initialContent={splitNoteContent}
                         title={currentSplitNote?.name || "Split Document.md"}
                         editorFont={editorFont}
+                        textOnlyClipboard={textOnlyClipboard}
                         onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
                         onSave={() => {
                           if (splitTabId && !splitTabId.startsWith("temp-")) {

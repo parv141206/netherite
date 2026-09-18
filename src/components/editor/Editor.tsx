@@ -10,6 +10,7 @@ import {
   insertMathTextIntoEditor,
   transformMathInEditor,
 } from "./MathExtension";
+import { useTheme } from "~/components/ThemeProvider";
 import {
   Bold,
   Italic,
@@ -45,6 +46,75 @@ interface Props {
   onStatsChange?: (stats: { words: number; chars: number }) => void;
   isLoading?: boolean;
   editorFont?: string;
+  textOnlyClipboard?: boolean;
+}
+
+/**
+ * Serializes a ProseMirror Slice into clean plain text,
+ * stripping Markdown formatting syntax (# headings, **bold**, *italic*, lists markers, etc.).
+ */
+export function serializeSliceToPlainText(slice: any): string {
+  if (!slice || !slice.content) return "";
+
+  const leafHandler = (node: any) => {
+    if (node.type.name === "mathInline" || node.type.name === "mathBlock") {
+      return node.attrs?.latex || "";
+    }
+    if (node.type.name === "image") {
+      return node.attrs?.alt || node.attrs?.title || "";
+    }
+    if (node.type.name === "hardBreak") {
+      return "\n";
+    }
+    return "";
+  };
+
+  const serializeNode = (node: any): string => {
+    if (node.isText) {
+      return node.text || "";
+    }
+    if (
+      node.type.name === "bulletList" ||
+      node.type.name === "orderedList" ||
+      node.type.name === "taskList"
+    ) {
+      const items: string[] = [];
+      node.forEach((item: any) => {
+        const itemText = serializeNode(item);
+        if (itemText) items.push(itemText);
+      });
+      return items.join("\n");
+    }
+    if (node.type.name === "listItem" || node.type.name === "taskItem") {
+      const subParts: string[] = [];
+      node.forEach((child: any) => {
+        const childText = serializeNode(child);
+        if (childText) subParts.push(childText);
+      });
+      return subParts.join("\n");
+    }
+    if (node.type.name === "table") {
+      const rows: string[] = [];
+      node.forEach((row: any) => {
+        const cells: string[] = [];
+        row.forEach((cell: any) => {
+          cells.push(
+            cell.content.textBetween(0, cell.content.size, " ", leafHandler).trim()
+          );
+        });
+        rows.push(cells.join("\t"));
+      });
+      return rows.join("\n");
+    }
+    return node.textBetween(0, node.content.size, "\n\n", leafHandler);
+  };
+
+  const parts: string[] = [];
+  slice.content.forEach((node: any) => {
+    const s = serializeNode(node);
+    if (s !== "") parts.push(s);
+  });
+  return parts.join("\n\n");
 }
 
 function DocumentTitleInput({
@@ -97,7 +167,15 @@ export function Editor({
   onStatsChange,
   isLoading = false,
   editorFont = "sans",
+  textOnlyClipboard: propTextOnlyClipboard,
 }: Props) {
+  const themeContext = useTheme();
+  const textOnlyClipboard = propTextOnlyClipboard ?? themeContext?.textOnlyClipboard ?? false;
+  const textOnlyClipboardRef = useRef(textOnlyClipboard);
+  useEffect(() => {
+    textOnlyClipboardRef.current = textOnlyClipboard;
+  }, [textOnlyClipboard]);
+
   const [mounted, setMounted] = useState(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -234,6 +312,40 @@ export function Editor({
           return true;
         }
         return false;
+      },
+      handleDOMEvents: {
+        copy(view, event) {
+          if (!textOnlyClipboardRef.current) return false;
+          const sel = view.state.selection;
+          if (sel.empty) return false;
+          const plainText = serializeSliceToPlainText(sel.content());
+          if (event.clipboardData) {
+            event.preventDefault();
+            event.clipboardData.clearData();
+            event.clipboardData.setData("text/plain", plainText);
+            return true;
+          }
+          return false;
+        },
+        cut(view, event) {
+          if (!textOnlyClipboardRef.current) return false;
+          const sel = view.state.selection;
+          if (sel.empty) return false;
+          const plainText = serializeSliceToPlainText(sel.content());
+          if (event.clipboardData) {
+            event.preventDefault();
+            event.clipboardData.clearData();
+            event.clipboardData.setData("text/plain", plainText);
+            view.dispatch(
+              view.state.tr
+                .deleteSelection()
+                .scrollIntoView()
+                .setMeta("uiEvent", "cut")
+            );
+            return true;
+          }
+          return false;
+        },
       },
     },
     onUpdate({ editor, transaction }) {
