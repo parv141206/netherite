@@ -30,6 +30,13 @@ import {
   CLOUD_AUTOSAVE_CADENCE_KEY,
   type CloudCadence,
 } from "~/lib/localDeviceSync";
+import {
+  safeLocalStorageSet,
+  pruneLocalStorage,
+  idbSetDoc,
+  idbDeleteDoc,
+  idbSaveSnapshot,
+} from "~/lib/storageEngine";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
@@ -729,43 +736,44 @@ export function WorkspaceLayout({
 
   const saveBackupSnapshot = (noteId: string, content: string) => {
     if (!noteId || !content || typeof window === "undefined") return;
-    try {
-      const key = `netherite_snapshot_${noteId}`;
-      const existing = localStorage.getItem(key);
-      const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
-      if (list.length > 0 && list[0]?.content === content) return;
-      list.unshift({ timestamp: Date.now(), content });
-      if (list.length > 10) list.length = 10;
-      localStorage.setItem(key, JSON.stringify(list));
-    } catch {}
+    // Store snapshot ledger in IndexedDB (virtually unlimited quota, no 5MB localStorage bloat)
+    void idbSaveSnapshot(noteId, content);
   };
 
   const onSaveCompleted = useCallback(
     (fileId: string, savedContent: string) => {
       setIsSaving(false);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`netherite_cache_${fileId}`, savedContent);
-        localStorage.setItem(`netherite_saved_at_${fileId}`, String(Date.now()));
-        localStorage.removeItem(`netherite_draft_${fileId}`);
-      }
-      utils.notes.get.setData({ id: fileId }, savedContent);
-      utils.notes.list.setData(undefined, (old: any) => {
-        if (!old || !Array.isArray(old)) return old;
-        return old.map((it: any) =>
-          it.id === fileId ? { ...it, modifiedTime: new Date().toISOString() } : it
-        );
-      });
+      try {
+        if (typeof window !== "undefined") {
+          safeLocalStorageSet(`netherite_cache_${fileId}`, savedContent);
+          safeLocalStorageSet(`netherite_saved_at_${fileId}`, String(Date.now()));
+          try {
+            localStorage.removeItem(`netherite_draft_${fileId}`);
+          } catch {}
+          void idbSetDoc(`netherite_cache_${fileId}`, savedContent);
+          void idbDeleteDoc(`netherite_draft_${fileId}`);
+        }
+        utils.notes.get.setData({ id: fileId }, savedContent);
+        utils.notes.list.setData(undefined, (old: any) => {
+          if (!old || !Array.isArray(old)) return old;
+          return old.map((it: any) =>
+            it.id === fileId ? { ...it, modifiedTime: new Date().toISOString() } : it
+          );
+        });
 
-      if (fileId === activeTabId) {
-        setLastSavedContent(savedContent);
-        saveBackupSnapshot(fileId, savedContent);
-      }
-      if (fileId === splitTabId) {
-        saveBackupSnapshot(fileId, savedContent);
-      }
+        if (fileId === activeTabId) {
+          setLastSavedContent(savedContent);
+          saveBackupSnapshot(fileId, savedContent);
+        }
+        if (fileId === splitTabId) {
+          saveBackupSnapshot(fileId, savedContent);
+        }
 
-      // Asynchronously mirror to local device directory handle if enabled
-      void syncSingleNoteToDevice(fileId, savedContent, localNotes);
+        // Asynchronously mirror to local device directory handle if enabled
+        void syncSingleNoteToDevice(fileId, savedContent, localNotes);
+      } catch (err) {
+        console.warn("Storage sync error on save:", err);
+      }
     },
     [activeTabId, splitTabId, utils, localNotes]
   );
@@ -837,10 +845,13 @@ export function WorkspaceLayout({
   const activeCanvasRef = useRef<DrawingCanvasHandle | null>(null);
   const activeSplitCanvasRef = useRef<DrawingCanvasHandle | null>(null);
 
-  // One-time startup scrubber: clean up phantom drafts that match saved/cached content or are empty
+  // One-time startup scrubber: clean up phantom drafts and prune bloated snapshots from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      // Purge bloated snapshots from localStorage (persisted in IndexedDB)
+      pruneLocalStorage();
+
       const keysToScrub: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -861,7 +872,10 @@ export function WorkspaceLayout({
           }
         }
       }
-      keysToScrub.forEach((k) => localStorage.removeItem(k));
+      keysToScrub.forEach((k) => {
+        localStorage.removeItem(k);
+        void idbDeleteDoc(k);
+      });
       if (keysToScrub.length > 0) {
         console.info(`[Netherite] Cleaned up ${keysToScrub.length} phantom drafts on startup.`);
       }
@@ -950,9 +964,8 @@ export function WorkspaceLayout({
       setNoteContent(unsavedDraft);
       if (fetchedContent !== undefined) {
         setLastSavedContent(fetchedContent);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(`netherite_cache_${activeTabId}`, fetchedContent);
-        }
+        safeLocalStorageSet(`netherite_cache_${activeTabId}`, fetchedContent);
+        void idbSetDoc(`netherite_cache_${activeTabId}`, fetchedContent);
       } else if (localCache) {
         setLastSavedContent(localCache);
       }
@@ -975,7 +988,8 @@ export function WorkspaceLayout({
       setNoteContent(contentToSet);
       setLastSavedContent(contentToSet);
       if (typeof window !== "undefined" && fetchedContent !== undefined) {
-        localStorage.setItem(`netherite_cache_${activeTabId}`, contentToSet);
+        safeLocalStorageSet(`netherite_cache_${activeTabId}`, contentToSet);
+        void idbSetDoc(`netherite_cache_${activeTabId}`, contentToSet);
       }
     }
   }, [fetchedContent, activeTabId, localNotes, getUnsavedDraft]);
@@ -1001,13 +1015,15 @@ export function WorkspaceLayout({
 
     if (isDirty && noteContent.length > 0) {
       try {
-        localStorage.setItem(`netherite_draft_${activeTabId}`, noteContent);
+        safeLocalStorageSet(`netherite_draft_${activeTabId}`, noteContent);
+        void idbSetDoc(`netherite_draft_${activeTabId}`, noteContent);
         saveBackupSnapshot(activeTabId, noteContent);
       } catch {}
     } else if (!isDirty) {
       try {
         localStorage.removeItem(`netherite_draft_${activeTabId}`);
       } catch {}
+      void idbDeleteDoc(`netherite_draft_${activeTabId}`);
     }
   }, [noteContent, lastSavedContent, activeTabId, localNotes, isDirty]);
 
@@ -1027,7 +1043,8 @@ export function WorkspaceLayout({
     if (unsavedDraft) {
       setSplitNoteContent(unsavedDraft);
       if (fetchedSplitContent !== undefined && typeof window !== "undefined") {
-        localStorage.setItem(`netherite_cache_${splitTabId}`, fetchedSplitContent);
+        safeLocalStorageSet(`netherite_cache_${splitTabId}`, fetchedSplitContent);
+        void idbSetDoc(`netherite_cache_${splitTabId}`, fetchedSplitContent);
       }
       return;
     }
@@ -1035,7 +1052,8 @@ export function WorkspaceLayout({
     if (baseline !== null && baseline !== undefined) {
       setSplitNoteContent(baseline);
       if (fetchedSplitContent !== undefined && typeof window !== "undefined") {
-        localStorage.setItem(`netherite_cache_${splitTabId}`, baseline);
+        safeLocalStorageSet(`netherite_cache_${splitTabId}`, baseline);
+        void idbSetDoc(`netherite_cache_${splitTabId}`, baseline);
       }
     }
   }, [fetchedSplitContent, splitTabId, localNotes, getUnsavedDraft]);
@@ -1198,6 +1216,7 @@ export function WorkspaceLayout({
     // Standard tRPC save for normal payloads (or fallback)
     try {
       await saveMutation.mutateAsync({ id: fileId, content: contentToSave });
+      showToast("Saved to Google Drive");
       return true;
     } catch (err: any) {
       // If tRPC failed with 413 or payload error, recover via direct Google Drive upload

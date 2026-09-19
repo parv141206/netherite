@@ -18,6 +18,12 @@ import type { DrawingCanvasHandle } from "./DrawingCanvas";
 import engineeringStyles from "@/features/engineering-canvas/engineering-sidebar.module.scss";
 import { useTheme } from "~/components/ThemeProvider";
 import { areExcalidrawScenesEquivalent } from "~/components/workspace/diffUtils";
+import {
+  safeLocalStorageSet,
+  idbSetDoc,
+  idbDeleteDoc,
+  idbSaveSnapshot,
+} from "~/lib/storageEngine";
 import { Sparkles } from "lucide-react";
 import { VisualNotesModal } from "./VisualNotesModal";
 
@@ -174,22 +180,15 @@ export default function ExcalidrawEditor({
         try {
           localStorage.removeItem(`netherite_draft_${id}`);
         } catch {}
+        void idbDeleteDoc(`netherite_draft_${id}`);
       } else {
         // Document actually has unsaved modifications: persist draft + snapshot safely
         try {
-          localStorage.setItem(`netherite_draft_${id}`, serialized);
-
-          // Versioned snapshot backup
-          const snapKey = `netherite_snapshot_${id}`;
-          const existing = localStorage.getItem(snapKey);
-          const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
-          if (list.length === 0 || list[0]?.content !== serialized) {
-            list.unshift({ timestamp: Date.now(), content: serialized });
-            if (list.length > 10) list.length = 10;
-            localStorage.setItem(snapKey, JSON.stringify(list));
-          }
+          safeLocalStorageSet(`netherite_draft_${id}`, serialized);
+          void idbSetDoc(`netherite_draft_${id}`, serialized);
+          void idbSaveSnapshot(id, serialized);
         } catch (err) {
-          console.warn("Failed to write Excalidraw draft directly to localStorage:", err);
+          console.warn("Failed to write Excalidraw draft:", err);
         }
       }
     }
@@ -366,10 +365,10 @@ export default function ExcalidrawEditor({
                 try {
                   localStorage.removeItem(`netherite_draft_${id}`);
                 } catch {}
+                void idbDeleteDoc(`netherite_draft_${id}`);
               } else {
-                try {
-                  localStorage.setItem(`netherite_draft_${id}`, serialized);
-                } catch {}
+                safeLocalStorageSet(`netherite_draft_${id}`, serialized);
+                void idbSetDoc(`netherite_draft_${id}`, serialized);
               }
             }
 
@@ -434,17 +433,12 @@ export default function ExcalidrawEditor({
           try {
             localStorage.removeItem(`netherite_draft_${id}`);
           } catch {}
+          void idbDeleteDoc(`netherite_draft_${id}`);
         } else {
           try {
-            localStorage.setItem(`netherite_draft_${id}`, serialized);
-            const snapKey = `netherite_snapshot_${id}`;
-            const existing = localStorage.getItem(snapKey);
-            const list: Array<{ timestamp: number; content: string }> = existing ? JSON.parse(existing) : [];
-            if (list.length === 0 || list[0]?.content !== serialized) {
-              list.unshift({ timestamp: Date.now(), content: serialized });
-              if (list.length > 10) list.length = 10;
-              localStorage.setItem(snapKey, JSON.stringify(list));
-            }
+            safeLocalStorageSet(`netherite_draft_${id}`, serialized);
+            void idbSetDoc(`netherite_draft_${id}`, serialized);
+            void idbSaveSnapshot(id, serialized);
           } catch {}
         }
       }
