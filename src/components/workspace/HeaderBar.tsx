@@ -233,39 +233,31 @@ export function HeaderBar({
   const isMermaid = safeTitle.endsWith(".mmd") || safeTitle.endsWith(".mermaid");
   const cleanTitle = safeTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
 
-  // Zen Mode: render as a compact floating pill at top right instead of full-width header bar
+  // Zen Mode: render as a sleek, unobtrusive floating pill at bottom right so it NEVER covers top toolbars (Excalidraw, diagrams, etc.)
   if (zenMode) {
     return (
       <aside
         aria-label="Zen mode floating controls"
-        className="fixed top-3 right-4 z-40 flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-background/85 backdrop-blur-md border border-border/70 shadow-lg select-none text-xs animate-in fade-in slide-in-from-top-2 duration-200"
+        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 hover:bg-background backdrop-blur-md border border-border/80 shadow-xl select-none text-xs opacity-75 hover:opacity-100 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200"
       >
-        {onToggleSidebar && (
-          <button
-            onClick={onToggleSidebar}
-            className="p-1 hover:bg-accent/70 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            title="Toggle Sidebar"
-          >
-            <Menu className="w-3.5 h-3.5" />
-          </button>
+        {cleanTitle && (
+          <div className="flex items-center gap-1.5 min-w-0 max-w-[140px] text-muted-foreground">
+            {isDrawing ? (
+              <Palette className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            ) : isUml ? (
+              <Network className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+            ) : isMermaid ? (
+              <Workflow className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            ) : (
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+            )}
+            <span className="truncate font-medium text-foreground text-xs">
+              {cleanTitle}
+            </span>
+          </div>
         )}
 
-        <div className="flex items-center gap-1.5 min-w-0 max-w-[200px]">
-          {isDrawing ? (
-            <Palette className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-          ) : isUml ? (
-            <Network className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-          ) : isMermaid ? (
-            <Workflow className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-          ) : (
-            <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-          )}
-          <span className="truncate font-medium text-foreground text-xs">
-            {cleanTitle || "Zen Mode"}
-          </span>
-        </div>
-
-        <div className="h-3 w-px bg-border/80 shrink-0" />
+        {cleanTitle && <div className="h-3 w-px bg-border/80 shrink-0" />}
 
         {onToggleZenMode && (
           <button
