@@ -157,18 +157,45 @@ html {
 }
 
 @media (max-width: 640px) {
-  /* Position Excalidraw mobile toolbar cleanly above Netherite bottom bar */
+  /* Move Excalidraw mobile toolbar to top of the canvas */
   .excalidraw .App-bottom-bar {
-    bottom: 3.5rem !important;
+    top: 0.5rem !important;
+    bottom: auto !important;
+    margin-bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 0.5rem !important;
     z-index: 30 !important;
+    width: auto !important;
+    max-width: calc(100vw - 16px) !important;
   }
-  /* When any modal, Action Sheet, or Library screen is open: HIDE Excalidraw's toolbar completely */
+
+  /* Hide redundant standalone hamburger menu on phone so it doesn't overlap the top toolbar */
+  .excalidraw .App-top-bar {
+    display: none !important;
+  }
+
+  /* Position undo/redo controls cleanly above Netherite bottom bar */
+  .excalidraw .App-menu_bottom {
+    bottom: 3.75rem !important;
+    pointer-events: none !important;
+  }
+
+  .excalidraw .App-menu_bottom > * {
+    pointer-events: auto !important;
+  }
+
+  /* When any modal, Action Sheet, or Library screen is open: HIDE Excalidraw's controls completely */
   body:has([data-mobile-overlay="true"]) .excalidraw .App-bottom-bar,
   body:has([data-mobile-overlay="true"]) .excalidraw .layer-ui__wrapper,
   body:has([data-mobile-overlay="true"]) .excalidraw .App-toolbar-container,
+  body:has([data-mobile-overlay="true"]) .excalidraw .App-menu_bottom,
   body.mobile-overlay-active .excalidraw .App-bottom-bar,
   body.mobile-overlay-active .excalidraw .layer-ui__wrapper,
-  body.mobile-overlay-active .excalidraw .App-toolbar-container {
+  body.mobile-overlay-active .excalidraw .App-toolbar-container,
+  body.mobile-overlay-active .excalidraw .App-menu_bottom {
     display: none !important;
     visibility: hidden !important;
   }
