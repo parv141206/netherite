@@ -156,20 +156,22 @@ html {
   user-select: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   /* Move Excalidraw mobile toolbar to top of the canvas */
   .excalidraw .App-bottom-bar {
+    position: absolute !important;
     top: 0.5rem !important;
     bottom: auto !important;
+    margin-top: 0 !important;
     margin-bottom: 0 !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     display: flex !important;
-    flex-direction: column-reverse !important;
-    gap: 0.5rem !important;
+    flex-direction: column !important;
+    gap: 0.375rem !important;
     z-index: 30 !important;
-    width: auto !important;
-    max-width: calc(100vw - 16px) !important;
+    width: calc(100% - 1rem) !important;
+    max-width: 440px !important;
   }
 
   /* Hide redundant standalone hamburger menu on phone so it doesn't overlap the top toolbar */
@@ -179,7 +181,7 @@ html {
 
   /* Position undo/redo controls cleanly above Netherite bottom bar */
   .excalidraw .App-menu_bottom {
-    bottom: 3.75rem !important;
+    bottom: calc(3.5rem + var(--sab, 0px)) !important;
     pointer-events: none !important;
   }
 

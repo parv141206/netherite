@@ -304,19 +304,20 @@ body.excalidraw-cursor-resize * {
 
   .App-bottom-bar {
     position: absolute;
-    // account for margins
-    width: calc(100% - 28px);
-    max-width: 450px;
-    bottom: 0;
+    width: calc(100% - 24px);
+    max-width: 440px;
+    top: 8px;
+    bottom: auto;
     left: 50%;
     transform: translateX(-50%);
     --bar-padding: calc(4 * var(--space-factor));
     z-index: var(--zIndex-ui-bottom);
     display: flex;
     flex-direction: column;
+    gap: 6px;
 
     pointer-events: none;
-    justify-content: center;
+    justify-content: flex-start;
 
     > .Island {
       box-sizing: border-box;

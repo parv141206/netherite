@@ -161,15 +161,15 @@ export const MobileMenu = ({
         <div
           className="App-bottom-bar"
           style={{
-            marginBottom: SCROLLBAR_WIDTH + SCROLLBAR_MARGIN,
+            marginTop: 8,
+            marginBottom: 0,
           }}
-          data-viewport-ui="bottom"
+          data-viewport-ui="top"
         >
-          {scrollBackToContentButton && (
-            <div className="floating-status-stack">
-              {scrollBackToContentButton}
-            </div>
-          )}
+          <Island className="App-toolbar">
+            {appState.openDialog?.name !== "elementLinkSelector" &&
+              renderToolbar()}
+          </Island>
 
           <MobileShapeActions
             appState={appState}
@@ -179,10 +179,11 @@ export const MobileMenu = ({
             setAppState={setAppState}
           />
 
-          <Island className="App-toolbar">
-            {appState.openDialog?.name !== "elementLinkSelector" &&
-              renderToolbar()}
-          </Island>
+          {scrollBackToContentButton && (
+            <div className="floating-status-stack">
+              {scrollBackToContentButton}
+            </div>
+          )}
         </div>
       )}
 
@@ -195,10 +196,6 @@ export const MobileMenu = ({
           {viewportStatusBadge}
         </div>
       )}
-
-      <FixedSideContainer side="top" className="App-top-bar">
-        {renderAppTopBar()}
-      </FixedSideContainer>
     </>
   );
 };
