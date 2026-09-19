@@ -28,6 +28,7 @@ interface MobileLibraryScreenProps {
   onCreateDrawing?: (parentId?: string) => void;
   onClose: () => void;
   folderColors?: Record<string, string>;
+  isLoading?: boolean;
 }
 
 export function MobileLibraryScreen({
@@ -39,18 +40,23 @@ export function MobileLibraryScreen({
   onCreateDrawing,
   onClose,
   folderColors = {},
+  isLoading = false,
 }: MobileLibraryScreenProps) {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Separate folders and files
+  // Separate folders and files with null safety
+  const safeNotes = useMemo(() => (Array.isArray(notes) ? notes.filter(Boolean) : []), [notes]);
+
   const folders = useMemo(() => {
-    return notes.filter((item) => item.mimeType === "application/vnd.google-apps.folder");
-  }, [notes]);
+    return safeNotes.filter((item) => item?.mimeType === "application/vnd.google-apps.folder");
+  }, [safeNotes]);
 
   const folderMap = useMemo(() => {
     const map = new Map<string, DriveItem>();
-    folders.forEach((f) => map.set(f.id, f));
+    folders.forEach((f) => {
+      if (f?.id) map.set(f.id, f);
+    });
     return map;
   }, [folders]);
 
@@ -63,44 +69,47 @@ export function MobileLibraryScreen({
     if (currentFolderId === null) {
       // Root level folders: items with no parents or whose parent is not in folderMap
       return folders.filter(
-        (f) => !f.parents || f.parents.length === 0 || !f.parents.some((p) => folderMap.has(p))
+        (f) => f && (!f.parents || f.parents.length === 0 || !f.parents.some((p) => folderMap.has(p)))
       );
     }
     // Subfolders inside current folder
-    return folders.filter((f) => f.parents?.includes(currentFolderId));
+    return folders.filter((f) => f && f.parents?.includes(currentFolderId));
   }, [folders, currentFolderId, folderMap, searchQuery]);
 
   const visibleNotes = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (query) {
       // Global search across all non-folder notes
-      return notes.filter(
+      return safeNotes.filter(
         (item) =>
+          item &&
           item.mimeType !== "application/vnd.google-apps.folder" &&
-          item.name.toLowerCase().includes(query)
+          (item.name || "").toLowerCase().includes(query)
       );
     }
 
     if (currentFolderId === null) {
       // Root level notes
-      return notes.filter(
+      return safeNotes.filter(
         (item) =>
+          item &&
           item.mimeType !== "application/vnd.google-apps.folder" &&
           (!item.parents || item.parents.length === 0 || !item.parents.some((p) => folderMap.has(p)))
       );
     }
 
     // Notes inside the current folder
-    return notes.filter(
+    return safeNotes.filter(
       (item) =>
+        item &&
         item.mimeType !== "application/vnd.google-apps.folder" &&
         item.parents?.includes(currentFolderId)
     );
-  }, [notes, currentFolderId, folderMap, searchQuery]);
+  }, [safeNotes, currentFolderId, folderMap, searchQuery]);
 
   // Count items inside a folder
   const getFolderItemCount = (folderId: string) => {
-    return notes.filter((item) => item.parents?.includes(folderId)).length;
+    return safeNotes.filter((item) => item?.parents?.includes(folderId)).length;
   };
 
   // Helper to format date cleanly
@@ -114,20 +123,22 @@ export function MobileLibraryScreen({
     }
   };
 
-  const getItemIcon = (name: string, mimeType?: string) => {
-    if (name.endsWith(".excalidraw") || mimeType === "application/vnd.excalidraw+json") {
+  const getItemIcon = (name?: string, mimeType?: string) => {
+    const n = name || "";
+    if (n.endsWith(".excalidraw") || mimeType === "application/vnd.excalidraw+json") {
       return <Palette className="w-4 h-4 text-indigo-500 shrink-0" />;
     }
-    if (name.endsWith(".apollon") || name.endsWith(".uml") || mimeType === "application/vnd.apollon+json") {
+    if (n.endsWith(".apollon") || n.endsWith(".uml") || mimeType === "application/vnd.apollon+json") {
       return <Network className="w-4 h-4 text-purple-500 shrink-0" />;
     }
-    if (name.endsWith(".mmd") || name.endsWith(".mermaid")) {
+    if (n.endsWith(".mmd") || n.endsWith(".mermaid")) {
       return <Workflow className="w-4 h-4 text-emerald-500 shrink-0" />;
     }
     return <FileText className="w-4 h-4 text-muted-foreground shrink-0" />;
   };
 
-  const getCleanName = (name: string) => {
+  const getCleanName = (name?: string) => {
+    if (!name) return "Untitled";
     return name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
   };
 
@@ -257,7 +268,14 @@ export function MobileLibraryScreen({
             </span>
           </div>
 
-          {visibleNotes.length === 0 ? (
+          {isLoading && safeNotes.length === 0 ? (
+            <div className="p-10 text-center bg-card/40 rounded-2xl border border-border/40 flex flex-col items-center gap-3 animate-pulse">
+              <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <p className="text-xs font-medium text-muted-foreground">
+                Syncing your notes from Google Drive…
+              </p>
+            </div>
+          ) : visibleNotes.length === 0 ? (
             <div className="p-8 text-center bg-card/40 rounded-2xl border border-dashed border-border/60 flex flex-col items-center gap-2">
               <FileText className="w-7 h-7 text-muted-foreground/40" />
               <p className="text-xs font-medium text-muted-foreground">
@@ -278,8 +296,9 @@ export function MobileLibraryScreen({
             <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border/50 divide-y divide-border/30 overflow-hidden shadow-xs">
               {visibleNotes.map((note) => {
                 const isActive = note.id === activeNoteId;
+                const noteName = note.name || "Untitled.md";
                 const isDrawing =
-                  note.name.endsWith(".excalidraw") ||
+                  noteName.endsWith(".excalidraw") ||
                   note.mimeType === "application/vnd.excalidraw+json";
 
                 return (
@@ -296,7 +315,7 @@ export function MobileLibraryScreen({
                   >
                     <div className="flex items-center gap-3 min-w-0 pr-2">
                       <div className="w-8 h-8 rounded-xl bg-accent/50 flex items-center justify-center shrink-0">
-                        {getItemIcon(note.name, note.mimeType)}
+                        {getItemIcon(noteName, note.mimeType)}
                       </div>
                       <div className="min-w-0">
                         <p
@@ -304,7 +323,7 @@ export function MobileLibraryScreen({
                             isActive ? "text-primary" : "text-foreground"
                           }`}
                         >
-                          {getCleanName(note.name)}
+                          {getCleanName(noteName)}
                         </p>
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
                           {formatTime(note.modifiedTime)}

@@ -562,8 +562,8 @@ export function WorkspaceLayout({
   const utils = api.useUtils();
 
   // Cached tRPC query for Google Drive syncing (staleTime = 60000ms)
-  const { data: notesData } = api.notes.list.useQuery(undefined, {
-    initialData: initialNotes as any,
+  const { data: notesData, isLoading: isNotesLoading } = api.notes.list.useQuery(undefined, {
+    initialData: initialNotes && initialNotes.length > 0 ? (initialNotes as any) : undefined,
     enabled: !!session?.user,
     staleTime: 60000,
   });
@@ -2622,6 +2622,7 @@ export function WorkspaceLayout({
                   }}
                   onClose={() => setMobileScreen("editor")}
                   folderColors={folderColors}
+                  isLoading={isNotesLoading && localNotes.length === 0}
                 />
               </div>
             )}

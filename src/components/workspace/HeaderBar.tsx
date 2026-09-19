@@ -227,10 +227,11 @@ export function HeaderBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showMoreMenu]);
 
-  const isDrawing = noteTitle.endsWith(".excalidraw");
-  const isUml = noteTitle.endsWith(".apollon") || noteTitle.endsWith(".uml");
-  const isMermaid = noteTitle.endsWith(".mmd") || noteTitle.endsWith(".mermaid");
-  const cleanTitle = noteTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+  const safeTitle = typeof noteTitle === "string" ? noteTitle : "";
+  const isDrawing = safeTitle.endsWith(".excalidraw");
+  const isUml = safeTitle.endsWith(".apollon") || safeTitle.endsWith(".uml");
+  const isMermaid = safeTitle.endsWith(".mmd") || safeTitle.endsWith(".mermaid");
+  const cleanTitle = safeTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
 
   // Zen Mode: render as a compact floating pill at top right instead of full-width header bar
   if (zenMode) {

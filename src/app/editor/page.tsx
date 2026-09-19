@@ -1,5 +1,5 @@
 import { auth } from "~/server/auth";
-import { listNotes, getNoteContent, getWorkspaceMetadata } from "~/server/googleDrive";
+import { listNotes, getWorkspaceMetadata } from "~/server/googleDrive";
 import { WorkspaceLayout } from "~/components/workspace/WorkspaceLayout";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -23,19 +23,31 @@ export default async function EditorPage() {
   }
 
   let notes: any[] = [];
-  let initialContent = "";
   let initialNoteId = "";
-  let initialMetadata = { folderColors: {} };
+  let initialMetadata: any = { folderColors: {} };
 
   try {
-    notes = await listNotes(session);
-    initialMetadata = await getWorkspaceMetadata(session);
+    const fetchPromises = Promise.all([
+      listNotes(session).catch((err) => {
+        console.error("Server listNotes error:", err?.message || err);
+        return [];
+      }),
+      getWorkspaceMetadata(session).catch(() => ({ version: 1, folderColors: {}, files: {} })),
+    ]);
+
+    const timeoutPromise = new Promise<[any[], any]>((resolve) =>
+      setTimeout(() => resolve([[], { version: 1, folderColors: {}, files: {} }]), 3500)
+    );
+
+    const [fetchedNotes, meta] = await Promise.race([fetchPromises, timeoutPromise]);
+    notes = fetchedNotes || [];
+    initialMetadata = meta || { folderColors: {} };
+
     const firstFile = notes.find(
       (n) => n.mimeType !== "application/vnd.google-apps.folder" && Boolean(n.id)
     );
     if (firstFile?.id) {
       initialNoteId = firstFile.id;
-      initialContent = await getNoteContent(session, initialNoteId);
     }
   } catch (error) {
     console.error("Error fetching notes in EditorPage:", error);
@@ -46,7 +58,7 @@ export default async function EditorPage() {
       session={session}
       initialNotes={notes}
       initialNoteId={initialNoteId}
-      initialContent={initialContent}
+      initialContent=""
       initialMetadata={initialMetadata}
     />
   );

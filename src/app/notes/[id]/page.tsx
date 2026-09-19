@@ -1,5 +1,5 @@
 import { auth } from "~/server/auth";
-import { listNotes, getNoteContent } from "~/server/googleDrive";
+import { listNotes } from "~/server/googleDrive";
 import { WorkspaceLayout } from "~/components/workspace/WorkspaceLayout";
 import { redirect } from "next/navigation";
 
@@ -17,11 +17,16 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
 
   const { id } = await params;
   let notes: any[] = [];
-  let initialContent = "";
 
   try {
-    notes = await listNotes(session);
-    initialContent = await getNoteContent(session, id);
+    const fetchPromise = listNotes(session).catch((err) => {
+      console.error("Server listNotes error in NotePage:", err?.message || err);
+      return [];
+    });
+    const timeoutPromise = new Promise<any[]>((resolve) =>
+      setTimeout(() => resolve([]), 3500)
+    );
+    notes = (await Promise.race([fetchPromise, timeoutPromise])) || [];
   } catch (error) {
     console.error("Failed to load note page:", error);
   }
@@ -31,7 +36,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
       session={session}
       initialNotes={notes}
       initialNoteId={id}
-      initialContent={initialContent}
+      initialContent=""
     />
   );
 }
