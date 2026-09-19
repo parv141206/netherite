@@ -326,30 +326,18 @@ export function HeaderBar({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {cleanTitle && isDirty && onSave ? (
-            <button
-              onClick={onSave}
-              disabled={isSaving}
-              className="px-2.5 py-1 rounded-full bg-amber-500 text-black font-extrabold text-[10px] active:scale-90 transition-all shadow-xs cursor-pointer"
-              title="Save changes"
-              type="button"
-            >
-              {isSaving ? "SAVING" : "SAVE"}
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("netherite:open-more-sheet"));
-                }
-              }}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 active:scale-90 transition-all cursor-pointer"
-              title="More options"
-              type="button"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("netherite:open-more-sheet"));
+              }
+            }}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 active:scale-90 transition-all cursor-pointer"
+            title="More options"
+            type="button"
+          >
+            <MoreHorizontal className="w-4.5 h-4.5" />
+          </button>
         </div>
       </div>
 

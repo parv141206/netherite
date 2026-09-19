@@ -15,6 +15,7 @@ import { DiffModal } from "./DiffModal";
 import { DiffSidebar } from "./DiffSidebar";
 import { SyncModal } from "./SyncModal";
 import { MobileBottomBar } from "./MobileBottomBar";
+import { MobileLibraryScreen } from "./MobileLibraryScreen";
 import {
   computeLineDiff,
   computeExcalidrawSemanticDiff,
@@ -156,6 +157,22 @@ export function WorkspaceLayout({
     }
     return false;
   });
+  const [mobileScreen, setMobileScreen] = useState<"editor" | "library">(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640 && !initialNoteId) {
+      return "library";
+    }
+    return "editor";
+  });
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (mobileScreen === "library") {
+      document.body.classList.add("mobile-overlay-active");
+      return () => {
+        document.body.classList.remove("mobile-overlay-active");
+      };
+    }
+  }, [mobileScreen]);
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [isCreateDiagramModalOpen, setIsCreateDiagramModalOpen] = useState(false);
   const [createDiagramParentId, setCreateDiagramParentId] = useState<string | undefined>(undefined);
@@ -2057,6 +2074,10 @@ export function WorkspaceLayout({
     setLastSavedContent(baselineToSet);
     setActiveTabId(fileId);
     setActiveView("editor");
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setIsOutlineOpen(false);
+      setMobileScreen("editor");
+    }
   };
 
   const closeTab = (fileId: string, e: React.MouseEvent) => {
@@ -2321,46 +2342,53 @@ export function WorkspaceLayout({
 
       {/* Main Workspace Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <HeaderBar
-          noteTitle={
-            activeView === "calendar"
-              ? "Google Calendar Studio"
-              : isSplitView && activePane === "split" && currentSplitNote
-              ? currentSplitNote.name
-              : activeTabId && currentNote
-              ? currentNote.name
-              : ""
-          }
-          isSaving={isSaving}
-          isDirty={isDirty}
-          diffSummary={diffSummary}
-          onOpenDiff={() => setIsDiffModalOpen(true)}
-          onManualSync={handleOpenSyncModal}
-          isSyncing={isSyncing}
-          isDiffOpen={isDiffSidebarOpen}
-          onToggleDiff={toggleDiffSidebar}
-          isSplitView={isSplitView}
-          onToggleSplitView={() => {
-            const next = !isSplitView;
-            setIsSplitView(next);
-            if (!next) {
-              setActivePane("primary");
-            } else if (!splitTabId && localNotes.length > 1) {
-              const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
-              if (other) setSplitTabId(other.id);
+        <div className={mobileScreen === "library" ? "hidden sm:block" : "block"}>
+          <HeaderBar
+            noteTitle={
+              activeView === "calendar"
+                ? "Google Calendar Studio"
+                : isSplitView && activePane === "split" && currentSplitNote
+                ? currentSplitNote.name
+                : activeTabId && currentNote
+                ? currentNote.name
+                : ""
             }
-          }}
-          onSave={() => {
-            if (isSplitView && activePane === "split" && splitTabId && !splitTabId.startsWith("temp-")) {
-              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
-            } else {
-              handleManualSave();
-            }
-          }}
-          onExportMarkdown={handleExportMarkdown}
-          onExportPdf={() => setIsPdfModalOpen(true)}
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-          sidebarCollapsed={sidebarCollapsed}
+            isSaving={isSaving}
+            isDirty={isDirty}
+            diffSummary={diffSummary}
+            onOpenDiff={() => setIsDiffModalOpen(true)}
+            onManualSync={handleOpenSyncModal}
+            isSyncing={isSyncing}
+            isDiffOpen={isDiffSidebarOpen}
+            onToggleDiff={toggleDiffSidebar}
+            isSplitView={isSplitView}
+            onToggleSplitView={() => {
+              const next = !isSplitView;
+              setIsSplitView(next);
+              if (!next) {
+                setActivePane("primary");
+              } else if (!splitTabId && localNotes.length > 1) {
+                const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
+                if (other) setSplitTabId(other.id);
+              }
+            }}
+            onSave={() => {
+              if (isSplitView && activePane === "split" && splitTabId && !splitTabId.startsWith("temp-")) {
+                saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+              } else {
+                handleManualSave();
+              }
+            }}
+            onExportMarkdown={handleExportMarkdown}
+            onExportPdf={() => setIsPdfModalOpen(true)}
+            onToggleSidebar={() => {
+              if (typeof window !== "undefined" && window.innerWidth < 640) {
+                setMobileScreen((prev) => (prev === "library" ? "editor" : "library"));
+              } else {
+                setSidebarCollapsed(!sidebarCollapsed);
+              }
+            }}
+            sidebarCollapsed={sidebarCollapsed}
           wordCount={wordCount}
           charCount={charCount}
           editorFont={editorFont}
@@ -2373,6 +2401,7 @@ export function WorkspaceLayout({
           zenMode={zenMode}
           onToggleZenMode={handleToggleZenMode}
         />
+        </div>
 
         {/* VS Code / Antigravity Style Tab Management Bar (Hidden in Zen Mode) */}
         {!zenMode && (openTabIds.length > 0 || activeView === "calendar") && (
@@ -2572,11 +2601,36 @@ export function WorkspaceLayout({
           </div>
         ) : (
           <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden pb-22 sm:pb-0">
+            {/* Native Mobile Library Screen (Replaces Sidebar on Phone) */}
+            {mobileScreen === "library" && (
+              <div className="sm:hidden flex-1 flex flex-col h-full overflow-hidden">
+                <MobileLibraryScreen
+                  notes={localNotes}
+                  activeNoteId={activeTabId}
+                  onSelectNote={(id) => {
+                    openFileInTab(id);
+                    setMobileScreen("editor");
+                  }}
+                  onCreateNote={(parentId) => {
+                    handleCreateFile(parentId);
+                    setMobileScreen("editor");
+                  }}
+                  onCreateFolder={handleCreateFolder}
+                  onCreateDrawing={(parentId) => {
+                    handleCreateDrawing(parentId);
+                    setMobileScreen("editor");
+                  }}
+                  onClose={() => setMobileScreen("editor")}
+                  folderColors={folderColors}
+                />
+              </div>
+            )}
+
             <main
-            ref={workspaceSplitContainerRef}
-            className={`flex-1 overflow-hidden bg-background ${
-              isSplitView ? "flex flex-row relative" : "flex flex-col"
-            }`}
+              ref={workspaceSplitContainerRef}
+              className={`${mobileScreen === "library" ? "hidden sm:flex" : "flex"} flex-1 overflow-hidden bg-background ${
+                isSplitView ? "flex-row relative" : "flex-col"
+              }`}
             onDragOver={(e) => {
               e.preventDefault();
               setIsOverSplitTarget(true);
@@ -3167,22 +3221,25 @@ export function WorkspaceLayout({
 
         {/* Mobile Bottom Bar for native app feel */}
         <MobileBottomBar
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onCreateNote={() => handleCreateFile()}
-          onCreateDrawing={handleCreateDrawing}
-          onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
-          showOutline={isCurrentMarkdown}
-          onToggleSplitView={() => {
-            const next = !isSplitView;
-            setIsSplitView(next);
-            if (!next) {
-              setActivePane("primary");
-            } else if (!splitTabId && localNotes.length > 1) {
-              const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
-              if (other) setSplitTabId(other.id);
+          onToggleSidebar={() => {
+            if (typeof window !== "undefined" && window.innerWidth < 640) {
+              setMobileScreen(mobileScreen === "library" ? "editor" : "library");
+            } else {
+              setSidebarCollapsed(!sidebarCollapsed);
             }
           }}
-          isSplitView={isSplitView}
+          onOpenLibrary={() => setMobileScreen(mobileScreen === "library" ? "editor" : "library")}
+          onOpenEditor={() => setMobileScreen("editor")}
+          onCreateNote={() => {
+            handleCreateFile();
+            setMobileScreen("editor");
+          }}
+          onCreateDrawing={() => {
+            handleCreateDrawing();
+            setMobileScreen("editor");
+          }}
+          onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
+          showOutline={isCurrentMarkdown}
           isOutlineOpen={isOutlineOpen}
           isDirty={isDirty}
           isSaving={isSaving}
@@ -3203,6 +3260,7 @@ export function WorkspaceLayout({
           onExportMarkdown={handleExportMarkdown}
           onExportPdf={() => setIsPdfModalOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          currentScreen={mobileScreen}
         />
       </div>
 

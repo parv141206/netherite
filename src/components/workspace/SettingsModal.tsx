@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   X,
   HardDrive,
@@ -66,6 +66,16 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
   } = useTheme();
   const [folderPath, setFolderPath] = useState("Netherite");
   const [copiedMcp, setCopiedMcp] = useState<"claude" | "cli" | null>(null);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isOpen) {
+      document.body.classList.add("mobile-overlay-active");
+      return () => {
+        document.body.classList.remove("mobile-overlay-active");
+      };
+    }
+  }, [isOpen]);
 
   // Gemini AI Copilot Settings
   const [geminiKey, setGeminiKey] = useState(() => {
@@ -402,31 +412,33 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+      data-mobile-overlay="true"
+      className="fixed inset-0 z-50 bg-background md:bg-black/60 md:backdrop-blur-xs flex flex-col md:items-center md:justify-center md:p-4 animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-3xl h-[600px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-150">
-        {/* Left Sidebar (Apple Settings style) */}
-        <div className="w-full md:w-56 border-b md:border-b-0 md:border-r border-border bg-muted/25 p-3 flex flex-col justify-between shrink-0 select-none">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-border/50">
+      <div className="w-full h-full md:h-[600px] md:max-w-3xl bg-background md:bg-card md:border md:border-border md:rounded-2xl md:shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-150">
+        {/* Left Sidebar (Apple Settings style / Top navigation on mobile) */}
+        <div className="w-full md:w-56 border-b md:border-b-0 md:border-r border-border bg-muted/25 px-4 pt-3 pb-2 md:p-3 flex flex-col justify-between shrink-0 select-none pt-safe">
+          <div className="space-y-2 md:space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-border/50">
               <div className="flex items-center gap-2">
-                <HardDrive className="w-4 h-4 text-foreground/70" />
-                <span className="font-semibold text-xs text-foreground tracking-tight">
+                <HardDrive className="w-4 h-4 text-primary" />
+                <span className="font-bold text-sm md:text-xs text-foreground tracking-tight">
                   Settings
                 </span>
               </div>
               <button
                 onClick={onClose}
-                className="md:hidden p-1 rounded-md hover:bg-muted text-muted-foreground"
+                className="md:hidden px-3 py-1 rounded-full bg-accent hover:bg-accent/80 text-foreground text-xs font-semibold active:scale-95 transition-all"
+                type="button"
               >
-                <X className="w-4 h-4" />
+                Done
               </button>
             </div>
 
-            <nav className="space-y-0.5">
+            <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible scrollbar-none py-1 md:py-0">
               {[
                 { id: "appearance", label: "Appearance", icon: Monitor },
                 { id: "editor", label: "Editor & Fonts", icon: Type },
@@ -441,7 +453,7 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left ${
+                    className={`shrink-0 flex items-center gap-2 px-3 py-1.5 md:px-2.5 md:py-1.5 rounded-full md:rounded-lg text-xs font-medium transition-colors cursor-pointer text-left ${
                       isActive
                         ? "bg-foreground text-background shadow-2xs font-semibold"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -457,7 +469,7 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
 
           {/* User badge at bottom of sidebar */}
           {userSession?.user && (
-            <div className="pt-2 border-t border-border/50 px-2 flex items-center gap-2 text-xs">
+            <div className="hidden md:flex pt-2 border-t border-border/50 px-2 items-center gap-2 text-xs">
               <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
                 {userSession.user.name?.[0] || "U"}
               </div>
@@ -474,9 +486,9 @@ export function SettingsModal({ isOpen, onClose, userSession }: SettingsModalPro
         </div>
 
         {/* Right Content Panel */}
-        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background pb-safe">
           {/* Header */}
-          <div className="px-6 py-3.5 border-b border-border/70 flex items-center justify-between shrink-0 bg-card">
+          <div className="px-4 md:px-6 py-3 md:py-3.5 border-b border-border/70 flex items-center justify-between shrink-0 bg-card">
             <h3 className="font-semibold text-xs text-foreground uppercase tracking-wider">
               {activeTab === "appearance" && "Appearance & Themes"}
               {activeTab === "editor" && "Editor & Typography"}

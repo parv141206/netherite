@@ -156,6 +156,24 @@ html {
   user-select: none;
 }
 
+@media (max-width: 640px) {
+  /* Position Excalidraw mobile toolbar cleanly above Netherite bottom bar */
+  .excalidraw .App-bottom-bar {
+    bottom: 3.5rem !important;
+    z-index: 30 !important;
+  }
+  /* When any modal, Action Sheet, or Library screen is open: HIDE Excalidraw's toolbar completely */
+  body:has([data-mobile-overlay="true"]) .excalidraw .App-bottom-bar,
+  body:has([data-mobile-overlay="true"]) .excalidraw .layer-ui__wrapper,
+  body:has([data-mobile-overlay="true"]) .excalidraw .App-toolbar-container,
+  body.mobile-overlay-active .excalidraw .App-bottom-bar,
+  body.mobile-overlay-active .excalidraw .layer-ui__wrapper,
+  body.mobile-overlay-active .excalidraw .App-toolbar-container {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
