@@ -2552,16 +2552,16 @@ export function WorkspaceLayout({
 
             {/* Right Tab Bar Actions (VS Code Style) */}
             <div className="flex items-center gap-1 px-2 shrink-0">
-              <button
-                onClick={() => setIsDiffModalOpen(true)}
-                className={`px-2 py-1 rounded hover:bg-accent transition-colors flex items-center gap-1 text-[11px] font-mono ${
-                  isDirty ? "text-amber-500 font-semibold" : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Inspect Browser Diff & Changelog"
-              >
-                <GitCompare className="w-3.5 h-3.5" />
-                <span>{isDirty ? diffSummary : "0 diff"}</span>
-              </button>
+              {isDirty && (
+                <button
+                  onClick={() => setIsDiffModalOpen(true)}
+                  className="px-1.5 py-1 rounded hover:bg-accent transition-colors flex items-center gap-1 text-[11px] font-mono text-amber-500 font-semibold shrink-0"
+                  title={`Inspect Browser Diff & Changelog (${diffSummary || "Unsaved changes"})`}
+                >
+                  <GitCompare className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden xl:inline whitespace-nowrap">{diffSummary}</span>
+                </button>
+              )}
 
               <button
                 onClick={() => {
@@ -2574,7 +2574,7 @@ export function WorkspaceLayout({
                     if (other) setSplitTabId(other.id);
                   }
                 }}
-                className={`p-1.5 rounded hover:bg-accent transition-colors ${
+                className={`p-1.5 rounded hover:bg-accent transition-colors shrink-0 ${
                   isSplitView ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title="Split Editor Right"

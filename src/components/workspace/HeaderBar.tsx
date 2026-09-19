@@ -345,86 +345,86 @@ export function HeaderBar({
       {/* Desktop Header */}
       <div className="hidden sm:flex items-center justify-between w-full min-w-0">
         {/* Left: Sidebar Toggle & Notion Page Breadcrumb */}
-        <div className="flex items-center gap-2 min-w-0">
-        <button
-          onClick={onToggleSidebar}
-          className={`p-1.5 hover:bg-accent/60 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer ${
-            zenMode || sidebarCollapsed ? "flex" : "flex sm:hidden"
-          }`}
-          title="Toggle Sidebar"
-        >
-          <Menu className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+          <button
+            onClick={onToggleSidebar}
+            className={`p-1.5 hover:bg-accent/60 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0 ${
+              zenMode || sidebarCollapsed ? "flex" : "flex sm:hidden"
+            }`}
+            title="Toggle Sidebar"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
 
-        {sidebarCollapsed && (
-          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold mr-1">
-            <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
-            <span className="tracking-widest text-[10px] font-extrabold">NETHERITE</span>
-          </div>
-        )}
+          {sidebarCollapsed && (
+            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold mr-1 shrink-0">
+              <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
+              <span className="tracking-widest text-[10px] font-extrabold hidden md:inline">NETHERITE</span>
+            </div>
+          )}
 
-        {/* Minimal Notion Breadcrumb or Workspace Title */}
-        {cleanTitle ? (
-          <>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-              {isDrawing ? (
-                <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
-              ) : isUml ? (
-                <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
-              ) : isMermaid ? (
-                <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
-              ) : (
-                <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+          {/* Minimal Notion Breadcrumb or Workspace Title */}
+          {cleanTitle ? (
+            <>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                {isDrawing ? (
+                  <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                ) : isUml ? (
+                  <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
+                ) : isMermaid ? (
+                  <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+                )}
+                <span className="truncate font-semibold text-foreground text-xs sm:text-sm max-w-[140px] sm:max-w-[200px] md:max-w-xs lg:max-w-sm">
+                  {cleanTitle}
+                </span>
+              </div>
+
+              {/* Subtle Sync & Diff Badge (Hidden in Zen Mode) */}
+              {!zenMode && (
+                <button
+                  onClick={onOpenDiff}
+                  className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-full text-[11px] text-muted-foreground hover:bg-accent/50 transition-colors cursor-pointer shrink-0"
+                  title={isSaving ? "Saving changes..." : isDirty ? `Unsaved changes (${diffSummary || "Modified"})` : "All changes saved to Google Drive"}
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                      <span className="hidden xl:inline whitespace-nowrap text-amber-500 font-medium">Saving...</span>
+                    </>
+                  ) : isDirty ? (
+                    <>
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                      <span className="font-mono text-amber-500 font-medium whitespace-nowrap hidden xl:inline">
+                        {diffSummary || "Unsaved"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="hidden xl:inline text-muted-foreground/80 whitespace-nowrap">Synced</span>
+                    </>
+                  )}
+                </button>
               )}
-              <span className="truncate font-medium text-foreground text-xs sm:text-sm max-w-[110px] xs:max-w-[160px] sm:max-w-xs">
-                {cleanTitle}
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+              <span className="font-semibold text-foreground tracking-tight text-xs sm:text-sm">
+                Netherite
               </span>
             </div>
-
-            {/* Subtle Sync & Diff Badge (Hidden in Zen Mode) */}
-            {!zenMode && (
-              <button
-                onClick={onOpenDiff}
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] text-muted-foreground hover:bg-accent/50 transition-colors cursor-pointer"
-                title="View changelog & diff"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="hidden xs:inline">Saving...</span>
-                  </>
-                ) : isDirty ? (
-                  <>
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    <span className="font-mono text-amber-500 font-medium">
-                      {diffSummary || "Unsaved"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="hidden xs:inline text-muted-foreground/80">Synced</span>
-                  </>
-                )}
-              </button>
-            )}
-          </>
-        ) : (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-            <span className="font-semibold text-foreground tracking-tight text-xs sm:text-sm">
-              Netherite
-            </span>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
       {/* Right: Whisper-quiet Notion Actions */}
-      <div className="flex items-center gap-1 sm:gap-1.5 relative" ref={menuRef} data-tauri-no-drag>
+      <div className="flex items-center gap-1 sm:gap-1.5 relative shrink-0" ref={menuRef} data-tauri-no-drag>
         {zenMode ? (
           onToggleZenMode && (
             <button
               onClick={onToggleZenMode}
-              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-accent text-foreground hover:bg-accent/80 transition-all cursor-pointer border border-border/60 shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-accent text-foreground hover:bg-accent/80 transition-all cursor-pointer border border-border/60 shadow-2xs shrink-0"
               title="Exit Zen Mode (Esc or Ctrl+Alt+Z)"
             >
               <Minimize2 className="w-3.5 h-3.5 text-primary" />
@@ -441,11 +441,11 @@ export function HeaderBar({
               <button
                 onClick={onSave}
                 disabled={isSaving}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-foreground text-background hover:opacity-90 transition-all shadow-xs cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-foreground text-background hover:opacity-90 transition-all shadow-xs cursor-pointer shrink-0"
                 title="Save changes (Ctrl+S)"
               >
                 <Save className="w-3 h-3" />
-                <span>Save</span>
+                <span className="hidden md:inline">Save</span>
               </button>
             )}
 
@@ -454,7 +454,7 @@ export function HeaderBar({
               <button
                 onClick={onManualSync}
                 disabled={isSyncing || isSaving}
-                className={`p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
                   isSyncing ? "text-foreground bg-accent/40" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title="Sync with Google Drive (Pull Latest)"
@@ -463,11 +463,11 @@ export function HeaderBar({
               </button>
             )}
 
-            {/* Split Editor Toggle */}
+            {/* Split Editor Toggle (visible on wide screens; on smaller laptop split view, tab bar handles split) */}
             {cleanTitle && onToggleSplitView && (
               <button
                 onClick={onToggleSplitView}
-                className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer ${
+                className={`hidden xl:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
                   isSplitView ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title="Toggle Split View"
@@ -480,7 +480,7 @@ export function HeaderBar({
             {cleanTitle && onToggleDiff && (
               <button
                 onClick={onToggleDiff}
-                className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all cursor-pointer shrink-0 ${
                   isDiffOpen
                     ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 shadow-2xs font-semibold"
                     : isDirty
@@ -490,7 +490,7 @@ export function HeaderBar({
                 title="Toggle Git Diff Inspector (Ctrl+Shift+D)"
               >
                 <GitCompare className="w-3.5 h-3.5" />
-                <span className="hidden md:inline text-[11px]">Diff</span>
+                <span className="hidden xl:inline text-[11px]">Diff</span>
                 {isDirty && (
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />
                 )}
@@ -501,12 +501,12 @@ export function HeaderBar({
             {onOpenGlobalSearch && (
               <button
                 onClick={onOpenGlobalSearch}
-                className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 p-1.5 xl:px-2 xl:py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer shrink-0"
                 title="Global Search (Ctrl+K)"
               >
                 <Search className="w-3.5 h-3.5" />
-                <span className="text-[11px] hidden md:inline">Search</span>
-                <kbd className="hidden lg:inline text-[9px] font-mono px-1 py-0.2 bg-muted/60 border border-border/40 rounded">
+                <span className="text-[11px] hidden 2xl:inline">Search</span>
+                <kbd className="hidden 2xl:inline text-[9px] font-mono px-1 py-0.2 bg-muted/60 border border-border/40 rounded">
                   ⌘K
                 </kbd>
               </button>
@@ -516,7 +516,7 @@ export function HeaderBar({
             {onToggleCopilot && (
               <button
                 onClick={onToggleCopilot}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 p-1.5 xl:px-2.5 xl:py-1 rounded-md text-xs font-medium transition-all cursor-pointer shrink-0 ${
                   isCopilotOpen
                     ? "bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 shadow-2xs font-semibold"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
@@ -524,7 +524,7 @@ export function HeaderBar({
                 title="Toggle Gemini AI Copilot (Ctrl+J)"
               >
                 <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                <span className="hidden sm:inline text-[11px]">Copilot</span>
+                <span className="hidden xl:inline text-[11px]">Copilot</span>
               </button>
             )}
 
@@ -539,7 +539,7 @@ export function HeaderBar({
               onToggleOutline && (
                 <button
                   onClick={onToggleOutline}
-                  className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer ${
+                  className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
                     isOutlineOpen ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
                   }`}
                   title="Toggle Document Outline"
@@ -548,34 +548,34 @@ export function HeaderBar({
                 </button>
               )}
 
-            {/* Quick PDF Export Button */}
+            {/* Quick PDF Export Button (available in ... menu on smaller screens) */}
             {cleanTitle && onExportPdf && (
               <button
                 onClick={onExportPdf}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer"
+                className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer shrink-0"
                 title="Export as PDF Document (Ctrl+P)"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span className="hidden md:inline text-[11px]">PDF</span>
+                <span className="hidden 2xl:inline text-[11px]">PDF</span>
               </button>
             )}
 
-            {/* Zen Mode Button */}
+            {/* Zen Mode Button (available in ... menu on smaller screens) */}
             {onToggleZenMode && (
               <button
                 onClick={onToggleZenMode}
-                className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer"
+                className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer shrink-0"
                 title="Enter Zen Mode (Ctrl+Alt+Z)"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline text-[11px]">Zen</span>
+                <span className="hidden 2xl:inline text-[11px]">Zen</span>
               </button>
             )}
 
             {/* Notion-Style More Options (...) Button */}
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className={`p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer ${
+              className={`p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
                 showMoreMenu ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
               }`}
               title="More Options"
