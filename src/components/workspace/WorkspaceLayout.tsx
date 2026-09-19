@@ -2236,9 +2236,14 @@ export function WorkspaceLayout({
             : "Workspace is in sync with Google Drive."
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to sync from Google Drive:", err);
-      showToast("Failed to sync with Drive. Please check your connection.");
+      const errMsg = String(err?.message || err || "");
+      if (errMsg.includes("invalid_grant") || errMsg.includes("authorization expired")) {
+        showToast("Google authorization expired. Please sign out and sign back in.");
+      } else {
+        showToast("Failed to sync with Drive. Please check your connection.");
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -2371,7 +2376,7 @@ export function WorkspaceLayout({
 
         {/* VS Code / Antigravity Style Tab Management Bar (Hidden in Zen Mode) */}
         {!zenMode && (openTabIds.length > 0 || activeView === "calendar") && (
-          <div className="h-9 border-b border-border bg-muted/30 flex items-center justify-between px-0 overflow-x-auto select-none shrink-0">
+          <div className="hidden sm:flex h-9 border-b border-border bg-muted/30 items-center justify-between px-0 overflow-x-auto select-none shrink-0">
             <div
               ref={tabBarRef}
               onWheel={(e) => {
@@ -3164,6 +3169,7 @@ export function WorkspaceLayout({
         <MobileBottomBar
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           onCreateNote={() => handleCreateFile()}
+          onCreateDrawing={handleCreateDrawing}
           onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
           showOutline={isCurrentMarkdown}
           onToggleSplitView={() => {
@@ -3191,6 +3197,12 @@ export function WorkspaceLayout({
           onManualSync={handleOpenSyncModal}
           isSyncing={isSyncing}
           diffSummary={diffSummary}
+          isDrawing={isCurrentDrawing}
+          activeNoteTitle={currentNote?.name || "Untitled.md"}
+          onOpenSearch={() => setIsGlobalSearchOpen(true)}
+          onExportMarkdown={handleExportMarkdown}
+          onExportPdf={() => setIsPdfModalOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
       </div>
 

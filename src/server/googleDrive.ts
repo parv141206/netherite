@@ -51,6 +51,20 @@ function getUserKey(session: unknown): string {
   return s?.user?.id ?? s?.accessToken?.slice(-16) ?? "default";
 }
 
+function cleanEnv(val?: string): string | undefined {
+  if (!val) return undefined;
+  const trimmed = val.trim();
+  return trimmed.replace(/^["']|["']$/g, "").trim();
+}
+
+const googleClientId =
+  cleanEnv(process.env.AUTH_GOOGLE_ID) ||
+  cleanEnv(process.env.GOOGLE_CLIENT_ID);
+
+const googleClientSecret =
+  cleanEnv(process.env.AUTH_GOOGLE_SECRET) ||
+  cleanEnv(process.env.GOOGLE_CLIENT_SECRET);
+
 export async function getDriveClient(session: any) {
   const accessToken = session?.accessToken;
   const refreshToken = session?.refreshToken;
@@ -60,8 +74,8 @@ export async function getDriveClient(session: any) {
   }
 
   const oauth2Client = new google.auth.OAuth2(
-    process.env.AUTH_GOOGLE_ID,
-    process.env.AUTH_GOOGLE_SECRET
+    googleClientId,
+    googleClientSecret
   );
 
   oauth2Client.setCredentials({
@@ -146,9 +160,13 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 600): P
     try {
       return await fn();
     } catch (err: any) {
+      const errMsg = String(err?.message || err || "");
+      if (errMsg.includes("invalid_grant")) {
+        throw new Error("Google authorization expired or revoked. Please sign out and sign in again.");
+      }
       attempt++;
       if (attempt > retries) throw err;
-      console.warn(`Drive API call transient error (attempt ${attempt}/${retries}):`, err?.message || err);
+      console.warn(`Drive API call transient error (attempt ${attempt}/${retries}):`, errMsg);
       await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
   }

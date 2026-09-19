@@ -12,6 +12,7 @@ import {
   Columns,
   ListTree,
   MoreHorizontal,
+  ChevronLeft,
   Moon,
   Sun,
   Type,
@@ -287,8 +288,75 @@ export function HeaderBar({
       className="h-11 border-b border-border/40 bg-background/80 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between gap-3 sticky top-0 z-40 select-none shrink-0"
       data-tauri-drag-region
     >
-      {/* Left: Sidebar Toggle & Notion Page Breadcrumb */}
-      <div className="flex items-center gap-2 min-w-0">
+      {/* Native Apple Notes-Style Mobile Top Bar (Single Row, Zero Clutter) */}
+      <div className="sm:hidden flex items-center justify-between w-full min-w-0">
+        <button
+          onClick={onToggleSidebar}
+          className="flex items-center gap-0.5 text-foreground hover:text-foreground/80 font-medium text-xs py-1 px-1.5 -ml-1.5 rounded-lg active:scale-95 transition-all shrink-0 cursor-pointer"
+          title="Open Notes Library"
+          type="button"
+        >
+          <ChevronLeft className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-primary">Notes</span>
+        </button>
+
+        <div className="flex items-center gap-1.5 min-w-0 px-2 max-w-[60%]">
+          {isDrawing ? (
+            <Palette className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+          ) : isUml ? (
+            <Network className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+          ) : isMermaid ? (
+            <Workflow className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          ) : (
+            <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+          )}
+          <span className="truncate font-semibold text-foreground text-xs">
+            {cleanTitle || "Netherite"}
+          </span>
+          <span
+            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+              isSaving
+                ? "bg-amber-500 animate-ping"
+                : isDirty
+                ? "bg-amber-400"
+                : "bg-emerald-500"
+            }`}
+            title={isSaving ? "Saving..." : isDirty ? "Unsaved changes" : "Synced"}
+          />
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {cleanTitle && isDirty && onSave ? (
+            <button
+              onClick={onSave}
+              disabled={isSaving}
+              className="px-2.5 py-1 rounded-full bg-amber-500 text-black font-extrabold text-[10px] active:scale-90 transition-all shadow-xs cursor-pointer"
+              title="Save changes"
+              type="button"
+            >
+              {isSaving ? "SAVING" : "SAVE"}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("netherite:open-more-sheet"));
+                }
+              }}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 active:scale-90 transition-all cursor-pointer"
+              title="More options"
+              type="button"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center justify-between w-full min-w-0">
+        {/* Left: Sidebar Toggle & Notion Page Breadcrumb */}
+        <div className="flex items-center gap-2 min-w-0">
         <button
           onClick={onToggleSidebar}
           className={`p-1.5 hover:bg-accent/60 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer ${
@@ -743,6 +811,7 @@ export function HeaderBar({
             </div>
           </div>
         )}
+      </div>
       </div>
     </header>
   );

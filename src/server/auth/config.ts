@@ -59,6 +59,12 @@ async function refreshGoogleAccessToken(token: any) {
 
     if (!response.ok) {
       console.error("Failed to refresh Google access token:", refreshedTokens);
+      if (refreshedTokens?.error === "invalid_grant") {
+        return {
+          ...token,
+          error: "RefreshAccessTokenError",
+        };
+      }
       return token;
     }
 
@@ -102,7 +108,7 @@ export const authConfig = {
     async jwt({ token, account }) {
       if (account) {
         token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
+        token.refreshToken = account.refresh_token ?? token.refreshToken;
         token.expiresAt = account.expires_at ?? Math.floor(Date.now() / 1000 + 3600);
         if (token.refreshToken) {
           saveLocalCredentials({

@@ -302,7 +302,15 @@ export default function ExcalidrawEditor({
   const handleApi = useCallback((nextApi: ExcalidrawImperativeAPI | null) => {
     setApi(nextApi);
     if (nextApi) {
-      appStateRef.current = nextApi.getAppState();
+      const state = nextApi.getAppState();
+      appStateRef.current = state;
+      if (typeof window !== "undefined" && state?.activeTool?.type) {
+        window.dispatchEvent(
+          new CustomEvent("netherite:excalidraw-active-tool", {
+            detail: { tool: state.activeTool.type },
+          })
+        );
+      }
     }
   }, []);
 
@@ -315,6 +323,14 @@ export default function ExcalidrawEditor({
       elementsRef.current = nextElements;
       appStateRef.current = nextAppState;
       filesRef.current = nextFiles;
+
+      if (typeof window !== "undefined" && nextAppState.activeTool?.type) {
+        window.dispatchEvent(
+          new CustomEvent("netherite:excalidraw-active-tool", {
+            detail: { tool: nextAppState.activeTool.type },
+          })
+        );
+      }
 
       const currentSig = getDrawingSignature(nextElements, nextAppState);
 
@@ -490,12 +506,59 @@ export default function ExcalidrawEditor({
     };
   }, [flush]);
 
+  // Mobile / Native custom event command bridge
+  useEffect(() => {
+    const handleExcalidrawCommand = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tool?: string; action?: string }>;
+      const { tool, action } = customEvent.detail || {};
+
+      if (action === "undo") {
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "z",
+            code: "KeyZ",
+            ctrlKey: true,
+            bubbles: true,
+          })
+        );
+      } else if (action === "redo") {
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "z",
+            code: "KeyZ",
+            ctrlKey: true,
+            shiftKey: true,
+            bubbles: true,
+          })
+        );
+      } else if (tool && api && !api.isDestroyed) {
+        try {
+          api.setActiveTool({ type: tool as any });
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("netherite:excalidraw-active-tool", {
+                detail: { tool },
+              })
+            );
+          }
+        } catch (err) {
+          console.warn("Failed to set active tool:", err);
+        }
+      }
+    };
+
+    window.addEventListener("netherite:excalidraw-command", handleExcalidrawCommand);
+    return () => {
+      window.removeEventListener("netherite:excalidraw-command", handleExcalidrawCommand);
+    };
+  }, [api]);
+
   return (
     <div
       ref={shellRef}
       data-excalidraw-container="true"
       data-canvas-container="true"
-      className={`${engineeringStyles.editorShell} ${
+      className={`${engineeringStyles.editorShell} mobile-canvas-container ${
         activeTheme === "dark" ? "theme--dark" : ""
       }`}
     >
