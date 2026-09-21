@@ -4165,6 +4165,7 @@ export function WorkspaceLayout({
         isOpen={isPdfModalOpen}
         onClose={() => setIsPdfModalOpen(false)}
         fileName={currentNote?.name || "Untitled.md"}
+        authorName={session?.user?.name || "Netherite Sovereign Author"}
         fileType={
           currentNote?.name?.endsWith(".mmd") ||
           currentNote?.name?.endsWith(".mermaid")

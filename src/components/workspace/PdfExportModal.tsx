@@ -18,8 +18,6 @@ import {
   Sparkles,
   Check,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useTheme } from "~/components/ThemeProvider";
 import {
   compileMarkdownForPdf,
   type HeadingItem,
@@ -36,6 +34,7 @@ interface PdfExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   fileName: string;
+  authorName?: string;
   fileType?: "markdown" | "mermaid" | "uml" | "drawing" | "image" | "tikz";
   content?: string;
   svgContent?: string;
@@ -45,13 +44,11 @@ export function PdfExportModal({
   isOpen,
   onClose,
   fileName,
+  authorName = "Netherite Sovereign Author",
   fileType = "markdown",
   content = "",
   svgContent = "",
 }: PdfExportModalProps) {
-  const { data: session } = useSession();
-  const { isDark: appDark } = useTheme();
-
   // Document Presets & Design
   const [themePreset, setThemePreset] = useState<
     "academic" | "engineering" | "executive" | "monochrome"
@@ -114,7 +111,7 @@ export function PdfExportModal({
       void compileMarkdownForPdf(content, {
         title: cleanTitle,
         subtitle: customSubtitle,
-        author: session?.user?.name || "Netherite Sovereign Author",
+        author: authorName,
         includeCoverPage,
         includeTableOfContents,
         sectionNumbering,
@@ -163,7 +160,7 @@ export function PdfExportModal({
     includeTableOfContents,
     sectionNumbering,
     colorMode,
-    session?.user?.name,
+    authorName,
   ]);
 
   if (!isOpen) return null;
