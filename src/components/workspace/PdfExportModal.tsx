@@ -3,16 +3,34 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   X,
+  Download,
   Printer,
   Eye,
   Type,
-  Palette,
   Layout,
   ZoomIn,
   ZoomOut,
+  RotateCcw,
+  Loader2,
+  FileText,
+  BookOpen,
+  ListOrdered,
+  Sparkles,
+  Check,
 } from "lucide-react";
-import { useTheme, type MdThemeId, type GlobalFontId } from "~/components/ThemeProvider";
-import { AppleSpinner } from "~/components/ui/AppleSpinner";
+import { useSession } from "next-auth/react";
+import { useTheme } from "~/components/ThemeProvider";
+import {
+  compileMarkdownForPdf,
+  type HeadingItem,
+} from "~/lib/pdf/mdToPdfCompiler";
+import {
+  generatePdfFile,
+  buildPdfStylesheet,
+  PAGE_SPECS,
+  MARGIN_SPECS,
+  type PdfEngineConfig,
+} from "~/lib/pdf/pdfEngine";
 
 interface PdfExportModalProps {
   isOpen: boolean;
@@ -31,356 +49,203 @@ export function PdfExportModal({
   content = "",
   svgContent = "",
 }: PdfExportModalProps) {
-  const { mdTheme: activeMdTheme, globalFont: activeGlobalFont } = useTheme();
+  const { data: session } = useSession();
+  const { isDark: appDark } = useTheme();
 
-  // Customization Options
-  const [themePreset, setThemePreset] = useState<"inherit" | "print-clean" | MdThemeId>("print-clean");
-  const [colorMode, setColorMode] = useState<"light" | "dark" | "monochrome">("light");
-  const [fontChoice, setFontChoice] = useState<"inherit" | GlobalFontId>("inherit");
-  const [baseFontSize, setBaseFontSize] = useState<"13px" | "15px" | "17px">("15px");
+  // Document Presets & Design
+  const [themePreset, setThemePreset] = useState<
+    "academic" | "engineering" | "executive" | "monochrome"
+  >("academic");
+  const [colorMode, setColorMode] = useState<"light" | "dark" | "monochrome">(
+    "light"
+  );
+  const [fontChoice, setFontChoice] = useState<string>("inter");
+  const [baseFontSize, setBaseFontSize] = useState<
+    "13px" | "14px" | "15px" | "16px"
+  >("14px");
   const [pageSize, setPageSize] = useState<"a4" | "letter" | "legal">("a4");
   const [orientation, setOrientation] = useState<"portrait" | "landscape">(
-    fileType === "mermaid" || fileType === "uml" || fileType === "drawing" || fileType === "tikz" ? "landscape" : "portrait"
+    fileType === "mermaid" ||
+      fileType === "uml" ||
+      fileType === "drawing" ||
+      fileType === "tikz"
+      ? "landscape"
+      : "portrait"
   );
-  const [margin, setMargin] = useState<"normal" | "compact" | "wide" | "none">("normal");
+  const [margin, setMargin] = useState<"normal" | "compact" | "wide" | "none">(
+    "normal"
+  );
 
-  // Headers & Footers
+  // Document Structure Toggles
+  const [includeCoverPage, setIncludeCoverPage] = useState(false);
+  const [includeTableOfContents, setIncludeTableOfContents] = useState(false);
+  const [sectionNumbering, setSectionNumbering] = useState(true);
   const [showHeaderTitle, setShowHeaderTitle] = useState(true);
   const [showDate, setShowDate] = useState(true);
   const [showPageNumbers, setShowPageNumbers] = useState(true);
   const [customSubtitle, setCustomSubtitle] = useState("");
 
-  // Content formatting
-  const [styleTables, setStyleTables] = useState(true);
-  const [avoidPageBreaks, setAvoidPageBreaks] = useState(true);
+  // Compilation & Generation States
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState("");
+  const [compiledHtml, setCompiledHtml] = useState("");
+  const [wordCount, setWordCount] = useState(0);
+  const [readingTime, setReadingTime] = useState(1);
+  const [headings, setHeadings] = useState<HeadingItem[]>([]);
 
-  // Preview & Print States
-  const [previewZoom, setPreviewZoom] = useState<number>(0.85);
+  // Preview & Viewport States
+  const [previewZoom, setPreviewZoom] = useState<number>(0.8);
   const [activeTab, setActiveTab] = useState<"preview" | "settings">("preview");
-  const [renderedHtml, setRenderedHtml] = useState<string>("");
-  const [diagramSvg, setDiagramSvg] = useState<string>(svgContent || "");
-  const [isGenerating, setIsGenerating] = useState(false);
+
+  const previewSheetRef = useRef<HTMLDivElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const cleanTitle = fileName.replace(/\.[^/.]+$/, "") || "Document";
 
-  // Capture live rendered HTML if Markdown, or live SVG if diagram
+  // Re-compile markdown into rich structured document whenever content or structural toggles change
   useEffect(() => {
     if (!isOpen) return;
 
+    let isMounted = true;
+    setIsCompiling(true);
+
     if (fileType === "markdown") {
-      // If editor DOM is live in window, extract clean prose HTML (preferring active primary pane)
-      const proseEl =
-        document.querySelector("main .ProseMirror") ||
-        document.querySelector(".ProseMirror");
-      if (proseEl) {
-        // Clone and sanitize
-        const clone = proseEl.cloneNode(true) as HTMLElement;
-        // Clean out editing helpers
-        clone
-          .querySelectorAll(".cm-editor, .ProseMirror-selectednode, [data-bubble-menu]")
-          .forEach((el) => el.remove());
-        setRenderedHtml(clone.innerHTML);
-      } else if (content) {
-        // Fallback: simple basic formatting
-        setRenderedHtml(
-          content
-            .split("\n\n")
-            .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
-            .join("")
-        );
-      }
+      void compileMarkdownForPdf(content, {
+        title: cleanTitle,
+        subtitle: customSubtitle,
+        author: session?.user?.name || "Netherite Sovereign Author",
+        includeCoverPage,
+        includeTableOfContents,
+        sectionNumbering,
+        isDark: colorMode === "dark",
+      })
+        .then((result) => {
+          if (!isMounted) return;
+          setCompiledHtml(result.html);
+          setWordCount(result.wordCount);
+          setReadingTime(result.readingTimeMinutes);
+          setHeadings(result.headings);
+          setIsCompiling(false);
+        })
+        .catch((err) => {
+          console.error("PDF Markdown compilation failed:", err);
+          if (isMounted) setIsCompiling(false);
+        });
     } else {
-      if (svgContent) {
-        setDiagramSvg(svgContent);
-      } else {
-        // Extract rendered SVG directly from the diagram canvas (Mermaid, TikZ, Apollon, Excalidraw)
-        const canvasSvg =
-          document.querySelector("main svg:not([class*='lucide'])") ||
-          document.querySelector(".mermaid-viewport svg") ||
-          document.querySelector(".excalidraw-svg") ||
-          document.querySelector("svg:not([class*='lucide'])");
-        if (canvasSvg) {
-          const clone = canvasSvg.cloneNode(true) as SVGElement;
-          clone.setAttribute(
-            "style",
-            "max-width: 100%; max-height: 85vh; width: auto; height: auto; display: block; margin: 0 auto;"
-          );
-          setDiagramSvg(clone.outerHTML);
-        } else if (content && (content.includes("<svg") || content.startsWith("<?xml"))) {
-          setDiagramSvg(content);
-        }
-      }
+      // Non-markdown diagrams (SVG, Excalidraw, TikZ)
+      const rawSvg = svgContent || content || "";
+      const diagramHtml = `
+        <div class="pdf-compiled-document">
+          <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 80vh; text-align: center;">
+            <h1 class="pdf-heading pdf-h1" style="margin-bottom: 20px;">${cleanTitle}</h1>
+            <div class="pdf-diagram-wrapper" style="width: 100%; max-width: 95%;">
+              ${rawSvg}
+            </div>
+          </div>
+        </div>
+      `;
+      setCompiledHtml(diagramHtml);
+      setIsCompiling(false);
     }
-  }, [isOpen, fileType, content, svgContent]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    isOpen,
+    content,
+    svgContent,
+    fileType,
+    cleanTitle,
+    customSubtitle,
+    includeCoverPage,
+    includeTableOfContents,
+    sectionNumbering,
+    colorMode,
+    session?.user?.name,
+  ]);
 
   if (!isOpen) return null;
 
-  const effectiveFontId = fontChoice === "inherit" ? activeGlobalFont : fontChoice;
+  const fontOptions = [
+    {
+      id: "inter",
+      label: "Inter (Modern Sans)",
+      family: "'Inter', -apple-system, sans-serif",
+    },
+    {
+      id: "jakarta",
+      label: "Plus Jakarta Sans",
+      family: "'Plus Jakarta Sans', sans-serif",
+    },
+    { id: "outfit", label: "Outfit (Editorial)", family: "'Outfit', sans-serif" },
+    {
+      id: "literata",
+      label: "Literata (Academic Serif)",
+      family: "'Literata', Georgia, serif",
+    },
+    {
+      id: "playfair",
+      label: "Playfair Display",
+      family: "'Playfair Display', Georgia, serif",
+    },
+    { id: "lora", label: "Lora (Book Serif)", family: "'Lora', Georgia, serif" },
+    {
+      id: "jetbrains",
+      label: "JetBrains Mono (Technical)",
+      family: "'JetBrains Mono', monospace",
+    },
+    {
+      id: "dm-sans",
+      label: "DM Sans (Minimal)",
+      family: "'DM Sans', sans-serif",
+    },
+  ];
 
-  const getFontFamily = (fId: GlobalFontId) => {
-    switch (fId) {
-      case "crafty-girls":
-        return "'Crafty Girls', cursive, sans-serif";
-      case "excalifont":
-        return "'Excalifont', cursive, sans-serif";
-      case "literata":
-        return "var(--font-literata), 'Literata', Georgia, serif";
-      case "playfair":
-        return "'Playfair Display', Georgia, serif";
-      case "lora":
-        return "'Lora', Georgia, serif";
-      case "merriweather":
-        return "'Merriweather', Georgia, serif";
-      case "outfit":
-        return "'Outfit', sans-serif";
-      case "inter":
-        return "'Inter', sans-serif";
-      case "jakarta":
-        return "'Plus Jakarta Sans', sans-serif";
-      case "dm-sans":
-        return "'DM Sans', sans-serif";
-      case "jetbrains":
-        return "'JetBrains Mono', monospace";
-      case "fira":
-        return "'Fira Code', monospace";
-      case "space-mono":
-        return "'Space Mono', monospace";
-      default:
-        return "var(--font-sans), ui-sans-serif, system-ui, sans-serif";
+  const currentFontFamily =
+    fontOptions.find((f) => f.id === fontChoice)?.family ||
+    fontOptions[0]!.family;
+
+  const engineConfig: PdfEngineConfig = {
+    fileName,
+    pageSize,
+    orientation,
+    margin,
+    colorMode,
+    themePreset,
+    fontFamily: currentFontFamily,
+    baseFontSize,
+    showHeaderTitle,
+    showDate,
+    showPageNumbers,
+    customSubtitle,
+  };
+
+  const dynamicStylesheet = buildPdfStylesheet(engineConfig);
+
+  // Trigger Direct Client-Side PDF Generation and File Download
+  const handleDownloadPdf = async () => {
+    if (!previewSheetRef.current || isExporting) return;
+    setIsExporting(true);
+    setExportProgress("Preparing document pages…");
+
+    try {
+      await generatePdfFile(previewSheetRef.current, {
+        ...engineConfig,
+        onProgress: (msg) => setExportProgress(msg),
+      });
+    } catch (err) {
+      console.error("PDF Export generation failed:", err);
+      alert("Could not generate PDF. Please try again or use Native Print.");
+    } finally {
+      setIsExporting(false);
+      setExportProgress("");
     }
   };
 
-  const getMarginMm = (m: string) => {
-    switch (m) {
-      case "compact":
-        return "10mm";
-      case "wide":
-        return "30mm";
-      case "none":
-        return "5mm";
-      default:
-        return "20mm";
-    }
-  };
-
-  const getPageDimensions = () => {
-    let w = 210;
-    let h = 297;
-    if (pageSize === "letter") {
-      w = 216;
-      h = 279;
-    } else if (pageSize === "legal") {
-      w = 216;
-      h = 356;
-    }
-    if (orientation === "landscape") {
-      return { width: `${h}mm`, height: `${w}mm`, aspectRatio: `${h}/${w}` };
-    }
-    return { width: `${w}mm`, height: `${h}mm`, aspectRatio: `${w}/${h}` };
-  };
-
-  // Build the complete standalone printable HTML document
-  const buildPrintDocument = () => {
-    const marginMm = getMarginMm(margin);
-    const fontCss = getFontFamily(effectiveFontId);
-    const isCleanPrint = themePreset === "print-clean";
-    const isDarkPdf = colorMode === "dark";
-    const isMonochrome = colorMode === "monochrome";
-
-    const bgColor = isDarkPdf ? "#121215" : isCleanPrint || isMonochrome ? "#ffffff" : "#fdfcfc";
-    const fgColor = isDarkPdf ? "#f4f4f5" : isMonochrome ? "#000000" : "#18181b";
-    const borderColor = isDarkPdf ? "#27272a" : isMonochrome ? "#000000" : "#e4e4e7";
-
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${cleanTitle}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Crafty+Girls&family=Inter:wght@400;600;700&family=Outfit:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&family=Playfair+Display:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
-  <style>
-    @font-face {
-      font-family: 'Excalifont';
-      src: url('/Excalifont-Regular.woff2') format('woff2');
-      font-weight: normal;
-      font-style: normal;
-    }
-
-    @page {
-      size: ${pageSize.toUpperCase()} ${orientation};
-      margin: ${marginMm};
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: ${fontCss};
-      font-size: ${baseFontSize};
-      line-height: 1.65;
-      color: ${fgColor};
-      background-color: ${bgColor};
-    }
-
-    .doc-container {
-      width: 100%;
-      margin: 0 auto;
-    }
-
-    /* Running Header & Footer */
-    .print-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 8px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid ${borderColor};
-      font-size: 11px;
-      color: ${isDarkPdf ? "#a1a1aa" : "#71717a"};
-    }
-    .print-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 12px;
-      margin-top: 32px;
-      border-top: 1px solid ${borderColor};
-      font-size: 10px;
-      color: ${isDarkPdf ? "#a1a1aa" : "#71717a"};
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-      color: ${fgColor};
-      margin-top: 1.4em;
-      margin-bottom: 0.5em;
-      font-weight: 700;
-      line-height: 1.25;
-      ${avoidPageBreaks ? "page-break-after: avoid; break-after: avoid;" : ""}
-    }
-    h1 { font-size: 2em; border-bottom: 1px solid ${borderColor}; padding-bottom: 0.3em; }
-    h2 { font-size: 1.5em; }
-    h3 { font-size: 1.25em; }
-
-    p { margin-top: 0; margin-bottom: 1em; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.5em 0;
-      ${avoidPageBreaks ? "page-break-inside: avoid; break-inside: avoid;" : ""}
-    }
-    th, td {
-      border: 1px solid ${borderColor};
-      padding: 8px 12px;
-      text-align: left;
-    }
-    th {
-      background-color: ${isDarkPdf ? "#27272a" : isMonochrome ? "#f4f4f5" : "#f1f5f9"};
-      font-weight: 600;
-    }
-    ${styleTables && !isMonochrome ? `tr:nth-child(even) td { background-color: ${isDarkPdf ? "#1a1a1e" : "#fafafa"}; }` : ""}
-
-    blockquote {
-      margin: 1.5em 0;
-      padding: 8px 16px;
-      border-left: 4px solid ${borderColor};
-      background: ${isDarkPdf ? "#1e1e24" : "#f9fafb"};
-      color: ${isDarkPdf ? "#d4d4d8" : "#4b5563"};
-      ${avoidPageBreaks ? "page-break-inside: avoid; break-inside: avoid;" : ""}
-    }
-
-    pre, code {
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.9em;
-    }
-    pre {
-      background-color: ${isDarkPdf ? "#18181b" : "#f4f4f5"};
-      border: 1px solid ${borderColor};
-      border-radius: 6px;
-      padding: 12px;
-      overflow-x: auto;
-      margin: 1.2em 0;
-      ${avoidPageBreaks ? "page-break-inside: avoid; break-inside: avoid;" : ""}
-    }
-    code:not(pre code) {
-      background-color: ${isDarkPdf ? "#27272a" : "#f4f4f5"};
-      padding: 2px 5px;
-      border-radius: 4px;
-      border: 1px solid ${borderColor};
-    }
-
-    .mermaid-viewport, svg {
-      max-width: 100%;
-      height: auto;
-      margin: 1.5em auto;
-      display: block;
-      ${avoidPageBreaks ? "page-break-inside: avoid; break-inside: avoid;" : ""}
-    }
-
-    ul, ol {
-      margin-top: 0;
-      margin-bottom: 1em;
-      padding-left: 2em;
-    }
-    li { margin-bottom: 0.3em; }
-
-    img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 6px;
-      ${avoidPageBreaks ? "page-break-inside: avoid; break-inside: avoid;" : ""}
-    }
-  </style>
-</head>
-<body>
-  <div class="doc-container">
-    ${
-      showHeaderTitle || showDate
-        ? `<div class="print-header">
-            <span>${showHeaderTitle ? cleanTitle : ""} ${customSubtitle ? `— ${customSubtitle}` : ""}</span>
-            <span>${showDate ? new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : ""}</span>
-          </div>`
-        : ""
-    }
-
-    ${
-      fileType === "markdown"
-        ? renderedHtml || `<div style="white-space: pre-wrap;">${content}</div>`
-        : (diagramSvg || svgContent)
-        ? `<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-            ${diagramSvg || svgContent}
-          </div>`
-        : `<div style="text-align: center; padding: 40px;">No printable content available.</div>`
-    }
-
-    ${
-      showPageNumbers
-        ? `<div class="print-footer">
-            <span>Generated with Netherite Sovereign Studio</span>
-            <span>Netherite Sovereign Drive Document</span>
-          </div>`
-        : ""
-    }
-  </div>
-</body>
-</html>
-    `;
-  };
-
-  // Trigger Native High-DPI Browser Print to PDF
-  const handlePrint = () => {
-    setIsGenerating(true);
-    const docHtml = buildPrintDocument();
-
+  // Trigger High-DPI Native Print Spooler (for physical printer devices)
+  const handleNativePrint = () => {
     let iframe = iframeRef.current;
     if (!iframe) {
       iframe = document.createElement("iframe");
@@ -395,148 +260,191 @@ export function PdfExportModal({
     }
 
     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!iframeDoc) {
-      setIsGenerating(false);
-      return;
-    }
+    if (!iframeDoc) return;
+
+    const fullPrintDoc = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${cleanTitle}</title>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
+          <style>${dynamicStylesheet}</style>
+        </head>
+        <body class="pdf-root-container">
+          <div style="padding: 10px;">
+            ${compiledHtml}
+          </div>
+        </body>
+      </html>
+    `;
 
     iframeDoc.open();
-    iframeDoc.write(docHtml);
+    iframeDoc.write(fullPrintDoc);
     iframeDoc.close();
 
-    // Allow fonts, math, and SVGs to layout before triggering print dialog
     setTimeout(() => {
-      setIsGenerating(false);
       try {
         iframe?.contentWindow?.focus();
         iframe?.contentWindow?.print();
       } catch (err) {
-        console.error("Print invocation error:", err);
+        console.error("Print spooler error:", err);
       }
-    }, 500);
+    }, 400);
   };
 
-  const pageDims = getPageDimensions();
+  // Dimensions of a single sheet in preview
+  const spec = PAGE_SPECS[pageSize][orientation];
+  const sheetWidthPx = Math.round(spec.widthMm * 3.7795); // 1mm ~= 3.7795px at 96 DPI
+  const sheetMinHeightPx = Math.round(spec.heightMm * 3.7795);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
-      <div className="w-full max-w-5xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[92vh] max-h-[860px] animate-in fade-in zoom-in-95 duration-200">
-        {/* Modal Header */}
-        <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between shrink-0 bg-muted/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-2 backdrop-blur-md sm:p-4 animate-in fade-in duration-200">
+      <div className="relative flex h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-border/80 bg-background shadow-2xl">
+        {/* Header Bar */}
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-card/80 px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Printer className="w-4 h-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FileText className="h-4 w-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-sm sm:text-base text-foreground truncate max-w-[240px] sm:max-w-md">
-                  Export PDF Document
+                <h2 className="text-sm font-semibold tracking-tight text-foreground truncate max-w-[220px] sm:max-w-xs">
+                  {cleanTitle}
                 </h2>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-accent text-accent-foreground font-semibold">
-                  {fileType}
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  In-House PDF
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground hidden sm:block">
-                Print, format and save vector PDF to your device or Google Drive
+                {wordCount} words • ~{readingTime} min read • {headings.length}{" "}
+                sections
               </p>
             </div>
           </div>
 
-          {/* Header Action Controls */}
+          {/* Quick Actions & Close */}
           <div className="flex items-center gap-2">
-            {/* Mobile Tab Switcher */}
-            <div className="flex sm:hidden items-center border border-border rounded-lg overflow-hidden text-xs">
-              <button
-                onClick={() => setActiveTab("preview")}
-                className={`px-2.5 py-1 ${activeTab === "preview" ? "bg-accent font-medium text-foreground" : "text-muted-foreground"}`}
-              >
-                Preview
-              </button>
-              <button
-                onClick={() => setActiveTab("settings")}
-                className={`px-2.5 py-1 ${activeTab === "settings" ? "bg-accent font-medium text-foreground" : "text-muted-foreground"}`}
-              >
-                Options
-              </button>
-            </div>
-
+            {/* Primary Download PDF Button */}
             <button
-              onClick={handlePrint}
-              disabled={isGenerating}
-              className="flex items-center gap-1.5 px-4 py-2 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              onClick={handleDownloadPdf}
+              disabled={isCompiling || isExporting}
+              className="flex items-center gap-2 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>{isGenerating ? "Preparing..." : "Print / Save PDF"}</span>
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>{exportProgress || "Generating PDF…"}</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download PDF</span>
+                </>
+              )}
+            </button>
+
+            {/* Secondary Native Print */}
+            <button
+              onClick={handleNativePrint}
+              disabled={isCompiling || isExporting}
+              title="Send directly to physical printer spooler"
+              className="hidden sm:flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-accent cursor-pointer"
+            >
+              <Printer className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Native Print</span>
             </button>
 
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-foreground cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        {/* Modal Main Body (2 Columns on desktop) */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Column: Comprehensive PDF Settings */}
-          <div
-            className={`w-full sm:w-[340px] lg:w-[380px] border-r border-border p-4 space-y-5 overflow-y-auto shrink-0 bg-background/50 ${
-              activeTab === "preview" ? "hidden sm:block" : "block"
-            }`}
-          >
-            {/* 1. Theme & Appearance */}
-            <div className="space-y-2.5">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5 text-primary" />
-                <span>Theme & Palette</span>
+        {/* Modal Body: Sidebar Controls + Live Sheet Preview */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Controls Sidebar */}
+          <div className="w-80 shrink-0 overflow-y-auto border-r border-border/70 bg-card/40 p-4 space-y-5 custom-scrollbar text-xs">
+            {/* 1. Publication Preset */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span>Document Preset</span>
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { id: "print-clean", label: "Clean Print (B&W)" },
-                  { id: "inherit", label: "Current Workspace" },
-                  { id: "netherite", label: "Netherite" },
-                  { id: "pookie", label: "Pookie Mode" },
-                  { id: "nord", label: "Nordic Frost" },
-                  { id: "solarized", label: "Amber Parchment" },
-                  { id: "dracula", label: "Vampire Gothic" },
-                  { id: "forest", label: "Botanical Sage" },
-                  { id: "cyber", label: "Cyber Neon" },
-                ].map((t) => (
+                  {
+                    id: "academic",
+                    label: "Academic Paper",
+                    font: "literata",
+                    desc: "Formal serif, justified",
+                  },
+                  {
+                    id: "engineering",
+                    label: "Engineering Spec",
+                    font: "inter",
+                    desc: "Clean sans, code badges",
+                  },
+                  {
+                    id: "executive",
+                    label: "Executive Brief",
+                    font: "outfit",
+                    desc: "Modern editorial",
+                  },
+                  {
+                    id: "monochrome",
+                    label: "Ink-Saver Mono",
+                    font: "inter",
+                    desc: "Pure 100% black/white",
+                  },
+                ].map((p) => (
                   <button
-                    key={t.id}
-                    onClick={() => setThemePreset(t.id as any)}
-                    className={`px-2 py-1.5 rounded-lg border text-xs font-medium text-left truncate transition-all cursor-pointer ${
-                      themePreset === t.id
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/70 hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                    key={p.id}
+                    onClick={() => {
+                      setThemePreset(p.id as any);
+                      setFontChoice(p.font);
+                      if (p.id === "monochrome") {
+                        setColorMode("monochrome");
+                      } else if (colorMode === "monochrome") {
+                        setColorMode("light");
+                      }
+                    }}
+                    className={`rounded-xl border p-2 text-left transition-all cursor-pointer ${
+                      themePreset === p.id
+                        ? "border-primary bg-primary/10 text-primary shadow-sm"
+                        : "border-border/60 hover:bg-accent/40 text-foreground"
                     }`}
                   >
-                    {t.label}
+                    <div className="font-semibold">{p.label}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                      {p.desc}
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 2. Color Mode */}
+            {/* 2. Color Palette */}
             <div className="space-y-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Color Mode
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                Color Palette
               </label>
               <div className="grid grid-cols-3 gap-1.5">
                 {[
-                  { id: "light", label: "Light (Print)" },
-                  { id: "dark", label: "Dark (Digital)" },
+                  { id: "light", label: "Light" },
+                  { id: "dark", label: "Dark" },
                   { id: "monochrome", label: "Monochrome" },
                 ].map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setColorMode(m.id as any)}
-                    className={`py-1.5 text-center rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                    className={`rounded-lg border py-1.5 text-center font-medium transition-all cursor-pointer ${
                       colorMode === m.id
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/70 hover:bg-accent/50 text-muted-foreground"
+                        : "border-border/60 hover:bg-accent/40 text-muted-foreground"
                     }`}
                   >
                     {m.label}
@@ -545,301 +453,292 @@ export function PdfExportModal({
               </div>
             </div>
 
-            {/* 3. Typography Selection */}
+            {/* 3. Typography & Size */}
             <div className="space-y-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Type className="w-3.5 h-3.5 text-primary" />
-                <span>Font Typography</span>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Type className="h-3.5 w-3.5 text-primary" />
+                <span>Typography</span>
               </label>
               <select
                 value={fontChoice}
-                onChange={(e) => setFontChoice(e.target.value as any)}
-                className="w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                onChange={(e) => setFontChoice(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer font-medium"
               >
-                <option value="inherit">Inherit Current Note Font</option>
-                <optgroup label="Cursive & Handwritten">
-                  <option value="crafty-girls">Girly</option>
-                  <option value="excalifont">Excalifont</option>
-                </optgroup>
-                <optgroup label="Modern Sans">
-                  <option value="inter">Inter (Clean)</option>
-                  <option value="outfit">Outfit (Editorial)</option>
-                  <option value="jakarta">Plus Jakarta Sans</option>
-                  <option value="dm-sans">DM Sans</option>
-                </optgroup>
-                <optgroup label="Serif">
-                  <option value="literata">Literata (Warm Serif)</option>
-                  <option value="playfair">Playfair Display (Luxury)</option>
-                  <option value="lora">Lora</option>
-                  <option value="merriweather">Merriweather</option>
-                </optgroup>
-                <optgroup label="Monospace">
-                  <option value="jetbrains">JetBrains Mono</option>
-                  <option value="fira">Fira Code</option>
-                </optgroup>
+                {fontOptions.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
               </select>
-            </div>
 
-            {/* 4. Page Setup (Paper size, Orientation, Margins) */}
-            <div className="space-y-2.5">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Layout className="w-3.5 h-3.5 text-primary" />
-                <span>Page Layout & Margins</span>
-              </label>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <span className="text-[10px] text-muted-foreground block mb-1">Page Size</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => setPageSize(e.target.value as any)}
-                    className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none cursor-pointer"
+              <div className="grid grid-cols-4 gap-1 pt-1">
+                {(["13px", "14px", "15px", "16px"] as const).map((sz) => (
+                  <button
+                    key={sz}
+                    onClick={() => setBaseFontSize(sz)}
+                    className={`rounded border py-1 text-center font-mono text-[11px] transition-all cursor-pointer ${
+                      baseFontSize === sz
+                        ? "border-primary bg-primary/10 text-primary font-bold"
+                        : "border-border/60 hover:bg-accent/40 text-muted-foreground"
+                    }`}
                   >
-                    <option value="a4">A4 (210 × 297 mm)</option>
-                    <option value="letter">US Letter (8.5 × 11 in)</option>
-                    <option value="legal">Legal (8.5 × 14 in)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <span className="text-[10px] text-muted-foreground block mb-1">Orientation</span>
-                  <select
-                    value={orientation}
-                    onChange={(e) => setOrientation(e.target.value as any)}
-                    className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none cursor-pointer"
-                  >
-                    <option value="portrait">Portrait</option>
-                    <option value="landscape">Landscape</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-muted-foreground block mb-1">Page Margins</span>
-                <div className="grid grid-cols-4 gap-1 text-center">
-                  {[
-                    { id: "compact", label: "10mm" },
-                    { id: "normal", label: "20mm" },
-                    { id: "wide", label: "30mm" },
-                    { id: "none", label: "5mm" },
-                  ].map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setMargin(m.id as any)}
-                      className={`py-1 rounded border text-[11px] font-mono transition-all cursor-pointer ${
-                        margin === m.id
-                          ? "border-primary bg-primary/10 text-primary font-semibold"
-                          : "border-border/70 text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
+                    {sz}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* 5. Headers & Footers Toggles */}
+            {/* 4. Page Layout & Margins */}
             <div className="space-y-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Headers & Footers
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Layout className="h-3.5 w-3.5 text-primary" />
+                <span>Page Layout</span>
               </label>
-              <div className="space-y-1.5 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showHeaderTitle}
-                    onChange={(e) => setShowHeaderTitle(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span>Include Document Title in Header</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showDate}
-                    onChange={(e) => setShowDate(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span>Include Current Date Timestamp</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showPageNumbers}
-                    onChange={(e) => setShowPageNumbers(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span>Include Page Footer & Attribution</span>
-                </label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(["a4", "letter", "legal"] as const).map((sz) => (
+                  <button
+                    key={sz}
+                    onClick={() => setPageSize(sz)}
+                    className={`rounded-lg border py-1 text-center uppercase font-semibold transition-all cursor-pointer ${
+                      pageSize === sz
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/60 hover:bg-accent/40 text-muted-foreground"
+                    }`}
+                  >
+                    {sz}
+                  </button>
+                ))}
               </div>
+
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                {(["portrait", "landscape"] as const).map((ori) => (
+                  <button
+                    key={ori}
+                    onClick={() => setOrientation(ori)}
+                    className={`rounded-lg border py-1 text-center capitalize font-medium transition-all cursor-pointer ${
+                      orientation === ori
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/60 hover:bg-accent/40 text-muted-foreground"
+                    }`}
+                  >
+                    {ori}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-1 pt-1">
+                {(["compact", "normal", "wide"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMargin(m)}
+                    className={`rounded border py-1 text-center capitalize text-[11px] transition-all cursor-pointer ${
+                      margin === m
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/60 hover:bg-accent/40 text-muted-foreground"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Document Structure Options */}
+            <div className="space-y-2.5 pt-1 border-t border-border/60">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-primary" />
+                <span>Document Structure</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-foreground">
+                <input
+                  type="checkbox"
+                  checked={includeCoverPage}
+                  onChange={(e) => setIncludeCoverPage(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary"
+                />
+                <span>Include Cover / Title Page</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-foreground">
+                <input
+                  type="checkbox"
+                  checked={includeTableOfContents}
+                  onChange={(e) => setIncludeTableOfContents(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary"
+                />
+                <span>Include Table of Contents</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-foreground">
+                <input
+                  type="checkbox"
+                  checked={sectionNumbering}
+                  onChange={(e) => setSectionNumbering(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary"
+                />
+                <span>Section Numbering (1.0, 1.1)</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-foreground">
+                <input
+                  type="checkbox"
+                  checked={showPageNumbers}
+                  onChange={(e) => setShowPageNumbers(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary"
+                />
+                <span>Page Numbers (Page X)</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-foreground">
+                <input
+                  type="checkbox"
+                  checked={showHeaderTitle}
+                  onChange={(e) => setShowHeaderTitle(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary"
+                />
+                <span>Running Header Title</span>
+              </label>
+            </div>
+
+            {/* Subtitle Input */}
+            <div className="space-y-1 pt-1">
+              <label className="text-[11px] font-medium text-muted-foreground">
+                Custom Subtitle
+              </label>
               <input
                 type="text"
-                placeholder="Optional author / subtitle note..."
                 value={customSubtitle}
                 onChange={(e) => setCustomSubtitle(e.target.value)}
-                className="w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary mt-1"
+                placeholder="e.g. Technical Architecture Specification"
+                className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
-
-            {/* 6. Formatting & Inclusions */}
-            {fileType === "markdown" && (
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Formatting Controls
-                </label>
-                <div className="space-y-1.5 text-xs">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={avoidPageBreaks}
-                      onChange={(e) => setAvoidPageBreaks(e.target.checked)}
-                      className="rounded border-border text-primary focus:ring-primary"
-                    />
-                    <span>Avoid breaks inside tables & diagrams</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={styleTables}
-                      onChange={(e) => setStyleTables(e.target.checked)}
-                      className="rounded border-border text-primary focus:ring-primary"
-                    />
-                    <span>Alternating striped table rows</span>
-                  </label>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Right Column: Live Interactive Print & PDF Preview */}
-          <div
-            className={`flex-1 flex flex-col bg-muted/30 overflow-hidden ${
-              activeTab === "settings" ? "hidden sm:flex" : "flex"
-            }`}
-          >
+          {/* Right Pane: Interactive Live Sheet Preview */}
+          <div className="relative flex flex-1 flex-col overflow-hidden bg-muted/40">
             {/* Preview Toolbar */}
-            <div className="p-2 border-b border-border/60 flex items-center justify-between text-xs text-muted-foreground shrink-0 bg-background/40">
-              <div className="flex items-center gap-2">
-                <Eye className="w-3.5 h-3.5 text-primary" />
-                <span className="font-semibold text-foreground">Live PDF Sheet Preview</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted">
-                  {pageSize.toUpperCase()} • {orientation}
+            <div className="flex h-10 shrink-0 items-center justify-between border-b border-border/70 bg-card/60 px-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+                <span className="font-semibold text-foreground uppercase">
+                  {pageSize}
                 </span>
+                <span>•</span>
+                <span>
+                  {spec.widthMm} × {spec.heightMm} mm
+                </span>
+                <span>•</span>
+                <span>{orientation}</span>
               </div>
 
-              <div className="flex items-center gap-1">
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setPreviewZoom((z) => Math.max(0.4, z - 0.1))}
-                  className="p-1 hover:bg-accent rounded transition-colors text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    setPreviewZoom((z) => Math.max(0.4, Number((z - 0.1).toFixed(1))))
+                  }
+                  className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer"
                   title="Zoom Out"
                 >
-                  <ZoomOut className="w-3.5 h-3.5" />
+                  <ZoomOut className="h-3.5 w-3.5" />
                 </button>
-                <span className="text-[11px] font-mono w-10 text-center">{Math.round(previewZoom * 100)}%</span>
+                <span className="min-w-[42px] text-center font-mono text-xs text-foreground">
+                  {Math.round(previewZoom * 100)}%
+                </span>
                 <button
-                  onClick={() => setPreviewZoom((z) => Math.min(1.4, z + 0.1))}
-                  className="p-1 hover:bg-accent rounded transition-colors text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    setPreviewZoom((z) => Math.min(1.5, Number((z + 0.1).toFixed(1))))
+                  }
+                  className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer"
                   title="Zoom In"
                 >
-                  <ZoomIn className="w-3.5 h-3.5" />
+                  <ZoomIn className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={() => setPreviewZoom(0.85)}
-                  className="px-2 py-0.5 text-[10px] hover:bg-accent rounded text-muted-foreground hover:text-foreground ml-1 font-medium"
+                  onClick={() => setPreviewZoom(0.8)}
+                  className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer"
+                  title="Reset Zoom"
                 >
-                  Fit
+                  <RotateCcw className="h-3 w-3" />
                 </button>
               </div>
             </div>
 
-            {/* Simulated Paper Viewport */}
-            <div className="flex-1 overflow-auto p-4 sm:p-8 flex items-start justify-center">
-              <div
-                style={{
-                  width: pageDims.width,
-                  minHeight: pageDims.height,
-                  transform: `scale(${previewZoom})`,
-                  transformOrigin: "top center",
-                  backgroundColor: colorMode === "dark" ? "#121215" : "#ffffff",
-                  color: colorMode === "dark" ? "#f4f4f5" : "#18181b",
-                  fontFamily: getFontFamily(effectiveFontId),
-                  fontSize: baseFontSize,
-                  padding: getMarginMm(margin),
-                  transition: "transform 0.15s ease-out",
-                }}
-                className="shadow-2xl border border-border/80 rounded-sm flex flex-col shrink-0 select-text overflow-hidden"
-              >
-                {/* Header in Preview */}
-                {(showHeaderTitle || showDate) && (
-                  <div className="flex justify-between items-center text-[11px] text-muted-foreground pb-2 mb-4 border-b border-border/60">
-                    <span className="font-medium text-foreground truncate">
-                      {showHeaderTitle ? cleanTitle : ""} {customSubtitle ? `— ${customSubtitle}` : ""}
-                    </span>
-                    <span className="font-mono text-[10px]">{showDate ? new Date().toLocaleDateString() : ""}</span>
-                  </div>
-                )}
-
-                {/* Content in Preview */}
-                <div className="flex-1 space-y-3">
-                  {fileType === "markdown" ? (
-                    renderedHtml ? (
-                      <div
-                        className="prose-pdf [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:border-b [&>h1]:border-border/60 [&>h1]:pb-2 [&>h2]:text-xl [&>h2]:font-semibold [&>p]:leading-relaxed [&>table]:w-full [&>table]:border-collapse [&>table_th]:border [&>table_th]:p-2 [&>table_td]:border [&>table_td]:p-2"
-                        dangerouslySetInnerHTML={{ __html: renderedHtml }}
-                      />
-                    ) : (
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed">{content}</div>
-                    )
-                  ) : (diagramSvg || svgContent) ? (
-                    <div
-                      className="w-full flex items-center justify-center py-6 [&>svg]:max-w-full [&>svg]:h-auto"
-                      dangerouslySetInnerHTML={{ __html: diagramSvg || svgContent }}
-                    />
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground text-sm">
-                      Ready to format document.
-                    </div>
-                  )}
+            {/* Scrollable Canvas for Sheets */}
+            <div className="flex-1 overflow-auto p-6 flex justify-center custom-scrollbar">
+              {isCompiling ? (
+                <div className="flex flex-col items-center justify-center gap-3 my-auto">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Compiling Markdown, KaTeX math & Mermaid diagrams…
+                  </p>
                 </div>
-
-                {/* Footer in Preview */}
-                {showPageNumbers && (
-                  <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-3 mt-6 border-t border-border/60">
-                    <span>Generated with Netherite Sovereign Studio</span>
-                    <span>Page 1 of 1</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="p-3 sm:p-4 border-t border-border flex items-center justify-between shrink-0 bg-muted/20">
-          <div className="text-[11px] text-muted-foreground hidden sm:block">
-            Uses native browser vector print pipeline for crisp 600+ DPI PDF generation
-          </div>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={onClose}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-accent transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handlePrint}
-              disabled={isGenerating}
-              className="flex items-center gap-1.5 px-4 py-2 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <AppleSpinner size="xs" />
               ) : (
-                <Printer className="w-3.5 h-3.5" />
+                <div
+                  style={{
+                    transform: `scale(${previewZoom})`,
+                    transformOrigin: "top center",
+                    transition: "transform 0.15s ease-out",
+                  }}
+                  className="shrink-0"
+                >
+                  {/* Style injection for the preview sheet */}
+                  <style>{dynamicStylesheet}</style>
+
+                  {/* Physical Paper Sheet Representation */}
+                  <div
+                    ref={previewSheetRef}
+                    style={{
+                      width: `${sheetWidthPx}px`,
+                      minHeight: `${sheetMinHeightPx}px`,
+                    }}
+                    className={`pdf-root-container relative rounded-sm shadow-2xl transition-all ${
+                      colorMode === "dark"
+                        ? "bg-[#121215] text-[#f4f4f6] ring-1 ring-white/10"
+                        : "bg-white text-[#1a1a1d] ring-1 ring-black/10"
+                    }`}
+                  >
+                    {/* Running Header on Preview */}
+                    {showHeaderTitle && (
+                      <div className="pdf-page-header" style={{ padding: "16px 24px 0 24px" }}>
+                        <span className="font-semibold">{cleanTitle}</span>
+                        <span>{showDate ? new Date().toLocaleDateString() : ""}</span>
+                      </div>
+                    )}
+
+                    {/* Compiled Document Content */}
+                    <div
+                      style={{
+                        padding: `${MARGIN_SPECS[margin].topMm * 3.78}px ${
+                          MARGIN_SPECS[margin].rightMm * 3.78
+                        }px ${MARGIN_SPECS[margin].bottomMm * 3.78}px ${
+                          MARGIN_SPECS[margin].leftMm * 3.78
+                        }px`,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: compiledHtml }}
+                    />
+
+                    {/* Running Footer on Preview */}
+                    {showPageNumbers && (
+                      <div
+                        className="pdf-page-footer"
+                        style={{
+                          padding: "0 24px 16px 24px",
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                        }}
+                      >
+                        <span>Netherite Sovereign Studio</span>
+                        <span className="font-mono">Page 1</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-              <span>{isGenerating ? "Preparing..." : "Print / Save as PDF"}</span>
-            </button>
+            </div>
           </div>
         </div>
       </div>

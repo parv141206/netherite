@@ -15,6 +15,7 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Underline } from "@tiptap/extension-underline";
 import { CharacterCount } from "@tiptap/extension-character-count";
 import { MathInline, MathBlock } from "./MathExtension";
+import { ImagePlaceholderNode } from "./ImagePlaceholderNode";
 
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { CodeBlockView } from "./CodeBlockView";
@@ -144,5 +145,6 @@ export function buildExtensions() {
     }),
     MathInline,
     MathBlock,
+    ImagePlaceholderNode,
   ];
 }

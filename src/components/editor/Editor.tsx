@@ -156,6 +156,47 @@ function DocumentTitleInput({
   );
 }
 
+function replacePlaceholderWithImage(
+  editorInstance: any,
+  uploadId: string,
+  src: string,
+) {
+  if (!editorInstance || editorInstance.isDestroyed) return;
+  let targetPos: number | null = null;
+  let targetNodeSize = 1;
+
+  editorInstance.state.doc.descendants((node: any, pos: number) => {
+    if (
+      node.type.name === "imagePlaceholder" &&
+      node.attrs.uploadId === uploadId
+    ) {
+      targetPos = pos;
+      targetNodeSize = node.nodeSize;
+      return false;
+    }
+  });
+
+  if (targetPos !== null) {
+    const nodeType =
+      editorInstance.state.schema.nodes.imageResize ||
+      editorInstance.state.schema.nodes.image;
+    if (nodeType) {
+      const replacementNode = nodeType.create({ src });
+      editorInstance.view.dispatch(
+        editorInstance.state.tr.replaceWith(
+          targetPos,
+          targetPos + targetNodeSize,
+          replacementNode,
+        ),
+      );
+      return;
+    }
+  }
+
+  // Fallback if placeholder was already cleared or moved
+  editorInstance.chain().focus().setImage({ src }).run();
+}
+
 export function Editor({
   initialContent = "",
   title = "Untitled",
@@ -219,30 +260,46 @@ export function Editor({
         const imageFile = files.find((f) => f.type.startsWith("image/"));
         if (imageFile && editor) {
           event.preventDefault();
-          if (onImageUpload) {
-            onImageUpload(imageFile).then((src) => {
-              if (!src) return;
-              const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
-              if (coords) {
-                const nodeType = view.state.schema.nodes.imageResize || view.state.schema.nodes.image;
-                const node = nodeType?.create({ src });
-                if (node) {
-                  view.dispatch(view.state.tr.insert(coords.pos, node));
-                  return;
-                }
-              }
-              editor.chain().focus().setImage({ src }).run();
-            });
-          } else {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const src = reader.result as string;
-              if (src) {
-                editor.chain().focus().setImage({ src }).run();
-              }
-            };
-            reader.readAsDataURL(imageFile);
-          }
+          const uploadId = `up-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+          const coords = view.posAtCoords({
+            left: event.clientX,
+            top: event.clientY,
+          });
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            const tempSrc = reader.result as string;
+            const placeholderType = view.state.schema.nodes.imagePlaceholder;
+            if (placeholderType) {
+              const node = placeholderType.create({
+                uploadId,
+                tempSrc,
+                fileName: imageFile.name,
+                fileSize: imageFile.size,
+              });
+              const insertPos = coords ? coords.pos : view.state.selection.from;
+              view.dispatch(view.state.tr.insert(insertPos, node));
+            }
+
+            if (onImageUpload) {
+              onImageUpload(imageFile)
+                .then((src) => {
+                  if (src) {
+                    replacePlaceholderWithImage(editor, uploadId, src);
+                  } else if (tempSrc) {
+                    replacePlaceholderWithImage(editor, uploadId, tempSrc);
+                  }
+                })
+                .catch(() => {
+                  if (tempSrc) {
+                    replacePlaceholderWithImage(editor, uploadId, tempSrc);
+                  }
+                });
+            } else if (tempSrc) {
+              replacePlaceholderWithImage(editor, uploadId, tempSrc);
+            }
+          };
+          reader.readAsDataURL(imageFile);
           return true;
         }
         return false;
@@ -253,22 +310,42 @@ export function Editor({
 
         if (imageFile && editor) {
           event.preventDefault();
-          if (onImageUpload) {
-            onImageUpload(imageFile).then((src) => {
-              if (src) {
-                editor.chain().focus().setImage({ src }).run();
-              }
-            });
-          } else {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const src = reader.result as string;
-              if (src) {
-                editor.chain().focus().setImage({ src }).run();
-              }
-            };
-            reader.readAsDataURL(imageFile);
-          }
+          const uploadId = `up-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            const tempSrc = reader.result as string;
+            const placeholderType = view.state.schema.nodes.imagePlaceholder;
+            if (placeholderType) {
+              const node = placeholderType.create({
+                uploadId,
+                tempSrc,
+                fileName: imageFile.name || "pasted-image.png",
+                fileSize: imageFile.size,
+              });
+              const insertPos = view.state.selection.from;
+              view.dispatch(view.state.tr.insert(insertPos, node));
+            }
+
+            if (onImageUpload) {
+              onImageUpload(imageFile)
+                .then((src) => {
+                  if (src) {
+                    replacePlaceholderWithImage(editor, uploadId, src);
+                  } else if (tempSrc) {
+                    replacePlaceholderWithImage(editor, uploadId, tempSrc);
+                  }
+                })
+                .catch(() => {
+                  if (tempSrc) {
+                    replacePlaceholderWithImage(editor, uploadId, tempSrc);
+                  }
+                });
+            } else if (tempSrc) {
+              replacePlaceholderWithImage(editor, uploadId, tempSrc);
+            }
+          };
+          reader.readAsDataURL(imageFile);
           return true;
         }
 
@@ -705,28 +782,47 @@ export function Editor({
     };
   }, [fontSize, mounted, isLoading, editor]);
 
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file && editor) {
-      if (onImageUpload) {
-        try {
-          const src = await onImageUpload(file);
-          if (src) {
-            editor.chain().focus().setImage({ src }).run();
-          }
-        } catch (err) {
-          console.error("Image upload failed:", err);
+      const uploadId = `up-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const tempSrc = reader.result as string;
+        const placeholderType = editor.state.schema.nodes.imagePlaceholder;
+        if (placeholderType) {
+          const node = placeholderType.create({
+            uploadId,
+            tempSrc,
+            fileName: file.name,
+            fileSize: file.size,
+          });
+          editor.view.dispatch(
+            editor.state.tr.insert(editor.state.selection.from, node),
+          );
         }
-      } else {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const src = reader.result as string;
-          if (src) {
-            editor.chain().focus().setImage({ src }).run();
-          }
-        };
-        reader.readAsDataURL(file);
-      }
+
+        if (onImageUpload) {
+          onImageUpload(file)
+            .then((src) => {
+              if (src) {
+                replacePlaceholderWithImage(editor, uploadId, src);
+              } else if (tempSrc) {
+                replacePlaceholderWithImage(editor, uploadId, tempSrc);
+              }
+            })
+            .catch(() => {
+              if (tempSrc) {
+                replacePlaceholderWithImage(editor, uploadId, tempSrc);
+              }
+            });
+        } else if (tempSrc) {
+          replacePlaceholderWithImage(editor, uploadId, tempSrc);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
