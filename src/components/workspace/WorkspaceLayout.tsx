@@ -1489,19 +1489,12 @@ export function WorkspaceLayout({
     }
   }, [activeTabId, localNotes]);
 
-  const pendingImagesRef = useRef<Map<string, File>>(new Map());
-  const pendingUploadsRef = useRef<Map<string, Promise<string | null>>>(
-    new Map(),
-  );
-
   // Manual save ONLY: No background autosave timer and NO mutation on keystroke/cleanup!
   const unsavedRef = useRef(false);
   unsavedRef.current =
     !!activeTabId &&
     !activeTabId.startsWith("temp-") &&
-    (noteContent !== lastSavedContent ||
-      pendingImagesRef.current.size > 0 ||
-      pendingUploadsRef.current.size > 0);
+    noteContent !== lastSavedContent;
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -1587,64 +1580,10 @@ export function WorkspaceLayout({
       contentToSave.includes('"type":"excalidraw"') ||
       contentToSave.includes('"type": "excalidraw"');
 
-    // 1. If any background image uploads are still in-flight, await them!
-    if (pendingUploadsRef.current.size > 0) {
-      await Promise.allSettled(Array.from(pendingUploadsRef.current.values()));
+    if (!isDrawing) {
+      contentToSave = normalizeDriveImageUrls(contentToSave);
     }
 
-    // 2. If any pending images remain in pendingImagesRef (e.g. weren't in flight or direct save)
-    if (pendingImagesRef.current.size > 0) {
-      const entries = Array.from(pendingImagesRef.current.entries());
-      for (const [blobUrl, file] of entries) {
-        if (contentToSave.includes(blobUrl)) {
-          try {
-            const base64 = await fileToBase64(file);
-            const res = await uploadAssetMutation.mutateAsync({
-              fileName: file.name || `image-${Date.now()}.png`,
-              mimeType: file.type || "image/png",
-              base64Data: base64,
-            });
-
-            if (res?.url) {
-              contentToSave = contentToSave.replaceAll(blobUrl, res.url);
-              if (
-                activeEditorRef.current &&
-                !activeEditorRef.current.isDestroyed &&
-                activeEditorRef.current.view &&
-                activeEditorRef.current.state
-              ) {
-                try {
-                  const editor = activeEditorRef.current;
-                  const { tr } = editor.state;
-                  let found = false;
-                  editor.state.doc.descendants((node: any, pos: number) => {
-                    if (
-                      node.type.name === "image" &&
-                      node.attrs.src === blobUrl
-                    ) {
-                      tr.setNodeMarkup(pos, undefined, {
-                        ...node.attrs,
-                        src: res.url,
-                      });
-                      found = true;
-                    }
-                  });
-                  if (found) editor.view.dispatch(tr);
-                } catch {}
-              }
-            }
-          } catch (err) {
-            console.error("Asset upload failed in saveDocument:", err);
-          }
-        }
-        try {
-          URL.revokeObjectURL(blobUrl);
-        } catch {}
-        pendingImagesRef.current.delete(blobUrl);
-      }
-    }
-
-    // If local blob URLs were replaced with permanent URLs, sync back to state and draft
     if (contentToSave !== rawContent) {
       if (fileId === activeTabId) {
         setNoteContent(contentToSave);
@@ -1785,13 +1724,7 @@ export function WorkspaceLayout({
     }
 
     const diff = computeLineDiff(lastSavedContent, noteContent);
-    if (
-      !diff.hasChanges &&
-      !saveMutation.isPending &&
-      !isSaving &&
-      pendingImagesRef.current.size === 0 &&
-      pendingUploadsRef.current.size === 0
-    ) {
+    if (!diff.hasChanges && !saveMutation.isPending && !isSaving) {
       return;
     }
 
@@ -2668,90 +2601,34 @@ export function WorkspaceLayout({
   };
 
   const handleImageUpload = async (file: File): Promise<string> => {
-    const localUrl = URL.createObjectURL(file);
-    pendingImagesRef.current.set(localUrl, file);
+    try {
+      showToast("Uploading image to Google Drive…");
+      const base64 = await fileToBase64(file);
+      const res = await uploadAssetMutation.mutateAsync({
+        fileName: file.name || `image-${Date.now()}.png`,
+        mimeType: file.type || "image/png",
+        base64Data: base64,
+      });
 
-    const uploadTask = (async (): Promise<string | null> => {
-      try {
-        const base64 = await fileToBase64(file);
-        const res = await uploadAssetMutation.mutateAsync({
-          fileName: file.name || `image-${Date.now()}.png`,
-          mimeType: file.type || "image/png",
-          base64Data: base64,
-        });
-
-        const permanentUrl = res?.url;
-        if (permanentUrl) {
-          // 1. Update active TipTap editor image node
-          if (
-            activeEditorRef.current &&
-            !activeEditorRef.current.isDestroyed &&
-            activeEditorRef.current.view &&
-            activeEditorRef.current.state
-          ) {
-            try {
-              const editor = activeEditorRef.current;
-              const { tr } = editor.state;
-              let found = false;
-              editor.state.doc.descendants((node: any, pos: number) => {
-                if (node.type.name === "image" && node.attrs.src === localUrl) {
-                  tr.setNodeMarkup(pos, undefined, {
-                    ...node.attrs,
-                    src: permanentUrl,
-                  });
-                  found = true;
-                }
-              });
-              if (found) {
-                editor.view.dispatch(tr);
-              }
-            } catch (e) {
-              console.warn("Could not update TipTap image node:", e);
-            }
-          }
-
-          // 2. Update noteContent state
-          setNoteContent((prev) => {
-            if (prev.includes(localUrl)) {
-              return prev.replaceAll(localUrl, permanentUrl);
-            }
-            return prev;
-          });
-
-          // 3. Update localStorage and IDB draft
-          if (activeTabId) {
-            try {
-              const draft = localStorage.getItem(
-                `netherite_draft_${activeTabId}`,
-              );
-              if (draft && draft.includes(localUrl)) {
-                const updatedDraft = draft.replaceAll(localUrl, permanentUrl);
-                safeLocalStorageSet(
-                  `netherite_draft_${activeTabId}`,
-                  updatedDraft,
-                );
-                void idbSetDoc(`netherite_draft_${activeTabId}`, updatedDraft);
-              }
-            } catch {}
-          }
-
-          return permanentUrl;
-        }
-        return null;
-      } catch (err) {
-        console.error("Background asset upload failed:", err);
-        return null;
-      } finally {
-        try {
-          URL.revokeObjectURL(localUrl);
-        } catch {}
-        pendingImagesRef.current.delete(localUrl);
-        pendingUploadsRef.current.delete(localUrl);
+      if (res?.url) {
+        showToast("Image saved to Google Drive");
+        return res.url;
       }
-    })();
+    } catch (err) {
+      console.error(
+        "Asset upload to Drive failed, falling back to local base64:",
+        err,
+      );
+      showToast("Drive upload failed, saving image locally");
+    }
 
-    pendingUploadsRef.current.set(localUrl, uploadTask);
-    return localUrl;
+    // Fallback: Return data URL so image is NEVER lost even if offline
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string) || "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
   };
 
   // Extract headings from active document for Outline sidebar
@@ -2833,8 +2710,7 @@ export function WorkspaceLayout({
         }
       }
 
-      pendingImagesRef.current.clear();
-      pendingUploadsRef.current.clear();
+
 
       await Promise.all([
         utils.notes.list.refetch(),

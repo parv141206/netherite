@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       return new NextResponse("Image not found", { status: 404 });
     }
 
-    return new Response(asset.buffer, {
+    return new Response(new Uint8Array(asset.buffer), {
       status: 200,
       headers: {
         "Content-Type": asset.mimeType || "image/png",

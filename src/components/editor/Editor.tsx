@@ -207,11 +207,7 @@ export function Editor({
   const lastLoadedContentRef = useRef<string>(initialContent);
 
   const editor = useEditor({
-    extensions: buildExtensions(async (file: File) => {
-      if (onImageUpload) {
-        await onImageUpload(file);
-      }
-    }),
+    extensions: buildExtensions(),
     content: preprocessMarkdownMath(initialContent),
     editorProps: {
       attributes: {
@@ -225,9 +221,11 @@ export function Editor({
           event.preventDefault();
           if (onImageUpload) {
             onImageUpload(imageFile).then((src) => {
+              if (!src) return;
               const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
               if (coords) {
-                const node = view.state.schema.nodes.image?.create({ src });
+                const nodeType = view.state.schema.nodes.imageResize || view.state.schema.nodes.image;
+                const node = nodeType?.create({ src });
                 if (node) {
                   view.dispatch(view.state.tr.insert(coords.pos, node));
                   return;
@@ -239,7 +237,9 @@ export function Editor({
             const reader = new FileReader();
             reader.onload = () => {
               const src = reader.result as string;
-              editor.chain().focus().setImage({ src }).run();
+              if (src) {
+                editor.chain().focus().setImage({ src }).run();
+              }
             };
             reader.readAsDataURL(imageFile);
           }
@@ -255,13 +255,17 @@ export function Editor({
           event.preventDefault();
           if (onImageUpload) {
             onImageUpload(imageFile).then((src) => {
-              editor.chain().focus().setImage({ src }).run();
+              if (src) {
+                editor.chain().focus().setImage({ src }).run();
+              }
             });
           } else {
             const reader = new FileReader();
             reader.onload = () => {
               const src = reader.result as string;
-              editor.chain().focus().setImage({ src }).run();
+              if (src) {
+                editor.chain().focus().setImage({ src }).run();
+              }
             };
             reader.readAsDataURL(imageFile);
           }
@@ -707,7 +711,9 @@ export function Editor({
       if (onImageUpload) {
         try {
           const src = await onImageUpload(file);
-          editor.chain().focus().setImage({ src }).run();
+          if (src) {
+            editor.chain().focus().setImage({ src }).run();
+          }
         } catch (err) {
           console.error("Image upload failed:", err);
         }
@@ -715,7 +721,9 @@ export function Editor({
         const reader = new FileReader();
         reader.onload = () => {
           const src = reader.result as string;
-          editor.chain().focus().setImage({ src }).run();
+          if (src) {
+            editor.chain().focus().setImage({ src }).run();
+          }
         };
         reader.readAsDataURL(file);
       }

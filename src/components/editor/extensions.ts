@@ -15,7 +15,6 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Underline } from "@tiptap/extension-underline";
 import { CharacterCount } from "@tiptap/extension-character-count";
 import { MathInline, MathBlock } from "./MathExtension";
-import { ImageUploadExtension } from "./ImageUploadExtension";
 
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { CodeBlockView } from "./CodeBlockView";
@@ -23,7 +22,7 @@ import { NetheriteTableView } from "./NetheriteTableView";
 
 const lowlight = createLowlight(all);
 
-export function buildExtensions(uploadFn?: (file: File) => void) {
+export function buildExtensions() {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
@@ -80,7 +79,32 @@ export function buildExtensions(uploadFn?: (file: File) => void) {
       bulletListMarker: "-",
       transformCopiedText: true,
     }),
-    ResizeImage.configure({
+    ResizeImage.extend({
+      addStorage() {
+        return {
+          markdown: {
+            serialize(state: any, node: any) {
+              const src = node.attrs?.src ?? "";
+              const alt = node.attrs?.alt ?? "";
+              const title = node.attrs?.title ? ` "${node.attrs.title}"` : "";
+              const width = node.attrs?.width;
+              const height = node.attrs?.height;
+              if (width || height) {
+                const widthAttr = width ? ` width="${width}"` : "";
+                const heightAttr = height ? ` height="${height}"` : "";
+                const altAttr = alt ? ` alt="${alt}"` : "";
+                state.write(`<img src="${src}"${altAttr}${widthAttr}${heightAttr} />`);
+              } else {
+                state.write(`![${alt}](${src}${title})`);
+              }
+            },
+            parse: {
+              // handled by markdown-it
+            },
+          },
+        };
+      },
+    }).configure({
       inline: true,
       allowBase64: true,
     }),
@@ -120,8 +144,5 @@ export function buildExtensions(uploadFn?: (file: File) => void) {
     }),
     MathInline,
     MathBlock,
-    ImageUploadExtension.configure({
-      uploadFn,
-    }),
   ];
 }
