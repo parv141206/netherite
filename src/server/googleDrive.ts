@@ -1016,7 +1016,7 @@ export async function uploadAsset(
     name: fileName,
     mimeType,
     parents: [assetsFolderId],
-    url: `https://lh3.googleusercontent.com/d/${fileId}`,
+    url: `/api/notes/image?id=${fileId}`,
   };
 }
 
@@ -1041,6 +1041,7 @@ export async function getImageAsset(session: any, fileId: string) {
       id: fileId,
       name: meta.data.name ?? "image",
       mimeType,
+      buffer,
       dataUrl: `data:${mimeType};base64,${base64}`,
     };
   });

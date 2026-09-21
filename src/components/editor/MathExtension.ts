@@ -114,6 +114,40 @@ export function escapeHtmlAttr(str: string): string {
     .replace(/>/g, "&gt;");
 }
 
+/**
+ * Normalizes legacy Google Drive image URLs (lh3.googleusercontent.com, drive.google.com/uc, etc.)
+ * to the authenticated Netherite image proxy endpoint /api/notes/image?id=...
+ */
+export function normalizeDriveImageUrls(content: string): string {
+  if (!content || typeof content !== "string") return content;
+
+  // 1. lh3.googleusercontent.com/d/FILE_ID
+  let s = content.replace(
+    /https?:\/\/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/g,
+    "/api/notes/image?id=$1"
+  );
+
+  // 2. drive.google.com/uc?export=view&id=FILE_ID or drive.google.com/uc?id=FILE_ID
+  s = s.replace(
+    /https?:\/\/drive\.google\.com\/uc\?(?:[^"\s)]*&)?id=([a-zA-Z0-9_-]+)(?:&[^"\s)]*)?/g,
+    "/api/notes/image?id=$1"
+  );
+
+  // 3. drive.google.com/thumbnail?id=FILE_ID
+  s = s.replace(
+    /https?:\/\/drive\.google\.com\/thumbnail\?(?:[^"\s)]*&)?id=([a-zA-Z0-9_-]+)(?:&[^"\s)]*)?/g,
+    "/api/notes/image?id=$1"
+  );
+
+  // 4. drive.google.com/file/d/FILE_ID/(view|edit)
+  s = s.replace(
+    /https?:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/(?:view|edit)[^"\s)]*/g,
+    "/api/notes/image?id=$1"
+  );
+
+  return s;
+}
+
 export function preprocessMarkdownMath(content: string): string {
   if (!content) return "";
 
@@ -205,6 +239,9 @@ export function preprocessMarkdownMath(content: string): string {
 
   // 12. Restore protected code blocks (preserving all spaces, gaps, ASCII art, and indentation intact)
   s = s.replace(/___NETHERITE_CB_(\d+)___/g, (_, idx) => codeBlocks[Number(idx)] || "");
+
+  // 13. Normalize legacy Google Drive image URLs to authenticated proxy
+  s = normalizeDriveImageUrls(s);
 
   return s;
 }

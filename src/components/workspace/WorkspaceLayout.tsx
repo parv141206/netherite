@@ -58,6 +58,7 @@ import {
   idbSaveSnapshot,
 } from "~/lib/storageEngine";
 import { commitNote, isGitEnabled, getGitCadence } from "~/lib/gitEngine";
+import { normalizeDriveImageUrls } from "~/components/editor/MathExtension";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
@@ -1293,22 +1294,31 @@ export function WorkspaceLayout({
       typeof window !== "undefined"
         ? localStorage.getItem(`netherite_cache_${activeTabId}`)
         : null;
-    const baseline = fetchedContent !== undefined ? fetchedContent : localCache;
+    const rawBaseline = fetchedContent !== undefined ? fetchedContent : localCache;
+    const baseline =
+      rawBaseline && !isDrawing && !isUml
+        ? normalizeDriveImageUrls(rawBaseline)
+        : rawBaseline;
 
-    const unsavedDraft = getUnsavedDraft(
+    const rawUnsavedDraft = getUnsavedDraft(
       activeTabId,
       isDrawing,
       baseline ?? undefined,
     );
+    const unsavedDraft =
+      rawUnsavedDraft && !isDrawing && !isUml
+        ? normalizeDriveImageUrls(rawUnsavedDraft)
+        : rawUnsavedDraft;
+
     if (unsavedDraft) {
       contentFileIdRef.current = activeTabId;
       setNoteContent(unsavedDraft);
       if (fetchedContent !== undefined) {
-        setLastSavedContent(fetchedContent);
-        safeLocalStorageSet(`netherite_cache_${activeTabId}`, fetchedContent);
-        void idbSetDoc(`netherite_cache_${activeTabId}`, fetchedContent);
+        setLastSavedContent(baseline ?? fetchedContent);
+        safeLocalStorageSet(`netherite_cache_${activeTabId}`, baseline ?? fetchedContent);
+        void idbSetDoc(`netherite_cache_${activeTabId}`, baseline ?? fetchedContent);
       } else if (localCache) {
-        setLastSavedContent(localCache);
+        setLastSavedContent(baseline ?? localCache);
       }
       return;
     }
@@ -1432,22 +1442,31 @@ export function WorkspaceLayout({
       typeof window !== "undefined"
         ? localStorage.getItem(`netherite_cache_${splitTabId}`)
         : null;
-    const baseline =
+    const rawBaseline =
       fetchedSplitContent !== undefined ? fetchedSplitContent : localCache;
+    const baseline =
+      rawBaseline && !isDrawing
+        ? normalizeDriveImageUrls(rawBaseline)
+        : rawBaseline;
 
-    const unsavedDraft = getUnsavedDraft(
+    const rawUnsavedDraft = getUnsavedDraft(
       splitTabId,
       isDrawing,
       baseline ?? undefined,
     );
+    const unsavedDraft =
+      rawUnsavedDraft && !isDrawing
+        ? normalizeDriveImageUrls(rawUnsavedDraft)
+        : rawUnsavedDraft;
+
     if (unsavedDraft) {
       setSplitNoteContent(unsavedDraft);
       if (fetchedSplitContent !== undefined && typeof window !== "undefined") {
         safeLocalStorageSet(
           `netherite_cache_${splitTabId}`,
-          fetchedSplitContent,
+          baseline ?? fetchedSplitContent,
         );
-        void idbSetDoc(`netherite_cache_${splitTabId}`, fetchedSplitContent);
+        void idbSetDoc(`netherite_cache_${splitTabId}`, baseline ?? fetchedSplitContent);
       }
       return;
     }
@@ -1471,13 +1490,18 @@ export function WorkspaceLayout({
   }, [activeTabId, localNotes]);
 
   const pendingImagesRef = useRef<Map<string, File>>(new Map());
+  const pendingUploadsRef = useRef<Map<string, Promise<string | null>>>(
+    new Map(),
+  );
 
   // Manual save ONLY: No background autosave timer and NO mutation on keystroke/cleanup!
   const unsavedRef = useRef(false);
   unsavedRef.current =
     !!activeTabId &&
     !activeTabId.startsWith("temp-") &&
-    (noteContent !== lastSavedContent || pendingImagesRef.current.size > 0);
+    (noteContent !== lastSavedContent ||
+      pendingImagesRef.current.size > 0 ||
+      pendingUploadsRef.current.size > 0);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -1562,6 +1586,76 @@ export function WorkspaceLayout({
       item?.mimeType === "application/vnd.excalidraw+json" ||
       contentToSave.includes('"type":"excalidraw"') ||
       contentToSave.includes('"type": "excalidraw"');
+
+    // 1. If any background image uploads are still in-flight, await them!
+    if (pendingUploadsRef.current.size > 0) {
+      await Promise.allSettled(Array.from(pendingUploadsRef.current.values()));
+    }
+
+    // 2. If any pending images remain in pendingImagesRef (e.g. weren't in flight or direct save)
+    if (pendingImagesRef.current.size > 0) {
+      const entries = Array.from(pendingImagesRef.current.entries());
+      for (const [blobUrl, file] of entries) {
+        if (contentToSave.includes(blobUrl)) {
+          try {
+            const base64 = await fileToBase64(file);
+            const res = await uploadAssetMutation.mutateAsync({
+              fileName: file.name || `image-${Date.now()}.png`,
+              mimeType: file.type || "image/png",
+              base64Data: base64,
+            });
+
+            if (res?.url) {
+              contentToSave = contentToSave.replaceAll(blobUrl, res.url);
+              if (
+                activeEditorRef.current &&
+                !activeEditorRef.current.isDestroyed &&
+                activeEditorRef.current.view &&
+                activeEditorRef.current.state
+              ) {
+                try {
+                  const editor = activeEditorRef.current;
+                  const { tr } = editor.state;
+                  let found = false;
+                  editor.state.doc.descendants((node: any, pos: number) => {
+                    if (
+                      node.type.name === "image" &&
+                      node.attrs.src === blobUrl
+                    ) {
+                      tr.setNodeMarkup(pos, undefined, {
+                        ...node.attrs,
+                        src: res.url,
+                      });
+                      found = true;
+                    }
+                  });
+                  if (found) editor.view.dispatch(tr);
+                } catch {}
+              }
+            }
+          } catch (err) {
+            console.error("Asset upload failed in saveDocument:", err);
+          }
+        }
+        try {
+          URL.revokeObjectURL(blobUrl);
+        } catch {}
+        pendingImagesRef.current.delete(blobUrl);
+      }
+    }
+
+    // If local blob URLs were replaced with permanent URLs, sync back to state and draft
+    if (contentToSave !== rawContent) {
+      if (fileId === activeTabId) {
+        setNoteContent(contentToSave);
+      } else if (fileId === splitTabId) {
+        setSplitNoteContent(contentToSave);
+      }
+      try {
+        safeLocalStorageSet(`netherite_draft_${fileId}`, contentToSave);
+        void idbSetDoc(`netherite_draft_${fileId}`, contentToSave);
+      } catch {}
+    }
 
     // Automatically optimize any embedded base64 images (e.g. pasted from excalidraw.com or clipboard)
     try {
@@ -1690,74 +1784,16 @@ export function WorkspaceLayout({
       return;
     }
 
-    let contentToSave = noteContent;
-    let hasNewUploads = false;
-
-    // Check if any pending local images are actually present in the saved note
-    if (pendingImagesRef.current.size > 0) {
-      const entries = Array.from(pendingImagesRef.current.entries());
-      for (const [blobUrl, file] of entries) {
-        if (contentToSave.includes(blobUrl)) {
-          // User kept the image in the note! Upload to Drive now
-          try {
-            const base64 = await fileToBase64(file);
-            const res = await uploadAssetMutation.mutateAsync({
-              fileName: file.name,
-              mimeType: file.type || "image/png",
-              base64Data: base64,
-            });
-
-            if (res?.url) {
-              contentToSave = contentToSave.replaceAll(blobUrl, res.url);
-              hasNewUploads = true;
-
-              // Update TipTap editor image node src from blobUrl to driveUrl
-              if (
-                activeEditorRef.current &&
-                !activeEditorRef.current.isDestroyed &&
-                activeEditorRef.current.view &&
-                activeEditorRef.current.state
-              ) {
-                try {
-                  const editor = activeEditorRef.current;
-                  const { tr } = editor.state;
-                  let found = false;
-                  editor.state.doc.descendants((node: any, pos: number) => {
-                    if (
-                      node.type.name === "image" &&
-                      node.attrs.src === blobUrl
-                    ) {
-                      tr.setNodeMarkup(pos, undefined, {
-                        ...node.attrs,
-                        src: res.url,
-                      });
-                      found = true;
-                    }
-                  });
-                  if (found) {
-                    editor.view.dispatch(tr);
-                  }
-                } catch {}
-              }
-            }
-          } catch (err) {
-            console.error("Asset upload failed on save:", err);
-          }
-        }
-        // Always revoke and cleanup local blob URL
-        try {
-          URL.revokeObjectURL(blobUrl);
-        } catch {}
-        pendingImagesRef.current.delete(blobUrl);
-      }
-
-      if (hasNewUploads) {
-        setNoteContent(contentToSave);
-      }
+    const diff = computeLineDiff(lastSavedContent, noteContent);
+    if (
+      !diff.hasChanges &&
+      !saveMutation.isPending &&
+      !isSaving &&
+      pendingImagesRef.current.size === 0 &&
+      pendingUploadsRef.current.size === 0
+    ) {
+      return;
     }
-
-    const diff = computeLineDiff(lastSavedContent, contentToSave);
-    if (!diff.hasChanges && !saveMutation.isPending && !isSaving) return;
 
     const logEntry: ChangelogEntry = {
       id: `log-${Date.now()}`,
@@ -1772,7 +1808,7 @@ export function WorkspaceLayout({
     };
     saveChangelogEntry(logEntry);
 
-    await saveDocument(activeTabId, contentToSave, currentNoteItem);
+    await saveDocument(activeTabId, noteContent, currentNoteItem);
   };
 
   // 100% INSTANT OPTIMISTIC FILE CREATION (0ms response time, zero blink!)
@@ -2537,13 +2573,21 @@ export function WorkspaceLayout({
         ? localStorage.getItem(`netherite_cache_${fileId}`)
         : null;
     const queryCached = utils.notes.get.getData({ id: fileId });
-    const baseline =
+    const rawBaseline =
       (typeof queryCached === "string" ? queryCached : null) ??
       localCache ??
       "";
+    const baseline =
+      rawBaseline && !isDrawing
+        ? normalizeDriveImageUrls(rawBaseline)
+        : rawBaseline;
 
     // Hydrate note content: check for a genuine unsaved draft
-    const unsavedDraft = getUnsavedDraft(fileId, isDrawing, baseline);
+    const rawUnsavedDraft = getUnsavedDraft(fileId, isDrawing, baseline);
+    const unsavedDraft =
+      rawUnsavedDraft && !isDrawing
+        ? normalizeDriveImageUrls(rawUnsavedDraft)
+        : rawUnsavedDraft;
     let contentToSet = "";
     let baselineToSet = "";
 
@@ -2626,6 +2670,87 @@ export function WorkspaceLayout({
   const handleImageUpload = async (file: File): Promise<string> => {
     const localUrl = URL.createObjectURL(file);
     pendingImagesRef.current.set(localUrl, file);
+
+    const uploadTask = (async (): Promise<string | null> => {
+      try {
+        const base64 = await fileToBase64(file);
+        const res = await uploadAssetMutation.mutateAsync({
+          fileName: file.name || `image-${Date.now()}.png`,
+          mimeType: file.type || "image/png",
+          base64Data: base64,
+        });
+
+        const permanentUrl = res?.url;
+        if (permanentUrl) {
+          // 1. Update active TipTap editor image node
+          if (
+            activeEditorRef.current &&
+            !activeEditorRef.current.isDestroyed &&
+            activeEditorRef.current.view &&
+            activeEditorRef.current.state
+          ) {
+            try {
+              const editor = activeEditorRef.current;
+              const { tr } = editor.state;
+              let found = false;
+              editor.state.doc.descendants((node: any, pos: number) => {
+                if (node.type.name === "image" && node.attrs.src === localUrl) {
+                  tr.setNodeMarkup(pos, undefined, {
+                    ...node.attrs,
+                    src: permanentUrl,
+                  });
+                  found = true;
+                }
+              });
+              if (found) {
+                editor.view.dispatch(tr);
+              }
+            } catch (e) {
+              console.warn("Could not update TipTap image node:", e);
+            }
+          }
+
+          // 2. Update noteContent state
+          setNoteContent((prev) => {
+            if (prev.includes(localUrl)) {
+              return prev.replaceAll(localUrl, permanentUrl);
+            }
+            return prev;
+          });
+
+          // 3. Update localStorage and IDB draft
+          if (activeTabId) {
+            try {
+              const draft = localStorage.getItem(
+                `netherite_draft_${activeTabId}`,
+              );
+              if (draft && draft.includes(localUrl)) {
+                const updatedDraft = draft.replaceAll(localUrl, permanentUrl);
+                safeLocalStorageSet(
+                  `netherite_draft_${activeTabId}`,
+                  updatedDraft,
+                );
+                void idbSetDoc(`netherite_draft_${activeTabId}`, updatedDraft);
+              }
+            } catch {}
+          }
+
+          return permanentUrl;
+        }
+        return null;
+      } catch (err) {
+        console.error("Background asset upload failed:", err);
+        return null;
+      } finally {
+        try {
+          URL.revokeObjectURL(localUrl);
+        } catch {}
+        pendingImagesRef.current.delete(localUrl);
+        pendingUploadsRef.current.delete(localUrl);
+      }
+    })();
+
+    pendingUploadsRef.current.set(localUrl, uploadTask);
     return localUrl;
   };
 
@@ -2709,6 +2834,7 @@ export function WorkspaceLayout({
       }
 
       pendingImagesRef.current.clear();
+      pendingUploadsRef.current.clear();
 
       await Promise.all([
         utils.notes.list.refetch(),
@@ -2721,7 +2847,7 @@ export function WorkspaceLayout({
           { id: activeTabId },
           { staleTime: 0 },
         );
-        const cleanContent = typeof fresh === "string" ? fresh : "";
+        const cleanContent = typeof fresh === "string" ? normalizeDriveImageUrls(fresh) : "";
         setNoteContent(cleanContent);
         setLastSavedContent(cleanContent);
         setContentRevision((r) => r + 1);
