@@ -1,10 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Sidebar, type DriveItem } from "./Sidebar";
 import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
-import { DrawingCanvas, type DrawingCanvasHandle } from "~/components/canvas/DrawingCanvas";
+import {
+  DrawingCanvas,
+  type DrawingCanvasHandle,
+} from "~/components/canvas/DrawingCanvas";
 import { UmlCanvas } from "~/components/canvas/UmlCanvas";
 import { MermaidCanvas } from "~/components/canvas/MermaidCanvas";
 import { TikzCanvas } from "~/components/canvas/TikzCanvas";
@@ -25,11 +34,20 @@ import {
   clearChangelog,
   type ChangelogEntry,
 } from "./diffUtils";
-import { optimizeExcalidrawJson, optimizeMarkdownImages } from "~/lib/imageOptimization";
+import {
+  optimizeExcalidrawJson,
+  optimizeMarkdownImages,
+} from "~/lib/imageOptimization";
 import {
   syncSingleNoteToDevice,
+  CLOUD_AUTOSAVE_ENABLED_KEY,
   CLOUD_AUTOSAVE_CADENCE_KEY,
+  LOCAL_AUTOSAVE_INTERVAL_KEY,
   type CloudCadence,
+  type LocalAutoSaveInterval,
+  CLOUD_AUTOSAVE_ENABLED_CHANGED_EVENT,
+  CLOUD_CADENCE_CHANGED_EVENT,
+  LOCAL_AUTOSAVE_INTERVAL_CHANGED_EVENT,
 } from "~/lib/localDeviceSync";
 import {
   safeLocalStorageSet,
@@ -158,7 +176,11 @@ export function WorkspaceLayout({
     return false;
   });
   const [mobileScreen, setMobileScreen] = useState<"editor" | "library">(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 640 && !initialNoteId) {
+    if (
+      typeof window !== "undefined" &&
+      window.innerWidth < 640 &&
+      !initialNoteId
+    ) {
       return "library";
     }
     return "editor";
@@ -174,8 +196,11 @@ export function WorkspaceLayout({
     }
   }, [mobileScreen]);
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
-  const [isCreateDiagramModalOpen, setIsCreateDiagramModalOpen] = useState(false);
-  const [createDiagramParentId, setCreateDiagramParentId] = useState<string | undefined>(undefined);
+  const [isCreateDiagramModalOpen, setIsCreateDiagramModalOpen] =
+    useState(false);
+  const [createDiagramParentId, setCreateDiagramParentId] = useState<
+    string | undefined
+  >(undefined);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [editorFont, setEditorFont] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -221,10 +246,18 @@ export function WorkspaceLayout({
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
         setIsCopilotOpen((prev) => !prev);
-      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "d") {
+      } else if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        e.key.toLowerCase() === "d"
+      ) {
         e.preventDefault();
         toggleDiffSidebar();
-      } else if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "z") {
+      } else if (
+        (e.ctrlKey || e.metaKey) &&
+        e.altKey &&
+        e.key.toLowerCase() === "z"
+      ) {
         e.preventDefault();
         handleToggleZenMode();
       } else if (e.key === "Escape" && zenMode) {
@@ -252,18 +285,20 @@ export function WorkspaceLayout({
   });
 
   // Folder Coloring & Workspace Metadata State (Persisted in .netherite.json in Google Drive)
-  const [folderColors, setFolderColors] = useState<Record<string, string>>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("netherite_workspace_meta");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed?.folderColors) return parsed.folderColors;
-        }
-      } catch (e) {}
-    }
-    return initialMetadata?.folderColors || {};
-  });
+  const [folderColors, setFolderColors] = useState<Record<string, string>>(
+    () => {
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("netherite_workspace_meta");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed?.folderColors) return parsed.folderColors;
+          }
+        } catch (e) {}
+      }
+      return initialMetadata?.folderColors || {};
+    },
+  );
 
   // Stable session tracking per tab to prevent component unmounting / flickering on ID promotion
   const tabSessionsRef = useRef<Record<string, string>>({});
@@ -280,7 +315,10 @@ export function WorkspaceLayout({
     if (serverMeta?.folderColors) {
       setFolderColors(serverMeta.folderColors);
       if (typeof window !== "undefined") {
-        localStorage.setItem("netherite_workspace_meta", JSON.stringify(serverMeta));
+        localStorage.setItem(
+          "netherite_workspace_meta",
+          JSON.stringify(serverMeta),
+        );
       }
     }
   }, [serverMeta]);
@@ -296,7 +334,10 @@ export function WorkspaceLayout({
         next[folderId] = color;
       }
       if (typeof window !== "undefined") {
-        localStorage.setItem("netherite_workspace_meta", JSON.stringify({ folderColors: next }));
+        localStorage.setItem(
+          "netherite_workspace_meta",
+          JSON.stringify({ folderColors: next }),
+        );
       }
       saveMetaMutation.mutate({ folderColors: next });
       return next;
@@ -315,9 +356,14 @@ export function WorkspaceLayout({
       } catch (e) {}
     }
     const firstFile = (initialNotes || []).find(
-      (n) => n.mimeType !== "application/vnd.google-apps.folder" && !n.name?.startsWith(".") && Boolean(n.id)
+      (n) =>
+        n.mimeType !== "application/vnd.google-apps.folder" &&
+        !n.name?.startsWith(".") &&
+        Boolean(n.id),
     );
-    const initialItem = (initialNotes || []).find((n) => n.id === initialNoteId);
+    const initialItem = (initialNotes || []).find(
+      (n) => n.id === initialNoteId,
+    );
     const validInitialId =
       initialItem &&
       initialItem.mimeType !== "application/vnd.google-apps.folder" &&
@@ -334,9 +380,14 @@ export function WorkspaceLayout({
       if (saved) return saved;
     }
     const firstFile = (initialNotes || []).find(
-      (n) => n.mimeType !== "application/vnd.google-apps.folder" && !n.name?.startsWith(".") && Boolean(n.id)
+      (n) =>
+        n.mimeType !== "application/vnd.google-apps.folder" &&
+        !n.name?.startsWith(".") &&
+        Boolean(n.id),
     );
-    const initialItem = (initialNotes || []).find((n) => n.id === initialNoteId);
+    const initialItem = (initialNotes || []).find(
+      (n) => n.id === initialNoteId,
+    );
     return initialItem &&
       initialItem.mimeType !== "application/vnd.google-apps.folder" &&
       !initialItem.name?.startsWith(".") &&
@@ -357,7 +408,9 @@ export function WorkspaceLayout({
   useEffect(() => {
     if (localNotes.length > 0) {
       const folderIds = new Set(
-        localNotes.filter((n) => n.mimeType === "application/vnd.google-apps.folder").map((n) => n.id)
+        localNotes
+          .filter((n) => n.mimeType === "application/vnd.google-apps.folder")
+          .map((n) => n.id),
       );
       if (folderIds.size > 0) {
         setOpenTabIds((prev) => {
@@ -367,7 +420,9 @@ export function WorkspaceLayout({
 
         if (activeTabId && folderIds.has(activeTabId)) {
           const firstFile = localNotes.find(
-            (n) => n.mimeType !== "application/vnd.google-apps.folder" && Boolean(n.id)
+            (n) =>
+              n.mimeType !== "application/vnd.google-apps.folder" &&
+              Boolean(n.id),
           );
           if (firstFile) {
             openFileInTab(firstFile.id);
@@ -482,7 +537,8 @@ export function WorkspaceLayout({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [noteContent, setNoteContent] = useState<string>(initialContent);
-  const [lastSavedContent, setLastSavedContent] = useState<string>(initialContent);
+  const [lastSavedContent, setLastSavedContent] =
+    useState<string>(initialContent);
   const [noteTitle, setNoteTitle] = useState<string>("");
 
   const [splitNoteContent, setSplitNoteContent] = useState<string>("");
@@ -495,25 +551,105 @@ export function WorkspaceLayout({
   const [contentRevision, setContentRevision] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Cloud Auto-Save Cadence (GCP Free Tier Safe)
+  // Cloud Auto-Save Enabled & Cadence (GCP Free Tier Safe)
+  const [cloudAutoSaveEnabled, setCloudAutoSaveEnabled] = useState<boolean>(
+    () => {
+      if (typeof window !== "undefined") {
+        const val = localStorage.getItem(CLOUD_AUTOSAVE_ENABLED_KEY);
+        return val === null ? true : val === "true";
+      }
+      return true;
+    },
+  );
+
   const [cloudCadence, setCloudCadence] = useState<CloudCadence>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem(CLOUD_AUTOSAVE_CADENCE_KEY) as CloudCadence) || "30s";
+      return (
+        (localStorage.getItem(CLOUD_AUTOSAVE_CADENCE_KEY) as CloudCadence) ||
+        "30s"
+      );
     }
     return "30s";
   });
 
+  // Local Auto-Save Interval (IndexedDB, LocalStorage & Device sync)
+  const [localAutoSaveInterval, setLocalAutoSaveInterval] =
+    useState<LocalAutoSaveInterval>(() => {
+      if (typeof window !== "undefined") {
+        return (
+          (localStorage.getItem(
+            LOCAL_AUTOSAVE_INTERVAL_KEY,
+          ) as LocalAutoSaveInterval) || "immediate"
+        );
+      }
+      return "immediate";
+    });
+
   useEffect(() => {
+    const handleCloudEnabledChange = (e: any) => {
+      if (typeof e?.detail === "boolean") {
+        setCloudAutoSaveEnabled(e.detail);
+      } else if (typeof window !== "undefined") {
+        const val = localStorage.getItem(CLOUD_AUTOSAVE_ENABLED_KEY);
+        setCloudAutoSaveEnabled(val === null ? true : val === "true");
+      }
+    };
+
     const handleCadenceChange = (e: any) => {
       if (e?.detail) {
         setCloudCadence(e.detail);
       } else if (typeof window !== "undefined") {
-        const saved = (localStorage.getItem(CLOUD_AUTOSAVE_CADENCE_KEY) as CloudCadence) || "30s";
+        const saved =
+          (localStorage.getItem(CLOUD_AUTOSAVE_CADENCE_KEY) as CloudCadence) ||
+          "30s";
         setCloudCadence(saved);
       }
     };
-    window.addEventListener("netherite_cloud_cadence_changed", handleCadenceChange);
-    return () => window.removeEventListener("netherite_cloud_cadence_changed", handleCadenceChange);
+
+    const handleLocalIntervalChange = (e: any) => {
+      if (e?.detail) {
+        setLocalAutoSaveInterval(e.detail);
+      } else if (typeof window !== "undefined") {
+        const saved =
+          (localStorage.getItem(
+            LOCAL_AUTOSAVE_INTERVAL_KEY,
+          ) as LocalAutoSaveInterval) || "immediate";
+        setLocalAutoSaveInterval(saved);
+      }
+    };
+
+    window.addEventListener(
+      CLOUD_AUTOSAVE_ENABLED_CHANGED_EVENT,
+      handleCloudEnabledChange,
+    );
+    window.addEventListener(CLOUD_CADENCE_CHANGED_EVENT, handleCadenceChange);
+    window.addEventListener(
+      "netherite_cloud_cadence_changed",
+      handleCadenceChange,
+    );
+    window.addEventListener(
+      LOCAL_AUTOSAVE_INTERVAL_CHANGED_EVENT,
+      handleLocalIntervalChange,
+    );
+
+    return () => {
+      window.removeEventListener(
+        CLOUD_AUTOSAVE_ENABLED_CHANGED_EVENT,
+        handleCloudEnabledChange,
+      );
+      window.removeEventListener(
+        CLOUD_CADENCE_CHANGED_EVENT,
+        handleCadenceChange,
+      );
+      window.removeEventListener(
+        "netherite_cloud_cadence_changed",
+        handleCadenceChange,
+      );
+      window.removeEventListener(
+        LOCAL_AUTOSAVE_INTERVAL_CHANGED_EVENT,
+        handleLocalIntervalChange,
+      );
+    };
   }, []);
 
   // Native Android Hardware Back Button Handling via Capacitor
@@ -547,11 +683,19 @@ export function WorkspaceLayout({
       return false;
     },
     closeSidebar: () => {
-      if (typeof window !== "undefined" && window.innerWidth < 768 && !sidebarCollapsed) {
+      if (
+        typeof window !== "undefined" &&
+        window.innerWidth < 768 &&
+        !sidebarCollapsed
+      ) {
         setSidebarCollapsed(true);
         return true;
       }
-      if (typeof window !== "undefined" && window.innerWidth < 1280 && isOutlineOpen) {
+      if (
+        typeof window !== "undefined" &&
+        window.innerWidth < 1280 &&
+        isOutlineOpen
+      ) {
         setIsOutlineOpen(false);
         return true;
       }
@@ -562,11 +706,15 @@ export function WorkspaceLayout({
   const utils = api.useUtils();
 
   // Cached tRPC query for Google Drive syncing (staleTime = 60000ms)
-  const { data: notesData, isLoading: isNotesLoading } = api.notes.list.useQuery(undefined, {
-    initialData: initialNotes && initialNotes.length > 0 ? (initialNotes as any) : undefined,
-    enabled: !!session?.user,
-    staleTime: 60000,
-  });
+  const { data: notesData, isLoading: isNotesLoading } =
+    api.notes.list.useQuery(undefined, {
+      initialData:
+        initialNotes && initialNotes.length > 0
+          ? (initialNotes as any)
+          : undefined,
+      enabled: !!session?.user,
+      staleTime: 60000,
+    });
 
   // Sync Google Drive query into localNotes array
   useEffect(() => {
@@ -597,9 +745,10 @@ export function WorkspaceLayout({
   } = api.notes.get.useQuery(
     { id: activeTabId! },
     {
-      enabled: !!session?.user && !!activeTabId && !activeTabId.startsWith("temp-"),
+      enabled:
+        !!session?.user && !!activeTabId && !activeTabId.startsWith("temp-"),
       staleTime: 300000,
-    }
+    },
   );
 
   // Split Active Note Content Query
@@ -610,9 +759,13 @@ export function WorkspaceLayout({
   } = api.notes.get.useQuery(
     { id: splitTabId! },
     {
-      enabled: !!session?.user && !!splitTabId && !splitTabId.startsWith("temp-") && isSplitView,
+      enabled:
+        !!session?.user &&
+        !!splitTabId &&
+        !splitTabId.startsWith("temp-") &&
+        isSplitView,
       staleTime: 300000,
-    }
+    },
   );
 
   const isDocumentLoading =
@@ -624,7 +777,8 @@ export function WorkspaceLayout({
     Boolean(splitTabId) &&
     !splitTabId?.startsWith("temp-") &&
     isSplitView &&
-    (isLoadingSplitContent || (isFetchingSplitContent && fetchedSplitContent === undefined));
+    (isLoadingSplitContent ||
+      (isFetchingSplitContent && fetchedSplitContent === undefined));
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -679,7 +833,13 @@ export function WorkspaceLayout({
       return !areExcalidrawScenesEquivalent(lastSavedContent, noteContent);
     }
     return noteContent !== lastSavedContent;
-  }, [isCurrentImage, activeTabId, noteContent, lastSavedContent, isCurrentDrawing]);
+  }, [
+    isCurrentImage,
+    activeTabId,
+    noteContent,
+    lastSavedContent,
+    isCurrentDrawing,
+  ]);
 
   const [diffSummary, setDiffSummary] = useState<string>("0 diff");
 
@@ -690,7 +850,10 @@ export function WorkspaceLayout({
     }
     const timer = setTimeout(() => {
       if (isCurrentDrawing) {
-        const dDiff = computeExcalidrawSemanticDiff(lastSavedContent, noteContent);
+        const dDiff = computeExcalidrawSemanticDiff(
+          lastSavedContent,
+          noteContent,
+        );
         setDiffSummary(dDiff.summaryText);
       } else {
         const diff = computeLineDiff(lastSavedContent, noteContent);
@@ -701,11 +864,12 @@ export function WorkspaceLayout({
   }, [isDirty, isCurrentDrawing, lastSavedContent, noteContent]);
 
   // Efficient background cloud auto-save engine:
-  // When isDirty is true and user pauses typing/drawing, auto-sync to Google Drive
+  // When cloudAutoSaveEnabled and isDirty are true and user pauses typing/drawing, auto-sync to Google Drive
   // Default is 30 seconds (GCP quota-friendly, user-requested 30s / 1m).
   // Instant saves still occur on tab switch, window blur, or Ctrl+S.
   useEffect(() => {
     if (
+      !cloudAutoSaveEnabled ||
       !isDirty ||
       isSaving ||
       !activeTabId ||
@@ -726,20 +890,20 @@ export function WorkspaceLayout({
     }
 
     const delayMs =
-      cloudCadence === "1m"
-        ? 60000
-        : cloudCadence === "10s"
-        ? 10000
-        : 30000; // default 30s
+      cloudCadence === "1m" ? 60000 : cloudCadence === "10s" ? 10000 : 30000; // default 30s
 
     const timer = setTimeout(() => {
-      if (noteContent && (noteContent.length > 0 || lastSavedContent.length > 0)) {
+      if (
+        noteContent &&
+        (noteContent.length > 0 || lastSavedContent.length > 0)
+      ) {
         void saveDocument(activeTabId, noteContent, currentItem);
       }
     }, delayMs);
 
     return () => clearTimeout(timer);
   }, [
+    cloudAutoSaveEnabled,
     isDirty,
     isSaving,
     activeTabId,
@@ -763,7 +927,10 @@ export function WorkspaceLayout({
       try {
         if (typeof window !== "undefined") {
           safeLocalStorageSet(`netherite_cache_${fileId}`, savedContent);
-          safeLocalStorageSet(`netherite_saved_at_${fileId}`, String(Date.now()));
+          safeLocalStorageSet(
+            `netherite_saved_at_${fileId}`,
+            String(Date.now()),
+          );
           try {
             localStorage.removeItem(`netherite_draft_${fileId}`);
           } catch {}
@@ -774,7 +941,9 @@ export function WorkspaceLayout({
         utils.notes.list.setData(undefined, (old: any) => {
           if (!old || !Array.isArray(old)) return old;
           return old.map((it: any) =>
-            it.id === fileId ? { ...it, modifiedTime: new Date().toISOString() } : it
+            it.id === fileId
+              ? { ...it, modifiedTime: new Date().toISOString() }
+              : it,
           );
         });
 
@@ -792,7 +961,7 @@ export function WorkspaceLayout({
         console.warn("Storage sync error on save:", err);
       }
     },
-    [activeTabId, splitTabId, utils, localNotes]
+    [activeTabId, splitTabId, utils, localNotes],
   );
 
   const saveMutation = api.notes.save.useMutation({
@@ -808,7 +977,9 @@ export function WorkspaceLayout({
       utils.notes.list.setData(undefined, (old: any) => {
         if (!old) return [];
         return old.map((item: any) =>
-          item.id === variables.id ? { ...item, name: variables.newName } : item
+          item.id === variables.id
+            ? { ...item, name: variables.newName }
+            : item,
         );
       });
     },
@@ -831,13 +1002,14 @@ export function WorkspaceLayout({
         return old.map((item: any) =>
           item.id === variables.fileId
             ? { ...item, parents: [variables.targetFolderId] }
-            : item
+            : item,
         );
       });
     },
   });
   const uploadAssetMutation = api.notes.uploadAsset.useMutation();
-  const getResumableUploadUrlMutation = api.notes.getResumableUploadUrl.useMutation();
+  const getResumableUploadUrlMutation =
+    api.notes.getResumableUploadUrl.useMutation();
 
   const deepSyncMutation = api.notes.deepSync.useMutation({
     onSuccess: (res) => {
@@ -882,7 +1054,8 @@ export function WorkspaceLayout({
           const cacheVal = localStorage.getItem(`netherite_cache_${fileId}`);
           if (cacheVal) {
             const isDrawing =
-              draftVal.includes('"type":"excalidraw"') || draftVal.includes('"type": "excalidraw"');
+              draftVal.includes('"type":"excalidraw"') ||
+              draftVal.includes('"type": "excalidraw"');
             if (isDocumentContentEquivalent(isDrawing, cacheVal, draftVal)) {
               keysToScrub.push(key);
             }
@@ -894,7 +1067,9 @@ export function WorkspaceLayout({
         void idbDeleteDoc(k);
       });
       if (keysToScrub.length > 0) {
-        console.info(`[Netherite] Cleaned up ${keysToScrub.length} phantom drafts on startup.`);
+        console.info(
+          `[Netherite] Cleaned up ${keysToScrub.length} phantom drafts on startup.`,
+        );
       }
     } catch (e) {
       console.warn("Draft scrubber error:", e);
@@ -906,7 +1081,11 @@ export function WorkspaceLayout({
    * compared to the cached/cloud version. Cleans up phantom identical drafts automatically.
    */
   const getUnsavedDraft = useCallback(
-    (fileId: string, isDrawing: boolean, baselineContent?: string): string | null => {
+    (
+      fileId: string,
+      isDrawing: boolean,
+      baselineContent?: string,
+    ): string | null => {
       if (typeof window === "undefined" || !fileId) return null;
 
       const directDraft = localStorage.getItem(`netherite_draft_${fileId}`);
@@ -925,7 +1104,10 @@ export function WorkspaceLayout({
         localStorage.getItem(`netherite_cache_${fileId}`) ??
         "";
 
-      if (baseline && isDocumentContentEquivalent(isDrawing, baseline, directDraft)) {
+      if (
+        baseline &&
+        isDocumentContentEquivalent(isDrawing, baseline, directDraft)
+      ) {
         try {
           localStorage.removeItem(`netherite_draft_${fileId}`);
         } catch {}
@@ -934,25 +1116,127 @@ export function WorkspaceLayout({
 
       return directDraft;
     },
-    [utils]
+    [utils],
   );
 
-  // Synchronous flush on window unload or tab hidden
+  const noteContentRef = useRef(noteContent);
+  noteContentRef.current = noteContent;
+
+  const activeTabIdRef = useRef(activeTabId);
+  activeTabIdRef.current = activeTabId;
+
+  const isDirtyRef = useRef(isDirty);
+  isDirtyRef.current = isDirty;
+
+  const localNotesRef = useRef(localNotes);
+  localNotesRef.current = localNotes;
+
+  const saveDocumentRef = useRef<
+    | ((
+        fileId: string,
+        rawContent: string,
+        item?: DriveItem,
+      ) => Promise<boolean>)
+    | null
+  >(null);
+
+  const sendKeepaliveSave = (fileId: string, content: string) => {
+    if (
+      !fileId ||
+      fileId.startsWith("temp-") ||
+      !content ||
+      typeof window === "undefined"
+    )
+      return;
+    try {
+      void fetch("/api/notes/save-beacon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: fileId, content }),
+        keepalive: true,
+      });
+    } catch (err) {
+      console.warn("Keepalive save failed:", err);
+    }
+  };
+
+  // Synchronous flush on window unload or tab hidden (Java finally {} style Google Drive persistence)
   useEffect(() => {
     const handleBeforeUnload = () => {
-      activeCanvasRef.current?.flush();
-      activeSplitCanvasRef.current?.flush();
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        activeCanvasRef.current?.flush();
-        activeSplitCanvasRef.current?.flush();
+      let content = noteContentRef.current;
+      if (activeCanvasRef.current) {
+        try {
+          const flushed = activeCanvasRef.current.flush();
+          if (flushed) content = flushed;
+        } catch {}
+      }
+      if (activeSplitCanvasRef.current) {
+        try {
+          activeSplitCanvasRef.current.flush();
+        } catch {}
+      }
+
+      const activeId = activeTabIdRef.current;
+      if (
+        activeId &&
+        !activeId.startsWith("temp-") &&
+        isDirtyRef.current &&
+        content
+      ) {
+        try {
+          safeLocalStorageSet(`netherite_draft_${activeId}`, content);
+          void idbSetDoc(`netherite_draft_${activeId}`, content);
+          saveBackupSnapshot(activeId, content);
+        } catch {}
+        sendKeepaliveSave(activeId, content);
       }
     };
+
+    const handlePageHide = () => {
+      handleBeforeUnload();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        let content = noteContentRef.current;
+        if (activeCanvasRef.current) {
+          try {
+            const flushed = activeCanvasRef.current.flush();
+            if (flushed) content = flushed;
+          } catch {}
+        }
+        if (activeSplitCanvasRef.current) {
+          try {
+            activeSplitCanvasRef.current.flush();
+          } catch {}
+        }
+
+        const activeId = activeTabIdRef.current;
+        if (
+          activeId &&
+          !activeId.startsWith("temp-") &&
+          isDirtyRef.current &&
+          content
+        ) {
+          try {
+            safeLocalStorageSet(`netherite_draft_${activeId}`, content);
+            void idbSetDoc(`netherite_draft_${activeId}`, content);
+            saveBackupSnapshot(activeId, content);
+          } catch {}
+          const item = localNotesRef.current.find((n) => n.id === activeId);
+          if (saveDocumentRef.current) {
+            void saveDocumentRef.current(activeId, content, item);
+          }
+        }
+      }
+    };
+
     window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handlePageHide);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handlePageHide);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
@@ -972,10 +1256,16 @@ export function WorkspaceLayout({
     const isUml = isUmlFile(currentItem);
 
     const localCache =
-      typeof window !== "undefined" ? localStorage.getItem(`netherite_cache_${activeTabId}`) : null;
+      typeof window !== "undefined"
+        ? localStorage.getItem(`netherite_cache_${activeTabId}`)
+        : null;
     const baseline = fetchedContent !== undefined ? fetchedContent : localCache;
 
-    const unsavedDraft = getUnsavedDraft(activeTabId, isDrawing, baseline ?? undefined);
+    const unsavedDraft = getUnsavedDraft(
+      activeTabId,
+      isDrawing,
+      baseline ?? undefined,
+    );
     if (unsavedDraft) {
       contentFileIdRef.current = activeTabId;
       setNoteContent(unsavedDraft);
@@ -1011,9 +1301,14 @@ export function WorkspaceLayout({
     }
   }, [fetchedContent, activeTabId, localNotes, getUnsavedDraft]);
 
-  // Continuous local draft backup on every edit (Strictly isolated to active tab's file ID)
+  // Continuous local draft backup with configurable cadence (Strictly isolated to active tab's file ID)
   useEffect(() => {
-    if (!activeTabId || activeTabId.startsWith("temp-") || typeof window === "undefined") return;
+    if (
+      !activeTabId ||
+      activeTabId.startsWith("temp-") ||
+      typeof window === "undefined"
+    )
+      return;
     if (contentFileIdRef.current !== activeTabId) return;
 
     const currentItem = localNotes.find((n) => n.id === activeTabId);
@@ -1023,26 +1318,73 @@ export function WorkspaceLayout({
     const isUml = isUmlFile(currentItem);
 
     // NEVER save an empty drawing/uml draft to localStorage if the original file has content!
-    if (isDrawing && isEmptyExcalidraw(noteContent) && !isEmptyExcalidraw(lastSavedContent)) {
+    if (
+      isDrawing &&
+      isEmptyExcalidraw(noteContent) &&
+      !isEmptyExcalidraw(lastSavedContent)
+    ) {
       return;
     }
-    if (isUml && isEmptyApollon(noteContent) && !isEmptyApollon(lastSavedContent)) {
+    if (
+      isUml &&
+      isEmptyApollon(noteContent) &&
+      !isEmptyApollon(lastSavedContent)
+    ) {
       return;
     }
 
-    if (isDirty && noteContent.length > 0) {
-      try {
-        safeLocalStorageSet(`netherite_draft_${activeTabId}`, noteContent);
-        void idbSetDoc(`netherite_draft_${activeTabId}`, noteContent);
-        saveBackupSnapshot(activeTabId, noteContent);
-      } catch {}
-    } else if (!isDirty) {
+    if (!isDirty) {
       try {
         localStorage.removeItem(`netherite_draft_${activeTabId}`);
       } catch {}
       void idbDeleteDoc(`netherite_draft_${activeTabId}`);
+      return;
     }
-  }, [noteContent, lastSavedContent, activeTabId, localNotes, isDirty]);
+
+    if (noteContent.length === 0) return;
+
+    const persistDraft = () => {
+      try {
+        safeLocalStorageSet(`netherite_draft_${activeTabId}`, noteContent);
+        void idbSetDoc(`netherite_draft_${activeTabId}`, noteContent);
+        saveBackupSnapshot(activeTabId, noteContent);
+        void syncSingleNoteToDevice(activeTabId, noteContent, localNotes);
+      } catch {}
+    };
+
+    let delayMs = 0;
+    if (localAutoSaveInterval === "1s") delayMs = 1000;
+    else if (localAutoSaveInterval === "2s") delayMs = 2000;
+    else if (localAutoSaveInterval === "5s") delayMs = 5000;
+    else if (localAutoSaveInterval === "10s") delayMs = 10000;
+    else if (localAutoSaveInterval === "30s") delayMs = 30000;
+    else if (
+      localAutoSaveInterval !== "immediate" &&
+      !isNaN(Number(localAutoSaveInterval))
+    ) {
+      delayMs = Number(localAutoSaveInterval) * 1000;
+    }
+
+    if (delayMs <= 0) {
+      persistDraft();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      persistDraft();
+    }, delayMs);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    noteContent,
+    lastSavedContent,
+    activeTabId,
+    localNotes,
+    isDirty,
+    localAutoSaveInterval,
+  ]);
 
   // Split Pane Note Content Loading (With Clean Draft & Cache Support)
   useEffect(() => {
@@ -1053,14 +1395,24 @@ export function WorkspaceLayout({
       currentItem?.mimeType === "application/vnd.excalidraw+json";
 
     const localCache =
-      typeof window !== "undefined" ? localStorage.getItem(`netherite_cache_${splitTabId}`) : null;
-    const baseline = fetchedSplitContent !== undefined ? fetchedSplitContent : localCache;
+      typeof window !== "undefined"
+        ? localStorage.getItem(`netherite_cache_${splitTabId}`)
+        : null;
+    const baseline =
+      fetchedSplitContent !== undefined ? fetchedSplitContent : localCache;
 
-    const unsavedDraft = getUnsavedDraft(splitTabId, isDrawing, baseline ?? undefined);
+    const unsavedDraft = getUnsavedDraft(
+      splitTabId,
+      isDrawing,
+      baseline ?? undefined,
+    );
     if (unsavedDraft) {
       setSplitNoteContent(unsavedDraft);
       if (fetchedSplitContent !== undefined && typeof window !== "undefined") {
-        safeLocalStorageSet(`netherite_cache_${splitTabId}`, fetchedSplitContent);
+        safeLocalStorageSet(
+          `netherite_cache_${splitTabId}`,
+          fetchedSplitContent,
+        );
         void idbSetDoc(`netherite_cache_${splitTabId}`, fetchedSplitContent);
       }
       return;
@@ -1163,7 +1515,11 @@ export function WorkspaceLayout({
   }, []);
 
   // Unified, robust document save pipeline with automatic base64 optimization and direct Google Drive fallback
-  const saveDocument = async (fileId: string, rawContent: string, item?: DriveItem): Promise<boolean> => {
+  const saveDocument = async (
+    fileId: string,
+    rawContent: string,
+    item?: DriveItem,
+  ): Promise<boolean> => {
     if (!fileId || fileId.startsWith("temp-") || !session?.user) return false;
 
     let contentToSave = rawContent;
@@ -1209,7 +1565,9 @@ export function WorkspaceLayout({
     if (isLargePayload) {
       try {
         showToast("Saving large document directly to Google Drive…");
-        const sessionRes = await getResumableUploadUrlMutation.mutateAsync({ fileId });
+        const sessionRes = await getResumableUploadUrlMutation.mutateAsync({
+          fileId,
+        });
         if (sessionRes?.uploadUrl) {
           const uploadRes = await fetch(sessionRes.uploadUrl, {
             method: "PUT",
@@ -1226,7 +1584,10 @@ export function WorkspaceLayout({
           }
         }
       } catch (err: any) {
-        console.warn("Direct upload encountered issue, attempting standard save:", err);
+        console.warn(
+          "Direct upload encountered issue, attempting standard save:",
+          err,
+        );
       }
     }
 
@@ -1245,13 +1606,18 @@ export function WorkspaceLayout({
         errMsg.includes("Unexpected token 'R'")
       ) {
         try {
-          showToast("Payload exceeded Vercel limit. Uploading directly to Google Drive…");
-          const sessionRes = await getResumableUploadUrlMutation.mutateAsync({ fileId });
+          showToast(
+            "Payload exceeded Vercel limit. Uploading directly to Google Drive…",
+          );
+          const sessionRes = await getResumableUploadUrlMutation.mutateAsync({
+            fileId,
+          });
           if (sessionRes?.uploadUrl) {
             const uploadRes = await fetch(sessionRes.uploadUrl, {
               method: "PUT",
               headers: {
-                "Content-Type": sessionRes.mimeType || "application/octet-stream",
+                "Content-Type":
+                  sessionRes.mimeType || "application/octet-stream",
               },
               body: contentToSave,
             });
@@ -1271,9 +1637,16 @@ export function WorkspaceLayout({
       return false;
     }
   };
+  saveDocumentRef.current = saveDocument;
 
   const handleManualSave = async () => {
-    if (!activeTabId || !session?.user || activeTabId.startsWith("temp-") || isLoadingContent) return;
+    if (
+      !activeTabId ||
+      !session?.user ||
+      activeTabId.startsWith("temp-") ||
+      isLoadingContent
+    )
+      return;
 
     const currentNoteItem = localNotes.find((n) => n.id === activeTabId);
     if (
@@ -1316,7 +1689,10 @@ export function WorkspaceLayout({
                   const { tr } = editor.state;
                   let found = false;
                   editor.state.doc.descendants((node: any, pos: number) => {
-                    if (node.type.name === "image" && node.attrs.src === blobUrl) {
+                    if (
+                      node.type.name === "image" &&
+                      node.attrs.src === blobUrl
+                    ) {
                       tr.setNodeMarkup(pos, undefined, {
                         ...node.attrs,
                         src: res.url,
@@ -1411,18 +1787,24 @@ export function WorkspaceLayout({
 
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
-          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          const filtered = items.filter(
+            (n: any) => n.id !== tempId && n.id !== realNote.id,
+          );
           return [realNote, ...filtered];
         });
         setLocalNotes((prev) =>
           prev.map((item) =>
             item.id === tempId
               ? { ...item, id: realNote.id!, parents: realNote.parents }
-              : item
-          )
+              : item,
+          ),
         );
-        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
-        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setOpenTabIds((prev) =>
+          prev.map((id) => (id === tempId ? realNote.id! : id)),
+        );
+        setActiveTabId((current) =>
+          current === tempId ? realNote.id! : current,
+        );
         setEditingId(realNote.id!);
       }
     } catch (err) {
@@ -1450,7 +1832,7 @@ export function WorkspaceLayout({
         files: {},
       },
       null,
-      2
+      2,
     );
 
     const newItem: DriveItem = {
@@ -1488,7 +1870,9 @@ export function WorkspaceLayout({
 
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
-          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          const filtered = items.filter(
+            (n: any) => n.id !== tempId && n.id !== realNote.id,
+          );
           return [realNote, ...filtered];
         });
         setLocalNotes((prev) =>
@@ -1500,11 +1884,15 @@ export function WorkspaceLayout({
                   parents: realNote.parents,
                   mimeType: "application/vnd.excalidraw+json",
                 }
-              : item
-          )
+              : item,
+          ),
         );
-        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
-        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setOpenTabIds((prev) =>
+          prev.map((id) => (id === tempId ? realNote.id! : id)),
+        );
+        setActiveTabId((current) =>
+          current === tempId ? realNote.id! : current,
+        );
         setEditingId(realNote.id!);
       }
     } catch (err) {
@@ -1518,17 +1906,27 @@ export function WorkspaceLayout({
   };
 
   // 100% INSTANT OPTIMISTIC ARCHITECTURE & UML CREATION (All 13 Apollon diagram suites)
-  const handleCreateUml = async (diagramType: UMLDiagramType = "ClassDiagram" as UMLDiagramType, customTitle?: string) => {
+  const handleCreateUml = async (
+    diagramType: UMLDiagramType = "ClassDiagram" as UMLDiagramType,
+    customTitle?: string,
+  ) => {
     const parentId = createDiagramParentId;
     const tempId = `temp-uml-${Date.now()}`;
-    const cleanTitle = customTitle?.trim() || `${diagramType}-${Date.now().toString().slice(-4)}`;
-    const defaultName = cleanTitle.endsWith(".apollon") ? cleanTitle : `${cleanTitle}.apollon`;
+    const cleanTitle =
+      customTitle?.trim() ||
+      `${diagramType}-${Date.now().toString().slice(-4)}`;
+    const defaultName = cleanTitle.endsWith(".apollon")
+      ? cleanTitle
+      : `${cleanTitle}.apollon`;
     const stableSession = `session-uml-${Date.now()}`;
     tabSessionsRef.current[tempId] = stableSession;
 
     const defaultContent = JSON.stringify(
       {
-        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `model-${Date.now()}`,
+        id:
+          typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `model-${Date.now()}`,
         version: "4.2.0",
         title: defaultName.replace(/\.apollon$/i, ""),
         type: diagramType,
@@ -1537,7 +1935,7 @@ export function WorkspaceLayout({
         assessments: {},
       },
       null,
-      2
+      2,
     );
 
     const newItem: DriveItem = {
@@ -1575,7 +1973,9 @@ export function WorkspaceLayout({
 
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
-          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          const filtered = items.filter(
+            (n: any) => n.id !== tempId && n.id !== realNote.id,
+          );
           return [realNote, ...filtered];
         });
         setLocalNotes((prev) =>
@@ -1587,11 +1987,15 @@ export function WorkspaceLayout({
                   parents: realNote.parents,
                   mimeType: "application/vnd.apollon+json",
                 }
-              : item
-          )
+              : item,
+          ),
         );
-        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
-        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setOpenTabIds((prev) =>
+          prev.map((id) => (id === tempId ? realNote.id! : id)),
+        );
+        setActiveTabId((current) =>
+          current === tempId ? realNote.id! : current,
+        );
         setEditingId(realNote.id!);
       }
     } catch (err) {
@@ -1649,7 +2053,9 @@ export function WorkspaceLayout({
 
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
-          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          const filtered = items.filter(
+            (n: any) => n.id !== tempId && n.id !== realNote.id,
+          );
           return [realNote, ...filtered];
         });
         setLocalNotes((prev) =>
@@ -1661,11 +2067,15 @@ export function WorkspaceLayout({
                   parents: realNote.parents,
                   mimeType: "text/vnd.mermaid",
                 }
-              : item
-          )
+              : item,
+          ),
         );
-        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
-        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setOpenTabIds((prev) =>
+          prev.map((id) => (id === tempId ? realNote.id! : id)),
+        );
+        setActiveTabId((current) =>
+          current === tempId ? realNote.id! : current,
+        );
         setEditingId(realNote.id!);
       }
     } catch (err) {
@@ -1723,7 +2133,9 @@ export function WorkspaceLayout({
 
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
-          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realNote.id);
+          const filtered = items.filter(
+            (n: any) => n.id !== tempId && n.id !== realNote.id,
+          );
           return [realNote, ...filtered];
         });
         setLocalNotes((prev) =>
@@ -1735,11 +2147,15 @@ export function WorkspaceLayout({
                   parents: realNote.parents,
                   mimeType: "text/vnd.tikz",
                 }
-              : item
-          )
+              : item,
+          ),
         );
-        setOpenTabIds((prev) => prev.map((id) => (id === tempId ? realNote.id! : id)));
-        setActiveTabId((current) => (current === tempId ? realNote.id! : current));
+        setOpenTabIds((prev) =>
+          prev.map((id) => (id === tempId ? realNote.id! : id)),
+        );
+        setActiveTabId((current) =>
+          current === tempId ? realNote.id! : current,
+        );
         setEditingId(realNote.id!);
       }
     } catch (err) {
@@ -1771,15 +2187,17 @@ export function WorkspaceLayout({
       if (realFolder?.id) {
         utils.notes.list.setData(undefined, (old: any) => {
           const items = old ? [...old] : [];
-          const filtered = items.filter((n: any) => n.id !== tempId && n.id !== realFolder.id);
+          const filtered = items.filter(
+            (n: any) => n.id !== tempId && n.id !== realFolder.id,
+          );
           return [realFolder, ...filtered];
         });
         setLocalNotes((prev) =>
           prev.map((item) =>
             item.id === tempId
               ? { ...item, id: realFolder.id!, parents: realFolder.parents }
-              : item
-          )
+              : item,
+          ),
         );
         setEditingId(realFolder.id!);
       }
@@ -1793,7 +2211,8 @@ export function WorkspaceLayout({
     if (!id || !newName.trim()) return;
 
     const targetItem = localNotes.find((n) => n.id === id);
-    const isFolder = targetItem?.mimeType === "application/vnd.google-apps.folder";
+    const isFolder =
+      targetItem?.mimeType === "application/vnd.google-apps.folder";
     const isImage =
       targetItem?.mimeType?.startsWith("image/") ||
       /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(targetItem?.name ?? "");
@@ -1808,43 +2227,55 @@ export function WorkspaceLayout({
         targetItem?.name.endsWith(".uml") ||
         targetItem?.mimeType === "application/vnd.apollon+json");
     const isMermaid =
-      !isImage &&
-      !isDrawing &&
-      !isUml &&
-      isMermaidFile(targetItem);
+      !isImage && !isDrawing && !isUml && isMermaidFile(targetItem);
     const isTikz =
-      !isImage &&
-      !isDrawing &&
-      !isUml &&
-      !isMermaid &&
-      isTikzFile(targetItem);
+      !isImage && !isDrawing && !isUml && !isMermaid && isTikzFile(targetItem);
 
     let finalName = newName;
     if (isFolder || isImage) {
       finalName = newName;
     } else if (isDrawing) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+      const cleanName = newName.replace(
+        /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+        "",
+      );
       finalName = `${cleanName}.excalidraw`;
     } else if (isUml) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+      const cleanName = newName.replace(
+        /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+        "",
+      );
       finalName = `${cleanName}.apollon`;
     } else if (isMermaid) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+      const cleanName = newName.replace(
+        /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+        "",
+      );
       finalName = `${cleanName}.mmd`;
     } else if (isTikz) {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+      const cleanName = newName.replace(
+        /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+        "",
+      );
       finalName = `${cleanName}.tikz`;
     } else {
-      const cleanName = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+      const cleanName = newName.replace(
+        /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+        "",
+      );
       finalName = `${cleanName}.md`;
     }
 
     setLocalNotes((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, name: finalName } : item))
+      prev.map((item) =>
+        item.id === id ? { ...item, name: finalName } : item,
+      ),
     );
     utils.notes.list.setData(undefined, (old: any) => {
       if (!old) return [];
-      return old.map((item: any) => (item.id === id ? { ...item, name: finalName } : item));
+      return old.map((item: any) =>
+        item.id === id ? { ...item, name: finalName } : item,
+      );
     });
 
     if (activeTabId === id) {
@@ -1948,20 +2379,22 @@ export function WorkspaceLayout({
     }
 
     const realIds = ids.filter((id) => !id.startsWith("temp-"));
-    await Promise.allSettled(realIds.map((id) => deleteMutation.mutateAsync({ id })));
+    await Promise.allSettled(
+      realIds.map((id) => deleteMutation.mutateAsync({ id })),
+    );
   };
 
   // 100% INSTANT OPTIMISTIC MOVE TO FOLDER
   const handleMoveItem = (fileId: string, targetFolderId: string) => {
     setLocalNotes((prev) =>
       prev.map((item) =>
-        item.id === fileId ? { ...item, parents: [targetFolderId] } : item
-      )
+        item.id === fileId ? { ...item, parents: [targetFolderId] } : item,
+      ),
     );
     utils.notes.list.setData(undefined, (old: any) => {
       if (!old) return [];
       return old.map((item: any) =>
-        item.id === fileId ? { ...item, parents: [targetFolderId] } : item
+        item.id === fileId ? { ...item, parents: [targetFolderId] } : item,
       );
     });
 
@@ -1977,19 +2410,21 @@ export function WorkspaceLayout({
 
     setLocalNotes((prev) =>
       prev.map((item) =>
-        idsSet.has(item.id) ? { ...item, parents: [targetFolderId] } : item
-      )
+        idsSet.has(item.id) ? { ...item, parents: [targetFolderId] } : item,
+      ),
     );
     utils.notes.list.setData(undefined, (old: any) => {
       if (!old) return [];
       return old.map((item: any) =>
-        idsSet.has(item.id) ? { ...item, parents: [targetFolderId] } : item
+        idsSet.has(item.id) ? { ...item, parents: [targetFolderId] } : item,
       );
     });
 
     const realIds = ids.filter((id) => !id.startsWith("temp-"));
     await Promise.allSettled(
-      realIds.map((id) => moveMutation.mutateAsync({ fileId: id, targetFolderId }))
+      realIds.map((id) =>
+        moveMutation.mutateAsync({ fileId: id, targetFolderId }),
+      ),
     );
   };
 
@@ -1999,7 +2434,11 @@ export function WorkspaceLayout({
 
     // 0. Handle unsaved changes for the PREVIOUS file before switching tabs
     const prevFileId = contentFileIdRef.current;
-    if (prevFileId && prevFileId !== fileId && !prevFileId.startsWith("temp-")) {
+    if (
+      prevFileId &&
+      prevFileId !== fileId &&
+      !prevFileId.startsWith("temp-")
+    ) {
       const prevItem = localNotes.find((n) => n.id === prevFileId);
       const isPrevDrawing =
         prevItem?.name.endsWith(".excalidraw") ||
@@ -2015,11 +2454,18 @@ export function WorkspaceLayout({
       }
 
       const contentToPersist = flushed ?? noteContent;
-      const isPrevModified = !isDocumentContentEquivalent(isPrevDrawing, lastSavedContent, contentToPersist);
+      const isPrevModified = !isDocumentContentEquivalent(
+        isPrevDrawing,
+        lastSavedContent,
+        contentToPersist,
+      );
 
       if (isPrevModified && contentToPersist && typeof window !== "undefined") {
         try {
-          localStorage.setItem(`netherite_draft_${prevFileId}`, contentToPersist);
+          localStorage.setItem(
+            `netherite_draft_${prevFileId}`,
+            contentToPersist,
+          );
           saveBackupSnapshot(prevFileId, contentToPersist);
         } catch {}
         // Trigger background auto-save to Drive so work is never lost
@@ -2053,9 +2499,14 @@ export function WorkspaceLayout({
     const isUml = isUmlFile(item);
 
     const localCache =
-      typeof window !== "undefined" ? localStorage.getItem(`netherite_cache_${fileId}`) : null;
+      typeof window !== "undefined"
+        ? localStorage.getItem(`netherite_cache_${fileId}`)
+        : null;
     const queryCached = utils.notes.get.getData({ id: fileId });
-    const baseline = (typeof queryCached === "string" ? queryCached : null) ?? localCache ?? "";
+    const baseline =
+      (typeof queryCached === "string" ? queryCached : null) ??
+      localCache ??
+      "";
 
     // Hydrate note content: check for a genuine unsaved draft
     const unsavedDraft = getUnsavedDraft(fileId, isDrawing, baseline);
@@ -2089,11 +2540,24 @@ export function WorkspaceLayout({
     const isThisTabDirty = activeTabId === fileId && isDirty;
     const hasDraft = Boolean(getUnsavedDraft(fileId, isDrawing));
 
+    // Flush active drawing canvas if this was the active tab
+    let flushedContent: string | null = null;
+    if (activeTabId === fileId && activeCanvasRef.current) {
+      try {
+        flushedContent = activeCanvasRef.current.flush();
+      } catch {}
+    }
+
+    // Java finally {} behavior: ensure final persistence to Google Drive when tab closes
     if (isThisTabDirty || hasDraft) {
-      const confirmed = window.confirm(
-        "You have unsaved changes in this tab. Close tab anyway? (Your local draft will remain preserved)."
-      );
-      if (!confirmed) return;
+      const contentToPersist =
+        flushedContent ??
+        (activeTabId === fileId
+          ? noteContent
+          : localStorage.getItem(`netherite_draft_${fileId}`));
+      if (contentToPersist) {
+        void saveDocument(fileId, contentToPersist, item);
+      }
     }
 
     const closedIndex = openTabIds.indexOf(fileId);
@@ -2174,8 +2638,6 @@ export function WorkspaceLayout({
 
   const documentHeadings = getHeadings(noteContent);
 
-
-
   const handleOpenSyncModal = () => {
     const hasLocalDraft =
       typeof window !== "undefined" &&
@@ -2221,7 +2683,10 @@ export function WorkspaceLayout({
 
       if (activeTabId && !activeTabId.startsWith("temp-")) {
         await utils.notes.get.invalidate({ id: activeTabId });
-        const fresh = await utils.notes.get.fetch({ id: activeTabId }, { staleTime: 0 });
+        const fresh = await utils.notes.get.fetch(
+          { id: activeTabId },
+          { staleTime: 0 },
+        );
         const cleanContent = typeof fresh === "string" ? fresh : "";
         setNoteContent(cleanContent);
         setLastSavedContent(cleanContent);
@@ -2233,14 +2698,19 @@ export function WorkspaceLayout({
           activeEditorRef.current.view
         ) {
           try {
-            activeEditorRef.current.commands?.setContent(cleanContent, { emitUpdate: false });
+            activeEditorRef.current.commands?.setContent(cleanContent, {
+              emitUpdate: false,
+            });
           } catch {}
         }
       }
 
       if (isSplitView && splitTabId && !splitTabId.startsWith("temp-")) {
         await utils.notes.get.invalidate({ id: splitTabId });
-        const freshSplit = await utils.notes.get.fetch({ id: splitTabId }, { staleTime: 0 });
+        const freshSplit = await utils.notes.get.fetch(
+          { id: splitTabId },
+          { staleTime: 0 },
+        );
         const cleanSplit = typeof freshSplit === "string" ? freshSplit : "";
         setSplitNoteContent(cleanSplit);
       }
@@ -2249,19 +2719,26 @@ export function WorkspaceLayout({
 
       const scopeCheck = await utils.notes.checkScope.fetch().catch(() => null);
       if (scopeCheck && !scopeCheck.hasFullDriveScope) {
-        showToast("Drive permissions update required to access files created directly in Google Drive. Re-authorize in Sync menu.");
+        showToast(
+          "Drive permissions update required to access files created directly in Google Drive. Re-authorize in Sync menu.",
+        );
       } else {
         showToast(
           isDirty
             ? "Discarded local changes and synced latest from Google Drive."
-            : "Workspace is in sync with Google Drive."
+            : "Workspace is in sync with Google Drive.",
         );
       }
     } catch (err: any) {
       console.error("Failed to sync from Google Drive:", err);
       const errMsg = String(err?.message || err || "");
-      if (errMsg.includes("invalid_grant") || errMsg.includes("authorization expired")) {
-        showToast("Google authorization expired. Please sign out and sign back in.");
+      if (
+        errMsg.includes("invalid_grant") ||
+        errMsg.includes("authorization expired")
+      ) {
+        showToast(
+          "Google authorization expired. Please sign out and sign back in.",
+        );
       } else {
         showToast("Failed to sync with Drive. Please check your connection.");
       }
@@ -2286,12 +2763,14 @@ export function WorkspaceLayout({
   }
 
   return (
-    <div className="h-screen w-screen flex bg-background text-foreground overflow-hidden">
+    <div className="bg-background text-foreground flex h-screen w-screen overflow-hidden">
       {/* VS Code Style Left Sidebar */}
       <Sidebar
         userSession={session}
         notes={localNotes}
         activeNoteId={activeTabId}
+        activeNoteContent={noteContent}
+        onToast={showToast}
         onSelectNote={(id) => {
           if (isSplitView && activePane === "split") {
             if (!openTabIds.includes(id)) {
@@ -2341,17 +2820,19 @@ export function WorkspaceLayout({
       />
 
       {/* Main Workspace Container */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <div className={mobileScreen === "library" ? "hidden sm:block" : "block"}>
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <div
+          className={mobileScreen === "library" ? "hidden sm:block" : "block"}
+        >
           <HeaderBar
             noteTitle={
               activeView === "calendar"
                 ? "Google Calendar Studio"
                 : isSplitView && activePane === "split" && currentSplitNote
-                ? currentSplitNote.name
-                : activeTabId && currentNote
-                ? currentNote.name
-                : ""
+                  ? currentSplitNote.name
+                  : activeTabId && currentNote
+                    ? currentNote.name
+                    : ""
             }
             isSaving={isSaving}
             isDirty={isDirty}
@@ -2368,12 +2849,21 @@ export function WorkspaceLayout({
               if (!next) {
                 setActivePane("primary");
               } else if (!splitTabId && localNotes.length > 1) {
-                const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
+                const other = localNotes.find(
+                  (n) =>
+                    n.id !== activeTabId &&
+                    n.mimeType !== "application/vnd.google-apps.folder",
+                );
                 if (other) setSplitTabId(other.id);
               }
             }}
             onSave={() => {
-              if (isSplitView && activePane === "split" && splitTabId && !splitTabId.startsWith("temp-")) {
+              if (
+                isSplitView &&
+                activePane === "split" &&
+                splitTabId &&
+                !splitTabId.startsWith("temp-")
+              ) {
                 saveDocument(splitTabId, splitNoteContent, currentSplitNote);
               } else {
                 handleManualSave();
@@ -2383,29 +2873,31 @@ export function WorkspaceLayout({
             onExportPdf={() => setIsPdfModalOpen(true)}
             onToggleSidebar={() => {
               if (typeof window !== "undefined" && window.innerWidth < 640) {
-                setMobileScreen((prev) => (prev === "library" ? "editor" : "library"));
+                setMobileScreen((prev) =>
+                  prev === "library" ? "editor" : "library",
+                );
               } else {
                 setSidebarCollapsed(!sidebarCollapsed);
               }
             }}
             sidebarCollapsed={sidebarCollapsed}
-          wordCount={wordCount}
-          charCount={charCount}
-          editorFont={editorFont}
-          onEditorFontChange={(font) => setEditorFont(font)}
-          isOutlineOpen={isOutlineOpen}
-          onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
-          isCopilotOpen={isCopilotOpen}
-          onToggleCopilot={() => setIsCopilotOpen((prev) => !prev)}
-          onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
-          zenMode={zenMode}
-          onToggleZenMode={handleToggleZenMode}
-        />
+            wordCount={wordCount}
+            charCount={charCount}
+            editorFont={editorFont}
+            onEditorFontChange={(font) => setEditorFont(font)}
+            isOutlineOpen={isOutlineOpen}
+            onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
+            isCopilotOpen={isCopilotOpen}
+            onToggleCopilot={() => setIsCopilotOpen((prev) => !prev)}
+            onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
+            zenMode={zenMode}
+            onToggleZenMode={handleToggleZenMode}
+          />
         </div>
 
         {/* VS Code / Antigravity Style Tab Management Bar (Hidden in Zen Mode) */}
         {!zenMode && (openTabIds.length > 0 || activeView === "calendar") && (
-          <div className="hidden sm:flex h-9 border-b border-border bg-muted/30 items-center justify-between px-0 overflow-x-auto select-none shrink-0">
+          <div className="border-border bg-muted/30 hidden h-9 shrink-0 items-center justify-between overflow-x-auto border-b px-0 select-none sm:flex">
             <div
               ref={tabBarRef}
               onWheel={(e) => {
@@ -2413,27 +2905,36 @@ export function WorkspaceLayout({
                   tabBarRef.current.scrollLeft += e.deltaY;
                 }
               }}
-              className="flex items-center h-full overflow-x-auto scrollbar-none"
+              className="flex h-full scrollbar-none items-center overflow-x-auto"
             >
               {/* Google Calendar Studio Tab */}
               <button
-                onClick={() => setActiveView(activeView === "calendar" ? "editor" : "calendar")}
-                className={`flex items-center gap-1.5 px-3 h-full text-xs cursor-pointer border-r border-border/70 transition-all ${
+                onClick={() =>
+                  setActiveView(
+                    activeView === "calendar" ? "editor" : "calendar",
+                  )
+                }
+                className={`border-border/70 flex h-full cursor-pointer items-center gap-1.5 border-r px-3 text-xs transition-all ${
                   activeView === "calendar"
-                    ? "bg-card text-blue-600 dark:text-blue-400 font-medium border-t-2 border-t-blue-500 shadow-2xs"
+                    ? "bg-card border-t-2 border-t-blue-500 font-medium text-blue-600 shadow-2xs dark:text-blue-400"
                     : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
                 }`}
                 title="Google Calendar Studio"
               >
-                <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
                 <span className="font-medium">Calendar</span>
               </button>
 
               {openTabIds.map((tabId) => {
                 const note = localNotes.find((n) => n.id === tabId);
-                const isPrimaryActive = activeView === "editor" && activeTabId === tabId;
+                const isPrimaryActive =
+                  activeView === "editor" && activeTabId === tabId;
                 const isSplitTab = isSplitView && splitTabId === tabId;
-                const isActive = isSplitView ? (activePane === "split" ? isSplitTab : isPrimaryActive) : isPrimaryActive;
+                const isActive = isSplitView
+                  ? activePane === "split"
+                    ? isSplitTab
+                    : isPrimaryActive
+                  : isPrimaryActive;
                 const hasLocalDiff = isPrimaryActive ? isDirty : false;
                 const isTabLoading = isPrimaryActive && isDocumentLoading;
 
@@ -2445,11 +2946,18 @@ export function WorkspaceLayout({
                     onDragEnd={() => setDraggedTabId(null)}
                     onClick={() => {
                       if (isSplitView && activePane === "split") {
-                        if (splitTabId && splitTabId !== tabId && !splitTabId.startsWith("temp-")) {
-                          const prevSplitItem = localNotes.find((n) => n.id === splitTabId);
+                        if (
+                          splitTabId &&
+                          splitTabId !== tabId &&
+                          !splitTabId.startsWith("temp-")
+                        ) {
+                          const prevSplitItem = localNotes.find(
+                            (n) => n.id === splitTabId,
+                          );
                           const isPrevSplitDrawing =
                             prevSplitItem?.name.endsWith(".excalidraw") ||
-                            prevSplitItem?.mimeType === "application/vnd.excalidraw+json";
+                            prevSplitItem?.mimeType ===
+                              "application/vnd.excalidraw+json";
                           let flushed: string | null = null;
                           if (activeSplitCanvasRef.current) {
                             try {
@@ -2457,76 +2965,121 @@ export function WorkspaceLayout({
                             } catch {}
                           }
                           const contentToPersist = flushed ?? splitNoteContent;
-                          const cached = localStorage.getItem(`netherite_cache_${splitTabId}`) || "";
-                          const isModified = !isDocumentContentEquivalent(isPrevSplitDrawing, cached, contentToPersist);
+                          const cached =
+                            localStorage.getItem(
+                              `netherite_cache_${splitTabId}`,
+                            ) || "";
+                          const isModified = !isDocumentContentEquivalent(
+                            isPrevSplitDrawing,
+                            cached,
+                            contentToPersist,
+                          );
                           if (isModified && contentToPersist) {
-                            localStorage.setItem(`netherite_draft_${splitTabId}`, contentToPersist);
+                            localStorage.setItem(
+                              `netherite_draft_${splitTabId}`,
+                              contentToPersist,
+                            );
                             saveBackupSnapshot(splitTabId, contentToPersist);
-                            void saveDocument(splitTabId, contentToPersist, prevSplitItem);
+                            void saveDocument(
+                              splitTabId,
+                              contentToPersist,
+                              prevSplitItem,
+                            );
                           } else {
-                            localStorage.removeItem(`netherite_draft_${splitTabId}`);
+                            localStorage.removeItem(
+                              `netherite_draft_${splitTabId}`,
+                            );
                           }
                         }
 
-                        const targetItem = localNotes.find((n) => n.id === tabId);
+                        const targetItem = localNotes.find(
+                          (n) => n.id === tabId,
+                        );
                         const isTargetDrawing =
                           targetItem?.name.endsWith(".excalidraw") ||
-                          targetItem?.mimeType === "application/vnd.excalidraw+json";
-                        const targetDraft = getUnsavedDraft(tabId, isTargetDrawing);
+                          targetItem?.mimeType ===
+                            "application/vnd.excalidraw+json";
+                        const targetDraft = getUnsavedDraft(
+                          tabId,
+                          isTargetDrawing,
+                        );
                         const cached =
                           utils.notes.get.getData({ id: tabId }) ||
                           localStorage.getItem(`netherite_cache_${tabId}`) ||
                           "";
-                        setSplitNoteContent(targetDraft ?? (typeof cached === "string" ? cached : ""));
+                        setSplitNoteContent(
+                          targetDraft ??
+                            (typeof cached === "string" ? cached : ""),
+                        );
                         setSplitTabId(tabId);
                       } else {
                         openFileInTab(tabId);
                       }
                     }}
-                    className={`group flex items-center gap-2 px-3.5 h-full text-xs cursor-pointer border-r border-border/70 transition-all ${
+                    className={`group border-border/70 flex h-full cursor-pointer items-center gap-2 border-r px-3.5 text-xs transition-all ${
                       isActive
-                        ? "bg-card text-foreground font-medium border-t-2 border-t-foreground shadow-2xs"
+                        ? "bg-card text-foreground border-t-foreground border-t-2 font-medium shadow-2xs"
                         : isSplitTab
-                        ? "bg-muted/30 text-foreground font-medium border-t-2 border-t-primary/50"
-                        : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                          ? "bg-muted/30 text-foreground border-t-primary/50 border-t-2 font-medium"
+                          : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
                     }`}
                   >
                     {isTabLoading ? (
-                      <AppleSpinner size="xs" className="text-foreground shrink-0" />
-                    ) : note?.name.endsWith(".excalidraw") || note?.mimeType === "application/vnd.excalidraw+json" ? (
-                      <Palette className={`w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                      <AppleSpinner
+                        size="xs"
+                        className="text-foreground shrink-0"
+                      />
+                    ) : note?.name.endsWith(".excalidraw") ||
+                      note?.mimeType === "application/vnd.excalidraw+json" ? (
+                      <Palette
+                        className={`h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                      />
                     ) : isUmlFile(note) ? (
-                      <Network className={`w-3.5 h-3.5 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                      <Network
+                        className={`h-3.5 w-3.5 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                      />
                     ) : isMermaidFile(note) ? (
-                      <Workflow className={`w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                      <Workflow
+                        className={`h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                      />
                     ) : isTikzFile(note) ? (
-                      <Activity className={`w-3.5 h-3.5 text-blue-500 dark:text-blue-400 ${isActive ? "opacity-100" : "opacity-70"}`} />
+                      <Activity
+                        className={`h-3.5 w-3.5 text-blue-500 dark:text-blue-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                      />
                     ) : (
-                      <FileText className={`w-3.5 h-3.5 ${isActive ? "text-foreground" : "opacity-60"}`} />
+                      <FileText
+                        className={`h-3.5 w-3.5 ${isActive ? "text-foreground" : "opacity-60"}`}
+                      />
                     )}
-                    <span className="truncate max-w-[130px]">
-                      {(note?.name || "Untitled").replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "")}
+                    <span className="max-w-[130px] truncate">
+                      {(note?.name || "Untitled").replace(
+                        /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+                        "",
+                      )}
                     </span>
                     {isSplitView && isSplitTab && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" title="Open in Split Pane" />
+                      <span
+                        className="bg-primary/60 h-1.5 w-1.5 shrink-0 rounded-full"
+                        title="Open in Split Pane"
+                      />
                     )}
-                    <div className="flex items-center ml-1">
+                    <div className="ml-1 flex items-center">
                       {hasLocalDiff ? (
                         <button
                           onClick={(e) => closeTab(tabId, e)}
-                          className="w-4 h-4 flex items-center justify-center rounded hover:bg-accent transition-colors"
+                          className="hover:bg-accent flex h-4 w-4 items-center justify-center rounded transition-colors"
                           title="Unsaved changes (Click to close)"
                         >
-                          <span className="w-2 h-2 rounded-full bg-foreground group-hover:hidden" />
-                          <X className="w-3 h-3 hidden group-hover:block" />
+                          <span className="bg-foreground h-2 w-2 rounded-full group-hover:hidden" />
+                          <X className="hidden h-3 w-3 group-hover:block" />
                         </button>
                       ) : (
                         <button
                           onClick={(e) => closeTab(tabId, e)}
-                          className="w-4 h-4 flex items-center justify-center rounded hover:bg-accent text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="hover:bg-accent text-muted-foreground hover:text-foreground flex h-4 w-4 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100"
                           title="Close"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="h-3.5 w-3.5" />
                         </button>
                       )}
                     </div>
@@ -2536,30 +3089,32 @@ export function WorkspaceLayout({
 
               <button
                 onClick={() => handleCreateFile()}
-                className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors ml-1"
+                className="hover:bg-accent text-muted-foreground hover:text-foreground ml-1 rounded p-1.5 transition-colors"
                 title="New Note Tab"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => handleCreateDrawing()}
-                className="p-1.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors mr-1"
+                className="hover:bg-accent text-muted-foreground hover:text-foreground mr-1 rounded p-1.5 transition-colors"
                 title="New Whiteboard Tab"
               >
-                <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+                <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
               </button>
             </div>
 
             {/* Right Tab Bar Actions (VS Code Style) */}
-            <div className="flex items-center gap-1 px-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-1 px-2">
               {isDirty && (
                 <button
                   onClick={() => setIsDiffModalOpen(true)}
-                  className="px-1.5 py-1 rounded hover:bg-accent transition-colors flex items-center gap-1 text-[11px] font-mono text-amber-500 font-semibold shrink-0"
+                  className="hover:bg-accent flex shrink-0 items-center gap-1 rounded px-1.5 py-1 font-mono text-[11px] font-semibold text-amber-500 transition-colors"
                   title={`Inspect Browser Diff & Changelog (${diffSummary || "Unsaved changes"})`}
                 >
-                  <GitCompare className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden xl:inline whitespace-nowrap">{diffSummary}</span>
+                  <GitCompare className="h-3.5 w-3.5 shrink-0" />
+                  <span className="hidden whitespace-nowrap xl:inline">
+                    {diffSummary}
+                  </span>
                 </button>
               )}
 
@@ -2570,16 +3125,22 @@ export function WorkspaceLayout({
                   if (!next) {
                     setActivePane("primary");
                   } else if (!splitTabId && localNotes.length > 1) {
-                    const other = localNotes.find((n) => n.id !== activeTabId && n.mimeType !== "application/vnd.google-apps.folder");
+                    const other = localNotes.find(
+                      (n) =>
+                        n.id !== activeTabId &&
+                        n.mimeType !== "application/vnd.google-apps.folder",
+                    );
                     if (other) setSplitTabId(other.id);
                   }
                 }}
-                className={`p-1.5 rounded hover:bg-accent transition-colors shrink-0 ${
-                  isSplitView ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
+                className={`hover:bg-accent shrink-0 rounded p-1.5 transition-colors ${
+                  isSplitView
+                    ? "text-foreground bg-accent"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
                 title="Split Editor Right"
               >
-                <Columns className="w-3.5 h-3.5" />
+                <Columns className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -2587,7 +3148,7 @@ export function WorkspaceLayout({
 
         {/* Main Workspace Body (Editor + Right Outline Sidebar OR Google Calendar Studio) */}
         {activeView === "calendar" ? (
-          <div className="flex-1 min-h-0 min-w-0 overflow-hidden pb-22 sm:pb-0 bg-background">
+          <div className="bg-background min-h-0 min-w-0 flex-1 overflow-hidden pb-22 sm:pb-0">
             <CalendarView
               onClose={() => setActiveView("editor")}
               onOpenNote={(noteId) => {
@@ -2600,10 +3161,10 @@ export function WorkspaceLayout({
             />
           </div>
         ) : (
-          <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden pb-22 sm:pb-0">
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden pb-22 sm:pb-0">
             {/* Native Mobile Library Screen (Replaces Sidebar on Phone) */}
             {mobileScreen === "library" && (
-              <div className="sm:hidden flex-1 flex flex-col h-full overflow-hidden">
+              <div className="flex h-full flex-1 flex-col overflow-hidden sm:hidden">
                 <MobileLibraryScreen
                   notes={localNotes}
                   activeNoteId={activeTabId}
@@ -2629,584 +3190,713 @@ export function WorkspaceLayout({
 
             <main
               ref={workspaceSplitContainerRef}
-              className={`${mobileScreen === "library" ? "hidden sm:flex" : "flex"} flex-1 overflow-hidden bg-background ${
-                isSplitView ? "flex-row relative" : "flex-col"
+              className={`${mobileScreen === "library" ? "hidden sm:flex" : "flex"} bg-background flex-1 overflow-hidden ${
+                isSplitView ? "relative flex-row" : "flex-col"
               }`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsOverSplitTarget(true);
-            }}
-            onDragLeave={() => setIsOverSplitTarget(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setIsOverSplitTarget(false);
-              if (draggedTabId && isSplitView) {
-                setSplitTabId(draggedTabId);
-              }
-            }}
-          >
-            {localNotes.filter((n) => n.mimeType !== "application/vnd.google-apps.folder").length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-border rounded-2xl p-12 text-center">
-                <FileText className="w-12 h-12 text-muted-foreground opacity-30 mb-4" />
-                <h3 className="text-lg font-bold text-foreground mb-2">No Files Found</h3>
-                <p className="text-xs text-muted-foreground max-w-sm mb-6">
-                  Your Netherite Google Drive folder is empty. Create a file to start writing!
-                </p>
-                <button
-                  onClick={() => handleCreateFile()}
-                  className="flex items-center gap-2 px-4 py-2 bg-foreground text-background font-semibold text-xs rounded-xl hover:opacity-90 transition-all shadow-sm"
-                >
-                  <Plus className="w-4 h-4" /> Create First Note
-                </button>
-              </div>
-            ) : !activeTabId || openTabIds.length === 0 ? (
-              <div className="h-full w-full flex flex-col items-center justify-center p-8 select-none">
-                <div className="max-w-md w-full flex flex-col items-center text-center space-y-6 animate-in fade-in duration-300">
-                  <div className="w-16 h-16 rounded-2xl bg-muted/60 border border-border/80 flex items-center justify-center shadow-sm">
-                    <FileText className="w-8 h-8 text-foreground/40" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <h3 className="text-xl font-semibold text-foreground tracking-tight">
-                      No Note Open
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground max-w-xs mx-auto">
-                      Select a note from the sidebar to start writing, or create a new one.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleCreateFile()}
-                      className="flex items-center gap-2 px-4 py-2 bg-foreground text-background font-medium text-xs rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-95 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      New Note
-                    </button>
-                    <button
-                      onClick={() => handleCreateDrawing()}
-                      className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground font-medium text-xs rounded-xl border border-border/60 transition-all shadow-2xs active:scale-95 cursor-pointer"
-                    >
-                      <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
-                      New Whiteboard
-                    </button>
-                    <button
-                      onClick={() => setSidebarCollapsed(false)}
-                      className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground font-medium text-xs rounded-xl border border-border/60 transition-all shadow-2xs active:scale-95 cursor-pointer"
-                    >
-                      <Search className="w-3.5 h-3.5 text-muted-foreground" />
-                      Browse Notes
-                    </button>
-                  </div>
-
-                  <div className="pt-6 border-t border-border/40 w-full max-w-xs flex flex-col gap-2 text-[11px] text-muted-foreground/80 font-mono">
-                    <div className="flex items-center justify-between">
-                      <span>Create note</span>
-                      <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">Ctrl + N</kbd>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Save note / whiteboard</span>
-                      <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">Ctrl + S</kbd>
-                    </div>
-                  </div>
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsOverSplitTarget(true);
+              }}
+              onDragLeave={() => setIsOverSplitTarget(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsOverSplitTarget(false);
+                if (draggedTabId && isSplitView) {
+                  setSplitTabId(draggedTabId);
+                }
+              }}
+            >
+              {localNotes.filter(
+                (n) => n.mimeType !== "application/vnd.google-apps.folder",
+              ).length === 0 ? (
+                <div className="border-border flex h-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center">
+                  <FileText className="text-muted-foreground mb-4 h-12 w-12 opacity-30" />
+                  <h3 className="text-foreground mb-2 text-lg font-bold">
+                    No Files Found
+                  </h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm text-xs">
+                    Your Netherite Google Drive folder is empty. Create a file
+                    to start writing!
+                  </p>
+                  <button
+                    onClick={() => handleCreateFile()}
+                    className="bg-foreground text-background flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold shadow-sm transition-all hover:opacity-90"
+                  >
+                    <Plus className="h-4 w-4" /> Create First Note
+                  </button>
                 </div>
-              </div>
-            ) : (
-              <>
-                {/* Primary Pane */}
-                <div
-                  data-pane="primary"
-                  data-active-pane={activePane === "primary"}
-                  style={isSplitView ? { width: `${splitRatio * 100}%` } : { width: "100%" }}
-                  onPointerDown={() => {
-                    if (isSplitView && activePane !== "primary") setActivePane("primary");
-                  }}
-                  onFocusCapture={() => {
-                    if (isSplitView && activePane !== "primary") setActivePane("primary");
-                  }}
-                  className={`h-full overflow-hidden flex flex-col relative shrink-0 ${
-                    isResizingSplit ? "pointer-events-none select-none" : ""
-                  }`}
-                >
-                  {isSplitView && (
-                    <div className="h-8 border-b border-border/70 bg-muted/20 flex items-center justify-between px-3 shrink-0 select-none text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isCurrentDrawing ? (
-                          <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
-                        ) : isCurrentUml ? (
-                          <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
-                        ) : isCurrentMermaid ? (
-                          <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
-                        ) : isCurrentTikz ? (
-                          <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-                        ) : (
-                          <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        )}
-                        <span className="font-medium text-foreground truncate max-w-[180px]">
-                          {currentNote?.name || "Main Document"}
-                        </span>
-                        <span
-                          className={`w-2 h-2 rounded-full shrink-0 transition-all duration-200 ${
-                            activePane === "primary"
-                              ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]"
-                              : "bg-muted-foreground/30"
-                          }`}
-                          title={activePane === "primary" ? "Active pane" : "Inactive pane"}
-                        />
+              ) : !activeTabId || openTabIds.length === 0 ? (
+                <div className="flex h-full w-full flex-col items-center justify-center p-8 select-none">
+                  <div className="animate-in fade-in flex w-full max-w-md flex-col items-center space-y-6 text-center duration-300">
+                    <div className="bg-muted/60 border-border/80 flex h-16 w-16 items-center justify-center rounded-2xl border shadow-sm">
+                      <FileText className="text-foreground/40 h-8 w-8" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h3 className="text-foreground text-xl font-semibold tracking-tight">
+                        No Note Open
+                      </h3>
+                      <p className="text-muted-foreground mx-auto max-w-xs text-xs sm:text-sm">
+                        Select a note from the sidebar to start writing, or
+                        create a new one.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleCreateFile()}
+                        className="bg-foreground text-background flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium shadow-sm transition-all hover:opacity-90 active:scale-95"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        New Note
+                      </button>
+                      <button
+                        onClick={() => handleCreateDrawing()}
+                        className="bg-muted hover:bg-muted/80 text-foreground border-border/60 flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2 text-xs font-medium shadow-2xs transition-all active:scale-95"
+                      >
+                        <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
+                        New Whiteboard
+                      </button>
+                      <button
+                        onClick={() => setSidebarCollapsed(false)}
+                        className="bg-muted hover:bg-muted/80 text-foreground border-border/60 flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2 text-xs font-medium shadow-2xs transition-all active:scale-95"
+                      >
+                        <Search className="text-muted-foreground h-3.5 w-3.5" />
+                        Browse Notes
+                      </button>
+                    </div>
+
+                    <div className="border-border/40 text-muted-foreground/80 flex w-full max-w-xs flex-col gap-2 border-t pt-6 font-mono text-[11px]">
+                      <div className="flex items-center justify-between">
+                        <span>Create note</span>
+                        <kbd className="bg-muted border-border rounded border px-1.5 py-0.5 text-[10px]">
+                          Ctrl + N
+                        </kbd>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Save note / whiteboard</span>
+                        <kbd className="bg-muted border-border rounded border px-1.5 py-0.5 text-[10px]">
+                          Ctrl + S
+                        </kbd>
                       </div>
                     </div>
-                  )}
-                  {isCurrentImage ? (
-                    <ImageViewer
-                      key={activeTabId}
-                      fileId={currentNote?.id || ""}
-                      fileName={currentNote?.name || "image"}
-                      mimeType={currentNote?.mimeType}
-                    />
-                  ) : isUmlFile(currentNote) ? (
-                    isDocumentLoading && isEmptyApollon(noteContent) ? (
-                      <MacFileLoader
-                        fileName={currentNote?.name}
-                        fileType="uml"
-                        message="Opening UML diagram from Google Drive…"
-                      />
-                    ) : (
-                      <UmlCanvas
-                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
-                        initialContent={noteContent}
-                        theme={isDark ? "dark" : "light"}
-                        onChange={(updatedContent) => {
-                          setNoteContent(updatedContent);
-                          if (activeTabId && typeof window !== "undefined") {
-                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
-                          }
-                        }}
-                        onSave={handleManualSave}
-                      />
-                    )
-                  ) : isMermaidFile(currentNote) ? (
-                    isDocumentLoading && (!noteContent || noteContent.trim() === "") ? (
-                      <MacFileLoader
-                        fileName={currentNote?.name}
-                        fileType="mermaid"
-                        message="Opening Mermaid chart from Google Drive…"
-                      />
-                    ) : (
-                      <MermaidCanvas
-                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
-                        initialContent={noteContent}
-                        theme={isDark ? "dark" : "light"}
-                        title={currentNote?.name}
-                        onChange={(updatedContent) => {
-                          setNoteContent(updatedContent);
-                          if (activeTabId && typeof window !== "undefined") {
-                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
-                          }
-                        }}
-                        onSave={handleManualSave}
-                      />
-                    )
-                  ) : isTikzFile(currentNote) ? (
-                    isDocumentLoading && (!noteContent || noteContent.trim() === "") ? (
-                      <MacFileLoader
-                        fileName={currentNote?.name}
-                        fileType="tikz"
-                        message="Opening TikZ LaTeX diagram from Google Drive…"
-                      />
-                    ) : (
-                      <TikzCanvas
-                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
-                        initialContent={noteContent}
-                        theme={isDark ? "dark" : "light"}
-                        title={currentNote?.name}
-                        onChange={(updatedContent) => {
-                          setNoteContent(updatedContent);
-                          if (activeTabId && typeof window !== "undefined") {
-                            localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
-                          }
-                        }}
-                        onSave={handleManualSave}
-                      />
-                    )
-                  ) : currentNote?.name?.endsWith(".excalidraw") ||
-                  currentNote?.mimeType === "application/vnd.excalidraw+json" ? (
-                    isDocumentLoading && isEmptyExcalidraw(noteContent) ? (
-                      <MacFileLoader
-                        fileName={currentNote?.name}
-                        fileType="drawing"
-                        message="Opening whiteboard canvas from Google Drive…"
-                      />
-                    ) : (
-                      <DrawingCanvas
-                        ref={activeCanvasRef}
-                        fileId={activeTabId}
-                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
-                        initialContent={noteContent}
-                        lastSavedContent={lastSavedContent}
-                        theme={isDark ? "dark" : "light"}
-                        onChange={(updatedContent) => {
-                          if (contentFileIdRef.current === activeTabId) {
-                            setNoteContent(updatedContent);
-                          }
-                        }}
-                        onSave={handleManualSave}
-                      />
-                    )
-                  ) : isDocumentLoading && (!noteContent || noteContent === "") ? (
-                    <MacFileLoader
-                      fileName={currentNote?.name}
-                      fileType="note"
-                      message="Opening note from Google Drive…"
-                    />
-                  ) : (
-                    <Editor
-                      key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
-                      initialContent={noteContent}
-                      title={currentNote?.name || "Untitled.md"}
-                      editorFont={editorFont}
-                      isLoading={false}
-                      textOnlyClipboard={textOnlyClipboard}
-                      onTitleChange={(newTitle) => {
-                        if (activeTabId) {
-                          handleRenameFile(activeTabId, newTitle);
-                        }
-                      }}
-                      onChange={(updatedContent) => {
-                        setNoteContent(updatedContent);
-                        if (activeTabId && typeof window !== "undefined") {
-                          localStorage.setItem(`netherite_draft_${activeTabId}`, updatedContent);
-                        }
-                      }}
-                      onSave={handleManualSave}
-                      onImageUpload={handleImageUpload}
-                      onEditorReady={(editor) => {
-                        activeEditorRef.current = editor;
-                      }}
-                      onStatsChange={({ words, chars }) => {
-                        setWordCount(words);
-                        setCharCount(chars);
-                      }}
-                    />
-                  )}
-                </div>
-
-                {/* Center Draggable Resizer */}
-                {isSplitView && (
-                  <div
-                    role="separator"
-                    aria-orientation="vertical"
-                    tabIndex={0}
-                    onPointerDown={handleSplitResizeStart}
-                    className={`w-1.5 hover:w-2 -mx-[3px] z-30 cursor-col-resize flex items-center justify-center group relative select-none transition-all ${
-                      isResizingSplit ? "w-2 bg-primary/30" : "bg-transparent hover:bg-primary/20"
-                    }`}
-                    title="Drag to resize split view width"
-                  >
-                    <div
-                      className={`w-[1px] h-full transition-colors ${
-                        isResizingSplit ? "bg-primary" : "bg-border/80 group-hover:bg-primary/80"
-                      }`}
-                    />
                   </div>
-                )}
-
-                {/* Secondary Split Pane */}
-                {isSplitView && (
+                </div>
+              ) : (
+                <>
+                  {/* Primary Pane */}
                   <div
-                    data-pane="split"
-                    data-active-pane={activePane === "split"}
-                    style={{ width: `${(1 - splitRatio) * 100}%` }}
+                    data-pane="primary"
+                    data-active-pane={activePane === "primary"}
+                    style={
+                      isSplitView
+                        ? { width: `${splitRatio * 100}%` }
+                        : { width: "100%" }
+                    }
                     onPointerDown={() => {
-                      if (activePane !== "split") setActivePane("split");
+                      if (isSplitView && activePane !== "primary")
+                        setActivePane("primary");
                     }}
                     onFocusCapture={() => {
-                      if (activePane !== "split") setActivePane("split");
+                      if (isSplitView && activePane !== "primary")
+                        setActivePane("primary");
                     }}
-                    className={`h-full overflow-hidden flex flex-col relative shrink-0 ${
+                    className={`relative flex h-full shrink-0 flex-col overflow-hidden ${
                       isResizingSplit ? "pointer-events-none select-none" : ""
-                    } ${
-                      isOverSplitTarget ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : ""
                     }`}
                   >
-                    <div className="h-8 border-b border-border/70 bg-muted/20 flex items-center justify-between px-3 shrink-0 select-none text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isSplitDrawing ? (
-                          <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
-                        ) : isSplitUml ? (
-                          <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
-                        ) : isSplitMermaid ? (
-                          <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
-                        ) : isSplitTikz ? (
-                          <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-                        ) : (
-                          <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        )}
-                        <span className="font-medium text-foreground truncate max-w-[180px]">
-                          {currentSplitNote?.name || "Split Document"}
-                        </span>
-                        <span
-                          className={`w-2 h-2 rounded-full shrink-0 transition-all duration-200 ${
-                            activePane === "split"
-                              ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]"
-                              : "bg-muted-foreground/30"
-                          }`}
-                          title={activePane === "split" ? "Active pane" : "Inactive pane"}
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (splitTabId && activeTabId) {
-                              const prevPrimary = activeTabId;
-                              openFileInTab(splitTabId);
-                              setSplitTabId(prevPrimary);
+                    {isSplitView && (
+                      <div className="border-border/70 bg-muted/20 flex h-8 shrink-0 items-center justify-between border-b px-3 text-xs select-none">
+                        <div className="flex min-w-0 items-center gap-2">
+                          {isCurrentDrawing ? (
+                            <Palette className="h-3.5 w-3.5 shrink-0 text-indigo-500 dark:text-indigo-400" />
+                          ) : isCurrentUml ? (
+                            <Network className="h-3.5 w-3.5 shrink-0 text-purple-500 dark:text-purple-400" />
+                          ) : isCurrentMermaid ? (
+                            <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                          ) : isCurrentTikz ? (
+                            <Activity className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+                          ) : (
+                            <FileText className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <span className="text-foreground max-w-[180px] truncate font-medium">
+                            {currentNote?.name || "Main Document"}
+                          </span>
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full transition-all duration-200 ${
+                              activePane === "primary"
+                                ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]"
+                                : "bg-muted-foreground/30"
+                            }`}
+                            title={
+                              activePane === "primary"
+                                ? "Active pane"
+                                : "Inactive pane"
                             }
-                          }}
-                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                          title="Swap Panes"
-                        >
-                          <ArrowLeftRight className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsSplitView(false);
-                            setActivePane("primary");
-                          }}
-                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                          title="Close Split View"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                          />
+                        </div>
                       </div>
-                    </div>
-                    {isSplitImage ? (
+                    )}
+                    {isCurrentImage ? (
                       <ImageViewer
-                        key={splitTabId || "split-image"}
-                        fileId={currentSplitNote?.id || ""}
-                        fileName={currentSplitNote?.name || "image"}
-                        mimeType={currentSplitNote?.mimeType}
+                        key={activeTabId}
+                        fileId={currentNote?.id || ""}
+                        fileName={currentNote?.name || "image"}
+                        mimeType={currentNote?.mimeType}
                       />
-                    ) : isUmlFile(currentSplitNote) ? (
-                      isSplitDocumentLoading && isEmptyApollon(splitNoteContent) ? (
+                    ) : isUmlFile(currentNote) ? (
+                      isDocumentLoading && isEmptyApollon(noteContent) ? (
                         <MacFileLoader
-                          fileName={currentSplitNote?.name}
+                          fileName={currentNote?.name}
                           fileType="uml"
-                          message="Opening UML diagram in split pane…"
+                          message="Opening UML diagram from Google Drive…"
                         />
                       ) : (
                         <UmlCanvas
-                          key={splitTabId || "split-uml"}
-                          initialContent={splitNoteContent}
+                          key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                          initialContent={noteContent}
                           theme={isDark ? "dark" : "light"}
-                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
-                          onSave={() => {
-                            if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+                          onChange={(updatedContent) => {
+                            setNoteContent(updatedContent);
+                            if (activeTabId && typeof window !== "undefined") {
+                              localStorage.setItem(
+                                `netherite_draft_${activeTabId}`,
+                                updatedContent,
+                              );
                             }
                           }}
+                          onSave={handleManualSave}
                         />
                       )
-                    ) : isMermaidFile(currentSplitNote) ? (
-                      isSplitDocumentLoading && (!splitNoteContent || splitNoteContent.trim() === "") ? (
+                    ) : isMermaidFile(currentNote) ? (
+                      isDocumentLoading &&
+                      (!noteContent || noteContent.trim() === "") ? (
                         <MacFileLoader
-                          fileName={currentSplitNote?.name}
+                          fileName={currentNote?.name}
                           fileType="mermaid"
-                          message="Opening Mermaid chart in split pane…"
+                          message="Opening Mermaid chart from Google Drive…"
                         />
                       ) : (
                         <MermaidCanvas
-                          key={splitTabId || "split-mermaid"}
-                          initialContent={splitNoteContent}
+                          key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                          initialContent={noteContent}
                           theme={isDark ? "dark" : "light"}
-                          title={currentSplitNote?.name}
-                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
-                          onSave={() => {
-                            if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+                          title={currentNote?.name}
+                          onChange={(updatedContent) => {
+                            setNoteContent(updatedContent);
+                            if (activeTabId && typeof window !== "undefined") {
+                              localStorage.setItem(
+                                `netherite_draft_${activeTabId}`,
+                                updatedContent,
+                              );
                             }
                           }}
+                          onSave={handleManualSave}
                         />
                       )
-                    ) : isTikzFile(currentSplitNote) ? (
-                      isSplitDocumentLoading && (!splitNoteContent || splitNoteContent.trim() === "") ? (
+                    ) : isTikzFile(currentNote) ? (
+                      isDocumentLoading &&
+                      (!noteContent || noteContent.trim() === "") ? (
                         <MacFileLoader
-                          fileName={currentSplitNote?.name}
+                          fileName={currentNote?.name}
                           fileType="tikz"
-                          message="Opening TikZ LaTeX diagram in split pane…"
+                          message="Opening TikZ LaTeX diagram from Google Drive…"
                         />
                       ) : (
                         <TikzCanvas
-                          key={splitTabId || "split-tikz"}
-                          initialContent={splitNoteContent}
+                          key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                          initialContent={noteContent}
                           theme={isDark ? "dark" : "light"}
-                          title={currentSplitNote?.name}
-                          onChange={(updatedContent) => setSplitNoteContent(updatedContent)}
-                          onSave={() => {
-                            if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+                          title={currentNote?.name}
+                          onChange={(updatedContent) => {
+                            setNoteContent(updatedContent);
+                            if (activeTabId && typeof window !== "undefined") {
+                              localStorage.setItem(
+                                `netherite_draft_${activeTabId}`,
+                                updatedContent,
+                              );
                             }
                           }}
+                          onSave={handleManualSave}
                         />
                       )
-                    ) : currentSplitNote?.name?.endsWith(".excalidraw") ||
-                    currentSplitNote?.mimeType === "application/vnd.excalidraw+json" ? (
-                      isSplitDocumentLoading && isEmptyExcalidraw(splitNoteContent) ? (
+                    ) : currentNote?.name?.endsWith(".excalidraw") ||
+                      currentNote?.mimeType ===
+                        "application/vnd.excalidraw+json" ? (
+                      isDocumentLoading && isEmptyExcalidraw(noteContent) ? (
                         <MacFileLoader
-                          fileName={currentSplitNote?.name}
+                          fileName={currentNote?.name}
                           fileType="drawing"
-                          message="Opening whiteboard in split pane…"
+                          message="Opening whiteboard canvas from Google Drive…"
                         />
                       ) : (
                         <DrawingCanvas
-                          ref={activeSplitCanvasRef}
-                          fileId={splitTabId}
-                          key={splitTabId || "split-drawing"}
-                          initialContent={splitNoteContent}
-                          lastSavedContent={
-                            (typeof window !== "undefined" && splitTabId
-                              ? localStorage.getItem(`netherite_cache_${splitTabId}`)
-                              : null) || (splitTabId ? (utils.notes.get.getData({ id: splitTabId }) as string | undefined) : "") || ""
-                          }
+                          ref={activeCanvasRef}
+                          fileId={activeTabId}
+                          key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                          initialContent={noteContent}
+                          lastSavedContent={lastSavedContent}
                           theme={isDark ? "dark" : "light"}
                           onChange={(updatedContent) => {
-                            setSplitNoteContent(updatedContent);
-                          }}
-                          onSave={() => {
-                            if (splitTabId && !splitTabId.startsWith("temp-")) {
-                              void saveDocument(splitTabId, splitNoteContent, currentSplitNote);
+                            if (contentFileIdRef.current === activeTabId) {
+                              setNoteContent(updatedContent);
                             }
                           }}
+                          onSave={handleManualSave}
                         />
                       )
-                    ) : isSplitDocumentLoading && (!splitNoteContent || splitNoteContent === "") ? (
+                    ) : isDocumentLoading &&
+                      (!noteContent || noteContent === "") ? (
                       <MacFileLoader
-                        fileName={currentSplitNote?.name}
+                        fileName={currentNote?.name}
                         fileType="note"
-                        message="Opening note in split pane…"
+                        message="Opening note from Google Drive…"
                       />
                     ) : (
                       <Editor
-                        key={splitTabId || "split-editor"}
-                        initialContent={splitNoteContent}
-                        title={currentSplitNote?.name || "Split Document.md"}
+                        key={`${tabSessionsRef.current[activeTabId || ""] || activeTabId}-${contentRevision}`}
+                        initialContent={noteContent}
+                        title={currentNote?.name || "Untitled.md"}
                         editorFont={editorFont}
+                        isLoading={false}
                         textOnlyClipboard={textOnlyClipboard}
+                        onTitleChange={(newTitle) => {
+                          if (activeTabId) {
+                            handleRenameFile(activeTabId, newTitle);
+                          }
+                        }}
                         onChange={(updatedContent) => {
-                          setSplitNoteContent(updatedContent);
-                          if (splitTabId && typeof window !== "undefined") {
-                            localStorage.setItem(`netherite_draft_${splitTabId}`, updatedContent);
+                          setNoteContent(updatedContent);
+                          if (activeTabId && typeof window !== "undefined") {
+                            localStorage.setItem(
+                              `netherite_draft_${activeTabId}`,
+                              updatedContent,
+                            );
                           }
                         }}
-                        onSave={() => {
-                          if (splitTabId && !splitTabId.startsWith("temp-")) {
-                            saveDocument(splitTabId, splitNoteContent, currentSplitNote);
-                          }
-                        }}
+                        onSave={handleManualSave}
                         onImageUpload={handleImageUpload}
+                        onEditorReady={(editor) => {
+                          activeEditorRef.current = editor;
+                        }}
+                        onStatsChange={({ words, chars }) => {
+                          setWordCount(words);
+                          setCharCount(chars);
+                        }}
                       />
                     )}
                   </div>
-                )}
-              </>
-            )}
-          </main>
 
-          {/* Right Outline Sidebar - strictly only for Markdown (.md) documents */}
-          {isCurrentMarkdown && (
-            <OutlineSidebar
-              isOpen={isOutlineOpen}
-              onClose={() => setIsOutlineOpen(false)}
-              headings={documentHeadings}
-              onSelectHeading={(text) => {
-                // Smooth scroll to heading element in editor
-                const editorElements = Array.from(
-                  document.querySelectorAll("h1, h2, h3, h4, h5, h6, [data-type='heading']")
-                );
-                const match = editorElements.find((el) => {
-                  const elText = (el.textContent || "").trim().toLowerCase();
-                  const targetText = text.trim().toLowerCase();
-                  return elText.includes(targetText) || targetText.includes(elText);
-                });
-                if (match) {
-                  match.scrollIntoView({ behavior: "smooth", block: "center" });
+                  {/* Center Draggable Resizer */}
+                  {isSplitView && (
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      tabIndex={0}
+                      onPointerDown={handleSplitResizeStart}
+                      className={`group relative z-30 -mx-[3px] flex w-1.5 cursor-col-resize items-center justify-center transition-all select-none hover:w-2 ${
+                        isResizingSplit
+                          ? "bg-primary/30 w-2"
+                          : "hover:bg-primary/20 bg-transparent"
+                      }`}
+                      title="Drag to resize split view width"
+                    >
+                      <div
+                        className={`h-full w-[1px] transition-colors ${
+                          isResizingSplit
+                            ? "bg-primary"
+                            : "bg-border/80 group-hover:bg-primary/80"
+                        }`}
+                      />
+                    </div>
+                  )}
+
+                  {/* Secondary Split Pane */}
+                  {isSplitView && (
+                    <div
+                      data-pane="split"
+                      data-active-pane={activePane === "split"}
+                      style={{ width: `${(1 - splitRatio) * 100}%` }}
+                      onPointerDown={() => {
+                        if (activePane !== "split") setActivePane("split");
+                      }}
+                      onFocusCapture={() => {
+                        if (activePane !== "split") setActivePane("split");
+                      }}
+                      className={`relative flex h-full shrink-0 flex-col overflow-hidden ${
+                        isResizingSplit ? "pointer-events-none select-none" : ""
+                      } ${
+                        isOverSplitTarget
+                          ? "ring-foreground ring-offset-background ring-2 ring-offset-2"
+                          : ""
+                      }`}
+                    >
+                      <div className="border-border/70 bg-muted/20 flex h-8 shrink-0 items-center justify-between border-b px-3 text-xs select-none">
+                        <div className="flex min-w-0 items-center gap-2">
+                          {isSplitDrawing ? (
+                            <Palette className="h-3.5 w-3.5 shrink-0 text-indigo-500 dark:text-indigo-400" />
+                          ) : isSplitUml ? (
+                            <Network className="h-3.5 w-3.5 shrink-0 text-purple-500 dark:text-purple-400" />
+                          ) : isSplitMermaid ? (
+                            <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                          ) : isSplitTikz ? (
+                            <Activity className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+                          ) : (
+                            <FileText className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <span className="text-foreground max-w-[180px] truncate font-medium">
+                            {currentSplitNote?.name || "Split Document"}
+                          </span>
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full transition-all duration-200 ${
+                              activePane === "split"
+                                ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]"
+                                : "bg-muted-foreground/30"
+                            }`}
+                            title={
+                              activePane === "split"
+                                ? "Active pane"
+                                : "Inactive pane"
+                            }
+                          />
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (splitTabId && activeTabId) {
+                                const prevPrimary = activeTabId;
+                                openFileInTab(splitTabId);
+                                setSplitTabId(prevPrimary);
+                              }
+                            }}
+                            className="hover:bg-accent text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors"
+                            title="Swap Panes"
+                          >
+                            <ArrowLeftRight className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsSplitView(false);
+                              setActivePane("primary");
+                            }}
+                            className="hover:bg-accent text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors"
+                            title="Close Split View"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      {isSplitImage ? (
+                        <ImageViewer
+                          key={splitTabId || "split-image"}
+                          fileId={currentSplitNote?.id || ""}
+                          fileName={currentSplitNote?.name || "image"}
+                          mimeType={currentSplitNote?.mimeType}
+                        />
+                      ) : isUmlFile(currentSplitNote) ? (
+                        isSplitDocumentLoading &&
+                        isEmptyApollon(splitNoteContent) ? (
+                          <MacFileLoader
+                            fileName={currentSplitNote?.name}
+                            fileType="uml"
+                            message="Opening UML diagram in split pane…"
+                          />
+                        ) : (
+                          <UmlCanvas
+                            key={splitTabId || "split-uml"}
+                            initialContent={splitNoteContent}
+                            theme={isDark ? "dark" : "light"}
+                            onChange={(updatedContent) =>
+                              setSplitNoteContent(updatedContent)
+                            }
+                            onSave={() => {
+                              if (
+                                splitTabId &&
+                                !splitTabId.startsWith("temp-")
+                              ) {
+                                saveDocument(
+                                  splitTabId,
+                                  splitNoteContent,
+                                  currentSplitNote,
+                                );
+                              }
+                            }}
+                          />
+                        )
+                      ) : isMermaidFile(currentSplitNote) ? (
+                        isSplitDocumentLoading &&
+                        (!splitNoteContent ||
+                          splitNoteContent.trim() === "") ? (
+                          <MacFileLoader
+                            fileName={currentSplitNote?.name}
+                            fileType="mermaid"
+                            message="Opening Mermaid chart in split pane…"
+                          />
+                        ) : (
+                          <MermaidCanvas
+                            key={splitTabId || "split-mermaid"}
+                            initialContent={splitNoteContent}
+                            theme={isDark ? "dark" : "light"}
+                            title={currentSplitNote?.name}
+                            onChange={(updatedContent) =>
+                              setSplitNoteContent(updatedContent)
+                            }
+                            onSave={() => {
+                              if (
+                                splitTabId &&
+                                !splitTabId.startsWith("temp-")
+                              ) {
+                                saveDocument(
+                                  splitTabId,
+                                  splitNoteContent,
+                                  currentSplitNote,
+                                );
+                              }
+                            }}
+                          />
+                        )
+                      ) : isTikzFile(currentSplitNote) ? (
+                        isSplitDocumentLoading &&
+                        (!splitNoteContent ||
+                          splitNoteContent.trim() === "") ? (
+                          <MacFileLoader
+                            fileName={currentSplitNote?.name}
+                            fileType="tikz"
+                            message="Opening TikZ LaTeX diagram in split pane…"
+                          />
+                        ) : (
+                          <TikzCanvas
+                            key={splitTabId || "split-tikz"}
+                            initialContent={splitNoteContent}
+                            theme={isDark ? "dark" : "light"}
+                            title={currentSplitNote?.name}
+                            onChange={(updatedContent) =>
+                              setSplitNoteContent(updatedContent)
+                            }
+                            onSave={() => {
+                              if (
+                                splitTabId &&
+                                !splitTabId.startsWith("temp-")
+                              ) {
+                                saveDocument(
+                                  splitTabId,
+                                  splitNoteContent,
+                                  currentSplitNote,
+                                );
+                              }
+                            }}
+                          />
+                        )
+                      ) : currentSplitNote?.name?.endsWith(".excalidraw") ||
+                        currentSplitNote?.mimeType ===
+                          "application/vnd.excalidraw+json" ? (
+                        isSplitDocumentLoading &&
+                        isEmptyExcalidraw(splitNoteContent) ? (
+                          <MacFileLoader
+                            fileName={currentSplitNote?.name}
+                            fileType="drawing"
+                            message="Opening whiteboard in split pane…"
+                          />
+                        ) : (
+                          <DrawingCanvas
+                            ref={activeSplitCanvasRef}
+                            fileId={splitTabId}
+                            key={splitTabId || "split-drawing"}
+                            initialContent={splitNoteContent}
+                            lastSavedContent={
+                              (typeof window !== "undefined" && splitTabId
+                                ? localStorage.getItem(
+                                    `netherite_cache_${splitTabId}`,
+                                  )
+                                : null) ||
+                              (splitTabId
+                                ? (utils.notes.get.getData({
+                                    id: splitTabId,
+                                  }) as string | undefined)
+                                : "") ||
+                              ""
+                            }
+                            theme={isDark ? "dark" : "light"}
+                            onChange={(updatedContent) => {
+                              setSplitNoteContent(updatedContent);
+                            }}
+                            onSave={() => {
+                              if (
+                                splitTabId &&
+                                !splitTabId.startsWith("temp-")
+                              ) {
+                                void saveDocument(
+                                  splitTabId,
+                                  splitNoteContent,
+                                  currentSplitNote,
+                                );
+                              }
+                            }}
+                          />
+                        )
+                      ) : isSplitDocumentLoading &&
+                        (!splitNoteContent || splitNoteContent === "") ? (
+                        <MacFileLoader
+                          fileName={currentSplitNote?.name}
+                          fileType="note"
+                          message="Opening note in split pane…"
+                        />
+                      ) : (
+                        <Editor
+                          key={splitTabId || "split-editor"}
+                          initialContent={splitNoteContent}
+                          title={currentSplitNote?.name || "Split Document.md"}
+                          editorFont={editorFont}
+                          textOnlyClipboard={textOnlyClipboard}
+                          onChange={(updatedContent) => {
+                            setSplitNoteContent(updatedContent);
+                            if (splitTabId && typeof window !== "undefined") {
+                              localStorage.setItem(
+                                `netherite_draft_${splitTabId}`,
+                                updatedContent,
+                              );
+                            }
+                          }}
+                          onSave={() => {
+                            if (splitTabId && !splitTabId.startsWith("temp-")) {
+                              saveDocument(
+                                splitTabId,
+                                splitNoteContent,
+                                currentSplitNote,
+                              );
+                            }
+                          }}
+                          onImageUpload={handleImageUpload}
+                        />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </main>
+
+            {/* Right Outline Sidebar - strictly only for Markdown (.md) documents */}
+            {isCurrentMarkdown && (
+              <OutlineSidebar
+                isOpen={isOutlineOpen}
+                onClose={() => setIsOutlineOpen(false)}
+                headings={documentHeadings}
+                onSelectHeading={(text) => {
+                  // Smooth scroll to heading element in editor
+                  const editorElements = Array.from(
+                    document.querySelectorAll(
+                      "h1, h2, h3, h4, h5, h6, [data-type='heading']",
+                    ),
+                  );
+                  const match = editorElements.find((el) => {
+                    const elText = (el.textContent || "").trim().toLowerCase();
+                    const targetText = text.trim().toLowerCase();
+                    return (
+                      elText.includes(targetText) || targetText.includes(elText)
+                    );
+                  });
+                  if (match) {
+                    match.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                  }
+                }}
+              />
+            )}
+
+            {/* Gemini AI Copilot Right Sidebar */}
+            <GeminiCopilotSidebar
+              isOpen={isCopilotOpen}
+              onClose={() => setIsCopilotOpen(false)}
+              currentNoteTitle={currentNote?.name || noteTitle}
+              currentNoteContent={noteContent}
+              onInsertContent={(content) => {
+                if (!isCurrentMarkdown) {
+                  showToast(
+                    "Cannot insert markdown into a vector drawing or architecture model.",
+                  );
+                  return;
                 }
+                setNoteContent((prev) =>
+                  prev ? `${prev}\n\n${content}` : content,
+                );
+              }}
+              onReplaceContent={(content) => {
+                if (!isCurrentMarkdown) {
+                  showToast(
+                    "Cannot replace canvas diagram structure with raw markdown.",
+                  );
+                  return;
+                }
+                setNoteContent(content);
+              }}
+              onCreateNoteWithContent={async (title, content) => {
+                await handleCreateFile(undefined);
+                setNoteTitle(title.endsWith(".md") ? title : `${title}.md`);
+                setNoteContent(content);
               }}
             />
-          )}
 
-          {/* Gemini AI Copilot Right Sidebar */}
-          <GeminiCopilotSidebar
-            isOpen={isCopilotOpen}
-            onClose={() => setIsCopilotOpen(false)}
-            currentNoteTitle={currentNote?.name || noteTitle}
-            currentNoteContent={noteContent}
-            onInsertContent={(content) => {
-              if (!isCurrentMarkdown) {
-                showToast("Cannot insert markdown into a vector drawing or architecture model.");
-                return;
-              }
-              setNoteContent((prev) => (prev ? `${prev}\n\n${content}` : content));
-            }}
-            onReplaceContent={(content) => {
-              if (!isCurrentMarkdown) {
-                showToast("Cannot replace canvas diagram structure with raw markdown.");
-                return;
-              }
-              setNoteContent(content);
-            }}
-            onCreateNoteWithContent={async (title, content) => {
-              await handleCreateFile(undefined);
-              setNoteTitle(title.endsWith(".md") ? title : `${title}.md`);
-              setNoteContent(content);
-            }}
-          />
-
-          {/* Toggleable Git Diff Right Sidebar */}
-          <DiffSidebar
-            isOpen={isDiffSidebarOpen}
-            onClose={() => setIsDiffSidebarOpen(false)}
-            noteTitle={currentNote?.name || noteTitle || "Untitled.md"}
-            noteId={activeTabId || ""}
-            baselineContent={lastSavedContent}
-            currentContent={noteContent}
-            onSaveToDrive={handleManualSave}
-            isSaving={saveMutation.isPending || isSaving}
-            onDiscardAndSync={() => {
-              void executeSync(false);
-            }}
-            isSyncing={isSyncing}
-          />
-        </div>
+            {/* Toggleable Git Diff Right Sidebar */}
+            <DiffSidebar
+              isOpen={isDiffSidebarOpen}
+              onClose={() => setIsDiffSidebarOpen(false)}
+              noteTitle={currentNote?.name || noteTitle || "Untitled.md"}
+              noteId={activeTabId || ""}
+              baselineContent={lastSavedContent}
+              currentContent={noteContent}
+              onSaveToDrive={handleManualSave}
+              isSaving={saveMutation.isPending || isSaving}
+              onDiscardAndSync={() => {
+                void executeSync(false);
+              }}
+              isSyncing={isSyncing}
+            />
+          </div>
         )}
 
         {/* VS Code / Antigravity IDE Bottom Status Bar (Desktop only) */}
-        <footer className="h-6 border-t border-border/60 bg-muted/40 px-3 flex items-center justify-between text-[11px] font-mono text-muted-foreground select-none shrink-0 hidden sm:flex">
+        <footer className="border-border/60 bg-muted/40 text-muted-foreground flex hidden h-6 shrink-0 items-center justify-between border-t px-3 font-mono text-[11px] select-none sm:flex">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${activeView === "calendar" ? "bg-blue-500" : "bg-emerald-500"}`} />
-              <span>{activeView === "calendar" ? "Google Calendar Studio" : "Google Drive"}</span>
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${activeView === "calendar" ? "bg-blue-500" : "bg-emerald-500"}`}
+              />
+              <span>
+                {activeView === "calendar"
+                  ? "Google Calendar Studio"
+                  : "Google Drive"}
+              </span>
             </span>
             {isDirty && (
-              <span className="text-amber-500 font-medium flex items-center gap-1">
+              <span className="flex items-center gap-1 font-medium text-amber-500">
                 <span>●</span> Unsaved changes
               </span>
             )}
-            {isSaving && <span className="text-primary animate-pulse">Saving…</span>}
+            {isSaving && (
+              <span className="text-primary animate-pulse">Saving…</span>
+            )}
           </div>
 
           {/* Author Attribution */}
           <div className="flex items-center gap-1.5 text-[11px]">
             <span>Made with</span>
-            <span className="text-foreground text-xs leading-none font-bold select-none" title="Monochrome">♥</span>
+            <span
+              className="text-foreground text-xs leading-none font-bold select-none"
+              title="Monochrome"
+            >
+              ♥
+            </span>
             <span>by</span>
             <a
               href="https://github.com/parv141206"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-foreground hover:underline font-medium transition-colors"
+              className="text-foreground font-medium transition-colors hover:underline"
             >
               Parv Shah
             </a>
@@ -3224,12 +3914,16 @@ export function WorkspaceLayout({
         <MobileBottomBar
           onToggleSidebar={() => {
             if (typeof window !== "undefined" && window.innerWidth < 640) {
-              setMobileScreen(mobileScreen === "library" ? "editor" : "library");
+              setMobileScreen(
+                mobileScreen === "library" ? "editor" : "library",
+              );
             } else {
               setSidebarCollapsed(!sidebarCollapsed);
             }
           }}
-          onOpenLibrary={() => setMobileScreen(mobileScreen === "library" ? "editor" : "library")}
+          onOpenLibrary={() =>
+            setMobileScreen(mobileScreen === "library" ? "editor" : "library")
+          }
           onOpenEditor={() => setMobileScreen("editor")}
           onCreateNote={() => {
             handleCreateFile();
@@ -3245,7 +3939,12 @@ export function WorkspaceLayout({
           isDirty={isDirty}
           isSaving={isSaving}
           onSave={() => {
-            if (isSplitView && activePane === "split" && splitTabId && !splitTabId.startsWith("temp-")) {
+            if (
+              isSplitView &&
+              activePane === "split" &&
+              splitTabId &&
+              !splitTabId.startsWith("temp-")
+            ) {
               saveDocument(splitTabId, splitNoteContent, currentSplitNote);
             } else {
               handleManualSave();
@@ -3326,15 +4025,19 @@ export function WorkspaceLayout({
         onClose={() => setIsPdfModalOpen(false)}
         fileName={currentNote?.name || "Untitled.md"}
         fileType={
-          currentNote?.name?.endsWith(".mmd") || currentNote?.name?.endsWith(".mermaid")
+          currentNote?.name?.endsWith(".mmd") ||
+          currentNote?.name?.endsWith(".mermaid")
             ? "mermaid"
-            : currentNote?.name?.endsWith(".apollon") || currentNote?.name?.endsWith(".uml")
-            ? "uml"
-            : currentNote?.name?.endsWith(".excalidraw")
-            ? "drawing"
-            : /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNote?.name || "")
-            ? "image"
-            : "markdown"
+            : currentNote?.name?.endsWith(".apollon") ||
+                currentNote?.name?.endsWith(".uml")
+              ? "uml"
+              : currentNote?.name?.endsWith(".excalidraw")
+                ? "drawing"
+                : /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(
+                      currentNote?.name || "",
+                    )
+                  ? "image"
+                  : "markdown"
         }
         content={noteContent}
       />
@@ -3356,15 +4059,15 @@ export function WorkspaceLayout({
 
       {/* Floating Sync / Status Notification Toast */}
       {toastMessage && (
-        <div className="fixed bottom-16 sm:bottom-6 left-1/2 -translate-x-1/2 z-[110] max-w-md w-auto px-4 py-2.5 bg-foreground text-background text-xs font-medium rounded-xl shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 select-none">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="bg-foreground text-background animate-in fade-in slide-in-from-bottom-2 fixed bottom-16 left-1/2 z-[110] flex w-auto max-w-md -translate-x-1/2 items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium shadow-2xl duration-150 select-none sm:bottom-6">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
           <span>{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="ml-2 text-background/60 hover:text-background p-0.5 cursor-pointer"
+            className="text-background/60 hover:text-background ml-2 cursor-pointer p-0.5"
             aria-label="Close"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}

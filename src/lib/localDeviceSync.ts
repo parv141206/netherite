@@ -15,9 +15,19 @@ const KEY_NAME = "root_dir";
 
 export const LOCAL_DEVICE_SYNC_ENABLED_KEY = "netherite_device_sync_enabled";
 export const LOCAL_DEVICE_FOLDER_NAME_KEY = "netherite_device_sync_folder_name";
+export const CLOUD_AUTOSAVE_ENABLED_KEY = "netherite_cloud_autosave_enabled";
 export const CLOUD_AUTOSAVE_CADENCE_KEY = "netherite_cloud_autosave_cadence";
+export const LOCAL_AUTOSAVE_INTERVAL_KEY = "netherite_local_autosave_interval";
 
 export type CloudCadence = "10s" | "30s" | "1m" | "manual";
+export type LocalAutoSaveInterval =
+  "immediate" | "1s" | "2s" | "5s" | "10s" | "30s";
+
+export const CLOUD_AUTOSAVE_ENABLED_CHANGED_EVENT =
+  "netherite_cloud_autosave_enabled_changed";
+export const CLOUD_CADENCE_CHANGED_EVENT = "netherite_cloud_cadence_changed";
+export const LOCAL_AUTOSAVE_INTERVAL_CHANGED_EVENT =
+  "netherite_local_autosave_interval_changed";
 
 /**
  * Returns true if the browser supports the File System Access API (Chromium-based browsers, desktop, etc.)
@@ -32,7 +42,9 @@ export const isFileSystemAccessSupported = (): boolean => {
 function openSyncDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined" || !window.indexedDB) {
-      return reject(new Error("IndexedDB is not available in this environment."));
+      return reject(
+        new Error("IndexedDB is not available in this environment."),
+      );
     }
     const req = indexedDB.open(DB_NAME, 1);
     req.onupgradeneeded = () => {
@@ -49,7 +61,9 @@ function openSyncDB(): Promise<IDBDatabase> {
 /**
  * Persist the selected FileSystemDirectoryHandle into IndexedDB
  */
-export async function storeDeviceDirectoryHandle(handle: FileSystemDirectoryHandle): Promise<void> {
+export async function storeDeviceDirectoryHandle(
+  handle: FileSystemDirectoryHandle,
+): Promise<void> {
   const db = await openSyncDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
@@ -77,7 +91,8 @@ export async function getStoredDeviceDirectoryHandle(): Promise<FileSystemDirect
       const tx = db.transaction(STORE_NAME, "readonly");
       const store = tx.objectStore(STORE_NAME);
       const req = store.get(KEY_NAME);
-      req.onsuccess = () => resolve((req.result as FileSystemDirectoryHandle) || null);
+      req.onsuccess = () =>
+        resolve((req.result as FileSystemDirectoryHandle) || null);
       req.onerror = () => reject(req.error);
     });
   } catch (err) {
@@ -115,7 +130,7 @@ export async function removeStoredDeviceDirectoryHandle(): Promise<void> {
  */
 export async function verifyHandlePermission(
   handle: FileSystemDirectoryHandle,
-  readWrite = true
+  readWrite = true,
 ): Promise<boolean> {
   try {
     const opts = { mode: readWrite ? "readwrite" : "read" } as const;
@@ -133,13 +148,17 @@ export async function verifyHandlePermission(
 /**
  * Compute the full relative path of a file in the workspace
  */
-export function computeRelativePath(file: any, filesMap: Map<string, any>): string {
+export function computeRelativePath(
+  file: any,
+  filesMap: Map<string, any>,
+): string {
   const parts: string[] = [file.name];
   let currentParentId = file.parents?.[0];
   let depth = 0;
   while (currentParentId && depth < 10) {
     const parent = filesMap.get(currentParentId);
-    if (!parent || parent.mimeType !== "application/vnd.google-apps.folder") break;
+    if (!parent || parent.mimeType !== "application/vnd.google-apps.folder")
+      break;
     parts.unshift(parent.name);
     currentParentId = parent.parents?.[0];
     depth++;
@@ -153,7 +172,7 @@ export function computeRelativePath(file: any, filesMap: Map<string, any>): stri
 export async function writeDocumentToDevice(
   dirHandle: FileSystemDirectoryHandle,
   relativePath: string,
-  content: string
+  content: string,
 ): Promise<boolean> {
   try {
     const segments = relativePath.split("/").filter(Boolean);
@@ -162,11 +181,15 @@ export async function writeDocumentToDevice(
     let currentDir: any = dirHandle;
     for (let i = 0; i < segments.length - 1; i++) {
       const folderName = segments[i]!;
-      currentDir = await currentDir.getDirectoryHandle(folderName, { create: true });
+      currentDir = await currentDir.getDirectoryHandle(folderName, {
+        create: true,
+      });
     }
 
     const fileName = segments[segments.length - 1]!;
-    const fileHandle = await currentDir.getFileHandle(fileName, { create: true });
+    const fileHandle = await currentDir.getFileHandle(fileName, {
+      create: true,
+    });
     const writable = await fileHandle.createWritable();
     await writable.write(content);
     await writable.close();
@@ -182,15 +205,20 @@ export async function writeDocumentToDevice(
  */
 export async function performFullWorkspaceSyncToDevice(
   dirHandle: FileSystemDirectoryHandle,
-  files: Array<{ id: string; name: string; parents?: string[] | null; mimeType?: string }>,
+  files: Array<{
+    id: string;
+    name: string;
+    parents?: string[] | null;
+    mimeType?: string;
+  }>,
   fetchContent: (fileId: string) => Promise<string>,
-  onProgress?: SyncProgressCallback
+  onProgress?: SyncProgressCallback,
 ): Promise<{ successCount: number; errorCount: number }> {
   const filesMap = new Map<string, any>();
   files.forEach((f) => filesMap.set(f.id, f));
 
   const nonFolders = files.filter(
-    (f) => f.mimeType !== "application/vnd.google-apps.folder"
+    (f) => f.mimeType !== "application/vnd.google-apps.folder",
   );
 
   let successCount = 0;
@@ -205,7 +233,11 @@ export async function performFullWorkspaceSyncToDevice(
 
     try {
       const content = await fetchContent(file.id);
-      const ok = await writeDocumentToDevice(dirHandle, relativePath, content ?? "");
+      const ok = await writeDocumentToDevice(
+        dirHandle,
+        relativePath,
+        content ?? "",
+      );
       if (ok) {
         successCount++;
       } else {
@@ -226,10 +258,16 @@ export async function performFullWorkspaceSyncToDevice(
 export async function syncSingleNoteToDevice(
   fileId: string,
   content: string,
-  allFiles: Array<{ id: string; name: string; parents?: string[] | null; mimeType?: string }>
+  allFiles: Array<{
+    id: string;
+    name: string;
+    parents?: string[] | null;
+    mimeType?: string;
+  }>,
 ): Promise<boolean> {
   if (typeof window === "undefined") return false;
-  const isEnabled = localStorage.getItem(LOCAL_DEVICE_SYNC_ENABLED_KEY) === "true";
+  const isEnabled =
+    localStorage.getItem(LOCAL_DEVICE_SYNC_ENABLED_KEY) === "true";
   if (!isEnabled) return false;
 
   const dirHandle = await getStoredDeviceDirectoryHandle();
@@ -246,4 +284,3 @@ export async function syncSingleNoteToDevice(
   const relativePath = computeRelativePath(file, filesMap);
   return await writeDocumentToDevice(dirHandle, relativePath, content);
 }
-

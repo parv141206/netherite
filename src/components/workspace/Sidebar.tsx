@@ -27,7 +27,10 @@ import {
   GitCompare,
   RotateCw,
   Activity,
+  Download,
+  Archive,
 } from "lucide-react";
+import JSZip from "jszip";
 import { useTheme } from "~/components/ThemeProvider";
 import { api } from "~/trpc/react";
 import { signOut } from "next-auth/react";
@@ -76,7 +79,7 @@ function InlineRenameInput({
         }
       }}
       onClick={(e) => e.stopPropagation()}
-      className="bg-background border border-foreground rounded px-1 text-xs text-foreground focus:outline-none w-full font-sans shadow-sm"
+      className="bg-background border-foreground text-foreground w-full rounded border px-1 font-sans text-xs shadow-sm focus:outline-none"
     />
   );
 }
@@ -107,63 +110,72 @@ export const FOLDER_COLOR_PALETTE: {
     id: "red",
     name: "Rose Red",
     dotColor: "bg-rose-500",
-    bgClass: "bg-rose-500/15 dark:bg-rose-500/25 text-foreground border border-rose-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-rose-500/15 dark:bg-rose-500/25 text-foreground border border-rose-500/30 font-medium shadow-2xs",
     iconClass: "text-rose-600 dark:text-rose-400",
   },
   {
     id: "orange",
     name: "Peach Orange",
     dotColor: "bg-orange-500",
-    bgClass: "bg-orange-500/15 dark:bg-orange-500/25 text-foreground border border-orange-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-orange-500/15 dark:bg-orange-500/25 text-foreground border border-orange-500/30 font-medium shadow-2xs",
     iconClass: "text-orange-600 dark:text-orange-400",
   },
   {
     id: "amber",
     name: "Warm Amber",
     dotColor: "bg-amber-500",
-    bgClass: "bg-amber-500/15 dark:bg-amber-500/25 text-foreground border border-amber-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-amber-500/15 dark:bg-amber-500/25 text-foreground border border-amber-500/30 font-medium shadow-2xs",
     iconClass: "text-amber-600 dark:text-amber-400",
   },
   {
     id: "green",
     name: "Mint Green",
     dotColor: "bg-emerald-500",
-    bgClass: "bg-emerald-500/15 dark:bg-emerald-500/25 text-foreground border border-emerald-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-emerald-500/15 dark:bg-emerald-500/25 text-foreground border border-emerald-500/30 font-medium shadow-2xs",
     iconClass: "text-emerald-600 dark:text-emerald-400",
   },
   {
     id: "teal",
     name: "Soft Teal",
     dotColor: "bg-teal-500",
-    bgClass: "bg-teal-500/15 dark:bg-teal-500/25 text-foreground border border-teal-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-teal-500/15 dark:bg-teal-500/25 text-foreground border border-teal-500/30 font-medium shadow-2xs",
     iconClass: "text-teal-600 dark:text-teal-400",
   },
   {
     id: "blue",
     name: "Pastel Blue",
     dotColor: "bg-blue-500",
-    bgClass: "bg-blue-500/15 dark:bg-blue-500/25 text-foreground border border-blue-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-blue-500/15 dark:bg-blue-500/25 text-foreground border border-blue-500/30 font-medium shadow-2xs",
     iconClass: "text-blue-600 dark:text-blue-400",
   },
   {
     id: "indigo",
     name: "Indigo",
     dotColor: "bg-indigo-500",
-    bgClass: "bg-indigo-500/15 dark:bg-indigo-500/25 text-foreground border border-indigo-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-indigo-500/15 dark:bg-indigo-500/25 text-foreground border border-indigo-500/30 font-medium shadow-2xs",
     iconClass: "text-indigo-600 dark:text-indigo-400",
   },
   {
     id: "purple",
     name: "Lavender Purple",
     dotColor: "bg-purple-500",
-    bgClass: "bg-purple-500/15 dark:bg-purple-500/25 text-foreground border border-purple-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-purple-500/15 dark:bg-purple-500/25 text-foreground border border-purple-500/30 font-medium shadow-2xs",
     iconClass: "text-purple-600 dark:text-purple-400",
   },
   {
     id: "pink",
     name: "Blush Pink",
     dotColor: "bg-pink-500",
-    bgClass: "bg-pink-500/15 dark:bg-pink-500/25 text-foreground border border-pink-500/30 font-medium shadow-2xs",
+    bgClass:
+      "bg-pink-500/15 dark:bg-pink-500/25 text-foreground border border-pink-500/30 font-medium shadow-2xs",
     iconClass: "text-pink-600 dark:text-pink-400",
   },
 ];
@@ -203,12 +215,16 @@ interface SidebarProps {
   onOpenGlobalSearch?: () => void;
   loadingNoteId?: string;
   folderToExpand?: string | null;
+  activeNoteContent?: string;
+  onToast?: (msg: string) => void;
 }
 
 export function Sidebar({
   userSession,
   notes,
   activeNoteId,
+  activeNoteContent,
+  onToast,
   onSelectNote,
   onCreateNote,
   onCreateDrawing,
@@ -243,7 +259,9 @@ export function Sidebar({
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
+  const [expandedFolders, setExpandedFolders] = useState<
+    Record<string, boolean>
+  >({
     root: true,
   });
 
@@ -326,15 +344,24 @@ export function Sidebar({
   // Find all subfolder IDs excluding Netherite root folder itself and internal assets folder
   const subfolderIds = new Set(
     notes
-      .filter((n) => n.mimeType === "application/vnd.google-apps.folder" && n.name !== "Netherite" && n.name !== "assets")
-      .map((n) => n.id)
+      .filter(
+        (n) =>
+          n.mimeType === "application/vnd.google-apps.folder" &&
+          n.name !== "Netherite" &&
+          n.name !== "assets",
+      )
+      .map((n) => n.id),
   );
 
   // Root items are non-Netherite items whose parents are NOT a subfolder inside Netherite
   const rootItems = notes.filter((n) => {
     if (n.name.startsWith(".")) return false;
     if (n.name === "assets") return false;
-    if (n.mimeType === "application/vnd.google-apps.folder" && n.name === "Netherite") return false;
+    if (
+      n.mimeType === "application/vnd.google-apps.folder" &&
+      n.name === "Netherite"
+    )
+      return false;
     if (!n.parents || n.parents.length === 0) return true;
     const isInsideSubfolder = n.parents.some((p) => subfolderIds.has(p));
     return !isInsideSubfolder;
@@ -344,7 +371,9 @@ export function Sidebar({
     if (item.name.startsWith(".")) return false;
     if (item.name === "assets") return false;
     if (!searchQuery.trim()) return true;
-    const matchSelf = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSelf = item.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     if (matchSelf) return true;
     if (item.mimeType === "application/vnd.google-apps.folder") {
       const children = notes.filter((c) => c.parents?.includes(item.id));
@@ -411,7 +440,8 @@ export function Sidebar({
       }
 
       if (e.key === "F2") {
-        const targetId = selectedIds.size === 1 ? Array.from(selectedIds)[0] : activeNoteId;
+        const targetId =
+          selectedIds.size === 1 ? Array.from(selectedIds)[0] : activeNoteId;
         if (targetId) {
           e.preventDefault();
           const current = notes.find((n) => n.id === targetId);
@@ -419,7 +449,10 @@ export function Sidebar({
             startInlineEditing(current.id, current.name);
           }
         }
-      } else if (e.key === "Delete" || ((e.metaKey || e.ctrlKey) && e.key === "Backspace")) {
+      } else if (
+        e.key === "Delete" ||
+        ((e.metaKey || e.ctrlKey) && e.key === "Backspace")
+      ) {
         const activeElem = document.activeElement;
         if (
           activeElem &&
@@ -454,7 +487,9 @@ export function Sidebar({
 
   const startInlineEditing = (id: string, name: string) => {
     if (setEditingId) setEditingId(id);
-    setEditingName(name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, ""));
+    setEditingName(
+      name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, ""),
+    );
     setContextMenu(null);
   };
 
@@ -475,7 +510,9 @@ export function Sidebar({
       const visible = getVisibleItems();
       const targetIdx = visible.findIndex((i) => i.id === item.id);
       const anchorId = lastSelectedIdRef.current;
-      let anchorIdx = anchorId ? visible.findIndex((i) => i.id === anchorId) : -1;
+      let anchorIdx = anchorId
+        ? visible.findIndex((i) => i.id === anchorId)
+        : -1;
       if (anchorIdx === -1) anchorIdx = 0;
 
       if (targetIdx !== -1) {
@@ -543,7 +580,8 @@ export function Sidebar({
     e.stopPropagation();
     setDragOverFolderId(null);
 
-    const idsToMove = draggedIds.length > 0 ? draggedIds : draggedItemId ? [draggedItemId] : [];
+    const idsToMove =
+      draggedIds.length > 0 ? draggedIds : draggedItemId ? [draggedItemId] : [];
     const validIds = idsToMove.filter((id) => id !== targetFolderId);
 
     if (validIds.length > 0) {
@@ -563,7 +601,7 @@ export function Sidebar({
     e: React.MouseEvent,
     itemId: string,
     itemName: string,
-    isFolder: boolean
+    isFolder: boolean,
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -592,24 +630,203 @@ export function Sidebar({
     });
   };
 
+  const getFileContent = async (fileId: string): Promise<string> => {
+    if (fileId === activeNoteId && activeNoteContent !== undefined) {
+      return activeNoteContent;
+    }
+    if (typeof window !== "undefined") {
+      const draft = localStorage.getItem(`netherite_draft_${fileId}`);
+      if (draft) return draft;
+      const cache = localStorage.getItem(`netherite_cache_${fileId}`);
+      if (cache) return cache;
+    }
+    try {
+      const fetched = await utils.notes.get.fetch({ id: fileId });
+      return fetched ?? "";
+    } catch (err) {
+      console.warn(`Failed to fetch content for file ${fileId}:`, err);
+      return "";
+    }
+  };
+
+  const handleDownloadSingle = async (fileId: string, fileName: string) => {
+    try {
+      onToast?.(`Downloading ${fileName}…`);
+      const content = await getFileContent(fileId);
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      onToast?.(`Downloaded ${fileName}`);
+    } catch (err: any) {
+      console.error("Download single failed:", err);
+      onToast?.(`Failed to download ${fileName}`);
+    }
+  };
+
+  const getDescendantsOfFolder = (
+    folderId: string,
+    currentPath = "",
+  ): Array<{ item: DriveItem; relativePath: string }> => {
+    const results: Array<{ item: DriveItem; relativePath: string }> = [];
+    const children = notes.filter(
+      (n) => n.parents && n.parents.includes(folderId),
+    );
+    for (const child of children) {
+      const isFolder = child.mimeType === "application/vnd.google-apps.folder";
+      const childPath = currentPath
+        ? `${currentPath}/${child.name}`
+        : child.name;
+      if (isFolder) {
+        results.push(...getDescendantsOfFolder(child.id, childPath));
+      } else {
+        results.push({ item: child, relativePath: childPath });
+      }
+    }
+    return results;
+  };
+
+  const handleDownloadFolderAsZip = async (
+    folderId: string,
+    folderName: string,
+  ) => {
+    try {
+      onToast?.(`Preparing ZIP for ${folderName}…`);
+      const descendants = getDescendantsOfFolder(folderId);
+      if (descendants.length === 0) {
+        onToast?.(`Folder "${folderName}" is empty.`);
+        return;
+      }
+
+      const zip = new JSZip();
+      for (const { item, relativePath } of descendants) {
+        const content = await getFileContent(item.id);
+        zip.file(relativePath, content);
+      }
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${folderName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      onToast?.(`Downloaded ${folderName}.zip`);
+    } catch (err: any) {
+      console.error("Folder zip download failed:", err);
+      onToast?.(`Failed to download ${folderName}.zip`);
+    }
+  };
+
+  const handleDownloadSelectionAsZip = async (ids: string[]) => {
+    try {
+      onToast?.(`Packaging ZIP for ${ids.length} items…`);
+      const zip = new JSZip();
+      const usedNames = new Map<string, number>();
+
+      const getUniqueName = (name: string): string => {
+        const count = usedNames.get(name) || 0;
+        usedNames.set(name, count + 1);
+        if (count === 0) return name;
+        const lastDot = name.lastIndexOf(".");
+        if (lastDot > 0) {
+          const base = name.slice(0, lastDot);
+          const ext = name.slice(lastDot);
+          return `${base} (${count})${ext}`;
+        }
+        return `${name} (${count})`;
+      };
+
+      for (const id of ids) {
+        const item = notes.find((n) => n.id === id);
+        if (!item) continue;
+        const isFolder = item.mimeType === "application/vnd.google-apps.folder";
+
+        if (isFolder) {
+          const descendants = getDescendantsOfFolder(item.id);
+          for (const desc of descendants) {
+            const content = await getFileContent(desc.item.id);
+            zip.file(`${item.name}/${desc.relativePath}`, content);
+          }
+        } else {
+          const content = await getFileContent(item.id);
+          const uniqueName = getUniqueName(item.name);
+          zip.file(uniqueName, content);
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const dateStr = new Date().toISOString().split("T")[0];
+      a.download = `Netherite-Selection-${dateStr}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      onToast?.("Downloaded ZIP archive");
+    } catch (err: any) {
+      console.error("Selection zip download failed:", err);
+      onToast?.("Failed to download ZIP archive");
+    }
+  };
+
   // Clean minimal Notion page icon / drawing icon
   const getFileIcon = (name: string, mimeType?: string) => {
-    if (mimeType?.startsWith("image/") || /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(name)) {
-      return <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />;
+    if (
+      mimeType?.startsWith("image/") ||
+      /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(name)
+    ) {
+      return (
+        <ImageIcon className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+      );
     }
-    if (name.endsWith(".excalidraw") || mimeType === "application/vnd.excalidraw+json") {
-      return <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />;
+    if (
+      name.endsWith(".excalidraw") ||
+      mimeType === "application/vnd.excalidraw+json"
+    ) {
+      return (
+        <Palette className="h-3.5 w-3.5 shrink-0 text-indigo-500 dark:text-indigo-400" />
+      );
     }
-    if (name.endsWith(".apollon") || name.endsWith(".uml") || mimeType === "application/vnd.apollon+json") {
-      return <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />;
+    if (
+      name.endsWith(".apollon") ||
+      name.endsWith(".uml") ||
+      mimeType === "application/vnd.apollon+json"
+    ) {
+      return (
+        <Network className="h-3.5 w-3.5 shrink-0 text-purple-500 dark:text-purple-400" />
+      );
     }
-    if (name.endsWith(".mmd") || name.endsWith(".mermaid") || mimeType === "text/vnd.mermaid") {
-      return <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />;
+    if (
+      name.endsWith(".mmd") ||
+      name.endsWith(".mermaid") ||
+      mimeType === "text/vnd.mermaid"
+    ) {
+      return (
+        <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+      );
     }
-    if (name.endsWith(".tikz") || name.endsWith(".tex") || mimeType === "text/vnd.tikz") {
-      return <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />;
+    if (
+      name.endsWith(".tikz") ||
+      name.endsWith(".tex") ||
+      mimeType === "text/vnd.tikz"
+    ) {
+      return (
+        <Activity className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+      );
     }
-    return <FileText className="w-3.5 h-3.5 text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-colors" />;
+    return (
+      <FileText className="text-muted-foreground/70 group-hover:text-foreground h-3.5 w-3.5 shrink-0 transition-colors" />
+    );
   };
 
   const renderTreeItem = (item: DriveItem) => {
@@ -641,39 +858,54 @@ export function Sidebar({
             }}
             onDrop={(e) => handleDropOnFolder(e, item.id)}
             onClick={(e) => handleItemClick(e, item)}
-            onContextMenu={(e) => handleItemContextMenu(e, item.id, item.name, true)}
-            className={`flex items-center border-0 ring-0 justify-between px-1.5 py-1 rounded-md cursor-pointer group transition-all select-none ${
+            onContextMenu={(e) =>
+              handleItemContextMenu(e, item.id, item.name, true)
+            }
+            className={`group flex cursor-pointer items-center justify-between rounded-md border-0 px-1.5 py-1 ring-0 transition-all select-none ${
               isTarget
-                ? "bg-accent   text-foreground"
+                ? "bg-accent text-foreground"
                 : selectedIds.size > 1 && isSelected
-                ? "bg-accent/60 text-foreground font-medium  shadow-2xs"
-                : (() => {
-                    const assignedColor = folderColors[item.id];
-                    const colorDef = assignedColor ? FOLDER_COLOR_PALETTE.find((c) => c.id === assignedColor) : null;
-                    return colorDef?.bgClass || "text-muted-foreground hover:bg-accent/60 hover:text-foreground";
-                  })()
+                  ? "bg-accent/60 text-foreground font-medium shadow-2xs"
+                  : (() => {
+                      const assignedColor = folderColors[item.id];
+                      const colorDef = assignedColor
+                        ? FOLDER_COLOR_PALETTE.find(
+                            (c) => c.id === assignedColor,
+                          )
+                        : null;
+                      return (
+                        colorDef?.bgClass ||
+                        "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                      );
+                    })()
             }`}
           >
-            <div className="flex items-center gap-1.5 truncate w-full">
+            <div className="flex w-full items-center gap-1.5 truncate">
               <span
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFolder(item.id, e);
                 }}
-                className="p-0.5 hover:bg-accent/80 rounded transition-colors"
+                className="hover:bg-accent/80 rounded p-0.5 transition-colors"
               >
                 <ChevronRight
-                  className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                  className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-90" : ""}`}
                 />
               </span>
               {(() => {
                 const assignedColor = folderColors[item.id];
-                const colorDef = assignedColor ? FOLDER_COLOR_PALETTE.find((c) => c.id === assignedColor) : null;
+                const colorDef = assignedColor
+                  ? FOLDER_COLOR_PALETTE.find((c) => c.id === assignedColor)
+                  : null;
                 const iconColor = colorDef?.iconClass;
                 return isExpanded ? (
-                  <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${iconColor || "text-foreground"}`} />
+                  <FolderOpen
+                    className={`h-3.5 w-3.5 shrink-0 ${iconColor || "text-foreground"}`}
+                  />
                 ) : (
-                  <Folder className={`w-3.5 h-3.5 shrink-0 ${iconColor || "text-muted-foreground"}`} />
+                  <Folder
+                    className={`h-3.5 w-3.5 shrink-0 ${iconColor || "text-muted-foreground"}`}
+                  />
                 );
               })()}
 
@@ -689,15 +921,17 @@ export function Sidebar({
                   }}
                 />
               ) : (
-                <span className="truncate font-medium text-foreground">{item.name.replace(/\.md$/i, "")}</span>
+                <span className="text-foreground truncate font-medium">
+                  {item.name.replace(/\.md$/i, "")}
+                </span>
               )}
             </div>
           </div>
 
           {isExpanded && (
-            <div className="pl-3 ml-2 border-l border-border/40 space-y-0.5 mt-0.5">
+            <div className="border-border/40 mt-0.5 ml-2 space-y-0.5 border-l pl-3">
               {children.length === 0 ? (
-                <div className="px-2 py-1 text-[11px] text-muted-foreground/60 italic">
+                <div className="text-muted-foreground/60 px-2 py-1 text-[11px] italic">
                   Empty folder
                 </div>
               ) : (
@@ -710,15 +944,20 @@ export function Sidebar({
     } else {
       const isActive = activeNoteId === item.id;
       const isDrawing = item.name.endsWith(".excalidraw");
-      const isUml = item.name.endsWith(".apollon") || item.name.endsWith(".uml");
-      const isMermaid = item.name.endsWith(".mmd") || item.name.endsWith(".mermaid");
+      const isUml =
+        item.name.endsWith(".apollon") || item.name.endsWith(".uml");
+      const isMermaid =
+        item.name.endsWith(".mmd") || item.name.endsWith(".mermaid");
       const isTikz = item.name.endsWith(".tikz") || item.name.endsWith(".tex");
       const isImage =
         item.mimeType?.startsWith("image/") ||
         /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(item.name);
       const displayName = isImage
         ? item.name
-        : item.name.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+        : item.name.replace(
+            /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+            "",
+          );
 
       return (
         <div
@@ -726,16 +965,18 @@ export function Sidebar({
           draggable
           onDragStart={(e) => handleDragStart(e, item)}
           onClick={(e) => handleItemClick(e, item)}
-          onContextMenu={(e) => handleItemContextMenu(e, item.id, item.name, false)}
-          className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition-all group select-none ${
+          onContextMenu={(e) =>
+            handleItemContextMenu(e, item.id, item.name, false)
+          }
+          className={`group flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 transition-all select-none ${
             selectedIds.size > 1 && isSelected
-               ? "bg-accent/60 text-foreground font-medium ring-1 ring-border/60 shadow-2xs"
+              ? "bg-accent/60 text-foreground ring-border/60 font-medium shadow-2xs ring-1"
               : isActive
-              ? "bg-accent text-foreground font-semibold shadow-2xs"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                ? "bg-accent text-foreground font-semibold shadow-2xs"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           }`}
         >
-          <div className="flex items-center gap-2 truncate w-full">
+          <div className="flex w-full items-center gap-2 truncate">
             {getFileIcon(item.name, item.mimeType)}
             {isEditing ? (
               <InlineRenameInput
@@ -744,16 +985,19 @@ export function Sidebar({
                   if (isImage) {
                     onRenameNote(item.id, newName);
                   } else {
-                    const clean = newName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i, "");
+                    const clean = newName.replace(
+                      /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+                      "",
+                    );
                     const finalName = isDrawing
                       ? `${clean}.excalidraw`
                       : isUml
-                      ? `${clean}.apollon`
-                      : isMermaid
-                      ? `${clean}.mmd`
-                      : isTikz
-                      ? `${clean}.tikz`
-                      : `${clean}.md`;
+                        ? `${clean}.apollon`
+                        : isMermaid
+                          ? `${clean}.mmd`
+                          : isTikz
+                            ? `${clean}.tikz`
+                            : `${clean}.md`;
                     onRenameNote(item.id, finalName);
                   }
                   if (setEditingId) setEditingId(null);
@@ -766,7 +1010,10 @@ export function Sidebar({
               <span className="truncate">{displayName}</span>
             )}
             {loadingNoteId === item.id && (
-              <AppleSpinner size="xs" className="shrink-0 text-foreground ml-auto" />
+              <AppleSpinner
+                size="xs"
+                className="text-foreground ml-auto shrink-0"
+              />
             )}
           </div>
         </div>
@@ -778,55 +1025,60 @@ export function Sidebar({
     return (
       <aside
         ref={sidebarContainerRef}
-        className="hidden sm:flex w-14 border-r border-border bg-[var(--sidebar-bg)] flex-col items-center py-2.5 justify-between select-none"
+        className="border-border hidden w-14 flex-col items-center justify-between border-r bg-[var(--sidebar-bg)] py-2.5 select-none sm:flex"
       >
-        <div className="flex flex-col items-center gap-3 w-full">
+        <div className="flex w-full flex-col items-center gap-3">
           {/* Top Window Drag Area with Traffic Lights */}
-          <div className="w-full flex justify-center py-1" data-tauri-drag-region>
+          <div
+            className="flex w-full justify-center py-1"
+            data-tauri-drag-region
+          >
             <WindowControls />
           </div>
 
           <button
             onClick={onToggleCollapse}
-            className="p-2 hover:bg-[var(--accent)] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors hover:bg-[var(--accent)]"
             title="Expand Sidebar"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4" />
           </button>
 
           <button
             onClick={() => onCreateNote()}
-            className="p-2 bg-foreground text-background hover:opacity-90 rounded-lg transition-all shadow-sm"
+            className="bg-foreground text-background rounded-lg p-2 shadow-sm transition-all hover:opacity-90"
             title="New File (Ctrl+N)"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
           </button>
 
           {onOpenCalendar && (
             <button
               onClick={onOpenCalendar}
-              className={`p-2 rounded-lg transition-all ${
+              className={`rounded-lg p-2 transition-all ${
                 isCalendarActive
                   ? "bg-accent text-foreground font-semibold"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
               }`}
               title="Google Calendar"
             >
-              <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              <Calendar className="h-4 w-4 text-blue-500 dark:text-blue-400" />
             </button>
           )}
 
-          <div className="w-6 h-[1px] bg-border my-1" />
+          <div className="bg-border my-1 h-[1px] w-6" />
 
           <div className="flex flex-col gap-1.5">
             {notes
-              .filter((n) => n.mimeType !== "application/vnd.google-apps.folder")
+              .filter(
+                (n) => n.mimeType !== "application/vnd.google-apps.folder",
+              )
               .slice(0, 6)
               .map((file) => (
                 <button
                   key={file.id}
                   onClick={() => onSelectNote(file.id)}
-                  className={`p-2 rounded-lg transition-all ${
+                  className={`rounded-lg p-2 transition-all ${
                     activeNoteId === file.id
                       ? "bg-accent text-foreground font-semibold"
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -842,21 +1094,25 @@ export function Sidebar({
         <div className="flex flex-col items-center gap-2">
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            className="hover:bg-accent text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors"
             title="Toggle Theme"
           >
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
           </button>
           <button
             onClick={onOpenSettings}
-            className="p-2 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            className="hover:bg-accent text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors"
             title="Settings"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="h-4 w-4" />
           </button>
 
           <div
-            className="p-1 cursor-default"
+            className="cursor-default p-1"
             title={userSession?.user?.name || "Account"}
           >
             {userSession?.user?.image ? (
@@ -864,16 +1120,17 @@ export function Sidebar({
                 src={userSession.user.image}
                 alt={userSession?.user?.name || "User"}
                 referrerPolicy="no-referrer"
-                className="w-5 h-5 rounded-full object-cover border border-border/80"
+                className="border-border/80 h-5 w-5 rounded-full border object-cover"
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = "none";
-                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  const fallback = e.currentTarget
+                    .nextElementSibling as HTMLElement;
                   if (fallback) fallback.style.display = "flex";
                 }}
               />
             ) : null}
             <div
-              className={`w-5 h-5 rounded-full bg-foreground text-background items-center justify-center text-[10px] font-bold uppercase ${
+              className={`bg-foreground text-background h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold uppercase ${
                 userSession?.user?.image ? "hidden" : "flex"
               }`}
             >
@@ -889,7 +1146,7 @@ export function Sidebar({
     <>
       {/* Mobile Backdrop Overlay */}
       <div
-        className="sm:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+        className="bg-background/80 animate-in fade-in fixed inset-0 z-40 backdrop-blur-sm duration-200 sm:hidden"
         onClick={onToggleCollapse}
       />
 
@@ -897,383 +1154,200 @@ export function Sidebar({
         ref={sidebarContainerRef}
         onContextMenu={handleRootContextMenu}
         style={{ width: `${sidebarWidth}px` }}
-        className={`fixed sm:relative inset-y-0 left-0 z-50 border-r border-border bg-[var(--sidebar-bg)] flex flex-col h-full select-none shadow-2xl sm:shadow-none animate-in slide-in-from-left duration-200 shrink-0 ${
+        className={`border-border animate-in slide-in-from-left fixed inset-y-0 left-0 z-50 flex h-full shrink-0 flex-col border-r bg-[var(--sidebar-bg)] shadow-2xl duration-200 select-none sm:relative sm:shadow-none ${
           isResizing ? "transition-none select-none" : ""
         }`}
       >
-      {/* Line 1: Top Bar with Mac Traffic Lights on Left & Workspace Action Icons on Right */}
-      <div className="px-3 pt-3 pb-1.5 flex items-center justify-between gap-1" data-tauri-drag-region>
-        <div className="flex items-center pl-0.5 shrink-0">
-          <WindowControls />
+        {/* Line 1: Top Bar with Mac Traffic Lights on Left & Workspace Action Icons on Right */}
+        <div
+          className="flex items-center justify-between gap-1 px-3 pt-3 pb-1.5"
+          data-tauri-drag-region
+        >
+          <div className="flex shrink-0 items-center pl-0.5">
+            <WindowControls />
+          </div>
+          <div
+            className="flex shrink-0 items-center gap-0.5"
+            data-tauri-no-drag
+          >
+            <button
+              onClick={() => onCreateNote()}
+              disabled={isMutating}
+              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+              title="New Page (Ctrl+N)"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+            {onCreateDrawing && (
+              <button
+                onClick={() => onCreateDrawing()}
+                disabled={isMutating}
+                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                title="New Whiteboard / Sketch"
+              >
+                <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
+              </button>
+            )}
+            {onCreateUml && (
+              <button
+                onClick={() => onCreateUml()}
+                disabled={isMutating}
+                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                title="New UML Diagram (Apollon)"
+              >
+                <Network className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400" />
+              </button>
+            )}
+            {onCreateMermaid && (
+              <button
+                onClick={() => onCreateMermaid()}
+                disabled={isMutating}
+                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                title="New Mermaid Diagram"
+              >
+                <Workflow className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
+              </button>
+            )}
+            {onCreateTikz && (
+              <button
+                onClick={() => onCreateTikz()}
+                disabled={isMutating}
+                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                title="New TikZ LaTeX Diagram"
+              >
+                <Activity className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
+              </button>
+            )}
+            <button
+              onClick={() => onCreateFolder()}
+              disabled={isMutating}
+              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+              title="New Folder"
+            >
+              <FolderPlus className="h-3.5 w-3.5" />
+            </button>
+            {onOpenCalendar && (
+              <button
+                onClick={onOpenCalendar}
+                className={`hover:bg-accent/60 cursor-pointer rounded p-1 transition-colors ${
+                  isCalendarActive
+                    ? "bg-accent text-blue-600 dark:text-blue-400"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Google Calendar"
+              >
+                <Calendar className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
+              </button>
+            )}
+            {onToggleDiff && (
+              <button
+                onClick={onToggleDiff}
+                className={`hover:bg-accent/60 cursor-pointer rounded p-1 transition-colors ${
+                  isDiffOpen
+                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Git Diff Inspector (Ctrl+Shift+D)"
+              >
+                <GitCompare className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (onDeepSync) {
+                  onDeepSync();
+                } else if (onManualSync) {
+                  onManualSync();
+                } else {
+                  utils.notes.list.invalidate();
+                }
+              }}
+              disabled={isSyncing || isDeepSyncing}
+              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+              title="Deep Sync & Repair Drive Workspace"
+            >
+              <RotateCw
+                className={`h-3.5 w-3.5 ${isSyncing || isDeepSyncing ? "text-foreground animate-spin" : ""}`}
+              />
+            </button>
+            <button
+              onClick={onToggleCollapse}
+              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors"
+              title="Collapse Sidebar"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-0.5 shrink-0" data-tauri-no-drag>
-          <button
-            onClick={() => onCreateNote()}
-            disabled={isMutating}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-            title="New Page (Ctrl+N)"
+
+        {/* Line 2: Full Width Workspace Title (Below Top Bar) */}
+        <div className="border-border/40 flex items-center justify-between border-b px-3 py-2">
+          <div className="flex w-full min-w-0 items-center gap-2.5">
+            <NetheriteLogo className="text-foreground h-5 w-auto shrink-0" />
+            <span className="text-foreground truncate text-xs font-semibold tracking-tight sm:text-sm">
+              {userSession?.user?.name
+                ? `${userSession.user.name.split(" ")[0]}'s Notes`
+                : "Netherite"}
+            </span>
+            {(isMutating || isSyncing || isDeepSyncing) && (
+              <AppleSpinner
+                size="xs"
+                className="text-muted-foreground ml-auto shrink-0"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Quick Filter Search */}
+        <div
+          className="border-border/30 space-y-1.5 border-b p-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="relative cursor-pointer"
+            onClick={() => {
+              if (onOpenGlobalSearch) onOpenGlobalSearch();
+            }}
           >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-          {onCreateDrawing && (
-            <button
-              onClick={() => onCreateDrawing()}
-              disabled={isMutating}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-              title="New Whiteboard / Sketch"
-            >
-              <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
-            </button>
-          )}
-          {onCreateUml && (
-            <button
-              onClick={() => onCreateUml()}
-              disabled={isMutating}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-              title="New UML Diagram (Apollon)"
-            >
-              <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
-            </button>
-          )}
-          {onCreateMermaid && (
-            <button
-              onClick={() => onCreateMermaid()}
-              disabled={isMutating}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-              title="New Mermaid Diagram"
-            >
-              <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-            </button>
-          )}
-          {onCreateTikz && (
-            <button
-              onClick={() => onCreateTikz()}
-              disabled={isMutating}
-              className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-              title="New TikZ LaTeX Diagram"
-            >
-              <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
-            </button>
-          )}
-          <button
-            onClick={() => onCreateFolder()}
-            disabled={isMutating}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-            title="New Folder"
-          >
-            <FolderPlus className="w-3.5 h-3.5" />
-          </button>
+            <Search className="text-muted-foreground/70 absolute top-2 left-2.5 h-3.5 w-3.5" />
+            <input
+              type="text"
+              placeholder="Search notes (Ctrl+K)..."
+              value={searchQuery}
+              readOnly={!!onOpenGlobalSearch}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-accent/40 hover:bg-accent/60 focus:border-border text-foreground placeholder:text-muted-foreground/60 w-full cursor-pointer rounded-md border border-transparent py-1 pr-8 pl-7 font-sans text-xs transition-colors focus:outline-none"
+            />
+            <kbd className="text-muted-foreground/80 bg-muted/60 border-border/40 pointer-events-none absolute top-1.5 right-2 hidden items-center rounded border px-1.5 py-0.5 font-mono text-[9px] sm:inline-flex">
+              ⌘K
+            </kbd>
+          </div>
+
+          {/* Apple Pinned Item: Google Calendar Studio */}
           {onOpenCalendar && (
             <button
               onClick={onOpenCalendar}
-              className={`p-1 hover:bg-accent/60 rounded transition-colors cursor-pointer ${
-                isCalendarActive ? "bg-accent text-blue-600 dark:text-blue-400" : "text-muted-foreground hover:text-foreground"
+              className={`flex w-full cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-xs transition-all ${
+                isCalendarActive
+                  ? "border border-blue-500/30 bg-blue-500/15 font-semibold text-blue-600 shadow-2xs dark:text-blue-400"
+                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
               }`}
-              title="Google Calendar"
             >
-              <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+              <div className="flex items-center gap-2 truncate">
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+                <span className="truncate">Google Calendar</span>
+              </div>
             </button>
           )}
-          {onToggleDiff && (
-            <button
-              onClick={onToggleDiff}
-              className={`p-1 hover:bg-accent/60 rounded transition-colors cursor-pointer ${
-                isDiffOpen ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Git Diff Inspector (Ctrl+Shift+D)"
-            >
-              <GitCompare className="w-3.5 h-3.5" />
-            </button>
-          )}
-          <button
-            onClick={() => {
-              if (onDeepSync) {
-                onDeepSync();
-              } else if (onManualSync) {
-                onManualSync();
-              } else {
-                utils.notes.list.invalidate();
-              }
-            }}
-            disabled={isSyncing || isDeepSyncing}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-            title="Deep Sync & Repair Drive Workspace"
-          >
-            <RotateCw className={`w-3.5 h-3.5 ${isSyncing || isDeepSyncing ? "animate-spin text-foreground" : ""}`} />
-          </button>
-          <button
-            onClick={onToggleCollapse}
-            className="p-1 hover:bg-accent/60 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            title="Collapse Sidebar"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Line 2: Full Width Workspace Title (Below Top Bar) */}
-      <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between">
-        <div className="flex items-center gap-2.5 min-w-0 w-full">
-          <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
-          <span className="font-semibold text-xs sm:text-sm text-foreground truncate tracking-tight">
-            {userSession?.user?.name ? `${userSession.user.name.split(" ")[0]}'s Notes` : "Netherite"}
-          </span>
-          {(isMutating || isSyncing || isDeepSyncing) && (
-            <AppleSpinner size="xs" className="text-muted-foreground ml-auto shrink-0" />
-          )}
-        </div>
-      </div>
-
-      {/* Quick Filter Search */}
-      <div className="p-2 border-b border-border/30 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-        <div
-          className="relative cursor-pointer"
-          onClick={() => {
-            if (onOpenGlobalSearch) onOpenGlobalSearch();
-          }}
-        >
-          <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-muted-foreground/70" />
-          <input
-            type="text"
-            placeholder="Search notes (Ctrl+K)..."
-            value={searchQuery}
-            readOnly={!!onOpenGlobalSearch}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-7 pr-8 py-1 bg-accent/40 hover:bg-accent/60 border border-transparent focus:border-border rounded-md text-xs focus:outline-none text-foreground placeholder:text-muted-foreground/60 font-sans transition-colors cursor-pointer"
-          />
-          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground/80 bg-muted/60 border border-border/40 rounded absolute right-2 top-1.5 pointer-events-none">
-            ⌘K
-          </kbd>
         </div>
 
-        {/* Apple Pinned Item: Google Calendar Studio */}
-        {onOpenCalendar && (
-          <button
-            onClick={onOpenCalendar}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
-              isCalendarActive
-                ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/30 shadow-2xs"
-                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-            }`}
-          >
-            <div className="flex items-center gap-2 truncate">
-              <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-              <span className="truncate">Google Calendar</span>
-            </div>
-          </button>
-        )}
-      </div>
-
-      {/* Multi-Select Action Banner */}
-      {selectedIds.size > 1 && (
-        <div className="mx-2 my-1 px-2.5 py-1.5 bg-accent/90 border border-border/80 rounded-md flex items-center justify-between text-xs animate-in fade-in slide-in-from-top-1 duration-150 shadow-sm">
-          <span className="font-semibold text-foreground text-[11px]">
-            {selectedIds.size} items selected
-          </span>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                if (onDeleteMultiple) {
-                  onDeleteMultiple(Array.from(selectedIds));
-                } else {
-                  selectedIds.forEach((id) => onDeleteNote(id));
-                }
-                setSelectedIds(new Set());
-              }}
-              className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-red-500/15 text-red-500 hover:bg-red-500/25 font-semibold transition-colors"
-              title="Delete selected items (Del)"
-            >
-              <Trash2 className="w-3 h-3" /> Delete
-            </button>
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="text-[11px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-background/40 transition-colors"
-              title="Clear selection (Esc)"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* VS Code Recursive Tree File Navigation */}
-      <div className="flex-1 overflow-y-auto px-1 py-1 text-xs">
-        {/* Root Directory Node */}
-        <div
-          onClick={(e) => toggleFolder("root", e)}
-          onContextMenu={(e) => handleRootContextMenu(e)}
-          className={`flex items-center gap-1.5 px-1.5 py-1 font-bold rounded-md cursor-pointer transition-all ${
-            (() => {
-              const rootColor = folderColors["root"];
-              const colorDef = rootColor ? FOLDER_COLOR_PALETTE.find((c) => c.id === rootColor) : null;
-              return colorDef?.bgClass || "text-foreground hover:bg-accent/40";
-            })()
-          }`}
-        >
-          <ChevronRight
-            className={`w-3.5 h-3.5 transition-transform ${
-              expandedFolders["root"] ? "rotate-90" : ""
-            }`}
-          />
-          {(() => {
-            const rootColor = folderColors["root"];
-            const colorDef = rootColor ? FOLDER_COLOR_PALETTE.find((c) => c.id === rootColor) : null;
-            const iconColor = colorDef?.iconClass;
-            return expandedFolders["root"] ? (
-              <FolderOpen className={`w-4 h-4 shrink-0 ${iconColor || "text-foreground"}`} />
-            ) : (
-              <Folder className={`w-4 h-4 shrink-0 ${iconColor || "text-muted-foreground"}`} />
-            );
-          })()}
-          <span className="truncate">netherite</span>
-        </div>
-
-        {/* Directory Items List */}
-        {expandedFolders["root"] && (
-          <div className="pl-3 ml-2 border-l border-border/40 space-y-0.5 mt-0.5">
-            {rootItems.length === 0 ? (
-              <div className="px-2 py-4 text-center text-[11px] text-muted-foreground">
-                No files found
-              </div>
-            ) : (
-              rootItems.map((item) => renderTreeItem(item))
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* VS Code Context Menu Popover */}
-      {contextMenu && (
-        <div
-          style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="fixed w-48 bg-card border border-border rounded-lg shadow-2xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {contextMenu.isRootArea ? (
-            <>
-              <button
-                onClick={() => {
-                  onCreateNote();
-                  setContextMenu(null);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-              >
-                <Plus className="w-3.5 h-3.5" /> New Page
-              </button>
-              {onCreateDrawing && (
-                <button
-                  onClick={() => {
-                    onCreateDrawing();
-                    setContextMenu(null);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-                >
-                  <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /> New Whiteboard / Sketch
-                </button>
-              )}
-              {onCreateUml && (
-                <button
-                  onClick={() => {
-                    onCreateUml();
-                    setContextMenu(null);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-                >
-                  <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" /> New UML Diagram
-                </button>
-              )}
-              {onCreateMermaid && (
-                <button
-                  onClick={() => {
-                    onCreateMermaid();
-                    setContextMenu(null);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-                >
-                  <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> New Mermaid Diagram
-                </button>
-              )}
-              {onCreateTikz && (
-                <button
-                  onClick={() => {
-                    onCreateTikz();
-                    setContextMenu(null);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-                >
-                  <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" /> New TikZ LaTeX Diagram
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  onCreateFolder();
-                  setContextMenu(null);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-              >
-                <FolderPlus className="w-3.5 h-3.5" /> New Folder
-              </button>
-              <div className="h-[1px] bg-border my-1" />
-              {/* Root Folder Color Picker */}
-              <div className="px-3 py-2 border-b border-border/40">
-                <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground mb-1.5">
-                  <span>Folder Color</span>
-                  {folderColors["root"] && (
-                    <button
-                      onClick={() => {
-                        if (onSetFolderColor) onSetFolderColor("root", null);
-                        setContextMenu(null);
-                      }}
-                      className="text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-5 gap-1.5 py-0.5">
-                  {FOLDER_COLOR_PALETTE.map((c) => {
-                    const isSelected = (folderColors["root"] || "default") === c.id;
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        title={c.name}
-                        onClick={() => {
-                          if (onSetFolderColor) onSetFolderColor("root", c.id === "default" ? null : c.id);
-                          setContextMenu(null);
-                        }}
-                        className={`w-5 h-5 rounded-full ${c.dotColor} flex items-center justify-center transition-transform hover:scale-110 cursor-pointer ${
-                          isSelected
-                            ? "ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105"
-                            : "opacity-80 hover:opacity-100"
-                        }`}
-                      >
-                        {c.id === "default" && <span className="w-1.5 h-1.5 rounded-full bg-background" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  if (onManualSync) {
-                    onManualSync();
-                  } else {
-                    utils.notes.list.invalidate();
-                  }
-                  setContextMenu(null);
-                }}
-                disabled={isSyncing}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} /> Refresh Explorer
-              </button>
-            </>
-          ) : selectedIds.size > 1 ? (
-            <>
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground border-b border-border/40">
-                {selectedIds.size} items selected
-              </div>
+        {/* Multi-Select Action Banner */}
+        {selectedIds.size > 1 && (
+          <div className="bg-accent/90 border-border/80 animate-in fade-in slide-in-from-top-1 mx-2 my-1 flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs shadow-sm duration-150">
+            <span className="text-foreground text-[11px] font-semibold">
+              {selectedIds.size} items selected
+            </span>
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => {
                   if (onDeleteMultiple) {
@@ -1282,261 +1356,556 @@ export function Sidebar({
                     selectedIds.forEach((id) => onDeleteNote(id));
                   }
                   setSelectedIds(new Set());
-                  setContextMenu(null);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-red-500/10 flex items-center gap-2 text-red-500 font-medium"
+                className="flex items-center gap-1 rounded bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-500/25"
+                title="Delete selected items (Del)"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Delete {selectedIds.size} items{" "}
-                <span className="ml-auto text-[10px] text-red-400 font-mono">Del</span>
+                <Trash2 className="h-3 w-3" /> Delete
               </button>
               <button
-                onClick={() => {
-                  setSelectedIds(new Set());
-                  setContextMenu(null);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-muted-foreground"
+                onClick={() => setSelectedIds(new Set())}
+                className="text-muted-foreground hover:text-foreground hover:bg-background/40 rounded px-1.5 py-0.5 text-[11px] transition-colors"
+                title="Clear selection (Esc)"
               >
-                Deselect all{" "}
-                <span className="ml-auto text-[10px] text-muted-foreground font-mono">Esc</span>
+                Clear
               </button>
-            </>
-          ) : contextMenu.isFolder ? (
-            <>
-              {/* Folder Color Picker */}
-              <div className="px-3 py-2 border-b border-border/40">
-                <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground mb-1.5">
-                  <span>Folder Color</span>
-                  {contextMenu.itemId && folderColors[contextMenu.itemId] && (
-                    <button
-                      onClick={() => {
-                        if (contextMenu.itemId && onSetFolderColor) {
-                          onSetFolderColor(contextMenu.itemId, null);
-                        }
-                        setContextMenu(null);
-                      }}
-                      className="text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer"
-                    >
-                      Reset
-                    </button>
-                  )}
+            </div>
+          </div>
+        )}
+
+        {/* VS Code Recursive Tree File Navigation */}
+        <div className="flex-1 overflow-y-auto px-1 py-1 text-xs">
+          {/* Root Directory Node */}
+          <div
+            onClick={(e) => toggleFolder("root", e)}
+            onContextMenu={(e) => handleRootContextMenu(e)}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 font-bold transition-all ${(() => {
+              const rootColor = folderColors["root"];
+              const colorDef = rootColor
+                ? FOLDER_COLOR_PALETTE.find((c) => c.id === rootColor)
+                : null;
+              return colorDef?.bgClass || "text-foreground hover:bg-accent/40";
+            })()}`}
+          >
+            <ChevronRight
+              className={`h-3.5 w-3.5 transition-transform ${
+                expandedFolders["root"] ? "rotate-90" : ""
+              }`}
+            />
+            {(() => {
+              const rootColor = folderColors["root"];
+              const colorDef = rootColor
+                ? FOLDER_COLOR_PALETTE.find((c) => c.id === rootColor)
+                : null;
+              const iconColor = colorDef?.iconClass;
+              return expandedFolders["root"] ? (
+                <FolderOpen
+                  className={`h-4 w-4 shrink-0 ${iconColor || "text-foreground"}`}
+                />
+              ) : (
+                <Folder
+                  className={`h-4 w-4 shrink-0 ${iconColor || "text-muted-foreground"}`}
+                />
+              );
+            })()}
+            <span className="truncate">netherite</span>
+          </div>
+
+          {/* Directory Items List */}
+          {expandedFolders["root"] && (
+            <div className="border-border/40 mt-0.5 ml-2 space-y-0.5 border-l pl-3">
+              {rootItems.length === 0 ? (
+                <div className="text-muted-foreground px-2 py-4 text-center text-[11px]">
+                  No files found
                 </div>
-                <div className="grid grid-cols-5 gap-1.5 py-0.5">
-                  {FOLDER_COLOR_PALETTE.map((c) => {
-                    const isSelected =
-                      (contextMenu.itemId ? folderColors[contextMenu.itemId] || "default" : "default") === c.id;
-                    return (
+              ) : (
+                rootItems.map((item) => renderTreeItem(item))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* VS Code Context Menu Popover */}
+        {contextMenu && (
+          <div
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            className="bg-card border-border animate-in fade-in zoom-in-95 fixed z-50 w-48 rounded-lg border py-1 text-xs shadow-2xl duration-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {contextMenu.isRootArea ? (
+              <>
+                <button
+                  onClick={() => {
+                    onCreateNote();
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                >
+                  <Plus className="h-3.5 w-3.5" /> New Page
+                </button>
+                {onCreateDrawing && (
+                  <button
+                    onClick={() => {
+                      onCreateDrawing();
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />{" "}
+                    New Whiteboard / Sketch
+                  </button>
+                )}
+                {onCreateUml && (
+                  <button
+                    onClick={() => {
+                      onCreateUml();
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Network className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400" />{" "}
+                    New UML Diagram
+                  </button>
+                )}
+                {onCreateMermaid && (
+                  <button
+                    onClick={() => {
+                      onCreateMermaid();
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Workflow className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />{" "}
+                    New Mermaid Diagram
+                  </button>
+                )}
+                {onCreateTikz && (
+                  <button
+                    onClick={() => {
+                      onCreateTikz();
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Activity className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />{" "}
+                    New TikZ LaTeX Diagram
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    onCreateFolder();
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                >
+                  <FolderPlus className="h-3.5 w-3.5" /> New Folder
+                </button>
+                <div className="bg-border my-1 h-[1px]" />
+                {/* Root Folder Color Picker */}
+                <div className="border-border/40 border-b px-3 py-2">
+                  <div className="text-muted-foreground mb-1.5 flex items-center justify-between text-[11px] font-medium">
+                    <span>Folder Color</span>
+                    {folderColors["root"] && (
                       <button
-                        key={c.id}
-                        type="button"
-                        title={c.name}
+                        onClick={() => {
+                          if (onSetFolderColor) onSetFolderColor("root", null);
+                          setContextMenu(null);
+                        }}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer text-[10px] underline"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5 py-0.5">
+                    {FOLDER_COLOR_PALETTE.map((c) => {
+                      const isSelected =
+                        (folderColors["root"] || "default") === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          title={c.name}
+                          onClick={() => {
+                            if (onSetFolderColor)
+                              onSetFolderColor(
+                                "root",
+                                c.id === "default" ? null : c.id,
+                              );
+                            setContextMenu(null);
+                          }}
+                          className={`h-5 w-5 rounded-full ${c.dotColor} flex cursor-pointer items-center justify-center transition-transform hover:scale-110 ${
+                            isSelected
+                              ? "ring-foreground ring-offset-background scale-105 ring-2 ring-offset-1"
+                              : "opacity-80 hover:opacity-100"
+                          }`}
+                        >
+                          {c.id === "default" && (
+                            <span className="bg-background h-1.5 w-1.5 rounded-full" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (onManualSync) {
+                      onManualSync();
+                    } else {
+                      utils.notes.list.invalidate();
+                    }
+                    setContextMenu(null);
+                  }}
+                  disabled={isSyncing}
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50"
+                >
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`}
+                  />{" "}
+                  Refresh Explorer
+                </button>
+              </>
+            ) : selectedIds.size > 1 ? (
+              <>
+                <div className="text-muted-foreground border-border/40 border-b px-3 py-1.5 text-[11px] font-semibold">
+                  {selectedIds.size} items selected
+                </div>
+                <button
+                  onClick={() => {
+                    void handleDownloadSelectionAsZip(Array.from(selectedIds));
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left font-medium"
+                >
+                  <Archive className="text-primary h-3.5 w-3.5" /> Download as
+                  ZIP ({selectedIds.size} items)
+                </button>
+                <button
+                  onClick={() => {
+                    if (onDeleteMultiple) {
+                      onDeleteMultiple(Array.from(selectedIds));
+                    } else {
+                      selectedIds.forEach((id) => onDeleteNote(id));
+                    }
+                    setSelectedIds(new Set());
+                    setContextMenu(null);
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-red-500 hover:bg-red-500/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete {selectedIds.size}{" "}
+                  items{" "}
+                  <span className="ml-auto font-mono text-[10px] text-red-400">
+                    Del
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedIds(new Set());
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-muted-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                >
+                  Deselect all{" "}
+                  <span className="text-muted-foreground ml-auto font-mono text-[10px]">
+                    Esc
+                  </span>
+                </button>
+              </>
+            ) : contextMenu.isFolder ? (
+              <>
+                {/* Folder Color Picker */}
+                <div className="border-border/40 border-b px-3 py-2">
+                  <div className="text-muted-foreground mb-1.5 flex items-center justify-between text-[11px] font-medium">
+                    <span>Folder Color</span>
+                    {contextMenu.itemId && folderColors[contextMenu.itemId] && (
+                      <button
                         onClick={() => {
                           if (contextMenu.itemId && onSetFolderColor) {
-                            onSetFolderColor(contextMenu.itemId, c.id === "default" ? null : c.id);
+                            onSetFolderColor(contextMenu.itemId, null);
                           }
                           setContextMenu(null);
                         }}
-                        className={`w-5 h-5 rounded-full ${c.dotColor} flex items-center justify-center transition-transform hover:scale-110 cursor-pointer ${
-                          isSelected
-                            ? "ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105"
-                            : "opacity-80 hover:opacity-100"
-                        }`}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer text-[10px] underline"
                       >
-                        {c.id === "default" && <span className="w-1.5 h-1.5 rounded-full bg-background" />}
+                        Reset
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5 py-0.5">
+                    {FOLDER_COLOR_PALETTE.map((c) => {
+                      const isSelected =
+                        (contextMenu.itemId
+                          ? folderColors[contextMenu.itemId] || "default"
+                          : "default") === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          title={c.name}
+                          onClick={() => {
+                            if (contextMenu.itemId && onSetFolderColor) {
+                              onSetFolderColor(
+                                contextMenu.itemId,
+                                c.id === "default" ? null : c.id,
+                              );
+                            }
+                            setContextMenu(null);
+                          }}
+                          className={`h-5 w-5 rounded-full ${c.dotColor} flex cursor-pointer items-center justify-center transition-transform hover:scale-110 ${
+                            isSelected
+                              ? "ring-foreground ring-offset-background scale-105 ring-2 ring-offset-1"
+                              : "opacity-80 hover:opacity-100"
+                          }`}
+                        >
+                          {c.id === "default" && (
+                            <span className="bg-background h-1.5 w-1.5 rounded-full" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <button
-                onClick={() => {
-                  onCreateNote(contextMenu.itemId);
-                  setContextMenu(null);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-              >
-                <Plus className="w-3.5 h-3.5" /> New Page in Folder
-              </button>
-              {onCreateDrawing && (
                 <button
                   onClick={() => {
-                    onCreateDrawing(contextMenu.itemId);
+                    onCreateNote(contextMenu.itemId);
                     setContextMenu(null);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 >
-                  <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /> New Sketch in Folder
+                  <Plus className="h-3.5 w-3.5" /> New Page in Folder
                 </button>
-              )}
-              {onCreateUml && (
+                {onCreateDrawing && (
+                  <button
+                    onClick={() => {
+                      onCreateDrawing(contextMenu.itemId);
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />{" "}
+                    New Sketch in Folder
+                  </button>
+                )}
+                {onCreateUml && (
+                  <button
+                    onClick={() => {
+                      onCreateUml(contextMenu.itemId);
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Network className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400" />{" "}
+                    New UML in Folder
+                  </button>
+                )}
+                {onCreateMermaid && (
+                  <button
+                    onClick={() => {
+                      onCreateMermaid(contextMenu.itemId);
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Workflow className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />{" "}
+                    New Mermaid in Folder
+                  </button>
+                )}
+                {onCreateTikz && (
+                  <button
+                    onClick={() => {
+                      onCreateTikz(contextMenu.itemId);
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <Activity className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />{" "}
+                    New TikZ in Folder
+                  </button>
+                )}
                 <button
                   onClick={() => {
-                    onCreateUml(contextMenu.itemId);
+                    onCreateFolder(contextMenu.itemId);
                     setContextMenu(null);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 >
-                  <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" /> New UML in Folder
+                  <FolderPlus className="h-3.5 w-3.5" /> New Folder in Folder
                 </button>
-              )}
-              {onCreateMermaid && (
                 <button
                   onClick={() => {
-                    onCreateMermaid(contextMenu.itemId);
-                    setContextMenu(null);
+                    if (contextMenu.itemId && contextMenu.itemName) {
+                      startInlineEditing(
+                        contextMenu.itemId,
+                        contextMenu.itemName,
+                      );
+                    }
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 >
-                  <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" /> New Mermaid in Folder
+                  <Edit3 className="h-3.5 w-3.5" /> Rename Folder
                 </button>
-              )}
-              {onCreateTikz && (
                 <button
                   onClick={() => {
-                    onCreateTikz(contextMenu.itemId);
+                    if (contextMenu.itemId && contextMenu.itemName) {
+                      void handleDownloadFolderAsZip(
+                        contextMenu.itemId,
+                        contextMenu.itemName,
+                      );
+                    }
                     setContextMenu(null);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
+                  className="hover:bg-accent text-foreground flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left"
                 >
-                  <Activity className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" /> New TikZ in Folder
+                  <Archive className="text-primary h-3.5 w-3.5" /> Download as
+                  ZIP
                 </button>
-              )}
-              <button
-                onClick={() => {
-                  onCreateFolder(contextMenu.itemId);
-                  setContextMenu(null);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-              >
-                <FolderPlus className="w-3.5 h-3.5" /> New Folder in Folder
-              </button>
-              <button
-                onClick={() => {
-                  if (contextMenu.itemId && contextMenu.itemName) {
-                    startInlineEditing(contextMenu.itemId, contextMenu.itemName);
+                <div className="bg-border my-1 h-[1px]" />
+                <button
+                  onClick={() =>
+                    contextMenu.itemId && onDeleteNote(contextMenu.itemId)
                   }
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-              >
-                <Edit3 className="w-3.5 h-3.5" /> Rename Folder
-              </button>
-              <div className="h-[1px] bg-border my-1" />
-              <button
-                onClick={() => contextMenu.itemId && onDeleteNote(contextMenu.itemId)}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-red-500"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Delete Folder
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() =>
-                  contextMenu.itemId &&
-                  contextMenu.itemName &&
-                  startInlineEditing(contextMenu.itemId, contextMenu.itemName)
-                }
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-              >
-                <Edit3 className="w-3.5 h-3.5" /> Rename{" "}
-                <span className="ml-auto text-[10px] text-muted-foreground font-mono">F2</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  if (contextMenu.itemName) {
-                    navigator.clipboard.writeText(contextMenu.itemName);
+                  className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-500"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete Folder
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() =>
+                    contextMenu.itemId &&
+                    contextMenu.itemName &&
+                    startInlineEditing(contextMenu.itemId, contextMenu.itemName)
                   }
-                  setContextMenu(null);
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                >
+                  <Edit3 className="h-3.5 w-3.5" /> Rename{" "}
+                  <span className="text-muted-foreground ml-auto font-mono text-[10px]">
+                    F2
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (contextMenu.itemName) {
+                      navigator.clipboard.writeText(contextMenu.itemName);
+                    }
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy Name
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (contextMenu.itemId && contextMenu.itemName) {
+                      void handleDownloadSingle(
+                        contextMenu.itemId,
+                        contextMenu.itemName,
+                      );
+                    }
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left"
+                >
+                  <Download className="text-primary h-3.5 w-3.5" /> Download
+                </button>
+
+                <div className="bg-border my-1 h-[1px]" />
+
+                <button
+                  onClick={() =>
+                    contextMenu.itemId && onDeleteNote(contextMenu.itemId)
+                  }
+                  className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-500"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete{" "}
+                  <span className="ml-auto font-mono text-[10px] text-red-400">
+                    Del
+                  </span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Footer: User Account & Settings */}
+        <div className="border-border bg-card/40 flex items-center justify-between border-t p-2">
+          <div className="flex min-w-0 items-center gap-2">
+            {userSession?.user?.image ? (
+              <img
+                src={userSession.user.image}
+                alt={userSession?.user?.name || "User"}
+                referrerPolicy="no-referrer"
+                className="border-border/80 h-6 w-6 shrink-0 rounded-full border object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                  const fallback = e.currentTarget
+                    .nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = "flex";
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-foreground"
-              >
-                <Copy className="w-3.5 h-3.5" /> Copy Name
-              </button>
-
-              <div className="h-[1px] bg-border my-1" />
-
-              <button
-                onClick={() => contextMenu.itemId && onDeleteNote(contextMenu.itemId)}
-                className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2 text-red-500"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Delete{" "}
-                <span className="ml-auto text-[10px] text-red-400 font-mono">Del</span>
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Footer: User Account & Settings */}
-      <div className="p-2 border-t border-border flex items-center justify-between bg-card/40">
-        <div className="flex items-center gap-2 min-w-0">
-          {userSession?.user?.image ? (
-            <img
-              src={userSession.user.image}
-              alt={userSession?.user?.name || "User"}
-              referrerPolicy="no-referrer"
-              className="w-6 h-6 rounded-full object-cover border border-border/80 shrink-0"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.display = "none";
-                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = "flex";
-              }}
-            />
-          ) : null}
-          <div
-            className={`w-6 h-6 rounded-full bg-foreground text-background items-center justify-center text-[11px] font-bold uppercase shrink-0 ${
-              userSession?.user?.image ? "hidden" : "flex"
-            }`}
-          >
-            {userSession?.user?.name?.[0] || "U"}
+              />
+            ) : null}
+            <div
+              className={`bg-foreground text-background h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold uppercase ${
+                userSession?.user?.image ? "hidden" : "flex"
+              }`}
+            >
+              {userSession?.user?.name?.[0] || "U"}
+            </div>
+            <div className="text-foreground truncate text-xs font-medium">
+              {userSession?.user?.name || "User"}
+            </div>
           </div>
-          <div className="truncate text-xs font-medium text-foreground">
-            {userSession?.user?.name || "User"}
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="hover:bg-accent text-muted-foreground hover:text-foreground rounded p-1 transition-colors"
+              title="Toggle Light/Dark Mode"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              onClick={onOpenSettings}
+              className="hover:bg-accent text-muted-foreground hover:text-foreground rounded p-1 transition-colors"
+              title="Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="hover:bg-accent text-muted-foreground rounded p-1 transition-colors hover:text-red-500"
+              title="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
-            title="Toggle Light/Dark Mode"
-          >
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-          <button
-            onClick={onOpenSettings}
-            className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-red-500 transition-colors"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+        {/* Draggable Resize Handle */}
+        <div
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsResizing(true);
+          }}
+          onDoubleClick={() => {
+            setSidebarWidth(260);
+            localStorage.setItem("netherite_sidebar_width", "260");
+          }}
+          title="Drag to resize sidebar • Double-click to reset"
+          className="hover:bg-primary/50 group/resizer absolute top-0 right-[-3px] z-50 hidden h-full w-2 cursor-col-resize transition-colors sm:block"
+        >
+          <div className="group-hover/resizer:bg-primary/80 mx-auto h-full w-[1px]" />
         </div>
-      </div>
-
-      {/* Draggable Resize Handle */}
-      <div
-        onMouseDown={(e) => {
-          e.preventDefault();
-          setIsResizing(true);
-        }}
-        onDoubleClick={() => {
-          setSidebarWidth(260);
-          localStorage.setItem("netherite_sidebar_width", "260");
-        }}
-        title="Drag to resize sidebar • Double-click to reset"
-        className="hidden sm:block absolute top-0 right-[-3px] w-2 h-full cursor-col-resize hover:bg-primary/50 transition-colors z-50 group/resizer"
-      >
-        <div className="w-[1px] h-full mx-auto group-hover/resizer:bg-primary/80" />
-      </div>
-    </aside>
-  </>
+      </aside>
+    </>
   );
 }
