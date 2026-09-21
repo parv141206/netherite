@@ -17,6 +17,9 @@ import {
   searchNotesContent,
   deepSyncAndRepairWorkspace,
   getResumableUploadSession,
+  listNoteRevisions,
+  getNoteRevisionContent,
+  pinNoteRevision,
 } from "~/server/googleDrive";
 
 export const notesRouter = createTRPCRouter({
@@ -54,7 +57,7 @@ export const notesRouter = createTRPCRouter({
         content: z.string().optional(),
         parentId: z.string().optional(),
         type: z.enum(["note", "drawing", "uml", "mermaid", "tikz"]).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       return await createNote(
@@ -62,7 +65,7 @@ export const notesRouter = createTRPCRouter({
         input.name,
         input.content ?? "",
         input.parentId,
-        input.type ?? "note"
+        input.type ?? "note",
       );
     }),
 
@@ -112,7 +115,7 @@ export const notesRouter = createTRPCRouter({
         fileName: z.string(),
         mimeType: z.string(),
         base64Data: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const buffer = Buffer.from(input.base64Data, "base64");
@@ -120,7 +123,7 @@ export const notesRouter = createTRPCRouter({
         ctx.session,
         input.fileName,
         input.mimeType,
-        buffer
+        buffer,
       );
     }),
 
@@ -135,7 +138,7 @@ export const notesRouter = createTRPCRouter({
           folderColors: z.record(z.string()).optional(),
           files: z.record(z.any()).optional(),
         })
-        .passthrough()
+        .passthrough(),
     )
     .mutation(async ({ ctx, input }) => {
       return await saveWorkspaceMetadata(ctx.session, input);
@@ -144,5 +147,37 @@ export const notesRouter = createTRPCRouter({
   checkScope: protectedProcedure.query(async ({ ctx }) => {
     return await checkDriveScope(ctx.session);
   }),
-});
 
+  listRevisions: protectedProcedure
+    .input(z.object({ fileId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await listNoteRevisions(ctx.session, input.fileId);
+    }),
+
+  getRevisionContent: protectedProcedure
+    .input(z.object({ fileId: z.string(), revisionId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await getNoteRevisionContent(
+        ctx.session,
+        input.fileId,
+        input.revisionId,
+      );
+    }),
+
+  pinRevision: protectedProcedure
+    .input(
+      z.object({
+        fileId: z.string(),
+        revisionId: z.string(),
+        keepForever: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await pinNoteRevision(
+        ctx.session,
+        input.fileId,
+        input.revisionId,
+        input.keepForever,
+      );
+    }),
+});

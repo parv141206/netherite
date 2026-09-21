@@ -24,6 +24,10 @@ import {
   ClipboardCopy,
   AlertTriangle,
   RefreshCw,
+  GitBranch,
+  GitCommit,
+  History,
+  RotateCcw,
 } from "lucide-react";
 import JSZip from "jszip";
 import {
@@ -44,6 +48,23 @@ import {
   CLOUD_CADENCE_CHANGED_EVENT,
   LOCAL_AUTOSAVE_INTERVAL_CHANGED_EVENT,
 } from "~/lib/localDeviceSync";
+import {
+  GIT_ENABLED_KEY,
+  GIT_AUTHOR_NAME_KEY,
+  GIT_AUTHOR_EMAIL_KEY,
+  GIT_AUTO_COMMIT_CADENCE_KEY,
+  GIT_GITHUB_REMOTE_URL_KEY,
+  GIT_GITHUB_PAT_KEY,
+  GIT_GITHUB_BRANCH_KEY,
+  DRIVE_REVISIONS_ENABLED_KEY,
+  DRIVE_KEEP_MILESTONES_FOREVER_KEY,
+  GIT_SETTINGS_CHANGED_EVENT,
+  getGitRepoStats,
+  resetGitRepository,
+  pushToGitHub,
+  type GitCadence,
+  type GitRepoStats,
+} from "~/lib/gitEngine";
 import { api } from "~/trpc/react";
 import {
   useTheme,
@@ -205,6 +226,234 @@ export function SettingsModal({
   const [deviceSyncProgress, setDeviceSyncProgress] = useState<string | null>(
     null,
   );
+
+  // Version Control & Git settings state
+  const [gitEnabled, setGitEnabled] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const val = localStorage.getItem(GIT_ENABLED_KEY);
+      return val === null ? true : val === "true";
+    }
+    return true;
+  });
+
+  const [gitAuthorName, setGitAuthorName] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return (
+        localStorage.getItem(GIT_AUTHOR_NAME_KEY) ||
+        userSession?.user?.name ||
+        "Netherite User"
+      );
+    }
+    return userSession?.user?.name || "Netherite User";
+  });
+
+  const [gitAuthorEmail, setGitAuthorEmail] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return (
+        localStorage.getItem(GIT_AUTHOR_EMAIL_KEY) ||
+        userSession?.user?.email ||
+        "user@netherite.local"
+      );
+    }
+    return userSession?.user?.email || "user@netherite.local";
+  });
+
+  const [gitCadence, setGitCadence] = useState<GitCadence>(() => {
+    if (typeof window !== "undefined") {
+      const val = localStorage.getItem(GIT_AUTO_COMMIT_CADENCE_KEY);
+      if (val === "periodic" || val === "on-tab-close" || val === "manual") {
+        return val as GitCadence;
+      }
+    }
+    return "on-save";
+  });
+
+  const [driveRevisionsEnabled, setDriveRevisionsEnabled] = useState<boolean>(
+    () => {
+      if (typeof window !== "undefined") {
+        const val = localStorage.getItem(DRIVE_REVISIONS_ENABLED_KEY);
+        return val === null ? true : val === "true";
+      }
+      return true;
+    },
+  );
+
+  const [driveKeepMilestonesForever, setDriveKeepMilestonesForever] =
+    useState<boolean>(() => {
+      if (typeof window !== "undefined") {
+        const val = localStorage.getItem(DRIVE_KEEP_MILESTONES_FOREVER_KEY);
+        return val === null ? true : val === "true";
+      }
+      return true;
+    });
+
+  const [githubRemoteUrl, setGithubRemoteUrl] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(GIT_GITHUB_REMOTE_URL_KEY) || "";
+    }
+    return "";
+  });
+
+  const [githubPat, setGithubPat] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(GIT_GITHUB_PAT_KEY) || "";
+    }
+    return "";
+  });
+
+  const [githubBranch, setGithubBranch] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(GIT_GITHUB_BRANCH_KEY) || "main";
+    }
+    return "main";
+  });
+
+  const [gitStats, setGitStats] = useState<GitRepoStats | null>(null);
+  const [isPushingGit, setIsPushingGit] = useState<boolean>(false);
+  const [gitPushMessage, setGitPushMessage] = useState<string | null>(null);
+  const [gitResetConfirm, setGitResetConfirm] = useState<boolean>(false);
+
+  const handleSetGitEnabled = (val: boolean) => {
+    setGitEnabled(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GIT_ENABLED_KEY, String(val));
+      window.dispatchEvent(
+        new CustomEvent(GIT_SETTINGS_CHANGED_EVENT, {
+          detail: { enabled: val },
+        }),
+      );
+    }
+  };
+
+  const handleSetGitAuthorName = (val: string) => {
+    setGitAuthorName(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GIT_AUTHOR_NAME_KEY, val);
+      window.dispatchEvent(
+        new CustomEvent(GIT_SETTINGS_CHANGED_EVENT, {
+          detail: { authorName: val },
+        }),
+      );
+    }
+  };
+
+  const handleSetGitAuthorEmail = (val: string) => {
+    setGitAuthorEmail(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GIT_AUTHOR_EMAIL_KEY, val);
+      window.dispatchEvent(
+        new CustomEvent(GIT_SETTINGS_CHANGED_EVENT, {
+          detail: { authorEmail: val },
+        }),
+      );
+    }
+  };
+
+  const handleSetGitCadence = (val: GitCadence) => {
+    setGitCadence(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GIT_AUTO_COMMIT_CADENCE_KEY, val);
+      window.dispatchEvent(
+        new CustomEvent(GIT_SETTINGS_CHANGED_EVENT, {
+          detail: { cadence: val },
+        }),
+      );
+    }
+  };
+
+  const handleSetDriveRevisionsEnabled = (val: boolean) => {
+    setDriveRevisionsEnabled(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(DRIVE_REVISIONS_ENABLED_KEY, String(val));
+      window.dispatchEvent(
+        new CustomEvent(GIT_SETTINGS_CHANGED_EVENT, {
+          detail: { driveRevisions: val },
+        }),
+      );
+    }
+  };
+
+  const handleSetDriveKeepMilestonesForever = (val: boolean) => {
+    setDriveKeepMilestonesForever(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(DRIVE_KEEP_MILESTONES_FOREVER_KEY, String(val));
+      window.dispatchEvent(
+        new CustomEvent(GIT_SETTINGS_CHANGED_EVENT, {
+          detail: { keepForever: val },
+        }),
+      );
+    }
+  };
+
+  const handleSetGithubRemoteUrl = (val: string) => {
+    setGithubRemoteUrl(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GIT_GITHUB_REMOTE_URL_KEY, val);
+    }
+  };
+
+  const handleSetGithubPat = (val: string) => {
+    setGithubPat(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GIT_GITHUB_PAT_KEY, val);
+    }
+  };
+
+  const handleSetGithubBranch = (val: string) => {
+    setGithubBranch(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(GIT_GITHUB_BRANCH_KEY, val);
+    }
+  };
+
+  const refreshGitStats = () => {
+    if (typeof window !== "undefined") {
+      getGitRepoStats()
+        .then(setGitStats)
+        .catch(() => null);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      refreshGitStats();
+    }
+  }, [isOpen]);
+
+  const handleResetGitRepo = async () => {
+    setGitResetConfirm(false);
+    const success = await resetGitRepository();
+    if (success) {
+      refreshGitStats();
+      setGitPushMessage("Local Git repository reset successfully.");
+      setTimeout(() => setGitPushMessage(null), 4000);
+    } else {
+      setGitPushMessage("Failed to reset Git repository.");
+    }
+  };
+
+  const handlePushToGithub = async () => {
+    if (!githubRemoteUrl.trim() || !githubPat.trim()) {
+      alert(
+        "Please provide both a GitHub Repository URL and a Personal Access Token.",
+      );
+      return;
+    }
+    setIsPushingGit(true);
+    setGitPushMessage(null);
+    try {
+      const res = await pushToGitHub({
+        url: githubRemoteUrl.trim(),
+        token: githubPat.trim(),
+        branch: githubBranch.trim() || "main",
+      });
+      setGitPushMessage(res.message);
+    } catch (err: any) {
+      setGitPushMessage(err?.message || "Failed to push to GitHub.");
+    } finally {
+      setIsPushingGit(false);
+    }
+  };
 
   const handleStartDeviceFolderPick = async () => {
     setShowOverwriteWarning(false);
@@ -485,7 +734,13 @@ export function SettingsModal({
   };
 
   const [activeTab, setActiveTab] = useState<
-    "appearance" | "editor" | "drive" | "copilot" | "backup" | "shortcuts"
+    | "appearance"
+    | "editor"
+    | "drive"
+    | "git"
+    | "copilot"
+    | "backup"
+    | "shortcuts"
   >("appearance");
 
   if (!isOpen) return null;
@@ -523,6 +778,7 @@ export function SettingsModal({
                 { id: "appearance", label: "Appearance", icon: Monitor },
                 { id: "editor", label: "Editor & Fonts", icon: Type },
                 { id: "drive", label: "Google Drive", icon: HardDrive },
+                { id: "git", label: "Version Control", icon: GitBranch },
                 { id: "copilot", label: "AI & Copilot", icon: Sparkles },
                 { id: "backup", label: "Backup & Restore", icon: Archive },
                 { id: "shortcuts", label: "Shortcuts", icon: Terminal },
@@ -573,6 +829,7 @@ export function SettingsModal({
               {activeTab === "appearance" && "Appearance & Themes"}
               {activeTab === "editor" && "Editor & Typography"}
               {activeTab === "drive" && "Google Drive Storage"}
+              {activeTab === "git" && "Version Control & Git"}
               {activeTab === "copilot" && "Google Gemini AI & MCP"}
               {activeTab === "backup" && "Workspace Backup & Restore"}
               {activeTab === "shortcuts" && "Keyboard Shortcuts"}
@@ -944,6 +1201,334 @@ export function SettingsModal({
               </div>
             )}
 
+            {/* VERSION CONTROL & GIT TAB */}
+            {activeTab === "git" && (
+              <div className="space-y-5">
+                {/* 1. Google Drive Cloud Revisions */}
+                <div className="border-border/60 bg-card space-y-4 rounded-xl border p-4 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-foreground block text-xs font-semibold">
+                        Google Drive Cloud Revisions
+                      </span>
+                      <p className="text-muted-foreground mt-0.5 text-[11px] leading-relaxed">
+                        Automatic cloud checkpoints saved to Google Drive.
+                        Recover past notes from days ago or diff changes.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleSetDriveRevisionsEnabled(!driveRevisionsEnabled)
+                      }
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        driveRevisionsEnabled ? "bg-primary" : "bg-muted"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          driveRevisionsEnabled
+                            ? "translate-x-4"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="border-border/40 flex items-center justify-between border-t pt-3">
+                    <div>
+                      <span className="text-foreground text-xs font-medium">
+                        Keep Milestones Forever
+                      </span>
+                      <p className="text-muted-foreground text-[10px]">
+                        Prevents Google Drive from auto-pruning milestone
+                        revisions after 30 days.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleSetDriveKeepMilestonesForever(
+                          !driveKeepMilestonesForever,
+                        )
+                      }
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        driveKeepMilestonesForever ? "bg-primary" : "bg-muted"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          driveKeepMilestonesForever
+                            ? "translate-x-4"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Client-Side Git Engine */}
+                <div className="border-border/60 bg-card space-y-4 rounded-xl border p-4 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground text-xs font-semibold">
+                          Client-Side Git Engine (Offline)
+                        </span>
+                        <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold">
+                          isomorphic-git
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground mt-0.5 text-[11px] leading-relaxed">
+                        True Git repository stored in browser IndexedDB. Creates
+                        real Git commits with diff history and works 100%
+                        offline.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSetGitEnabled(!gitEnabled)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        gitEnabled ? "bg-primary" : "bg-muted"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          gitEnabled ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {gitEnabled && (
+                    <div className="space-y-4 pt-1">
+                      {/* Author Details */}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <label className="text-muted-foreground block text-[11px] font-medium">
+                            Git Author Name
+                          </label>
+                          <input
+                            type="text"
+                            value={gitAuthorName}
+                            onChange={(e) =>
+                              handleSetGitAuthorName(e.target.value)
+                            }
+                            placeholder="Your Name"
+                            className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-1 focus:outline-hidden"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-muted-foreground block text-[11px] font-medium">
+                            Git Author Email
+                          </label>
+                          <input
+                            type="email"
+                            value={gitAuthorEmail}
+                            onChange={(e) =>
+                              handleSetGitAuthorEmail(e.target.value)
+                            }
+                            placeholder="user@example.com"
+                            className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-1 focus:outline-hidden"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Auto-commit Cadence */}
+                      <div className="space-y-2">
+                        <label className="text-muted-foreground block text-[11px] font-medium">
+                          Git Auto-Commit Trigger
+                        </label>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {[
+                            {
+                              id: "on-save",
+                              label: "On Every Save",
+                              desc: "Commit on save",
+                            },
+                            {
+                              id: "periodic",
+                              label: "Every 10 Mins",
+                              desc: "Periodic batch",
+                            },
+                            {
+                              id: "on-tab-close",
+                              label: "On Tab Close",
+                              desc: "Before exit",
+                            },
+                            {
+                              id: "manual",
+                              label: "Manual Only",
+                              desc: "Only milestones",
+                            },
+                          ].map((cad) => (
+                            <button
+                              key={cad.id}
+                              type="button"
+                              onClick={() =>
+                                handleSetGitCadence(cad.id as GitCadence)
+                              }
+                              className={`flex cursor-pointer flex-col justify-between rounded-lg border p-2 text-left transition-all ${
+                                gitCadence === cad.id
+                                  ? "border-foreground bg-accent text-foreground font-semibold"
+                                  : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                              }`}
+                            >
+                              <span className="text-xs">{cad.label}</span>
+                              <span className="mt-0.5 text-[10px] opacity-70">
+                                {cad.desc}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Git Repository Stats */}
+                      <div className="bg-muted/30 border-border/50 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-primary/15 text-primary flex h-8 w-8 items-center justify-center rounded-lg">
+                            <GitCommit className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <div className="text-foreground text-xs font-semibold">
+                              {gitStats
+                                ? `${gitStats.commitCount} Commits Recorded`
+                                : "Repository Initialized"}
+                            </div>
+                            <div className="text-muted-foreground text-[10px]">
+                              Branch:{" "}
+                              <span className="font-mono">
+                                {gitStats?.branch ?? "main"}
+                              </span>
+                              {gitStats?.lastCommitDate &&
+                                ` • Last commit: ${gitStats.lastCommitDate}`}
+                            </div>
+                          </div>
+                        </div>
+
+                        {!gitResetConfirm ? (
+                          <button
+                            type="button"
+                            onClick={() => setGitResetConfirm(true)}
+                            className="text-muted-foreground cursor-pointer rounded-lg px-2.5 py-1 text-xs transition-colors hover:bg-rose-500/10 hover:text-rose-500"
+                          >
+                            Reset Repository
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => void handleResetGitRepo()}
+                              className="rounded-lg bg-rose-500 px-2.5 py-1 text-xs font-semibold text-white transition-all hover:bg-rose-600"
+                            >
+                              Confirm Reset
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setGitResetConfirm(false)}
+                              className="text-muted-foreground hover:text-foreground rounded-lg px-2 py-1 text-xs"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. GitHub Remote Sync */}
+                <div className="border-border/60 bg-card space-y-4 rounded-xl border p-4 shadow-2xs">
+                  <div>
+                    <span className="text-foreground block text-xs font-semibold">
+                      Remote GitHub Sync (Optional)
+                    </span>
+                    <p className="text-muted-foreground mt-0.5 text-[11px] leading-relaxed">
+                      Optionally push your local Git commit history to a
+                      personal GitHub repository for off-site backup.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground block text-[11px] font-medium">
+                        GitHub Repository URL
+                      </label>
+                      <input
+                        type="url"
+                        value={githubRemoteUrl}
+                        onChange={(e) =>
+                          handleSetGithubRemoteUrl(e.target.value)
+                        }
+                        placeholder="https://github.com/username/my-notes.git"
+                        className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg border px-3 py-1.5 font-mono text-xs focus:ring-1 focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="text-muted-foreground block text-[11px] font-medium">
+                          Personal Access Token (PAT)
+                        </label>
+                        <input
+                          type="password"
+                          value={githubPat}
+                          onChange={(e) => handleSetGithubPat(e.target.value)}
+                          placeholder="ghp_xxxxxxxxxxxx"
+                          className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg border px-3 py-1.5 font-mono text-xs focus:ring-1 focus:outline-hidden"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-muted-foreground block text-[11px] font-medium">
+                          Branch Name
+                        </label>
+                        <input
+                          type="text"
+                          value={githubBranch}
+                          onChange={(e) =>
+                            handleSetGithubBranch(e.target.value)
+                          }
+                          placeholder="main"
+                          className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg border px-3 py-1.5 font-mono text-xs focus:ring-1 focus:outline-hidden"
+                        />
+                      </div>
+                    </div>
+
+                    {gitPushMessage && (
+                      <div className="bg-muted/50 text-foreground border-border/60 rounded-lg border p-2.5 text-xs">
+                        {gitPushMessage}
+                      </div>
+                    )}
+
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => void handlePushToGithub()}
+                        disabled={
+                          isPushingGit ||
+                          !githubRemoteUrl.trim() ||
+                          !githubPat.trim()
+                        }
+                        className="bg-foreground text-background flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {isPushingGit ? (
+                          <>
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                            <span>Pushing to GitHub...</span>
+                          </>
+                        ) : (
+                          <>
+                            <GitBranch className="h-3.5 w-3.5" />
+                            <span>Push to GitHub</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 4. AI & COPILOT TAB */}
             {activeTab === "copilot" && (
               <div className="space-y-5">
@@ -1279,6 +1864,7 @@ export function SettingsModal({
                 <div className="space-y-2 font-mono text-[11px]">
                   {[
                     { key: "Ctrl + S", desc: "Save note or whiteboard" },
+                    { key: "Ctrl + H", desc: "Open Version History & Diffs" },
                     { key: "Ctrl + Alt + Z", desc: "Toggle Zen Mode" },
                     { key: "Ctrl + K", desc: "Open Global Search" },
                     { key: "Ctrl + J", desc: "Toggle Gemini AI Copilot" },

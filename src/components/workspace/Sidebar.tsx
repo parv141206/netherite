@@ -29,6 +29,7 @@ import {
   Activity,
   Download,
   Archive,
+  History,
 } from "lucide-react";
 import JSZip from "jszip";
 import { useTheme } from "~/components/ThemeProvider";
@@ -217,6 +218,7 @@ interface SidebarProps {
   folderToExpand?: string | null;
   activeNoteContent?: string;
   onToast?: (msg: string) => void;
+  onOpenVersionHistory?: (noteId: string, noteTitle: string) => void;
 }
 
 export function Sidebar({
@@ -225,6 +227,7 @@ export function Sidebar({
   activeNoteId,
   activeNoteContent,
   onToast,
+  onOpenVersionHistory,
   onSelectNote,
   onCreateNote,
   onCreateDrawing,
@@ -1813,6 +1816,27 @@ export function Sidebar({
                 >
                   <Download className="text-primary h-3.5 w-3.5" /> Download
                 </button>
+
+                {onOpenVersionHistory && (
+                  <button
+                    onClick={() => {
+                      if (contextMenu.itemId && contextMenu.itemName) {
+                        onOpenVersionHistory(
+                          contextMenu.itemId,
+                          contextMenu.itemName,
+                        );
+                      }
+                      setContextMenu(null);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left"
+                  >
+                    <History className="text-primary h-3.5 w-3.5" /> Version
+                    History
+                    <span className="text-muted-foreground ml-auto font-mono text-[10px]">
+                      Ctrl+H
+                    </span>
+                  </button>
+                )}
 
                 <div className="bg-border my-1 h-[1px]" />
 

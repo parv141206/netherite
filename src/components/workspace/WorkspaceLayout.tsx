@@ -23,6 +23,7 @@ import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
 import { DiffSidebar } from "./DiffSidebar";
 import { SyncModal } from "./SyncModal";
+import { VersionHistoryModal } from "./VersionHistoryModal";
 import { MobileBottomBar } from "./MobileBottomBar";
 import { MobileLibraryScreen } from "./MobileLibraryScreen";
 import {
@@ -56,6 +57,7 @@ import {
   idbDeleteDoc,
   idbSaveSnapshot,
 } from "~/lib/storageEngine";
+import { commitNote, isGitEnabled, getGitCadence } from "~/lib/gitEngine";
 import { LandingPage } from "~/components/landing/LandingPage";
 import { ConfirmDeleteModal, type DeleteTarget } from "./ConfirmDeleteModal";
 import { CreateDiagramModal } from "./CreateDiagramModal";
@@ -196,6 +198,11 @@ export function WorkspaceLayout({
     }
   }, [mobileScreen]);
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyModalTarget, setHistoryModalTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [isCreateDiagramModalOpen, setIsCreateDiagramModalOpen] =
     useState(false);
   const [createDiagramParentId, setCreateDiagramParentId] = useState<
@@ -253,6 +260,14 @@ export function WorkspaceLayout({
       ) {
         e.preventDefault();
         toggleDiffSidebar();
+      } else if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "h" &&
+        !e.shiftKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        setIsHistoryModalOpen(true);
       } else if (
         (e.ctrlKey || e.metaKey) &&
         e.altKey &&
@@ -957,6 +972,17 @@ export function WorkspaceLayout({
 
         // Asynchronously mirror to local device directory handle if enabled
         void syncSingleNoteToDevice(fileId, savedContent, localNotes);
+
+        // Asynchronously commit to local Git engine if enabled and cadence is 'on-save'
+        if (isGitEnabled() && getGitCadence() === "on-save") {
+          const item = localNotes.find((n) => n.id === fileId);
+          void commitNote({
+            fileId,
+            fileName: item?.name,
+            content: savedContent,
+            message: `Update ${item?.name || "note"}`,
+          });
+        }
       } catch (err) {
         console.warn("Storage sync error on save:", err);
       }
@@ -1226,6 +1252,14 @@ export function WorkspaceLayout({
           const item = localNotesRef.current.find((n) => n.id === activeId);
           if (saveDocumentRef.current) {
             void saveDocumentRef.current(activeId, content, item);
+          }
+          if (isGitEnabled() && getGitCadence() === "on-tab-close") {
+            void commitNote({
+              fileId: activeId,
+              fileName: item?.name,
+              content,
+              message: `Tab closed: ${item?.name || "note"}`,
+            });
           }
         }
       }
@@ -2757,6 +2791,88 @@ export function WorkspaceLayout({
     URL.revokeObjectURL(url);
   };
 
+  const handleOpenHistory = useCallback(
+    (targetNoteId?: string, targetNoteTitle?: string) => {
+      if (targetNoteId && targetNoteTitle) {
+        setHistoryModalTarget({ id: targetNoteId, title: targetNoteTitle });
+      } else if (activeTabId && currentNote) {
+        setHistoryModalTarget({ id: activeTabId, title: currentNote.name });
+      } else if (localNotes.length > 0) {
+        const first = localNotes.find(
+          (n) => n.mimeType !== "application/vnd.google-apps.folder",
+        );
+        if (first) {
+          setHistoryModalTarget({ id: first.id, title: first.name });
+        }
+      }
+      setIsHistoryModalOpen(true);
+    },
+    [activeTabId, currentNote, localNotes],
+  );
+
+  const handleRestoreFromHistory = useCallback(
+    async (restoredContent: string) => {
+      const targetId = historyModalTarget?.id || activeTabId;
+      if (!targetId) return;
+
+      if (targetId === activeTabId) {
+        setNoteContent(restoredContent);
+        unsavedRef.current = true;
+        setContentRevision((r) => r + 1);
+
+        if (
+          activeEditorRef.current &&
+          !activeEditorRef.current.isDestroyed &&
+          activeEditorRef.current.view
+        ) {
+          try {
+            activeEditorRef.current.commands?.setContent(restoredContent, {
+              emitUpdate: false,
+            });
+          } catch {}
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        safeLocalStorageSet(`netherite_draft_${targetId}`, restoredContent);
+        void idbSetDoc(`netherite_draft_${targetId}`, restoredContent);
+      }
+
+      const item = localNotes.find((n) => n.id === targetId);
+      if (saveDocumentRef.current) {
+        await saveDocumentRef.current(targetId, restoredContent, item);
+      }
+      showToast("Historical snapshot restored and saved to Google Drive");
+    },
+    [historyModalTarget, activeTabId, localNotes, showToast],
+  );
+
+  // Periodic Git auto-commit if cadence is set to 'periodic'
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const interval = setInterval(
+      () => {
+        if (!isGitEnabled() || getGitCadence() !== "periodic") return;
+        if (!activeTabId || !unsavedRef.current) return;
+
+        const item = localNotesRef.current.find((n) => n.id === activeTabId);
+        const content = noteContentRef.current;
+        if (item && content) {
+          void commitNote({
+            fileId: activeTabId,
+            fileName: item.name,
+            content,
+            message: `Periodic checkpoint: ${item.name}`,
+          });
+        }
+      },
+      10 * 60 * 1000,
+    );
+
+    return () => clearInterval(interval);
+  }, [activeTabId]);
+
   // Unauthenticated Landing Page
   if (!session?.user) {
     return <LandingPage />;
@@ -2771,6 +2887,7 @@ export function WorkspaceLayout({
         activeNoteId={activeTabId}
         activeNoteContent={noteContent}
         onToast={showToast}
+        onOpenVersionHistory={(id, title) => handleOpenHistory(id, title)}
         onSelectNote={(id) => {
           if (isSplitView && activePane === "split") {
             if (!openTabIds.includes(id)) {
@@ -2842,6 +2959,7 @@ export function WorkspaceLayout({
             isSyncing={isSyncing}
             isDiffOpen={isDiffSidebarOpen}
             onToggleDiff={toggleDiffSidebar}
+            onOpenHistory={() => handleOpenHistory()}
             isSplitView={isSplitView}
             onToggleSplitView={() => {
               const next = !isSplitView;
@@ -3980,6 +4098,27 @@ export function WorkspaceLayout({
         }}
         isSyncing={isSyncing}
       />
+
+      {/* Version History Modal (Git & Google Drive Revisions) */}
+      {isHistoryModalOpen && (
+        <VersionHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={() => {
+            setIsHistoryModalOpen(false);
+            setHistoryModalTarget(null);
+          }}
+          noteId={historyModalTarget?.id || activeTabId || ""}
+          noteTitle={
+            historyModalTarget?.title || currentNote?.name || "Untitled.md"
+          }
+          currentContent={
+            (historyModalTarget?.id || activeTabId) === activeTabId
+              ? noteContent
+              : ""
+          }
+          onRestoreContent={handleRestoreFromHistory}
+        />
+      )}
 
       {/* Create Architecture & UML Diagram Modal */}
       <CreateDiagramModal

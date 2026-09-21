@@ -2,9 +2,15 @@ import { google } from "googleapis";
 import { Readable } from "stream";
 
 // In-memory cache for folder IDs to eliminate redundant Drive queries (5 min TTL)
-const folderIdCache = new Map<string, { folderId: string; expiresAt: number }>();
+const folderIdCache = new Map<
+  string,
+  { folderId: string; expiresAt: number }
+>();
 // In-memory cache for resolved Netherite folder tree IDs (3 min TTL)
-const folderTreeCache = new Map<string, { folderIds: string[]; expiresAt: number }>();
+const folderTreeCache = new Map<
+  string,
+  { folderIds: string[]; expiresAt: number }
+>();
 
 function getCachedFolderId(key: string): string | null {
   const entry = folderIdCache.get(key);
@@ -70,12 +76,14 @@ export async function getDriveClient(session: any) {
   const refreshToken = session?.refreshToken;
 
   if (!accessToken && !refreshToken) {
-    throw new Error("No Google account linked or missing access token in session");
+    throw new Error(
+      "No Google account linked or missing access token in session",
+    );
   }
 
   const oauth2Client = new google.auth.OAuth2(
     googleClientId,
-    googleClientSecret
+    googleClientSecret,
   );
 
   oauth2Client.setCredentials({
@@ -154,7 +162,11 @@ export async function ensureAssetsFolder(session: any): Promise<string> {
   return newId;
 }
 
-async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 600): Promise<T> {
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+  delayMs = 600,
+): Promise<T> {
   let attempt = 0;
   while (attempt <= retries) {
     try {
@@ -162,11 +174,16 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 600): P
     } catch (err: any) {
       const errMsg = String(err?.message || err || "");
       if (errMsg.includes("invalid_grant")) {
-        throw new Error("Google authorization expired or revoked. Please sign out and sign in again.");
+        throw new Error(
+          "Google authorization expired or revoked. Please sign out and sign in again.",
+        );
       }
       attempt++;
       if (attempt > retries) throw err;
-      console.warn(`Drive API call transient error (attempt ${attempt}/${retries}):`, errMsg);
+      console.warn(
+        `Drive API call transient error (attempt ${attempt}/${retries}):`,
+        errMsg,
+      );
       await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
   }
@@ -191,7 +208,9 @@ export interface WorkspaceMetadata {
   [key: string]: any;
 }
 
-export async function getWorkspaceMetadata(session: any): Promise<WorkspaceMetadata> {
+export async function getWorkspaceMetadata(
+  session: any,
+): Promise<WorkspaceMetadata> {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
     const rootFolderId = await ensureNetheriteFolder(session);
@@ -202,7 +221,11 @@ export async function getWorkspaceMetadata(session: any): Promise<WorkspaceMetad
       spaces: "drive",
     });
 
-    if (!res.data.files || res.data.files.length === 0 || !res.data.files[0]?.id) {
+    if (
+      !res.data.files ||
+      res.data.files.length === 0 ||
+      !res.data.files[0]?.id
+    ) {
       return { version: 1, folderColors: {}, files: {} };
     }
 
@@ -210,9 +233,12 @@ export async function getWorkspaceMetadata(session: any): Promise<WorkspaceMetad
     try {
       const fileRes = await drive.files.get(
         { fileId, alt: "media" },
-        { responseType: "text" }
+        { responseType: "text" },
       );
-      const data = typeof fileRes.data === "string" ? JSON.parse(fileRes.data) : fileRes.data;
+      const data =
+        typeof fileRes.data === "string"
+          ? JSON.parse(fileRes.data)
+          : fileRes.data;
       return { version: 1, folderColors: {}, files: {}, ...data };
     } catch (err) {
       console.warn("Failed to parse .netherite.json:", err);
@@ -223,7 +249,7 @@ export async function getWorkspaceMetadata(session: any): Promise<WorkspaceMetad
 
 export async function saveWorkspaceMetadata(
   session: any,
-  metadata: Partial<WorkspaceMetadata>
+  metadata: Partial<WorkspaceMetadata>,
 ): Promise<{ success: boolean; id?: string }> {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
@@ -234,7 +260,10 @@ export async function saveWorkspaceMetadata(
     const merged = {
       ...existing,
       ...metadata,
-      folderColors: { ...(existing.folderColors ?? {}), ...(metadata.folderColors ?? {}) },
+      folderColors: {
+        ...(existing.folderColors ?? {}),
+        ...(metadata.folderColors ?? {}),
+      },
       files: { ...(existing.files ?? {}), ...(metadata.files ?? {}) },
       updatedAt: new Date().toISOString(),
     };
@@ -274,20 +303,24 @@ export async function saveWorkspaceMetadata(
   });
 }
 
-
-export async function checkDriveScope(session: any): Promise<{ hasFullDriveScope: boolean; scopes: string[] }> {
+export async function checkDriveScope(
+  session: any,
+): Promise<{ hasFullDriveScope: boolean; scopes: string[] }> {
   try {
     const token = session?.accessToken;
     if (!token) return { hasFullDriveScope: false, scopes: [] };
     const oauth2Client = new google.auth.OAuth2(
       process.env.AUTH_GOOGLE_ID,
-      process.env.AUTH_GOOGLE_SECRET
+      process.env.AUTH_GOOGLE_SECRET,
     );
     oauth2Client.setCredentials({ access_token: token });
     const tokenInfo = await oauth2Client.getTokenInfo(token);
     const scopes: string[] = tokenInfo.scopes ?? [];
     const hasFullDriveScope = scopes.some(
-      (s) => s.includes("auth/drive") && !s.endsWith("drive.file") && !s.endsWith("drive.appdata")
+      (s) =>
+        s.includes("auth/drive") &&
+        !s.endsWith("drive.file") &&
+        !s.endsWith("drive.appdata"),
     );
     return { hasFullDriveScope, scopes };
   } catch (err) {
@@ -302,7 +335,7 @@ export async function checkDriveScope(session: any): Promise<{ hasFullDriveScope
 async function fetchAllDriveFiles(
   drive: any,
   query: string,
-  fields = "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)"
+  fields = "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
 ): Promise<any[]> {
   const all: any[] = [];
   let pageToken: string | undefined = undefined;
@@ -332,9 +365,13 @@ export async function listNotes(session: any) {
       fetchAllDriveFiles(
         drive,
         "trashed=false and mimeType='application/vnd.google-apps.folder'",
-        "nextPageToken, files(id, name, mimeType, modifiedTime, parents)"
+        "nextPageToken, files(id, name, mimeType, modifiedTime, parents)",
       ),
-      getWorkspaceMetadata(session).catch(() => ({ version: 1, folderColors: {}, files: {} })),
+      getWorkspaceMetadata(session).catch(() => ({
+        version: 1,
+        folderColors: {},
+        files: {},
+      })),
     ]);
 
     // Discover all Netherite root folders (handles multiple user-created roots seamlessly)
@@ -352,7 +389,9 @@ export async function listNotes(session: any) {
       for (const folder of allFolders) {
         if (!folder.id || netheriteFolderIds.has(folder.id)) continue;
         if (folder.name?.toLowerCase() === "assets") continue;
-        const isChild = folder.parents?.some((p: string) => netheriteFolderIds.has(p));
+        const isChild = folder.parents?.some((p: string) =>
+          netheriteFolderIds.has(p),
+        );
         if (isChild) {
           netheriteFolderIds.add(folder.id);
           addedNew = true;
@@ -372,12 +411,14 @@ export async function listNotes(session: any) {
       const chunkFiles = await fetchAllDriveFiles(
         drive,
         `trashed=false and (${parentClause}) and mimeType!='application/vnd.google-apps.folder'`,
-        "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)"
+        "nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, parents, properties)",
       );
       rawFiles.push(...chunkFiles);
     }
 
-    const updatedFilesMeta: Record<string, FileMetadata> = { ...(existingMeta.files ?? {}) };
+    const updatedFilesMeta: Record<string, FileMetadata> = {
+      ...(existingMeta.files ?? {}),
+    };
     let metadataNeedsSave = false;
     const backgroundUpdates: Array<Promise<any>> = [];
 
@@ -394,7 +435,8 @@ export async function listNotes(session: any) {
     for (const f of allFolders) {
       if (!f.id || !f.name) continue;
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
-      if (f.id === rootFolderId || f.name.toLowerCase() === "netherite") continue;
+      if (f.id === rootFolderId || f.name.toLowerCase() === "netherite")
+        continue;
       if (!netheriteFolderIds.has(f.id)) continue;
 
       const folderMime = f.mimeType ?? "application/vnd.google-apps.folder";
@@ -427,7 +469,9 @@ export async function listNotes(session: any) {
       if (f.name.startsWith(".") || f.name.toLowerCase() === "assets") continue;
 
       // Ensure file parent belongs to Netherite
-      const isInsideNetherite = f.parents?.some((p: string) => netheriteFolderIds.has(p));
+      const isInsideNetherite = f.parents?.some((p: string) =>
+        netheriteFolderIds.has(p),
+      );
       if (!isInsideNetherite) continue;
 
       const isImage =
@@ -461,23 +505,30 @@ export async function listNotes(session: any) {
 
       if (isImage) {
         displayName = f.name;
-      } else if (!isDrawing && !isUml && !isMermaid && !displayName.endsWith(".md")) {
+      } else if (
+        !isDrawing &&
+        !isUml &&
+        !isMermaid &&
+        !displayName.endsWith(".md")
+      ) {
         // Auto-normalize text documents while preserving other code formats
         if (/\.(txt|markdown|text)$/i.test(displayName)) {
           const cleanBase = displayName.replace(/\.(txt|markdown|text)$/i, "");
           const normalizedName = `${cleanBase}.md`;
           displayName = normalizedName;
           backgroundUpdates.push(
-            drive.files.update({
-              fileId: f.id,
-              requestBody: {
-                name: normalizedName,
-                properties: {
-                  netheriteType: "note",
-                  netheriteManaged: "true",
+            drive.files
+              .update({
+                fileId: f.id,
+                requestBody: {
+                  name: normalizedName,
+                  properties: {
+                    netheriteType: "note",
+                    netheriteManaged: "true",
+                  },
                 },
-              },
-            }).catch(() => {})
+              })
+              .catch(() => {}),
           );
         } else if (!displayName.includes(".")) {
           // If no extension was provided in Drive, treat as .md note
@@ -485,27 +536,37 @@ export async function listNotes(session: any) {
         }
       } else if (!f.properties?.netheriteManaged) {
         backgroundUpdates.push(
-          drive.files.update({
-            fileId: f.id,
-            requestBody: {
-              properties: {
-                netheriteType: isDrawing ? "drawing" : isUml ? "uml" : isMermaid ? "mermaid" : isImage ? "image" : "note",
-                netheriteManaged: "true",
+          drive.files
+            .update({
+              fileId: f.id,
+              requestBody: {
+                properties: {
+                  netheriteType: isDrawing
+                    ? "drawing"
+                    : isUml
+                      ? "uml"
+                      : isMermaid
+                        ? "mermaid"
+                        : isImage
+                          ? "image"
+                          : "note",
+                  netheriteManaged: "true",
+                },
               },
-            },
-          }).catch(() => {})
+            })
+            .catch(() => {}),
         );
       }
 
       const effectiveMimeType = isImage
-        ? f.mimeType ?? "image/png"
+        ? (f.mimeType ?? "image/png")
         : isDrawing
-        ? "application/vnd.excalidraw+json"
-        : isUml
-        ? "application/vnd.apollon+json"
-        : isMermaid
-        ? "text/vnd.mermaid"
-        : "text/markdown";
+          ? "application/vnd.excalidraw+json"
+          : isUml
+            ? "application/vnd.apollon+json"
+            : isMermaid
+              ? "text/vnd.mermaid"
+              : "text/markdown";
 
       itemsToReturn.push({
         id: f.id,
@@ -520,9 +581,18 @@ export async function listNotes(session: any) {
           id: f.id,
           name: displayName,
           mimeType: effectiveMimeType,
-          type: isImage ? "image" : isDrawing ? "drawing" : isUml ? "uml" : isMermaid ? "mermaid" : "note",
+          type: isImage
+            ? "image"
+            : isDrawing
+              ? "drawing"
+              : isUml
+                ? "uml"
+                : isMermaid
+                  ? "mermaid"
+                  : "note",
           parentId: f.parents?.[0] ?? rootFolderId,
-          createdAt: f.createdTime ?? f.modifiedTime ?? new Date().toISOString(),
+          createdAt:
+            f.createdTime ?? f.modifiedTime ?? new Date().toISOString(),
           updatedAt: f.modifiedTime ?? new Date().toISOString(),
         };
         metadataNeedsSave = true;
@@ -530,9 +600,14 @@ export async function listNotes(session: any) {
     }
 
     if (metadataNeedsSave) {
-      saveWorkspaceMetadata(session, { files: updatedFilesMeta }).catch((saveMetaErr) => {
-        console.warn("Failed to persist auto-generated workspace metadata:", saveMetaErr);
-      });
+      saveWorkspaceMetadata(session, { files: updatedFilesMeta }).catch(
+        (saveMetaErr) => {
+          console.warn(
+            "Failed to persist auto-generated workspace metadata:",
+            saveMetaErr,
+          );
+        },
+      );
     }
 
     // Fire off non-critical property updates without delaying user response
@@ -553,7 +628,9 @@ export async function deepSyncAndRepairWorkspace(session: any) {
   const rootFolderId = await ensureNetheriteFolder(session);
   await ensureAssetsFolder(session);
   const notes = await listNotes(session);
-  const totalFolders = notes.filter((n) => n.mimeType === "application/vnd.google-apps.folder").length;
+  const totalFolders = notes.filter(
+    (n) => n.mimeType === "application/vnd.google-apps.folder",
+  ).length;
   const totalFiles = notes.length - totalFolders;
 
   return {
@@ -566,7 +643,11 @@ export async function deepSyncAndRepairWorkspace(session: any) {
   };
 }
 
-export async function createSubfolder(session: any, name: string, parentId?: string) {
+export async function createSubfolder(
+  session: any,
+  name: string,
+  parentId?: string,
+) {
   folderTreeCache.delete(getUserKey(session));
 
   const drive = await getDriveClient(session);
@@ -584,9 +665,13 @@ export async function createSubfolder(session: any, name: string, parentId?: str
   return res.data;
 }
 
-export async function moveItem(session: any, fileId: string, targetFolderId: string) {
+export async function moveItem(
+  session: any,
+  fileId: string,
+  targetFolderId: string,
+) {
   const drive = await getDriveClient(session);
-  
+
   const file = await drive.files.get({
     fileId,
     fields: "parents",
@@ -609,7 +694,7 @@ export async function getNoteContent(session: any, fileId: string) {
       // Direct media get is 2x faster than querying metadata first
       const res = await drive.files.get(
         { fileId, alt: "media" },
-        { responseType: "text" }
+        { responseType: "text" },
       );
       if (typeof res.data === "object" && res.data !== null) {
         return JSON.stringify(res.data);
@@ -617,18 +702,25 @@ export async function getNoteContent(session: any, fileId: string) {
       return (res.data as string) ?? "";
     } catch (error: any) {
       // Fallback for Google Docs formats that require export
-      if (error?.message?.includes("export") || error?.code === 403 || error?.code === 400) {
+      if (
+        error?.message?.includes("export") ||
+        error?.code === 403 ||
+        error?.code === 400
+      ) {
         try {
           const exportRes = await drive.files.export(
             { fileId, mimeType: "text/plain" },
-            { responseType: "text" }
+            { responseType: "text" },
           );
           return (exportRes.data as string) ?? "";
         } catch {
           return "";
         }
       }
-      console.error(`Error in getNoteContent for ${fileId}:`, error?.message || error);
+      console.error(
+        `Error in getNoteContent for ${fileId}:`,
+        error?.message || error,
+      );
       return "";
     }
   });
@@ -637,7 +729,10 @@ export async function getNoteContent(session: any, fileId: string) {
 export async function saveNote(session: any, fileId: string, content: string) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
-    const meta = await drive.files.get({ fileId, fields: "id, name, mimeType" });
+    const meta = await drive.files.get({
+      fileId,
+      fields: "id, name, mimeType",
+    });
     const isDrawing =
       meta.data.name?.endsWith(".excalidraw") ||
       meta.data.mimeType === "application/vnd.excalidraw+json";
@@ -649,8 +744,8 @@ export async function saveNote(session: any, fileId: string, content: string) {
     const mimeType = isDrawing
       ? "application/vnd.excalidraw+json"
       : isUml
-      ? "application/vnd.apollon+json"
-      : "text/markdown";
+        ? "application/vnd.apollon+json"
+        : "text/markdown";
 
     await drive.files.update({
       fileId,
@@ -676,8 +771,8 @@ export async function getResumableUploadSession(session: any, fileId: string) {
   const mimeType = isDrawing
     ? "application/vnd.excalidraw+json"
     : isUml
-    ? "application/vnd.apollon+json"
-    : "text/markdown";
+      ? "application/vnd.apollon+json"
+      : "text/markdown";
 
   const s = session as SessionLike | null | undefined;
   const accessToken = s?.accessToken;
@@ -685,7 +780,7 @@ export async function getResumableUploadSession(session: any, fileId: string) {
 
   const oauth2Client = new google.auth.OAuth2(
     process.env.AUTH_GOOGLE_ID,
-    process.env.AUTH_GOOGLE_SECRET
+    process.env.AUTH_GOOGLE_SECRET,
   );
   oauth2Client.setCredentials({
     access_token: accessToken,
@@ -711,13 +806,15 @@ export async function getResumableUploadSession(session: any, fileId: string) {
       body: JSON.stringify({
         mimeType,
       }),
-    }
+    },
   );
 
   const uploadUrl = res.headers.get("location");
   if (!uploadUrl) {
     const errText = await res.text();
-    throw new Error(`Failed to initiate Google Drive upload session: ${res.status} ${errText}`);
+    throw new Error(
+      `Failed to initiate Google Drive upload session: ${res.status} ${errText}`,
+    );
   }
 
   return { uploadUrl, mimeType };
@@ -728,15 +825,18 @@ export async function createNote(
   name: string,
   content: string = "",
   parentId?: string,
-  type: "note" | "drawing" | "uml" | "mermaid" | "tikz" = "note"
+  type: "note" | "drawing" | "uml" | "mermaid" | "tikz" = "note",
 ) {
   const drive = await getDriveClient(session);
   const folderId = parentId || (await ensureNetheriteFolder(session));
 
   const isDrawing = type === "drawing" || name.endsWith(".excalidraw");
-  const isUml = type === "uml" || name.endsWith(".apollon") || name.endsWith(".uml");
-  const isMermaid = type === "mermaid" || name.endsWith(".mmd") || name.endsWith(".mermaid");
-  const isTikz = type === "tikz" || name.endsWith(".tikz") || name.endsWith(".tex");
+  const isUml =
+    type === "uml" || name.endsWith(".apollon") || name.endsWith(".uml");
+  const isMermaid =
+    type === "mermaid" || name.endsWith(".mmd") || name.endsWith(".mermaid");
+  const isTikz =
+    type === "tikz" || name.endsWith(".tikz") || name.endsWith(".tex");
 
   let cleanName = name;
   let finalName = name;
@@ -771,28 +871,31 @@ export async function createNote(
           version: 2,
           source: "netherite",
           elements: [],
-          appState: { viewBackgroundColor: "#ffffff", currentItemFontFamily: 1 },
+          appState: {
+            viewBackgroundColor: "#ffffff",
+            currentItemFontFamily: 1,
+          },
           files: {},
         })
       : isUml && !content
-      ? JSON.stringify(
-          {
-            version: "4.2.0",
-            id: `uml-${Date.now()}`,
-            title: cleanName,
-            type: "ClassDiagram",
-            nodes: [],
-            edges: [],
-            assessments: {},
-          },
-          null,
-          2
-        )
-      : isMermaid && !content
-      ? `flowchart TD\n  Start([Start]) --> Process[Process Request]\n  Process --> Decision{Is Valid?}\n  Decision -- Yes --> Success[Operation Complete]\n  Decision -- No --> Error[Handle Error]\n  Success --> End([Finish])\n  Error --> End`
-      : isTikz && !content
-      ? `\\begin{tikzpicture}[node distance=2cm, auto, >=stealth]\n  \\node [circle, draw=blue!80, fill=blue!10, thick] (A) {Input};\n  \\node [rectangle, draw=purple!80, fill=purple!10, thick, right of=A, node distance=3cm] (B) {Processing};\n  \\node [circle, draw=green!80, fill=green!10, thick, right of=B, node distance=3cm] (C) {Output};\n  \\path [->, thick] (A) edge node {x} (B);\n  \\path [->, thick] (B) edge node {f(x)} (C);\n\\end{tikzpicture}`
-      : content;
+        ? JSON.stringify(
+            {
+              version: "4.2.0",
+              id: `uml-${Date.now()}`,
+              title: cleanName,
+              type: "ClassDiagram",
+              nodes: [],
+              edges: [],
+              assessments: {},
+            },
+            null,
+            2,
+          )
+        : isMermaid && !content
+          ? `flowchart TD\n  Start([Start]) --> Process[Process Request]\n  Process --> Decision{Is Valid?}\n  Decision -- Yes --> Success[Operation Complete]\n  Decision -- No --> Error[Handle Error]\n  Success --> End([Finish])\n  Error --> End`
+          : isTikz && !content
+            ? `\\begin{tikzpicture}[node distance=2cm, auto, >=stealth]\n  \\node [circle, draw=blue!80, fill=blue!10, thick] (A) {Input};\n  \\node [rectangle, draw=purple!80, fill=purple!10, thick, right of=A, node distance=3cm] (B) {Processing};\n  \\node [circle, draw=green!80, fill=green!10, thick, right of=B, node distance=3cm] (C) {Output};\n  \\path [->, thick] (A) edge node {x} (B);\n  \\path [->, thick] (B) edge node {f(x)} (C);\n\\end{tikzpicture}`
+            : content;
 
   const res = await drive.files.create({
     requestBody: {
@@ -810,10 +913,18 @@ export async function createNote(
   return res.data;
 }
 
-export async function renameNote(session: any, fileId: string, newName: string) {
+export async function renameNote(
+  session: any,
+  fileId: string,
+  newName: string,
+) {
   const drive = await getDriveClient(session);
-  const fileMeta = await drive.files.get({ fileId, fields: "id, name, mimeType" });
-  const isFolder = fileMeta.data.mimeType === "application/vnd.google-apps.folder";
+  const fileMeta = await drive.files.get({
+    fileId,
+    fields: "id, name, mimeType",
+  });
+  const isFolder =
+    fileMeta.data.mimeType === "application/vnd.google-apps.folder";
   const isDrawing =
     fileMeta.data.name?.endsWith(".excalidraw") ||
     fileMeta.data.mimeType === "application/vnd.excalidraw+json";
@@ -867,7 +978,7 @@ export async function uploadAsset(
   session: any,
   fileName: string,
   mimeType: string,
-  buffer: Buffer
+  buffer: Buffer,
 ) {
   const drive = await getDriveClient(session);
   const assetsFolderId = await ensureAssetsFolder(session);
@@ -919,7 +1030,7 @@ export async function getImageAsset(session: any, fileId: string) {
 
     const res = await drive.files.get(
       { fileId, alt: "media" },
-      { responseType: "arraybuffer" }
+      { responseType: "arraybuffer" },
     );
 
     const buffer = Buffer.from(res.data as ArrayBuffer);
@@ -971,7 +1082,10 @@ export async function searchNotesContent(session: any, query: string) {
       setCachedFolderTree(userKey, parentIds);
     }
 
-    const parentClause = parentIds.slice(0, 30).map((id) => `'${id}' in parents`).join(" or ");
+    const parentClause = parentIds
+      .slice(0, 30)
+      .map((id) => `'${id}' in parents`)
+      .join(" or ");
     const sanitized = query.replace(/'/g, "\\'");
 
     // Search full-text content in files within Netherite
@@ -989,5 +1103,89 @@ export async function searchNotesContent(session: any, query: string) {
       modifiedTime: f.modifiedTime ?? new Date().toISOString(),
       parents: f.parents ?? [],
     }));
+  });
+}
+
+export interface DriveRevisionItem {
+  id: string;
+  modifiedTime: string;
+  size?: string;
+  keepForever?: boolean;
+  originalFilename?: string;
+  mimeType?: string;
+}
+
+export async function listNoteRevisions(
+  session: any,
+  fileId: string,
+): Promise<DriveRevisionItem[]> {
+  if (!fileId || fileId.startsWith("temp-")) return [];
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    const res = await drive.revisions.list({
+      fileId,
+      fields:
+        "revisions(id, mimeType, modifiedTime, size, keepForever, originalFilename)",
+      pageSize: 100,
+    });
+    const revisions = res.data.revisions || [];
+    return revisions
+      .map((r) => ({
+        id: r.id || "",
+        modifiedTime: r.modifiedTime || new Date().toISOString(),
+        size: r.size || undefined,
+        keepForever: Boolean(r.keepForever),
+        originalFilename: r.originalFilename || undefined,
+        mimeType: r.mimeType || undefined,
+      }))
+      .filter((r) => Boolean(r.id))
+      .reverse();
+  });
+}
+
+export async function getNoteRevisionContent(
+  session: any,
+  fileId: string,
+  revisionId: string,
+): Promise<string> {
+  if (!fileId || !revisionId) return "";
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    try {
+      const res = await drive.revisions.get(
+        { fileId, revisionId, alt: "media" },
+        { responseType: "text" },
+      );
+      if (typeof res.data === "object" && res.data !== null) {
+        return JSON.stringify(res.data);
+      }
+      return (res.data as string) ?? "";
+    } catch (err: any) {
+      console.error(
+        `Error in getNoteRevisionContent for ${fileId}/${revisionId}:`,
+        err?.message || err,
+      );
+      return "";
+    }
+  });
+}
+
+export async function pinNoteRevision(
+  session: any,
+  fileId: string,
+  revisionId: string,
+  keepForever: boolean,
+): Promise<boolean> {
+  if (!fileId || !revisionId) return false;
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    await drive.revisions.update({
+      fileId,
+      revisionId,
+      requestBody: {
+        keepForever,
+      },
+    });
+    return true;
   });
 }

@@ -26,6 +26,7 @@ import {
   Search,
   RefreshCw,
   GitCompare,
+  History,
   Maximize2,
   Minimize2,
 } from "lucide-react";
@@ -62,6 +63,7 @@ interface HeaderBarProps {
   onToggleOutline?: () => void;
   isDiffOpen?: boolean;
   onToggleDiff?: () => void;
+  onOpenHistory?: () => void;
   isCopilotOpen?: boolean;
   onToggleCopilot?: () => void;
   onOpenGlobalSearch?: () => void;
@@ -92,20 +94,15 @@ export function HeaderBar({
   onToggleOutline,
   isDiffOpen = false,
   onToggleDiff,
+  onOpenHistory,
   isCopilotOpen = false,
   onToggleCopilot,
   onOpenGlobalSearch,
   zenMode = false,
   onToggleZenMode,
 }: HeaderBarProps) {
-  const {
-    theme,
-    setTheme,
-    mdTheme,
-    setMdTheme,
-    globalFont,
-    setGlobalFont,
-  } = useTheme();
+  const { theme, setTheme, mdTheme, setMdTheme, globalFont, setGlobalFont } =
+    useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [warmth, setWarmth] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -171,8 +168,14 @@ export function HeaderBar({
         root.style.setProperty("--sidebar-fg", `rgb(${fgR}, ${fgG}, ${fgB})`);
         root.style.setProperty("--card", `rgb(${cdR}, ${cdG}, ${cdB})`);
         root.style.setProperty("--muted", `rgb(${cdR}, ${cdG}, ${cdB})`);
-        root.style.setProperty("--border", `rgb(${borderR}, ${borderG}, ${borderB})`);
-        root.style.setProperty("--editor-filter", `sepia(${warmth * 0.25}%) hue-rotate(-${warmth * 0.06}deg)`);
+        root.style.setProperty(
+          "--border",
+          `rgb(${borderR}, ${borderG}, ${borderB})`,
+        );
+        root.style.setProperty(
+          "--editor-filter",
+          `sepia(${warmth * 0.25}%) hue-rotate(-${warmth * 0.06}deg)`,
+        );
         root.style.filter = `sepia(${warmth * 0.22}%) hue-rotate(-${warmth * 0.05}deg)`;
       } else {
         // Light mode: cold #fcfcfc -> warm amber parchment
@@ -203,8 +206,14 @@ export function HeaderBar({
         root.style.setProperty("--sidebar-fg", `rgb(${fgR}, ${fgG}, ${fgB})`);
         root.style.setProperty("--card", `rgb(${cdR}, ${cdG}, ${cdB})`);
         root.style.setProperty("--muted", `rgb(${cdR}, ${cdG}, ${cdB})`);
-        root.style.setProperty("--border", `rgb(${borderR}, ${borderG}, ${borderB})`);
-        root.style.setProperty("--editor-filter", `sepia(${warmth * 0.25}%) hue-rotate(-${warmth * 0.06}deg)`);
+        root.style.setProperty(
+          "--border",
+          `rgb(${borderR}, ${borderG}, ${borderB})`,
+        );
+        root.style.setProperty(
+          "--editor-filter",
+          `sepia(${warmth * 0.25}%) hue-rotate(-${warmth * 0.06}deg)`,
+        );
         root.style.filter = `sepia(${warmth * 0.22}%) hue-rotate(-${warmth * 0.05}deg)`;
       }
     }
@@ -230,44 +239,48 @@ export function HeaderBar({
   const safeTitle = typeof noteTitle === "string" ? noteTitle : "";
   const isDrawing = safeTitle.endsWith(".excalidraw");
   const isUml = safeTitle.endsWith(".apollon") || safeTitle.endsWith(".uml");
-  const isMermaid = safeTitle.endsWith(".mmd") || safeTitle.endsWith(".mermaid");
-  const cleanTitle = safeTitle.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i, "");
+  const isMermaid =
+    safeTitle.endsWith(".mmd") || safeTitle.endsWith(".mermaid");
+  const cleanTitle = safeTitle.replace(
+    /\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i,
+    "",
+  );
 
   // Zen Mode: render as a sleek, unobtrusive floating pill at bottom right so it NEVER covers top toolbars (Excalidraw, diagrams, etc.)
   if (zenMode) {
     return (
       <aside
         aria-label="Zen mode floating controls"
-        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 hover:bg-background backdrop-blur-md border border-border/80 shadow-xl select-none text-xs opacity-75 hover:opacity-100 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200"
+        className="bg-background/90 hover:bg-background border-border/80 animate-in fade-in slide-in-from-bottom-2 fixed right-4 bottom-4 z-40 flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs opacity-75 shadow-xl backdrop-blur-md transition-all duration-200 select-none hover:opacity-100"
       >
         {cleanTitle && (
-          <div className="flex items-center gap-1.5 min-w-0 max-w-[140px] text-muted-foreground">
+          <div className="text-muted-foreground flex max-w-[140px] min-w-0 items-center gap-1.5">
             {isDrawing ? (
-              <Palette className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <Palette className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
             ) : isUml ? (
-              <Network className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+              <Network className="h-3.5 w-3.5 shrink-0 text-purple-500" />
             ) : isMermaid ? (
-              <Workflow className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
             ) : (
-              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <FileText className="h-3.5 w-3.5 shrink-0" />
             )}
-            <span className="truncate font-medium text-foreground text-xs">
+            <span className="text-foreground truncate text-xs font-medium">
               {cleanTitle}
             </span>
           </div>
         )}
 
-        {cleanTitle && <div className="h-3 w-px bg-border/80 shrink-0" />}
+        {cleanTitle && <div className="bg-border/80 h-3 w-px shrink-0" />}
 
         {onToggleZenMode && (
           <button
             onClick={onToggleZenMode}
-            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent/80 hover:bg-accent text-foreground text-[11px] font-medium transition-colors cursor-pointer"
+            className="bg-accent/80 hover:bg-accent text-foreground flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors"
             title="Exit Zen Mode (Esc or Ctrl+Alt+Z)"
           >
-            <Minimize2 className="w-3 h-3 text-primary" />
+            <Minimize2 className="text-primary h-3 w-3" />
             <span>Exit Zen</span>
-            <kbd className="text-[9px] font-mono px-1 py-0.2 bg-muted border border-border/50 rounded text-muted-foreground">
+            <kbd className="py-0.2 bg-muted border-border/50 text-muted-foreground rounded border px-1 font-mono text-[9px]">
               Esc
             </kbd>
           </button>
@@ -278,97 +291,103 @@ export function HeaderBar({
 
   return (
     <header
-      className="h-11 border-b border-border/40 bg-background/80 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between gap-3 sticky top-0 z-40 select-none shrink-0"
+      className="border-border/40 bg-background/80 sticky top-0 z-40 flex h-11 shrink-0 items-center justify-between gap-3 border-b px-3 backdrop-blur-md select-none sm:px-4"
       data-tauri-drag-region
     >
       {/* Native Apple Notes-Style Mobile Top Bar (Single Row, Zero Clutter) */}
-      <div className="sm:hidden flex items-center justify-between w-full min-w-0">
+      <div className="flex w-full min-w-0 items-center justify-between sm:hidden">
         <button
           onClick={onToggleSidebar}
-          className="flex items-center gap-0.5 text-foreground hover:text-foreground/80 font-medium text-xs py-1 px-1.5 -ml-1.5 rounded-lg active:scale-95 transition-all shrink-0 cursor-pointer"
+          className="text-foreground hover:text-foreground/80 -ml-1.5 flex shrink-0 cursor-pointer items-center gap-0.5 rounded-lg px-1.5 py-1 text-xs font-medium transition-all active:scale-95"
           title="Open Notes Library"
           type="button"
         >
-          <ChevronLeft className="w-4 h-4 text-primary" />
-          <span className="font-semibold text-primary">Notes</span>
+          <ChevronLeft className="text-primary h-4 w-4" />
+          <span className="text-primary font-semibold">Notes</span>
         </button>
 
-        <div className="flex items-center gap-1.5 min-w-0 px-2 max-w-[60%]">
+        <div className="flex max-w-[60%] min-w-0 items-center gap-1.5 px-2">
           {isDrawing ? (
-            <Palette className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <Palette className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
           ) : isUml ? (
-            <Network className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+            <Network className="h-3.5 w-3.5 shrink-0 text-purple-500" />
           ) : isMermaid ? (
-            <Workflow className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
           ) : (
-            <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+            <FileText className="text-foreground/70 h-3.5 w-3.5 shrink-0" />
           )}
-          <span className="truncate font-semibold text-foreground text-xs">
+          <span className="text-foreground truncate text-xs font-semibold">
             {cleanTitle || "Netherite"}
           </span>
           <span
-            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${
               isSaving
-                ? "bg-amber-500 animate-ping"
+                ? "animate-ping bg-amber-500"
                 : isDirty
-                ? "bg-amber-400"
-                : "bg-emerald-500"
+                  ? "bg-amber-400"
+                  : "bg-emerald-500"
             }`}
-            title={isSaving ? "Saving..." : isDirty ? "Unsaved changes" : "Synced"}
+            title={
+              isSaving ? "Saving..." : isDirty ? "Unsaved changes" : "Synced"
+            }
           />
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             onClick={() => {
               if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("netherite:open-more-sheet"));
+                window.dispatchEvent(
+                  new CustomEvent("netherite:open-more-sheet"),
+                );
               }
             }}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 active:scale-90 transition-all cursor-pointer"
+            className="text-muted-foreground hover:text-foreground hover:bg-accent/60 cursor-pointer rounded-lg p-1.5 transition-all active:scale-90"
             title="More options"
             type="button"
           >
-            <MoreHorizontal className="w-4.5 h-4.5" />
+            <MoreHorizontal className="h-4.5 w-4.5" />
           </button>
         </div>
       </div>
 
       {/* Desktop Header */}
-      <div className="hidden sm:flex items-center justify-between w-full min-w-0">
+      <div className="hidden w-full min-w-0 items-center justify-between sm:flex">
         {/* Left: Sidebar Toggle & Notion Page Breadcrumb */}
-        <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+        <div className="mr-2 flex min-w-0 flex-1 items-center gap-2">
           <button
             onClick={onToggleSidebar}
-            className={`p-1.5 hover:bg-accent/60 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0 ${
+            className={`hover:bg-accent/60 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-md p-1.5 transition-colors ${
               zenMode || sidebarCollapsed ? "flex" : "flex sm:hidden"
             }`}
             title="Toggle Sidebar"
           >
-            <Menu className="w-4 h-4" />
+            <Menu className="h-4 w-4" />
           </button>
 
           {sidebarCollapsed && (
-            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold mr-1 shrink-0">
-              <NetheriteLogo className="h-5 w-auto text-foreground shrink-0" />
-              <span className="tracking-widest text-[10px] font-extrabold hidden md:inline">NETHERITE</span>
+            <div className="mr-1 hidden shrink-0 items-center gap-2 text-xs font-semibold sm:flex">
+              <NetheriteLogo className="text-foreground h-5 w-auto shrink-0" />
+              <span className="hidden text-[10px] font-extrabold tracking-widest md:inline">
+                NETHERITE
+              </span>
             </div>
           )}
 
           {/* Minimal Notion Breadcrumb or Workspace Title */}
           {cleanTitle ? (
             <>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+              <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
                 {isDrawing ? (
-                  <Palette className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                  <Palette className="h-3.5 w-3.5 shrink-0 text-indigo-500 dark:text-indigo-400" />
                 ) : isUml ? (
-                  <Network className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
+                  <Network className="h-3.5 w-3.5 shrink-0 text-purple-500 dark:text-purple-400" />
                 ) : isMermaid ? (
-                  <Workflow className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                  <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
                 ) : (
-                  <FileText className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+                  <FileText className="text-foreground/70 h-3.5 w-3.5 shrink-0" />
                 )}
-                <span className="truncate font-semibold text-foreground text-xs sm:text-sm max-w-[140px] sm:max-w-[200px] md:max-w-xs lg:max-w-sm">
+                <span className="text-foreground max-w-[140px] truncate text-xs font-semibold sm:max-w-[200px] sm:text-sm md:max-w-xs lg:max-w-sm">
                   {cleanTitle}
                 </span>
               </div>
@@ -377,422 +396,470 @@ export function HeaderBar({
               {!zenMode && (
                 <button
                   onClick={onOpenDiff}
-                  className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-full text-[11px] text-muted-foreground hover:bg-accent/50 transition-colors cursor-pointer shrink-0"
-                  title={isSaving ? "Saving changes..." : isDirty ? `Unsaved changes (${diffSummary || "Modified"})` : "All changes saved to Google Drive"}
+                  className="text-muted-foreground hover:bg-accent/50 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[11px] transition-colors"
+                  title={
+                    isSaving
+                      ? "Saving changes..."
+                      : isDirty
+                        ? `Unsaved changes (${diffSummary || "Modified"})`
+                        : "All changes saved to Google Drive"
+                  }
                 >
                   {isSaving ? (
                     <>
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                      <span className="hidden xl:inline whitespace-nowrap text-amber-500 font-medium">Saving...</span>
+                      <div className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-amber-500" />
+                      <span className="hidden font-medium whitespace-nowrap text-amber-500 xl:inline">
+                        Saving...
+                      </span>
                     </>
                   ) : isDirty ? (
                     <>
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                      <span className="font-mono text-amber-500 font-medium whitespace-nowrap hidden xl:inline">
+                      <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                      <span className="hidden font-mono font-medium whitespace-nowrap text-amber-500 xl:inline">
                         {diffSummary || "Unsaved"}
                       </span>
                     </>
                   ) : (
                     <>
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span className="hidden xl:inline text-muted-foreground/80 whitespace-nowrap">Synced</span>
+                      <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                      <span className="text-muted-foreground/80 hidden whitespace-nowrap xl:inline">
+                        Synced
+                      </span>
                     </>
                   )}
                 </button>
               )}
             </>
           ) : (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-              <span className="font-semibold text-foreground tracking-tight text-xs sm:text-sm">
+            <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+              <span className="text-foreground text-xs font-semibold tracking-tight sm:text-sm">
                 Netherite
               </span>
             </div>
           )}
         </div>
 
-      {/* Right: Whisper-quiet Notion Actions */}
-      <div className="flex items-center gap-1 sm:gap-1.5 relative shrink-0" ref={menuRef} data-tauri-no-drag>
-        {zenMode ? (
-          onToggleZenMode && (
-            <button
-              onClick={onToggleZenMode}
-              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-accent text-foreground hover:bg-accent/80 transition-all cursor-pointer border border-border/60 shadow-2xs shrink-0"
-              title="Exit Zen Mode (Esc or Ctrl+Alt+Z)"
-            >
-              <Minimize2 className="w-3.5 h-3.5 text-primary" />
-              <span className="text-[11px]">Exit Zen</span>
-              <kbd className="hidden sm:inline text-[9px] font-mono px-1 py-0.2 bg-muted/60 border border-border/40 rounded text-muted-foreground">
-                Esc
-              </kbd>
-            </button>
-          )
-        ) : (
-          <>
-            {/* Save Button (prominent only when dirty, like Notion) */}
-            {cleanTitle && isDirty && (
-              <button
-                onClick={onSave}
-                disabled={isSaving}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-foreground text-background hover:opacity-90 transition-all shadow-xs cursor-pointer shrink-0"
-                title="Save changes (Ctrl+S)"
-              >
-                <Save className="w-3 h-3" />
-                <span className="hidden md:inline">Save</span>
-              </button>
-            )}
-
-            {/* Sync with Drive Button */}
-            {onManualSync && (
-              <button
-                onClick={onManualSync}
-                disabled={isSyncing || isSaving}
-                className={`p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
-                  isSyncing ? "text-foreground bg-accent/40" : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Sync with Google Drive (Pull Latest)"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-foreground" : ""}`} />
-              </button>
-            )}
-
-            {/* Split Editor Toggle (visible on wide screens; on smaller laptop split view, tab bar handles split) */}
-            {cleanTitle && onToggleSplitView && (
-              <button
-                onClick={onToggleSplitView}
-                className={`hidden xl:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
-                  isSplitView ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Toggle Split View"
-              >
-                <Columns className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Git Diff Sidebar Toggle */}
-            {cleanTitle && onToggleDiff && (
-              <button
-                onClick={onToggleDiff}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  isDiffOpen
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 shadow-2xs font-semibold"
-                    : isDirty
-                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                }`}
-                title="Toggle Git Diff Inspector (Ctrl+Shift+D)"
-              >
-                <GitCompare className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline text-[11px]">Diff</span>
-                {isDirty && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />
-                )}
-              </button>
-            )}
-
-            {/* Global Search Button */}
-            {onOpenGlobalSearch && (
-              <button
-                onClick={onOpenGlobalSearch}
-                className="flex items-center gap-1.5 p-1.5 xl:px-2 xl:py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer shrink-0"
-                title="Global Search (Ctrl+K)"
-              >
-                <Search className="w-3.5 h-3.5" />
-                <span className="text-[11px] hidden 2xl:inline">Search</span>
-                <kbd className="hidden 2xl:inline text-[9px] font-mono px-1 py-0.2 bg-muted/60 border border-border/40 rounded">
-                  ⌘K
-                </kbd>
-              </button>
-            )}
-
-            {/* Gemini Copilot Toggle Button */}
-            {onToggleCopilot && (
-              <button
-                onClick={onToggleCopilot}
-                className={`flex items-center gap-1.5 p-1.5 xl:px-2.5 xl:py-1 rounded-md text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  isCopilotOpen
-                    ? "bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 shadow-2xs font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                }`}
-                title="Toggle Gemini AI Copilot (Ctrl+J)"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                <span className="hidden xl:inline text-[11px]">Copilot</span>
-              </button>
-            )}
-
-            {/* Outline Toggle - strictly available for Markdown (.md) documents */}
-            {cleanTitle &&
-              !noteTitle.endsWith(".excalidraw") &&
-              !noteTitle.endsWith(".apollon") &&
-              !noteTitle.endsWith(".uml") &&
-              !noteTitle.endsWith(".mmd") &&
-              !noteTitle.endsWith(".mermaid") &&
-              !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(noteTitle) &&
-              onToggleOutline && (
-                <button
-                  onClick={onToggleOutline}
-                  className={`hidden sm:flex p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
-                    isOutlineOpen ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  title="Toggle Document Outline"
-                >
-                  <ListTree className="w-4 h-4" />
-                </button>
-              )}
-
-            {/* Quick PDF Export Button (available in ... menu on smaller screens) */}
-            {cleanTitle && onExportPdf && (
-              <button
-                onClick={onExportPdf}
-                className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer shrink-0"
-                title="Export as PDF Document (Ctrl+P)"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span className="hidden 2xl:inline text-[11px]">PDF</span>
-              </button>
-            )}
-
-            {/* Zen Mode Button (available in ... menu on smaller screens) */}
-            {onToggleZenMode && (
+        {/* Right: Whisper-quiet Notion Actions */}
+        <div
+          className="relative flex shrink-0 items-center gap-1 sm:gap-1.5"
+          ref={menuRef}
+          data-tauri-no-drag
+        >
+          {zenMode ? (
+            onToggleZenMode && (
               <button
                 onClick={onToggleZenMode}
-                className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer shrink-0"
-                title="Enter Zen Mode (Ctrl+Alt+Z)"
+                className="bg-accent text-foreground hover:bg-accent/80 border-border/60 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-semibold shadow-2xs transition-all"
+                title="Exit Zen Mode (Esc or Ctrl+Alt+Z)"
               >
-                <Maximize2 className="w-3.5 h-3.5" />
-                <span className="hidden 2xl:inline text-[11px]">Zen</span>
+                <Minimize2 className="text-primary h-3.5 w-3.5" />
+                <span className="text-[11px]">Exit Zen</span>
+                <kbd className="py-0.2 bg-muted/60 border-border/40 text-muted-foreground hidden rounded border px-1 font-mono text-[9px] sm:inline">
+                  Esc
+                </kbd>
               </button>
-            )}
+            )
+          ) : (
+            <>
+              {/* Save Button (prominent only when dirty, like Notion) */}
+              {cleanTitle && isDirty && (
+                <button
+                  onClick={onSave}
+                  disabled={isSaving}
+                  className="bg-foreground text-background flex shrink-0 cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium shadow-xs transition-all hover:opacity-90"
+                  title="Save changes (Ctrl+S)"
+                >
+                  <Save className="h-3 w-3" />
+                  <span className="hidden md:inline">Save</span>
+                </button>
+              )}
 
-            {/* Notion-Style More Options (...) Button */}
-            <button
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className={`p-1.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer shrink-0 ${
-                showMoreMenu ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="More Options"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </>
-        )}
-
-        {/* Notion Sleek Popover Menu */}
-        {showMoreMenu && (
-          <div className="absolute right-0 top-9 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs max-h-[85vh] overflow-y-auto">
-            {/* Markdown Themes (7 Themes in both Light & Dark = 14) */}
-            <div className="p-1.5 pb-2.5 border-b border-border/40">
-              <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-primary" />
-                  <span>Theme & Palette (14 Styles)</span>
-                </div>
-                <span className="text-[10px] font-mono text-primary font-medium capitalize">
-                  {mdTheme}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {MD_THEMES.map((t) => {
-                  const active = mdTheme === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setMdTheme(t.id)}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border text-left transition-all cursor-pointer ${
-                        active
-                          ? "border-primary bg-primary/10 text-primary font-semibold shadow-2xs ring-1 ring-primary/30"
-                          : "border-border/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-border/40"
-                        style={{ backgroundColor: t.previewColor }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[11px] truncate leading-tight font-medium">
-                          {t.name}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Global Google Fonts Selection */}
-            <div className="p-1.5 py-2.5 border-b border-border/40 space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                <div className="flex items-center gap-1.5">
-                  <Type className="w-3.5 h-3.5 text-primary" />
-                  <span>Global Google Font</span>
-                </div>
-                <span className="text-[10px] font-mono text-muted-foreground">
-                  {GLOBAL_FONTS.find((f) => f.id === globalFont)?.name?.split(" ")[0]}
-                </span>
-              </div>
-              <select
-                value={globalFont}
-                onChange={(e) => {
-                  const f = e.target.value as GlobalFontId;
-                  setGlobalFont(f);
-                  onEditorFontChange?.(f);
-                }}
-                className="w-full bg-background border border-border/70 rounded-lg px-2.5 py-1.5 text-xs text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-              >
-                <optgroup label="Cursive & Handwritten">
-                  <option value="crafty-girls">Girly (Crafty Girls)</option>
-                  <option value="excalifont">Excalifont (Handwritten Sketch)</option>
-                </optgroup>
-                <optgroup label="Modern Sans-Serif">
-                  <option value="system">Geist / Clean Sans</option>
-                  <option value="inter">Inter (Clean)</option>
-                  <option value="outfit">Outfit (Editorial)</option>
-                  <option value="jakarta">Plus Jakarta Sans</option>
-                  <option value="dm-sans">DM Sans</option>
-                </optgroup>
-                <optgroup label="Book & Literary Serif">
-                  <option value="literata">Literata (Warm Serif)</option>
-                  <option value="playfair">Playfair Display (Luxury)</option>
-                  <option value="lora">Lora</option>
-                  <option value="merriweather">Merriweather</option>
-                </optgroup>
-                <optgroup label="Developer Monospace">
-                  <option value="jetbrains">JetBrains Mono (Code)</option>
-                  <option value="fira">Fira Code (Technical)</option>
-                  <option value="space-mono">Space Mono (Retro)</option>
-                </optgroup>
-              </select>
-            </div>
-
-            {/* Blue Light / Warm Reading Mode Slider */}
-            <div className="p-2 border-b border-border/40 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  <SunMedium className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Blue Light Filter</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-mono text-muted-foreground font-medium">
-                    {warmth === 0 ? "Off" : `${warmth}%`}
-                  </span>
-                  {warmth > 0 && (
-                    <button
-                      onClick={() => setWarmth(0)}
-                      className="text-[10px] text-muted-foreground hover:text-foreground px-1 py-0.2 rounded hover:bg-accent transition-colors"
-                      title="Turn off"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 px-0.5">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={warmth}
-                  onChange={(e) => setWarmth(parseInt(e.target.value, 10))}
-                  className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-amber-500 hover:accent-amber-400 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Document Word & Character Count */}
-            <div className="p-1.5 border-b border-border/40 space-y-1 text-muted-foreground">
-              <div className="flex justify-between items-center">
-                <span>Words:</span>
-                <span className="font-mono text-foreground font-medium">{wordCount}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Characters:</span>
-                <span className="font-mono text-foreground font-medium">{charCount}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Reading time:</span>
-                <span className="font-mono text-foreground font-medium">
-                  {Math.max(1, Math.ceil(wordCount / 200))} min
-                </span>
-              </div>
-            </div>
-
-            {/* Actions: Export Markdown & Copy Link */}
-            <div className="p-1 space-y-0.5">
+              {/* Sync with Drive Button */}
               {onManualSync && (
                 <button
-                  onClick={() => {
-                    onManualSync();
-                    setShowMoreMenu(false);
-                  }}
-                  disabled={isSyncing}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors cursor-pointer"
+                  onClick={onManualSync}
+                  disabled={isSyncing || isSaving}
+                  className={`hover:bg-accent/60 shrink-0 cursor-pointer rounded-md p-1.5 transition-colors ${
+                    isSyncing
+                      ? "text-foreground bg-accent/40"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Sync with Google Drive (Pull Latest)"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 text-muted-foreground ${isSyncing ? "animate-spin" : ""}`} />
-                  <span>Sync with Google Drive</span>
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${isSyncing ? "text-foreground animate-spin" : ""}`}
+                  />
                 </button>
               )}
 
-              {onExportMarkdown && (
+              {/* Split Editor Toggle (visible on wide screens; on smaller laptop split view, tab bar handles split) */}
+              {cleanTitle && onToggleSplitView && (
                 <button
-                  onClick={() => {
-                    onExportMarkdown();
-                    setShowMoreMenu(false);
-                  }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors"
+                  onClick={onToggleSplitView}
+                  className={`hover:bg-accent/60 hidden shrink-0 cursor-pointer rounded-md p-1.5 transition-colors xl:flex ${
+                    isSplitView
+                      ? "text-foreground bg-accent"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Toggle Split View"
                 >
-                  <Download className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>Export Markdown (.md)</span>
+                  <Columns className="h-4 w-4" />
                 </button>
               )}
 
-              {onExportPdf && (
+              {/* Git Diff Sidebar Toggle */}
+              {cleanTitle && onToggleDiff && (
                 <button
-                  onClick={() => {
-                    onExportPdf();
-                    setShowMoreMenu(false);
-                  }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors cursor-pointer"
+                  onClick={onToggleDiff}
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-all ${
+                    isDiffOpen
+                      ? "border border-emerald-500/30 bg-emerald-500/20 font-semibold text-emerald-600 shadow-2xs dark:text-emerald-300"
+                      : isDirty
+                        ? "border border-amber-500/30 bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 dark:text-amber-400"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                  }`}
+                  title="Toggle Git Diff Inspector (Ctrl+Shift+D)"
                 >
-                  <Printer className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>Export PDF Document...</span>
+                  <GitCompare className="h-3.5 w-3.5" />
+                  <span className="hidden text-[11px] xl:inline">Diff</span>
+                  {isDirty && (
+                    <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-amber-500" />
+                  )}
                 </button>
               )}
 
+              {/* Version History Button */}
+              {cleanTitle && onOpenHistory && (
+                <button
+                  onClick={onOpenHistory}
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/60 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-all"
+                  title="Version History (Ctrl+H)"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  <span className="hidden text-[11px] xl:inline">History</span>
+                </button>
+              )}
+
+              {/* Global Search Button */}
+              {onOpenGlobalSearch && (
+                <button
+                  onClick={onOpenGlobalSearch}
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/60 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md p-1.5 text-xs transition-colors xl:px-2 xl:py-1"
+                  title="Global Search (Ctrl+K)"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  <span className="hidden text-[11px] 2xl:inline">Search</span>
+                  <kbd className="py-0.2 bg-muted/60 border-border/40 hidden rounded border px-1 font-mono text-[9px] 2xl:inline">
+                    ⌘K
+                  </kbd>
+                </button>
+              )}
+
+              {/* Gemini Copilot Toggle Button */}
+              {onToggleCopilot && (
+                <button
+                  onClick={onToggleCopilot}
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md p-1.5 text-xs font-medium transition-all xl:px-2.5 xl:py-1 ${
+                    isCopilotOpen
+                      ? "border border-purple-500/30 bg-purple-500/20 font-semibold text-purple-600 shadow-2xs dark:text-purple-300"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                  }`}
+                  title="Toggle Gemini AI Copilot (Ctrl+J)"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                  <span className="hidden text-[11px] xl:inline">Copilot</span>
+                </button>
+              )}
+
+              {/* Outline Toggle - strictly available for Markdown (.md) documents */}
+              {cleanTitle &&
+                !noteTitle.endsWith(".excalidraw") &&
+                !noteTitle.endsWith(".apollon") &&
+                !noteTitle.endsWith(".uml") &&
+                !noteTitle.endsWith(".mmd") &&
+                !noteTitle.endsWith(".mermaid") &&
+                !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(noteTitle) &&
+                onToggleOutline && (
+                  <button
+                    onClick={onToggleOutline}
+                    className={`hover:bg-accent/60 hidden shrink-0 cursor-pointer rounded-md p-1.5 transition-colors sm:flex ${
+                      isOutlineOpen
+                        ? "text-foreground bg-accent"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title="Toggle Document Outline"
+                  >
+                    <ListTree className="h-4 w-4" />
+                  </button>
+                )}
+
+              {/* Quick PDF Export Button (available in ... menu on smaller screens) */}
+              {cleanTitle && onExportPdf && (
+                <button
+                  onClick={onExportPdf}
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/60 hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors xl:flex"
+                  title="Export as PDF Document (Ctrl+P)"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span className="hidden text-[11px] 2xl:inline">PDF</span>
+                </button>
+              )}
+
+              {/* Zen Mode Button (available in ... menu on smaller screens) */}
               {onToggleZenMode && (
                 <button
-                  onClick={() => {
-                    onToggleZenMode();
-                    setShowMoreMenu(false);
-                  }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors cursor-pointer"
+                  onClick={onToggleZenMode}
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/60 hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors xl:flex"
+                  title="Enter Zen Mode (Ctrl+Alt+Z)"
                 >
-                  <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>Enter Zen Mode (Ctrl+Alt+Z)</span>
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  <span className="hidden text-[11px] 2xl:inline">Zen</span>
                 </button>
               )}
 
+              {/* Notion-Style More Options (...) Button */}
               <button
-                onClick={() => {
-                  setTheme(theme === "dark" ? "light" : "dark");
-                }}
-                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-accent flex items-center gap-2 text-foreground transition-colors"
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className={`hover:bg-accent/60 shrink-0 cursor-pointer rounded-md p-1.5 transition-colors ${
+                  showMoreMenu
+                    ? "text-foreground bg-accent"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="More Options"
               >
-                {theme === "dark" ? (
-                  <>
-                    <Sun className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>Switch to Light Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>Switch to Dark Mode</span>
-                  </>
-                )}
+                <MoreHorizontal className="h-4 w-4" />
               </button>
+            </>
+          )}
+
+          {/* Notion Sleek Popover Menu */}
+          {showMoreMenu && (
+            <div className="bg-card/95 border-border animate-in fade-in zoom-in-95 absolute top-9 right-0 z-50 max-h-[85vh] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border p-2.5 text-xs shadow-2xl backdrop-blur-xl duration-100 sm:w-80">
+              {/* Markdown Themes (7 Themes in both Light & Dark = 14) */}
+              <div className="border-border/40 border-b p-1.5 pb-2.5">
+                <div className="text-muted-foreground mb-2 flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase">
+                  <div className="flex items-center gap-1.5">
+                    <Palette className="text-primary h-3.5 w-3.5" />
+                    <span>Theme & Palette (14 Styles)</span>
+                  </div>
+                  <span className="text-primary font-mono text-[10px] font-medium capitalize">
+                    {mdTheme}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {MD_THEMES.map((t) => {
+                    const active = mdTheme === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setMdTheme(t.id)}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-all ${
+                          active
+                            ? "border-primary bg-primary/10 text-primary ring-primary/30 font-semibold shadow-2xs ring-1"
+                            : "border-border/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <span
+                          className="border-border/40 h-2.5 w-2.5 shrink-0 rounded-full border"
+                          style={{ backgroundColor: t.previewColor }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[11px] leading-tight font-medium">
+                            {t.name}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Global Google Fonts Selection */}
+              <div className="border-border/40 space-y-1.5 border-b p-1.5 py-2.5">
+                <div className="text-muted-foreground flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase">
+                  <div className="flex items-center gap-1.5">
+                    <Type className="text-primary h-3.5 w-3.5" />
+                    <span>Global Google Font</span>
+                  </div>
+                  <span className="text-muted-foreground font-mono text-[10px]">
+                    {
+                      GLOBAL_FONTS.find(
+                        (f) => f.id === globalFont,
+                      )?.name?.split(" ")[0]
+                    }
+                  </span>
+                </div>
+                <select
+                  value={globalFont}
+                  onChange={(e) => {
+                    const f = e.target.value as GlobalFontId;
+                    setGlobalFont(f);
+                    onEditorFontChange?.(f);
+                  }}
+                  className="bg-background border-border/70 text-foreground focus:ring-primary w-full cursor-pointer rounded-lg border px-2.5 py-1.5 text-xs font-medium focus:ring-1 focus:outline-none"
+                >
+                  <optgroup label="Cursive & Handwritten">
+                    <option value="crafty-girls">Girly (Crafty Girls)</option>
+                    <option value="excalifont">
+                      Excalifont (Handwritten Sketch)
+                    </option>
+                  </optgroup>
+                  <optgroup label="Modern Sans-Serif">
+                    <option value="system">Geist / Clean Sans</option>
+                    <option value="inter">Inter (Clean)</option>
+                    <option value="outfit">Outfit (Editorial)</option>
+                    <option value="jakarta">Plus Jakarta Sans</option>
+                    <option value="dm-sans">DM Sans</option>
+                  </optgroup>
+                  <optgroup label="Book & Literary Serif">
+                    <option value="literata">Literata (Warm Serif)</option>
+                    <option value="playfair">Playfair Display (Luxury)</option>
+                    <option value="lora">Lora</option>
+                    <option value="merriweather">Merriweather</option>
+                  </optgroup>
+                  <optgroup label="Developer Monospace">
+                    <option value="jetbrains">JetBrains Mono (Code)</option>
+                    <option value="fira">Fira Code (Technical)</option>
+                    <option value="space-mono">Space Mono (Retro)</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Blue Light / Warm Reading Mode Slider */}
+              <div className="border-border/40 space-y-2 border-b p-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-muted-foreground flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
+                    <SunMedium className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Blue Light Filter</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground font-mono text-[11px] font-medium">
+                      {warmth === 0 ? "Off" : `${warmth}%`}
+                    </span>
+                    {warmth > 0 && (
+                      <button
+                        onClick={() => setWarmth(0)}
+                        className="text-muted-foreground hover:text-foreground py-0.2 hover:bg-accent rounded px-1 text-[10px] transition-colors"
+                        title="Turn off"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-0.5">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={warmth}
+                    onChange={(e) => setWarmth(parseInt(e.target.value, 10))}
+                    className="bg-muted h-1.5 w-full cursor-pointer appearance-none rounded-lg accent-amber-500 transition-all hover:accent-amber-400"
+                  />
+                </div>
+              </div>
+
+              {/* Document Word & Character Count */}
+              <div className="border-border/40 text-muted-foreground space-y-1 border-b p-1.5">
+                <div className="flex items-center justify-between">
+                  <span>Words:</span>
+                  <span className="text-foreground font-mono font-medium">
+                    {wordCount}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Characters:</span>
+                  <span className="text-foreground font-mono font-medium">
+                    {charCount}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Reading time:</span>
+                  <span className="text-foreground font-mono font-medium">
+                    {Math.max(1, Math.ceil(wordCount / 200))} min
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions: Export Markdown & Copy Link */}
+              <div className="space-y-0.5 p-1">
+                {onManualSync && (
+                  <button
+                    onClick={() => {
+                      onManualSync();
+                      setShowMoreMenu(false);
+                    }}
+                    disabled={isSyncing}
+                    className="hover:bg-accent text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors"
+                  >
+                    <RefreshCw
+                      className={`text-muted-foreground h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`}
+                    />
+                    <span>Sync with Google Drive</span>
+                  </button>
+                )}
+
+                {onExportMarkdown && (
+                  <button
+                    onClick={() => {
+                      onExportMarkdown();
+                      setShowMoreMenu(false);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors"
+                  >
+                    <Download className="text-muted-foreground h-3.5 w-3.5" />
+                    <span>Export Markdown (.md)</span>
+                  </button>
+                )}
+
+                {onExportPdf && (
+                  <button
+                    onClick={() => {
+                      onExportPdf();
+                      setShowMoreMenu(false);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors"
+                  >
+                    <Printer className="text-muted-foreground h-3.5 w-3.5" />
+                    <span>Export PDF Document...</span>
+                  </button>
+                )}
+
+                {onToggleZenMode && (
+                  <button
+                    onClick={() => {
+                      onToggleZenMode();
+                      setShowMoreMenu(false);
+                    }}
+                    className="hover:bg-accent text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors"
+                  >
+                    <Maximize2 className="text-muted-foreground h-3.5 w-3.5" />
+                    <span>Enter Zen Mode (Ctrl+Alt+Z)</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setTheme(theme === "dark" ? "light" : "dark");
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors"
+                >
+                  {theme === "dark" ? (
+                    <>
+                      <Sun className="text-muted-foreground h-3.5 w-3.5" />
+                      <span>Switch to Light Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="text-muted-foreground h-3.5 w-3.5" />
+                      <span>Switch to Dark Mode</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       </div>
     </header>
   );
