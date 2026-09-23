@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { createPortal } from "react-dom";
 import { Sidebar, type DriveItem } from "./Sidebar";
 import { HeaderBar } from "./HeaderBar";
 import { Editor } from "~/components/editor/Editor";
@@ -4557,7 +4558,7 @@ export function WorkspaceLayout({
       />
 
       {/* Tab Context Menu (Close, Close Left, Close Right, Close Others) */}
-      {tabContextMenu && (() => {
+      {tabContextMenu && typeof document !== "undefined" && createPortal((() => {
         const targetIndex = openTabIds.indexOf(tabContextMenu.tabId);
         const canCloseLeft = targetIndex > 0;
         const canCloseRight = targetIndex >= 0 && targetIndex < openTabIds.length - 1;
@@ -4565,8 +4566,17 @@ export function WorkspaceLayout({
 
         return (
           <div
-            style={{ top: tabContextMenu.y, left: tabContextMenu.x }}
-            className="fixed z-[160] w-48 rounded-xl border border-border/80 bg-card/90 glass-popover py-1.5 text-xs shadow-2xl animate-in fade-in zoom-in-95 duration-100 select-none"
+            style={{
+              top: tabContextMenu.y,
+              left: tabContextMenu.x,
+              backgroundColor: isDark ? "rgba(18, 18, 22, 0.85)" : "rgba(255, 255, 255, 0.85)",
+              backdropFilter: "blur(24px) saturate(180%)",
+              WebkitBackdropFilter: "blur(24px) saturate(180%)",
+              boxShadow: isDark
+                ? "0 20px 45px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12)"
+                : "0 20px 45px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.08)",
+            }}
+            className="fixed z-[200] w-48 rounded-xl border border-border/70 py-1.5 text-xs shadow-2xl animate-in fade-in zoom-in-95 duration-100 select-none backdrop-blur-2xl backdrop-saturate-150"
             onClick={(e) => e.stopPropagation()}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -4635,7 +4645,7 @@ export function WorkspaceLayout({
             </button>
           </div>
         );
-      })()}
+      })(), document.body)}
 
       {/* Unsaved Changes Confirmation Modal */}
       {unsavedTabsWarning && (

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   FileText,
   Share2,
@@ -101,11 +102,28 @@ export function HeaderBar({
   zenMode = false,
   onToggleZenMode,
 }: HeaderBarProps) {
-  const { theme, setTheme, mdTheme, setMdTheme, globalFont, setGlobalFont, modernUi } =
+  const { theme, setTheme, mdTheme, setMdTheme, globalFont, setGlobalFont, modernUi, isDark } =
     useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [menuCoords, setMenuCoords] = useState<{ top: number; right: number }>({ top: 48, right: 16 });
   const [warmth, setWarmth] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const moreBtnRef = useRef<HTMLButtonElement | null>(null);
+  const popoverCardRef = useRef<HTMLDivElement | null>(null);
+
+  const toggleMoreMenu = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (!showMoreMenu) {
+      const btn = e?.currentTarget || moreBtnRef.current;
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        setMenuCoords({
+          top: rect.bottom + 6,
+          right: Math.max(12, window.innerWidth - rect.right),
+        });
+      }
+    }
+    setShowMoreMenu((prev) => !prev);
+  };
 
   // Load Blue Light filter preference
   useEffect(() => {
@@ -226,9 +244,11 @@ export function HeaderBar({
   // Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMoreMenu(false);
-      }
+      const target = e.target as Node;
+      if (menuRef.current?.contains(target)) return;
+      if (moreBtnRef.current?.contains(target)) return;
+      if (popoverCardRef.current?.contains(target)) return;
+      setShowMoreMenu(false);
     };
     if (showMoreMenu) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -652,7 +672,8 @@ export function HeaderBar({
 
               {/* More Options Button */}
               <button
-                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                ref={moreBtnRef}
+                onClick={toggleMoreMenu}
                 className={`hover:bg-accent/60 shrink-0 cursor-pointer rounded-md p-1.5 transition-colors ${
                   showMoreMenu
                     ? "text-foreground bg-accent"
@@ -823,7 +844,8 @@ export function HeaderBar({
 
               {/* Notion-Style More Options (...) Button */}
               <button
-                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                ref={moreBtnRef}
+                onClick={toggleMoreMenu}
                 className={`hover:bg-accent/60 shrink-0 cursor-pointer rounded-md p-1.5 transition-colors ${
                   showMoreMenu
                     ? "text-foreground bg-accent"
@@ -837,8 +859,21 @@ export function HeaderBar({
           )}
 
           {/* Notion Sleek Popover Menu */}
-          {showMoreMenu && (
-            <div className="bg-card/80 glass-popover border-border animate-in fade-in zoom-in-95 absolute top-9 right-0 z-50 max-h-[85vh] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border p-2.5 text-xs shadow-2xl duration-100 sm:w-80">
+          {showMoreMenu && typeof document !== "undefined" && createPortal(
+            <div
+              ref={popoverCardRef}
+              style={{
+                top: menuCoords.top,
+                right: menuCoords.right,
+                backgroundColor: isDark ? "rgba(18, 18, 22, 0.85)" : "rgba(255, 255, 255, 0.85)",
+                backdropFilter: "blur(24px) saturate(180%)",
+                WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                boxShadow: isDark
+                  ? "0 20px 45px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12)"
+                  : "0 20px 45px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.08)",
+              }}
+              className="fixed z-[200] max-h-[85vh] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-border/70 p-2.5 text-xs select-none backdrop-blur-2xl backdrop-saturate-150 sm:w-80"
+            >
               {/* Markdown Themes (7 Themes in both Light & Dark = 14) */}
               <div className="border-border/40 border-b p-1.5 pb-2.5">
                 <div className="text-muted-foreground mb-2 flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase">
@@ -1061,7 +1096,8 @@ export function HeaderBar({
                   )}
                 </button>
               </div>
-            </div>
+            </div>,
+            document.body,
           )}
         </div>
       </div>

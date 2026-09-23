@@ -1344,8 +1344,18 @@ html.dark [data-landing-page] {
 
 /* Glass popover backdrop blur to ensure underlying note content is frosted/blurred */
 .glass-popover {
+  background-color: rgba(255, 255, 255, 0.82) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  box-shadow: 0 20px 45px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+.dark .glass-popover,
+[data-theme="dark"] .glass-popover {
+  background-color: rgba(18, 18, 22, 0.82) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  box-shadow: 0 20px 45px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
 }
 
 /* ASCII & pre block mobile preservation */
