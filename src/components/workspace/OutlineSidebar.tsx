@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ListTree, X, AlignLeft } from "lucide-react";
+import { useTheme } from "~/components/ThemeProvider";
 
 export interface HeadingItem {
   id: string;
@@ -22,6 +23,8 @@ export function OutlineSidebar({
   headings = [],
   onSelectHeading,
 }: OutlineSidebarProps) {
+  const { modernUi } = useTheme();
+
   if (!isOpen) return null;
 
   return (
@@ -34,10 +37,19 @@ export function OutlineSidebar({
 
       <aside className="fixed sm:relative inset-y-0 right-0 z-30 sm:z-20 w-72 sm:w-64 border-l border-border/40 bg-background/80 backdrop-blur-md flex flex-col h-full select-none shrink-0 shadow-2xl sm:shadow-none animate-in slide-in-from-right-full duration-150">
         {/* Outline Header Bar */}
-        <div className="px-3 py-2.5 border-b border-border/40 flex items-center justify-between">
+        <div
+          className={`px-3 py-2.5 border-b border-border/40 flex items-center justify-between ${
+            modernUi ? "bg-background/40" : ""
+          }`}
+        >
           <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
             <ListTree className="w-3.5 h-3.5 text-foreground/70" />
             <span>Table of Contents</span>
+            {modernUi && headings.length > 0 && (
+              <span className="text-[10px] font-normal text-muted-foreground bg-accent/60 px-1.5 py-0.5 rounded-full">
+                {headings.length}
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -49,7 +61,11 @@ export function OutlineSidebar({
         </div>
 
         {/* Headings List */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 text-xs space-y-0.5">
+        <div
+          className={`flex-1 overflow-y-auto px-2 py-2 text-xs space-y-0.5 ${
+            modernUi ? "modern-toc-guide" : ""
+          }`}
+        >
           {headings.length === 0 ? (
             <div className="px-3 py-8 text-center text-[11px] text-muted-foreground flex flex-col items-center gap-2">
               <AlignLeft className="w-6 h-6 opacity-30" />
@@ -57,6 +73,39 @@ export function OutlineSidebar({
             </div>
           ) : (
             headings.map((h, index) => {
+              if (modernUi) {
+                const indentClass =
+                  h.level === 1
+                    ? "pl-2 font-medium text-foreground"
+                    : h.level === 2
+                    ? "pl-5 font-normal text-foreground/85"
+                    : h.level === 3
+                    ? "pl-8 text-muted-foreground/90 font-normal"
+                    : "pl-11 text-muted-foreground/70 font-normal";
+
+                return (
+                  <button
+                    key={`${h.id}-${index}`}
+                    onClick={() => {
+                      onSelectHeading(h.text, h.level);
+                      if (
+                        typeof window !== "undefined" &&
+                        window.innerWidth < 640
+                      ) {
+                        onClose();
+                      }
+                    }}
+                    className={`w-full group text-left py-1.5 px-2 hover:bg-accent/70 rounded-lg truncate transition-all duration-150 font-sans flex items-center justify-between gap-1.5 ${indentClass}`}
+                    title={`H${h.level}: ${h.text}`}
+                  >
+                    <span className="truncate">{h.text}</span>
+                    <span className="opacity-0 group-hover:opacity-60 text-[9px] font-mono text-muted-foreground shrink-0 uppercase">
+                      H{h.level}
+                    </span>
+                  </button>
+                );
+              }
+
               const indentClass =
                 h.level === 1
                   ? "pl-2 font-bold text-foreground"
@@ -71,7 +120,10 @@ export function OutlineSidebar({
                   key={`${h.id}-${index}`}
                   onClick={() => {
                     onSelectHeading(h.text, h.level);
-                    if (typeof window !== "undefined" && window.innerWidth < 640) {
+                    if (
+                      typeof window !== "undefined" &&
+                      window.innerWidth < 640
+                    ) {
                       onClose();
                     }
                   }}

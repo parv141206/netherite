@@ -1257,3 +1257,52 @@ html.dark [data-landing-page] {
   --muted-foreground: #a1a1aa !important;
 }
 
+/* ==========================================================================
+   Modern UI Workspace Modes & Refinements
+   ========================================================================== */
+
+[data-ui-mode="modern"] {
+  --modern-transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-ui-mode="modern"] .modern-tab-bar {
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-ui-mode="modern"] .modern-tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Subtle tree guide lines for deeply nested sidebar folders in Modern UI */
+[data-ui-mode="modern"] .tree-guide-line {
+  position: relative;
+}
+[data-ui-mode="modern"] .tree-guide-line::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--border);
+  opacity: 0.45;
+}
+
+/* Whisper-quiet TOC hierarchy guides */
+[data-ui-mode="modern"] .toc-guide-line {
+  position: relative;
+}
+[data-ui-mode="modern"] .toc-guide-line::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background-color: var(--border);
+  opacity: 0.5;
+  border-radius: 9999px;
+}
+

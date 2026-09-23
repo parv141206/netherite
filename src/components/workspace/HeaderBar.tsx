@@ -101,7 +101,7 @@ export function HeaderBar({
   zenMode = false,
   onToggleZenMode,
 }: HeaderBarProps) {
-  const { theme, setTheme, mdTheme, setMdTheme, globalFont, setGlobalFont } =
+  const { theme, setTheme, mdTheme, setMdTheme, globalFont, setGlobalFont, modernUi } =
     useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [warmth, setWarmth] = useState<number>(0);
@@ -245,6 +245,14 @@ export function HeaderBar({
     /\.(md|excalidraw|apollon|uml|mmd|mermaid)$/i,
     "",
   );
+  const isMarkdown =
+    Boolean(cleanTitle) &&
+    !safeTitle.endsWith(".excalidraw") &&
+    !safeTitle.endsWith(".apollon") &&
+    !safeTitle.endsWith(".uml") &&
+    !safeTitle.endsWith(".mmd") &&
+    !safeTitle.endsWith(".mermaid") &&
+    !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(safeTitle);
 
   // Zen Mode: render as a sleek, unobtrusive floating pill at bottom right so it NEVER covers top toolbars (Excalidraw, diagrams, etc.)
   if (zenMode) {
@@ -291,7 +299,9 @@ export function HeaderBar({
 
   return (
     <header
-      className="border-border/40 bg-background/80 sticky top-0 z-40 flex h-11 shrink-0 items-center justify-between gap-3 border-b px-3 backdrop-blur-md select-none sm:px-4"
+      className={`border-border/40 sticky top-0 z-40 flex shrink-0 items-center justify-between gap-3 border-b px-3 backdrop-blur-md select-none sm:px-4 ${
+        modernUi ? "h-10 bg-background/75" : "h-11 bg-background/80"
+      }`}
       data-tauri-drag-region
     >
       {/* Native Apple Notes-Style Mobile Top Bar (Single Row, Zero Clutter) */}
@@ -392,8 +402,8 @@ export function HeaderBar({
                 </span>
               </div>
 
-              {/* Subtle Sync & Diff Badge (Hidden in Zen Mode) */}
-              {!zenMode && (
+              {/* Subtle Sync & Diff Badge (Classic Mode) */}
+              {!modernUi && !zenMode && (
                 <button
                   onClick={onOpenDiff}
                   className="text-muted-foreground hover:bg-accent/50 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[11px] transition-colors"
@@ -439,6 +449,25 @@ export function HeaderBar({
           )}
         </div>
 
+        {/* Modern UI: Center Command Search Trigger */}
+        {modernUi && onOpenGlobalSearch && !zenMode && (
+          <div className="hidden md:flex flex-1 justify-center px-2 max-w-sm">
+            <button
+              onClick={onOpenGlobalSearch}
+              className="hover:bg-accent/60 bg-muted/40 text-muted-foreground hover:text-foreground border-border/40 flex w-full max-w-xs cursor-pointer items-center justify-between rounded-lg border px-2.5 py-1 text-xs transition-colors"
+              title="Global Search & Jump (Ctrl+K)"
+            >
+              <div className="flex items-center gap-2">
+                <Search className="h-3.5 w-3.5 opacity-60" />
+                <span className="text-[11px]">Search notes...</span>
+              </div>
+              <kbd className="bg-background/80 border-border/60 text-muted-foreground rounded border px-1.5 py-0.2 font-mono text-[9px]">
+                ⌘K
+              </kbd>
+            </button>
+          </div>
+        )}
+
         {/* Right: Whisper-quiet Notion Actions */}
         <div
           className="relative flex shrink-0 items-center gap-1 sm:gap-1.5"
@@ -459,6 +488,181 @@ export function HeaderBar({
                 </kbd>
               </button>
             )
+          ) : modernUi ? (
+            <>
+              {/* Save Button (prominent only when dirty) */}
+              {cleanTitle && isDirty && (
+                <button
+                  onClick={onSave}
+                  disabled={isSaving}
+                  className="bg-foreground text-background flex shrink-0 cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium shadow-xs transition-all hover:opacity-90"
+                  title="Save changes (Ctrl+S)"
+                >
+                  <Save className="h-3 w-3" />
+                  <span className="hidden md:inline">Save</span>
+                </button>
+              )}
+
+              {/* Polished Sync Status Badge */}
+              <button
+                onClick={onManualSync}
+                disabled={isSyncing || isSaving}
+                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] transition-colors"
+                title={
+                  isSaving
+                    ? "Saving changes to Google Drive..."
+                    : isSyncing
+                      ? "Syncing latest changes..."
+                      : isDirty
+                        ? `Unsaved changes (${diffSummary || "Modified"})`
+                        : "All changes saved to Google Drive (Click to pull latest)"
+                }
+              >
+                {isSaving || isSyncing ? (
+                  <>
+                    <div className="h-2 w-2 shrink-0 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                    <span className="hidden font-medium whitespace-nowrap text-amber-500 lg:inline">
+                      {isSaving ? "Saving..." : "Syncing..."}
+                    </span>
+                  </>
+                ) : isDirty ? (
+                  <>
+                    <div className="h-2 w-2 shrink-0 rounded-full bg-amber-400 animate-pulse" />
+                    <span className="hidden font-mono font-medium whitespace-nowrap text-amber-500 lg:inline">
+                      {diffSummary || "Unsaved"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                    <span className="text-muted-foreground/80 hidden whitespace-nowrap lg:inline">
+                      Synced
+                    </span>
+                  </>
+                )}
+              </button>
+
+              {/* Group 1: Review & History Pill */}
+              {cleanTitle && (onToggleDiff || onOpenHistory) && (
+                <div className="border-border/60 bg-muted/30 hidden items-center rounded-lg border p-0.5 xl:flex">
+                  {onToggleDiff && (
+                    <button
+                      onClick={onToggleDiff}
+                      className={`flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium transition-all ${
+                        isDiffOpen
+                          ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold"
+                          : isDirty
+                            ? "text-amber-600 hover:bg-amber-500/20 dark:text-amber-400"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                      }`}
+                      title="Toggle Git Diff Inspector (Ctrl+Shift+D)"
+                    >
+                      <GitCompare className="h-3.5 w-3.5" />
+                      <span className="text-[11px]">Diff</span>
+                      {isDirty && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      )}
+                    </button>
+                  )}
+                  {onToggleDiff && onOpenHistory && (
+                    <div className="bg-border/60 h-3 w-px mx-0.5" />
+                  )}
+                  {onOpenHistory && (
+                    <button
+                      onClick={onOpenHistory}
+                      className="text-muted-foreground hover:text-foreground hover:bg-accent/60 flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium transition-all"
+                      title="Version History (Ctrl+H)"
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      <span className="text-[11px]">History</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Split Editor Toggle (visible on wide screens) */}
+              {cleanTitle && onToggleSplitView && (
+                <button
+                  onClick={onToggleSplitView}
+                  className={`hover:bg-accent/60 hidden shrink-0 cursor-pointer rounded-md p-1.5 transition-colors xl:flex ${
+                    isSplitView
+                      ? "text-foreground bg-accent"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Toggle Split View"
+                >
+                  <Columns className="h-4 w-4" />
+                </button>
+              )}
+
+              {/* Group 2: Gemini Copilot */}
+              {onToggleCopilot && (
+                <button
+                  onClick={onToggleCopilot}
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                    isCopilotOpen
+                      ? "border border-purple-500/40 bg-purple-500/20 font-semibold text-purple-600 shadow-2xs dark:text-purple-300"
+                      : "border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20"
+                  }`}
+                  title="Toggle Gemini AI Copilot (Ctrl+J)"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                  <span className="hidden text-[11px] xl:inline font-medium">Copilot</span>
+                </button>
+              )}
+
+              {/* Outline Toggle */}
+              {cleanTitle && isMarkdown && onToggleOutline && (
+                <button
+                  onClick={onToggleOutline}
+                  className={`hover:bg-accent/60 hidden shrink-0 cursor-pointer rounded-md p-1.5 transition-colors sm:flex ${
+                    isOutlineOpen
+                      ? "text-foreground bg-accent"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Toggle Document Outline"
+                >
+                  <ListTree className="h-4 w-4" />
+                </button>
+              )}
+
+              {/* PDF Export Button */}
+              {cleanTitle && onExportPdf && (
+                <button
+                  onClick={onExportPdf}
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/60 hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors 2xl:flex"
+                  title="Export as PDF Document (Ctrl+P)"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span className="hidden text-[11px] 2xl:inline">PDF</span>
+                </button>
+              )}
+
+              {/* Zen Mode Button */}
+              {onToggleZenMode && (
+                <button
+                  onClick={onToggleZenMode}
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/60 hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors 2xl:flex"
+                  title="Enter Zen Mode (Ctrl+Alt+Z)"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  <span className="hidden text-[11px] 2xl:inline">Zen</span>
+                </button>
+              )}
+
+              {/* More Options Button */}
+              <button
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className={`hover:bg-accent/60 shrink-0 cursor-pointer rounded-md p-1.5 transition-colors ${
+                  showMoreMenu
+                    ? "text-foreground bg-accent"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="More Options"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </>
           ) : (
             <>
               {/* Save Button (prominent only when dirty, like Notion) */}

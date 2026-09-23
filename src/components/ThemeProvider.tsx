@@ -211,6 +211,8 @@ interface ThemeContextType {
   setGlobalFont: (font: GlobalFontId) => void;
   textOnlyClipboard: boolean;
   setTextOnlyClipboard: (enabled: boolean) => void;
+  modernUi: boolean;
+  setModernUi: (enabled: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -221,6 +223,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mdTheme, setMdThemeState] = useState<MdThemeId>("netherite");
   const [globalFont, setGlobalFontState] = useState<GlobalFontId>("system");
   const [textOnlyClipboard, setTextOnlyClipboardState] = useState<boolean>(false);
+  const [modernUi, setModernUiState] = useState<boolean>(true);
 
   // Load saved preferences on client mount
   useEffect(() => {
@@ -236,10 +239,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
       const savedTextOnly = localStorage.getItem("netherite_text_only_clipboard") === "true";
       setTextOnlyClipboardState(savedTextOnly);
+
+      const savedModernUi = localStorage.getItem("netherite_modern_ui");
+      if (savedModernUi !== null) {
+        setModernUiState(savedModernUi === "true");
+      }
     } catch {}
   }, []);
 
-  // Update root element classes & attributes when theme/font changes
+  // Update root element classes & attributes when theme/font/UI mode changes
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
@@ -247,6 +255,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("netherite-theme", theme);
     localStorage.setItem("netherite_md_theme", mdTheme);
     localStorage.setItem("netherite_global_font", globalFont);
+    localStorage.setItem("netherite_modern_ui", String(modernUi));
 
     let effectiveDark = true;
     if (theme === "system") {
@@ -266,6 +275,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     root.setAttribute("data-md-theme", mdTheme);
     root.setAttribute("data-global-font", globalFont);
+    root.setAttribute("data-ui-mode", modernUi ? "modern" : "classic");
 
     // Dynamically update mobile status bar on Android
     if (typeof window !== "undefined") {
@@ -281,7 +291,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         })
         .catch(() => {});
     }
-  }, [theme, mdTheme, globalFont]);
+  }, [theme, mdTheme, globalFont, modernUi]);
 
   // Global prevention of full-page webview zooming across desktop / Tauri / WebKit
   useEffect(() => {
@@ -364,6 +374,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   };
 
+  const setModernUi = (enabled: boolean) => {
+    setModernUiState(enabled);
+    try {
+      localStorage.setItem("netherite_modern_ui", String(enabled));
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-ui-mode", enabled ? "modern" : "classic");
+      }
+    } catch {}
+  };
+
   return (
     <ThemeContext.Provider
       value={{
@@ -376,6 +396,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setGlobalFont,
         textOnlyClipboard,
         setTextOnlyClipboard,
+        modernUi,
+        setModernUi,
       }}
     >
       {children}

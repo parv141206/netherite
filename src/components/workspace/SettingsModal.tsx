@@ -94,6 +94,8 @@ export function SettingsModal({
     setGlobalFont,
     textOnlyClipboard,
     setTextOnlyClipboard,
+    modernUi,
+    setModernUi,
   } = useTheme();
   const [folderPath, setFolderPath] = useState("Netherite");
   const [copiedMcp, setCopiedMcp] = useState<"claude" | "cli" | null>(null);
@@ -848,6 +850,81 @@ export function SettingsModal({
             {/* 1. APPEARANCE TAB */}
             {activeTab === "appearance" && (
               <div className="space-y-5">
+                {/* Modern UI vs Classic UI Mode */}
+                <div className="border-border/60 bg-card space-y-3 rounded-xl border p-4 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
+                        <span className="text-foreground text-xs font-semibold">
+                          Workspace Interface Mode
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">
+                        Choose between the streamlined modern workspace layout and classic layout
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setModernUi(!modernUi)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        modernUi ? "bg-blue-600" : "bg-muted"
+                      }`}
+                      role="switch"
+                      aria-checked={modernUi}
+                      title="Toggle Modern UI mode"
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          modernUi ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setModernUi(true)}
+                      className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all cursor-pointer ${
+                        modernUi
+                          ? "border-blue-500/50 bg-blue-500/10 text-foreground shadow-2xs"
+                          : "border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-1.5 font-semibold text-xs text-foreground">
+                          <span>Modern UI</span>
+                          <span className="text-[10px] bg-blue-500/20 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-medium">
+                            Recommended
+                          </span>
+                        </div>
+                        {modernUi && <Check className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
+                        Content-focused workspace, refined header hierarchy, horizontal scroll controls & graceful tab names, and grouped editor formatting tools.
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setModernUi(false)}
+                      className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all cursor-pointer ${
+                        !modernUi
+                          ? "border-foreground bg-accent text-foreground font-semibold shadow-2xs"
+                          : "border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-semibold text-xs text-foreground">Classic UI</span>
+                        {!modernUi && <Check className="h-3.5 w-3.5 text-foreground" />}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
+                        Original dense layout with explicit toolbars, classic toolbar arrangement, and fixed tab dimensions.
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Interface Theme */}
                 <div className="border-border/60 bg-card space-y-3 rounded-xl border p-4 shadow-2xs">
                   <span className="text-foreground block text-xs font-semibold">

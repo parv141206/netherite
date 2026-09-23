@@ -12,6 +12,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Folder,
   FolderOpen,
   FolderPlus,
@@ -260,7 +261,24 @@ export function Sidebar({
   loadingNoteId,
   folderToExpand,
 }: SidebarProps) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, modernUi } = useTheme();
+  const [showDiagramMenu, setShowDiagramMenu] = useState(false);
+  const diagramMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!showDiagramMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        diagramMenuRef.current &&
+        !diagramMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowDiagramMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDiagramMenu]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedFolders, setExpandedFolders] = useState<
     Record<string, boolean>
@@ -932,7 +950,13 @@ export function Sidebar({
           </div>
 
           {isExpanded && (
-            <div className="border-border/40 mt-0.5 ml-2 space-y-0.5 border-l pl-3">
+            <div
+              className={`mt-0.5 ml-2 space-y-0.5 border-l pl-3 ${
+                modernUi
+                  ? "modern-tree-guide border-border/30"
+                  : "border-border/40"
+              }`}
+            >
               {children.length === 0 ? (
                 <div className="text-muted-foreground/60 px-2 py-1 text-[11px] italic">
                   Empty folder
@@ -1173,113 +1197,259 @@ export function Sidebar({
             className="flex shrink-0 items-center gap-0.5"
             data-tauri-no-drag
           >
-            <button
-              onClick={() => onCreateNote()}
-              disabled={isMutating}
-              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
-              title="New Page (Ctrl+N)"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-            {onCreateDrawing && (
-              <button
-                onClick={() => onCreateDrawing()}
-                disabled={isMutating}
-                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
-                title="New Whiteboard / Sketch"
-              >
-                <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
-              </button>
+            {modernUi ? (
+              <>
+                <button
+                  onClick={() => onCreateNote()}
+                  disabled={isMutating}
+                  className="hover:bg-accent/70 text-muted-foreground hover:text-foreground cursor-pointer rounded-md p-1.5 transition-colors disabled:opacity-50"
+                  title="New Note (Ctrl+N)"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => onCreateFolder()}
+                  disabled={isMutating}
+                  className="hover:bg-accent/70 text-muted-foreground hover:text-foreground cursor-pointer rounded-md p-1.5 transition-colors disabled:opacity-50"
+                  title="New Folder"
+                >
+                  <FolderPlus className="h-3.5 w-3.5" />
+                </button>
+                {(onCreateDrawing ||
+                  onCreateUml ||
+                  onCreateMermaid ||
+                  onCreateTikz) && (
+                  <div className="relative" ref={diagramMenuRef}>
+                    <button
+                      onClick={() => setShowDiagramMenu((prev) => !prev)}
+                      disabled={isMutating}
+                      className={`hover:bg-accent/70 text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-0.5 rounded-md px-1.5 py-1 text-[11px] transition-colors disabled:opacity-50 ${
+                        showDiagramMenu ? "bg-accent text-foreground" : ""
+                      }`}
+                      title="New Visual Diagram or Sketch"
+                    >
+                      <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
+                      <ChevronDown className="h-2.5 w-2.5 opacity-60" />
+                    </button>
+                    {showDiagramMenu && (
+                      <div
+                        className="bg-popover/95 border-border text-popover-foreground animate-in fade-in zoom-in-95 absolute top-full right-0 z-50 mt-1.5 w-52 rounded-xl border p-1 shadow-xl backdrop-blur-md"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {onCreateDrawing && (
+                          <button
+                            onClick={() => {
+                              onCreateDrawing();
+                              setShowDiagramMenu(false);
+                            }}
+                            className="hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors"
+                          >
+                            <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Whiteboard / Sketch
+                              </span>
+                              <span className="text-muted-foreground text-[10px]">
+                                Excalidraw canvas
+                              </span>
+                            </div>
+                          </button>
+                        )}
+                        {onCreateUml && (
+                          <button
+                            onClick={() => {
+                              onCreateUml();
+                              setShowDiagramMenu(false);
+                            }}
+                            className="hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors"
+                          >
+                            <Network className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">UML Diagram</span>
+                              <span className="text-muted-foreground text-[10px]">
+                                Apollon architecture
+                              </span>
+                            </div>
+                          </button>
+                        )}
+                        {onCreateMermaid && (
+                          <button
+                            onClick={() => {
+                              onCreateMermaid();
+                              setShowDiagramMenu(false);
+                            }}
+                            className="hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors"
+                          >
+                            <Workflow className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Mermaid Diagram
+                              </span>
+                              <span className="text-muted-foreground text-[10px]">
+                                Flowcharts & sequences
+                              </span>
+                            </div>
+                          </button>
+                        )}
+                        {onCreateTikz && (
+                          <button
+                            onClick={() => {
+                              onCreateTikz();
+                              setShowDiagramMenu(false);
+                            }}
+                            className="hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors"
+                          >
+                            <Activity className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">TikZ LaTeX</span>
+                              <span className="text-muted-foreground text-[10px]">
+                                Mathematical drawings
+                              </span>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="bg-border/60 mx-0.5 h-3.5 w-[1px]" />
+                <button
+                  onClick={() => {
+                    if (onDeepSync) {
+                      onDeepSync();
+                    } else if (onManualSync) {
+                      onManualSync();
+                    } else {
+                      utils.notes.list.invalidate();
+                    }
+                  }}
+                  disabled={isSyncing || isDeepSyncing}
+                  className="hover:bg-accent/70 text-muted-foreground hover:text-foreground cursor-pointer rounded-md p-1.5 transition-colors disabled:opacity-50"
+                  title="Deep Sync & Repair Drive Workspace"
+                >
+                  <RotateCw
+                    className={`h-3.5 w-3.5 ${isSyncing || isDeepSyncing ? "text-foreground animate-spin" : ""}`}
+                  />
+                </button>
+                <button
+                  onClick={onToggleCollapse}
+                  className="hover:bg-accent/70 text-muted-foreground hover:text-foreground cursor-pointer rounded-md p-1.5 transition-colors"
+                  title="Collapse Sidebar"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => onCreateNote()}
+                  disabled={isMutating}
+                  className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                  title="New Page (Ctrl+N)"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+                {onCreateDrawing && (
+                  <button
+                    onClick={() => onCreateDrawing()}
+                    disabled={isMutating}
+                    className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                    title="New Whiteboard / Sketch"
+                  >
+                    <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
+                  </button>
+                )}
+                {onCreateUml && (
+                  <button
+                    onClick={() => onCreateUml()}
+                    disabled={isMutating}
+                    className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                    title="New UML Diagram (Apollon)"
+                  >
+                    <Network className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400" />
+                  </button>
+                )}
+                {onCreateMermaid && (
+                  <button
+                    onClick={() => onCreateMermaid()}
+                    disabled={isMutating}
+                    className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                    title="New Mermaid Diagram"
+                  >
+                    <Workflow className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
+                  </button>
+                )}
+                {onCreateTikz && (
+                  <button
+                    onClick={() => onCreateTikz()}
+                    disabled={isMutating}
+                    className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                    title="New TikZ LaTeX Diagram"
+                  >
+                    <Activity className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
+                  </button>
+                )}
+                <button
+                  onClick={() => onCreateFolder()}
+                  disabled={isMutating}
+                  className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                  title="New Folder"
+                >
+                  <FolderPlus className="h-3.5 w-3.5" />
+                </button>
+                {onOpenCalendar && (
+                  <button
+                    onClick={onOpenCalendar}
+                    className={`hover:bg-accent/60 cursor-pointer rounded p-1 transition-colors ${
+                      isCalendarActive
+                        ? "bg-accent text-blue-600 dark:text-blue-400"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title="Google Calendar"
+                  >
+                    <Calendar className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
+                  </button>
+                )}
+                {onToggleDiff && (
+                  <button
+                    onClick={onToggleDiff}
+                    className={`hover:bg-accent/60 cursor-pointer rounded p-1 transition-colors ${
+                      isDiffOpen
+                        ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title="Git Diff Inspector (Ctrl+Shift+D)"
+                  >
+                    <GitCompare className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (onDeepSync) {
+                      onDeepSync();
+                    } else if (onManualSync) {
+                      onManualSync();
+                    } else {
+                      utils.notes.list.invalidate();
+                    }
+                  }}
+                  disabled={isSyncing || isDeepSyncing}
+                  className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
+                  title="Deep Sync & Repair Drive Workspace"
+                >
+                  <RotateCw
+                    className={`h-3.5 w-3.5 ${isSyncing || isDeepSyncing ? "text-foreground animate-spin" : ""}`}
+                  />
+                </button>
+                <button
+                  onClick={onToggleCollapse}
+                  className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors"
+                  title="Collapse Sidebar"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+              </>
             )}
-            {onCreateUml && (
-              <button
-                onClick={() => onCreateUml()}
-                disabled={isMutating}
-                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
-                title="New UML Diagram (Apollon)"
-              >
-                <Network className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400" />
-              </button>
-            )}
-            {onCreateMermaid && (
-              <button
-                onClick={() => onCreateMermaid()}
-                disabled={isMutating}
-                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
-                title="New Mermaid Diagram"
-              >
-                <Workflow className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
-              </button>
-            )}
-            {onCreateTikz && (
-              <button
-                onClick={() => onCreateTikz()}
-                disabled={isMutating}
-                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
-                title="New TikZ LaTeX Diagram"
-              >
-                <Activity className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
-              </button>
-            )}
-            <button
-              onClick={() => onCreateFolder()}
-              disabled={isMutating}
-              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
-              title="New Folder"
-            >
-              <FolderPlus className="h-3.5 w-3.5" />
-            </button>
-            {onOpenCalendar && (
-              <button
-                onClick={onOpenCalendar}
-                className={`hover:bg-accent/60 cursor-pointer rounded p-1 transition-colors ${
-                  isCalendarActive
-                    ? "bg-accent text-blue-600 dark:text-blue-400"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Google Calendar"
-              >
-                <Calendar className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
-              </button>
-            )}
-            {onToggleDiff && (
-              <button
-                onClick={onToggleDiff}
-                className={`hover:bg-accent/60 cursor-pointer rounded p-1 transition-colors ${
-                  isDiffOpen
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Git Diff Inspector (Ctrl+Shift+D)"
-              >
-                <GitCompare className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <button
-              onClick={() => {
-                if (onDeepSync) {
-                  onDeepSync();
-                } else if (onManualSync) {
-                  onManualSync();
-                } else {
-                  utils.notes.list.invalidate();
-                }
-              }}
-              disabled={isSyncing || isDeepSyncing}
-              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors disabled:opacity-50"
-              title="Deep Sync & Repair Drive Workspace"
-            >
-              <RotateCw
-                className={`h-3.5 w-3.5 ${isSyncing || isDeepSyncing ? "text-foreground animate-spin" : ""}`}
-              />
-            </button>
-            <button
-              onClick={onToggleCollapse}
-              className="hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer rounded p-1 transition-colors"
-              title="Collapse Sidebar"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </button>
           </div>
         </div>
 
@@ -1416,7 +1586,13 @@ export function Sidebar({
 
           {/* Directory Items List */}
           {expandedFolders["root"] && (
-            <div className="border-border/40 mt-0.5 ml-2 space-y-0.5 border-l pl-3">
+            <div
+              className={`mt-0.5 ml-2 space-y-0.5 border-l pl-3 ${
+                modernUi
+                  ? "modern-tree-guide border-border/30"
+                  : "border-border/40"
+              }`}
+            >
               {rootItems.length === 0 ? (
                 <div className="text-muted-foreground px-2 py-4 text-center text-[11px]">
                   No files found

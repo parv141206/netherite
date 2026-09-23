@@ -211,6 +211,7 @@ export function Editor({
   textOnlyClipboard: propTextOnlyClipboard,
 }: Props) {
   const themeContext = useTheme();
+  const modernUi = themeContext?.modernUi ?? false;
   const textOnlyClipboard = propTextOnlyClipboard ?? themeContext?.textOnlyClipboard ?? false;
   const textOnlyClipboardRef = useRef(textOnlyClipboard);
   useEffect(() => {
@@ -1082,184 +1083,362 @@ export function Editor({
       />
 
       {/* Editor Formatting Toolbar Header (Desktop only; mobile uses dedicated Obsidian ribbon) */}
-      <div className="hidden sm:flex px-4 py-1.5 border-b border-border/40 bg-background/80 backdrop-blur-md items-center overflow-x-auto scrollbar-none gap-1 text-xs sticky top-0 z-20 select-none shrink-0">
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("bold") ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
-          }`}
-          title="Bold (Ctrl+B)"
-        >
-          <Bold className="w-3.5 h-3.5" />
-        </button>
+      {modernUi ? (
+        <div className="hidden sm:flex px-4 py-1.5 border-b border-border/30 bg-background/70 backdrop-blur-md items-center overflow-x-auto scrollbar-none gap-2 text-xs sticky top-0 z-20 select-none shrink-0">
+          {/* Group 1: Text Styles */}
+          <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
+            <button
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("bold") ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Bold (Ctrl+B)"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("italic") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Italic (Ctrl+I)"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("underline") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Underline (Ctrl+U)"
+            >
+              <UnderlineIcon className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("strike") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Strikethrough"
+            >
+              <Strikethrough className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHighlight().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("highlight") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Highlight"
+            >
+              <Highlighter className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("italic") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Italic (Ctrl+I)"
-        >
-          <Italic className="w-3.5 h-3.5" />
-        </button>
+          {/* Group 2: Headings & Blockquote */}
+          <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("heading", { level: 1 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Heading 1"
+            >
+              <Heading1 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("heading", { level: 2 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Heading 2"
+            >
+              <Heading2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("heading", { level: 3 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Heading 3"
+            >
+              <Heading3 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("blockquote") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Quote"
+            >
+              <Quote className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-        <button
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("underline") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Underline"
-        >
-          <UnderlineIcon className="w-3.5 h-3.5" />
-        </button>
+          {/* Group 3: Lists */}
+          <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
+            <button
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("bulletList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Bullet List"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("orderedList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Numbered List"
+            >
+              <ListOrdered className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
+                editor.isActive("taskList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+              }`}
+              title="Task List"
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-        <button
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("strike") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Strikethrough"
-        >
-          <Strikethrough className="w-3.5 h-3.5" />
-        </button>
+          {/* Group 4: Inserts & Media */}
+          <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
+            <button
+              onClick={() => insertInlineMath()}
+              className="px-2 py-1 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground font-mono text-[11px] flex items-center gap-1 transition-colors"
+              title="Inline Math \( ... \)"
+            >
+              <Sigma className="w-3.5 h-3.5" />
+              <span>Inline</span>
+            </button>
+            <button
+              onClick={() => insertBlockMath()}
+              className="px-2 py-1 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground font-mono text-[11px] flex items-center gap-1 transition-colors"
+              title="Display Math Block \[ ... \]"
+            >
+              <Sigma className="w-3.5 h-3.5" />
+              <span>Block</span>
+            </button>
+            <button
+              onClick={insertTable}
+              className="p-1.5 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors"
+              title="Insert Table"
+            >
+              <TableIcon className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1.5 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors"
+              title="Upload Image to Assets"
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-        <button
-          onClick={() => editor.chain().focus().toggleHighlight().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("highlight") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Highlight"
-        >
-          <Highlighter className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="h-4 w-[1px] bg-border mx-1" />
-
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("heading", { level: 1 }) ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
-          }`}
-          title="Heading 1"
-        >
-          <Heading1 className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("heading", { level: 2 }) ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
-          }`}
-          title="Heading 2"
-        >
-          <Heading2 className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("heading", { level: 3 }) ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
-          }`}
-          title="Heading 3"
-        >
-          <Heading3 className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="h-4 w-[1px] bg-border mx-1" />
-
-        <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("bulletList") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Bullet List"
-        >
-          <List className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("orderedList") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Ordered List"
-        >
-          <ListOrdered className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().toggleTaskList().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("taskList") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Task List"
-        >
-          <CheckSquare className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`p-1.5 rounded hover:bg-accent ${
-            editor.isActive("blockquote") ? "bg-accent text-foreground" : "text-muted-foreground"
-          }`}
-          title="Quote"
-        >
-          <Quote className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="h-4 w-[1px] bg-border mx-1" />
-
-        <button
-          onClick={() => insertInlineMath()}
-          className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground font-mono text-xs flex items-center gap-1"
-          title="Inline Math \( ... \)"
-        >
-          <Sigma className="w-3.5 h-3.5" /> Inline
-        </button>
-
-        <button
-          onClick={() => insertBlockMath()}
-          className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground font-mono text-xs flex items-center gap-1"
-          title="Display Math Block \[ ... \]"
-        >
-          <Sigma className="w-3.5 h-3.5" /> Block
-        </button>
-
-        <button
-          onClick={insertTable}
-          className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
-          title="Insert Table"
-        >
-          <TableIcon className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
-          title="Upload Image to Google Drive Assets"
-        >
-          <ImageIcon className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="ml-auto flex items-center gap-1">
-          <button
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-            className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
-            title="Undo"
-          >
-            <Undo className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-            className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
-            title="Redo"
-          >
-            <Redo className="w-3.5 h-3.5" />
-          </button>
+          {/* Group 5: History */}
+          <div className="ml-auto flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
+            <button
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().undo()}
+              className="p-1.5 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().redo()}
+              className="p-1.5 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="hidden sm:flex px-4 py-1.5 border-b border-border/40 bg-background/80 backdrop-blur-md items-center overflow-x-auto scrollbar-none gap-1 text-xs sticky top-0 z-20 select-none shrink-0">
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("bold") ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
+            }`}
+            title="Bold (Ctrl+B)"
+          >
+            <Bold className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("italic") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Italic (Ctrl+I)"
+          >
+            <Italic className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("underline") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Underline"
+          >
+            <UnderlineIcon className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("strike") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Strikethrough"
+          >
+            <Strikethrough className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("highlight") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Highlight"
+          >
+            <Highlighter className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="h-4 w-[1px] bg-border mx-1" />
+
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("heading", { level: 1 }) ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
+            }`}
+            title="Heading 1"
+          >
+            <Heading1 className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("heading", { level: 2 }) ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
+            }`}
+            title="Heading 2"
+          >
+            <Heading2 className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("heading", { level: 3 }) ? "bg-accent text-foreground font-bold" : "text-muted-foreground"
+            }`}
+            title="Heading 3"
+          >
+            <Heading3 className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="h-4 w-[1px] bg-border mx-1" />
+
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("bulletList") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Bullet List"
+          >
+            <List className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("orderedList") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Ordered List"
+          >
+            <ListOrdered className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleTaskList().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("taskList") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Task List"
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className={`p-1.5 rounded hover:bg-accent ${
+              editor.isActive("blockquote") ? "bg-accent text-foreground" : "text-muted-foreground"
+            }`}
+            title="Quote"
+          >
+            <Quote className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="h-4 w-[1px] bg-border mx-1" />
+
+          <button
+            onClick={() => insertInlineMath()}
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground font-mono text-xs flex items-center gap-1"
+            title="Inline Math \( ... \)"
+          >
+            <Sigma className="w-3.5 h-3.5" /> Inline
+          </button>
+
+          <button
+            onClick={() => insertBlockMath()}
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground font-mono text-xs flex items-center gap-1"
+            title="Display Math Block \[ ... \]"
+          >
+            <Sigma className="w-3.5 h-3.5" /> Block
+          </button>
+
+          <button
+            onClick={insertTable}
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+            title="Insert Table"
+          >
+            <TableIcon className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+            title="Upload Image to Google Drive Assets"
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().undo()}
+              className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
+              title="Undo"
+            >
+              <Undo className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().redo()}
+              className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
+              title="Redo"
+            >
+              <Redo className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Floating Selection Bubble Menu with Color Highlighting */}
       {editor && (
@@ -1363,7 +1542,13 @@ export function Editor({
         className="flex-1 w-full overflow-y-auto transition-colors duration-200"
         style={{ filter: "var(--editor-filter, none)" }}
       >
-        <div className="max-w-7xl  mx-auto px-4 sm:px-16 py-6 sm:py-12 min-h-full">
+        <div
+          className={`${
+            modernUi
+              ? "max-w-4xl lg:max-w-5xl mx-auto px-6 sm:px-12 py-8 sm:py-12"
+              : "max-w-7xl mx-auto px-4 sm:px-16 py-6 sm:py-12"
+          } min-h-full`}
+        >
           {/* Editable Title without .md extension */}
           <div className="mb-6">
             <DocumentTitleInput title={title} onTitleChange={onTitleChange} />
@@ -1383,32 +1568,75 @@ export function Editor({
       )}
 
       {/* Document Footer (Desktop only) */}
-      <div className="hidden sm:flex px-6 py-2 border-t border-border/30 bg-background/50 text-[11px] text-muted-foreground justify-between items-center select-none">
-        <div className="flex items-center gap-3">
-          <span>{editor.storage.characterCount?.words() || 0} words</span>
-          <span>•</span>
-          <span>{editor.storage.characterCount?.characters() || 0} characters</span>
+      {modernUi ? (
+        <div className="hidden sm:flex px-6 py-1.5 border-t border-border/20 bg-background/40 backdrop-blur-xs text-[11px] text-muted-foreground/80 justify-between items-center select-none">
+          <div className="flex items-center gap-2.5">
+            <span>{editor.storage.characterCount?.words() || 0} words</span>
+            <span className="text-border">•</span>
+            <span>{editor.storage.characterCount?.characters() || 0} characters</span>
+            <span className="text-border">•</span>
+            <span>
+              {Math.max(
+                1,
+                Math.ceil((editor.storage.characterCount?.words() || 0) / 200),
+              )}{" "}
+              min read
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 font-mono text-[10px]">
+            <button
+              onClick={() => {
+                setFontSize(15);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("netherite_editor_font_size", "15");
+                }
+                setShowZoomBadge(true);
+                if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+                zoomTimeoutRef.current = setTimeout(
+                  () => setShowZoomBadge(false),
+                  1500,
+                );
+              }}
+              className="hover:text-foreground transition-colors cursor-pointer"
+              title="Reset font zoom (Ctrl + Scroll or Pinch to adjust)"
+            >
+              Zoom: {Math.round((fontSize / 15) * 100)}%
+            </button>
+            <span className="text-border">•</span>
+            <span className="text-muted-foreground/60">Markdown + KaTeX</span>
+          </div>
         </div>
-        <div className="flex items-center gap-3 font-mono text-[10px]">
-          <button
-            onClick={() => {
-              setFontSize(15);
-              if (typeof window !== "undefined") {
-                localStorage.setItem("netherite_editor_font_size", "15");
-              }
-              setShowZoomBadge(true);
-              if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
-              zoomTimeoutRef.current = setTimeout(() => setShowZoomBadge(false), 1500);
-            }}
-            className="hover:text-foreground transition-colors cursor-pointer"
-            title="Reset font zoom (Ctrl + Scroll or Pinch to adjust)"
-          >
-            Zoom: {Math.round((fontSize / 15) * 100)}%
-          </button>
-          <span>•</span>
-          <span>Markdown + LaTeX KaTeX</span>
+      ) : (
+        <div className="hidden sm:flex px-6 py-2 border-t border-border/30 bg-background/50 text-[11px] text-muted-foreground justify-between items-center select-none">
+          <div className="flex items-center gap-3">
+            <span>{editor.storage.characterCount?.words() || 0} words</span>
+            <span>•</span>
+            <span>{editor.storage.characterCount?.characters() || 0} characters</span>
+          </div>
+          <div className="flex items-center gap-3 font-mono text-[10px]">
+            <button
+              onClick={() => {
+                setFontSize(15);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("netherite_editor_font_size", "15");
+                }
+                setShowZoomBadge(true);
+                if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+                zoomTimeoutRef.current = setTimeout(
+                  () => setShowZoomBadge(false),
+                  1500,
+                );
+              }}
+              className="hover:text-foreground transition-colors cursor-pointer"
+              title="Reset font zoom (Ctrl + Scroll or Pinch to adjust)"
+            >
+              Zoom: {Math.round((fontSize / 15) * 100)}%
+            </button>
+            <span>•</span>
+            <span>Markdown + LaTeX KaTeX</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

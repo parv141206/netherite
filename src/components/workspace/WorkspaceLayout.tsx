@@ -77,7 +77,10 @@ import {
   LogIn,
   X,
   GitCompare,
+  ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ListFilter,
   Columns,
   CheckCircle2,
   Search,
@@ -165,7 +168,11 @@ export function WorkspaceLayout({
   initialContent = "",
   initialMetadata,
 }: WorkspaceLayoutProps) {
-  const { theme, isDark, textOnlyClipboard } = useTheme();
+  const { theme, isDark, textOnlyClipboard, modernUi } = useTheme();
+  const [canScrollTabsLeft, setCanScrollTabsLeft] = useState(false);
+  const [canScrollTabsRight, setCanScrollTabsRight] = useState(false);
+  const [showOpenTabsMenu, setShowOpenTabsMenu] = useState(false);
+  const openTabsMenuRef = useRef<HTMLDivElement | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return window.innerWidth < 768;
@@ -321,6 +328,24 @@ export function WorkspaceLayout({
   // Strictly tracks which file owns the current noteContent in memory to isolate drafts across tabs
   const contentFileIdRef = useRef<string | null>(initialNoteId || null);
   const tabBarRef = useRef<HTMLDivElement | null>(null);
+  const activeTabElemRef = useRef<HTMLDivElement | null>(null);
+
+  const checkTabScroll = useCallback(() => {
+    if (tabBarRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tabBarRef.current;
+      setCanScrollTabsLeft(scrollLeft > 4);
+      setCanScrollTabsRight(scrollLeft < scrollWidth - clientWidth - 4);
+    }
+  }, []);
+
+  const handleScrollTabs = (direction: "left" | "right") => {
+    if (tabBarRef.current) {
+      tabBarRef.current.scrollBy({
+        left: direction === "left" ? -220 : 220,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const { data: serverMeta } = api.notes.getMetadata.useQuery(undefined, {
     enabled: !!session?.user,
@@ -411,6 +436,47 @@ export function WorkspaceLayout({
       ? initialNoteId
       : firstFile?.id;
   });
+
+  // Track tab scroll state and update left/right scroll indicators
+  useEffect(() => {
+    const el = tabBarRef.current;
+    if (!el) return;
+    checkTabScroll();
+    el.addEventListener("scroll", checkTabScroll, { passive: true });
+    window.addEventListener("resize", checkTabScroll);
+    return () => {
+      el.removeEventListener("scroll", checkTabScroll);
+      window.removeEventListener("resize", checkTabScroll);
+    };
+  }, [openTabIds, checkTabScroll]);
+
+  // Auto-scroll active tab into view when active tab changes
+  useEffect(() => {
+    if (activeTabElemRef.current) {
+      activeTabElemRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    }
+    setTimeout(checkTabScroll, 100);
+  }, [activeTabId, checkTabScroll]);
+
+  // Click outside to close open tabs dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        openTabsMenuRef.current &&
+        !openTabsMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowOpenTabsMenu(false);
+      }
+    };
+    if (showOpenTabsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showOpenTabsMenu]);
 
   // Responsive mobile sidebar collapse on mount
   useEffect(() => {
@@ -2600,6 +2666,19 @@ export function WorkspaceLayout({
     }
   };
 
+  const closeOtherTabs = (keepTabId: string) => {
+    const tabsToClose = openTabIds.filter((id) => id !== keepTabId);
+    tabsToClose.forEach((id) => {
+      closeTab(id, { stopPropagation: () => {} } as React.MouseEvent);
+    });
+  };
+
+  const closeAllTabs = () => {
+    [...openTabIds].forEach((id) => {
+      closeTab(id, { stopPropagation: () => {} } as React.MouseEvent);
+    });
+  };
+
   const handleImageUpload = async (file: File): Promise<string> => {
     try {
       showToast("Uploading image to Google Drive…");
@@ -3017,7 +3096,24 @@ export function WorkspaceLayout({
 
         {/* VS Code / Antigravity Style Tab Management Bar (Hidden in Zen Mode) */}
         {!zenMode && (openTabIds.length > 0 || activeView === "calendar") && (
-          <div className="border-border bg-muted/30 hidden h-9 shrink-0 items-center justify-between overflow-x-auto border-b px-0 select-none sm:flex">
+          <div
+            className={`border-border relative hidden shrink-0 items-center justify-between border-b select-none sm:flex ${
+              modernUi
+                ? "h-9 border-border/40 bg-background/50 px-1 backdrop-blur-md"
+                : "h-9 bg-muted/30 px-0"
+            }`}
+          >
+            {/* Modern UI: Horizontal Scroll Chevron Left */}
+            {modernUi && canScrollTabsLeft && (
+              <button
+                onClick={() => handleScrollTabs("left")}
+                className="bg-card/95 hover:bg-card text-foreground border-border/70 absolute top-1.5 left-1 z-20 flex h-6 w-6 items-center justify-center rounded-full border shadow-sm transition-all hover:scale-105 active:scale-95"
+                title="Scroll tabs left"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+            )}
+
             <div
               ref={tabBarRef}
               onWheel={(e) => {
@@ -3025,7 +3121,9 @@ export function WorkspaceLayout({
                   tabBarRef.current.scrollLeft += e.deltaY;
                 }
               }}
-              className="flex h-full scrollbar-none items-center overflow-x-auto"
+              className={`modern-tab-bar flex h-full items-center overflow-x-auto ${
+                modernUi ? "gap-1 px-1" : "scrollbar-none"
+              }`}
             >
               {/* Google Calendar Studio Tab */}
               <button
@@ -3034,10 +3132,14 @@ export function WorkspaceLayout({
                     activeView === "calendar" ? "editor" : "calendar",
                   )
                 }
-                className={`border-border/70 flex h-full cursor-pointer items-center gap-1.5 border-r px-3 text-xs transition-all ${
-                  activeView === "calendar"
-                    ? "bg-card border-t-2 border-t-blue-500 font-medium text-blue-600 shadow-2xs dark:text-blue-400"
-                    : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                className={`flex h-full cursor-pointer items-center gap-1.5 px-3 text-xs transition-all ${
+                  modernUi
+                    ? activeView === "calendar"
+                      ? "bg-card text-blue-600 dark:text-blue-400 h-7.5 border-border/60 rounded-md border font-semibold shadow-2xs"
+                      : "text-muted-foreground hover:bg-accent/40 hover:text-foreground h-7.5 rounded-md"
+                    : activeView === "calendar"
+                      ? "bg-card border-t-2 border-t-blue-500 font-medium text-blue-600 shadow-2xs dark:text-blue-400 border-r border-border/70"
+                      : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground border-r border-border/70"
                 }`}
                 title="Google Calendar Studio"
               >
@@ -3057,10 +3159,16 @@ export function WorkspaceLayout({
                   : isPrimaryActive;
                 const hasLocalDiff = isPrimaryActive ? isDirty : false;
                 const isTabLoading = isPrimaryActive && isDocumentLoading;
+                const rawName = note?.name || "Untitled";
+                const cleanName = rawName.replace(
+                  /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+                  "",
+                );
 
                 return (
                   <div
                     key={tabId}
+                    ref={isActive ? activeTabElemRef : undefined}
                     draggable
                     onDragStart={() => setDraggedTabId(tabId)}
                     onDragEnd={() => setDraggedTabId(null)}
@@ -3136,13 +3244,24 @@ export function WorkspaceLayout({
                         openFileInTab(tabId);
                       }
                     }}
-                    className={`group border-border/70 flex h-full cursor-pointer items-center gap-2 border-r px-3.5 text-xs transition-all ${
-                      isActive
-                        ? "bg-card text-foreground border-t-foreground border-t-2 font-medium shadow-2xs"
-                        : isSplitTab
-                          ? "bg-muted/30 text-foreground border-t-primary/50 border-t-2 font-medium"
-                          : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                    className={`group flex cursor-pointer items-center transition-all ${
+                      modernUi
+                        ? `h-7.5 shrink-0 gap-1.5 rounded-md px-2.5 text-xs min-w-[110px] max-w-[200px] lg:max-w-[250px] ${
+                            isActive
+                              ? "bg-card text-foreground border-border/70 font-semibold shadow-2xs border"
+                              : isSplitTab
+                                ? "bg-muted/40 text-foreground border-primary/30 border font-medium"
+                                : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                          }`
+                        : `h-full gap-2 border-r px-3.5 text-xs border-border/70 ${
+                            isActive
+                              ? "bg-card text-foreground border-t-foreground border-t-2 font-medium shadow-2xs"
+                              : isSplitTab
+                                ? "bg-muted/30 text-foreground border-t-primary/50 border-t-2 font-medium"
+                                : "bg-muted/15 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                          }`
                     }`}
+                    title={rawName}
                   >
                     {isTabLoading ? (
                       <AppleSpinner
@@ -3152,54 +3271,54 @@ export function WorkspaceLayout({
                     ) : note?.name.endsWith(".excalidraw") ||
                       note?.mimeType === "application/vnd.excalidraw+json" ? (
                       <Palette
-                        className={`h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                        className={`h-3.5 w-3.5 shrink-0 text-indigo-500 dark:text-indigo-400 ${isActive ? "opacity-100" : "opacity-70"}`}
                       />
                     ) : isUmlFile(note) ? (
                       <Network
-                        className={`h-3.5 w-3.5 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                        className={`h-3.5 w-3.5 shrink-0 text-purple-500 dark:text-purple-400 ${isActive ? "opacity-100" : "opacity-70"}`}
                       />
                     ) : isMermaidFile(note) ? (
                       <Workflow
-                        className={`h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                        className={`h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400 ${isActive ? "opacity-100" : "opacity-70"}`}
                       />
                     ) : isTikzFile(note) ? (
                       <Activity
-                        className={`h-3.5 w-3.5 text-blue-500 dark:text-blue-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                        className={`h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400 ${isActive ? "opacity-100" : "opacity-70"}`}
                       />
                     ) : (
                       <FileText
-                        className={`h-3.5 w-3.5 ${isActive ? "text-foreground" : "opacity-60"}`}
+                        className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-foreground" : "opacity-60"}`}
                       />
                     )}
-                    <span className="max-w-[130px] truncate">
-                      {(note?.name || "Untitled").replace(
-                        /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
-                        "",
-                      )}
+                    <span
+                      className={`truncate min-w-0 ${modernUi ? "flex-1" : "max-w-[130px]"}`}
+                      title={rawName}
+                    >
+                      {cleanName}
                     </span>
                     {isSplitView && isSplitTab && (
                       <span
-                        className="bg-primary/60 h-1.5 w-1.5 shrink-0 rounded-full"
+                        className="bg-primary/70 h-1.5 w-1.5 shrink-0 rounded-full"
                         title="Open in Split Pane"
                       />
                     )}
-                    <div className="ml-1 flex items-center">
+                    <div className="ml-0.5 flex shrink-0 items-center">
                       {hasLocalDiff ? (
                         <button
                           onClick={(e) => closeTab(tabId, e)}
                           className="hover:bg-accent flex h-4 w-4 items-center justify-center rounded transition-colors"
-                          title="Unsaved changes (Click to close)"
+                          title="Unsaved changes (Click to close & save)"
                         >
-                          <span className="bg-foreground h-2 w-2 rounded-full group-hover:hidden" />
+                          <span className="bg-amber-500 h-2 w-2 rounded-full group-hover:hidden animate-pulse" />
                           <X className="hidden h-3 w-3 group-hover:block" />
                         </button>
                       ) : (
                         <button
                           onClick={(e) => closeTab(tabId, e)}
                           className="hover:bg-accent text-muted-foreground hover:text-foreground flex h-4 w-4 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100"
-                          title="Close"
+                          title="Close Tab"
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X className="h-3 w-3" />
                         </button>
                       )}
                     </div>
@@ -3209,22 +3328,122 @@ export function WorkspaceLayout({
 
               <button
                 onClick={() => handleCreateFile()}
-                className="hover:bg-accent text-muted-foreground hover:text-foreground ml-1 rounded p-1.5 transition-colors"
-                title="New Note Tab"
+                className="hover:bg-accent text-muted-foreground hover:text-foreground ml-1 rounded p-1.5 transition-colors cursor-pointer"
+                title="New Note Tab (Ctrl+N)"
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => handleCreateDrawing()}
-                className="hover:bg-accent text-muted-foreground hover:text-foreground mr-1 rounded p-1.5 transition-colors"
+                className="hover:bg-accent text-muted-foreground hover:text-foreground mr-1 rounded p-1.5 transition-colors cursor-pointer"
                 title="New Whiteboard Tab"
               >
                 <Palette className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
               </button>
             </div>
 
-            {/* Right Tab Bar Actions (VS Code Style) */}
+            {/* Modern UI: Horizontal Scroll Chevron Right */}
+            {modernUi && canScrollTabsRight && (
+              <button
+                onClick={() => handleScrollTabs("right")}
+                className="bg-card/95 hover:bg-card text-foreground border-border/70 absolute top-1.5 right-20 z-20 flex h-6 w-6 items-center justify-center rounded-full border shadow-sm transition-all hover:scale-105 active:scale-95"
+                title="Scroll tabs right"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            {/* Right Tab Bar Actions */}
             <div className="flex shrink-0 items-center gap-1 px-2">
+              {/* Modern UI: All Open Tabs Dropdown Navigator */}
+              {modernUi && openTabIds.length > 1 && (
+                <div className="relative" ref={openTabsMenuRef}>
+                  <button
+                    onClick={() => setShowOpenTabsMenu(!showOpenTabsMenu)}
+                    className={`hover:bg-accent shrink-0 rounded p-1.5 text-xs transition-colors flex items-center gap-1 ${
+                      showOpenTabsMenu
+                        ? "text-foreground bg-accent"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title={`All Open Tabs (${openTabIds.length})`}
+                  >
+                    <ListFilter className="h-3.5 w-3.5" />
+                    <span className="text-[10px] font-mono opacity-80">{openTabIds.length}</span>
+                  </button>
+
+                  {showOpenTabsMenu && (
+                    <div className="bg-card/95 border-border animate-in fade-in zoom-in-95 absolute top-8 right-0 z-50 max-h-72 w-64 overflow-y-auto rounded-xl border p-1 text-xs shadow-2xl backdrop-blur-xl duration-100">
+                      <div className="text-muted-foreground border-border/40 flex items-center justify-between border-b px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider">
+                        <span>Open Tabs ({openTabIds.length})</span>
+                        <button
+                          onClick={() => {
+                            closeAllTabs();
+                            setShowOpenTabsMenu(false);
+                          }}
+                          className="hover:text-red-500 text-muted-foreground text-[10px] lowercase font-normal transition-colors"
+                        >
+                          close all
+                        </button>
+                      </div>
+
+                      <div className="space-y-0.5 py-1">
+                        {openTabIds.map((tabId) => {
+                          const note = localNotes.find((n) => n.id === tabId);
+                          const isCur = activeTabId === tabId;
+                          const name = (note?.name || "Untitled").replace(
+                            /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
+                            "",
+                          );
+                          return (
+                            <div
+                              key={tabId}
+                              onClick={() => {
+                                openFileInTab(tabId);
+                                setShowOpenTabsMenu(false);
+                              }}
+                              className={`flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 transition-colors ${
+                                isCur
+                                  ? "bg-accent text-foreground font-medium"
+                                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                              }`}
+                            >
+                              <div className="flex min-w-0 items-center gap-2">
+                                <FileText className="h-3 w-3 shrink-0 opacity-70" />
+                                <span className="truncate text-xs">{name}</span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  closeTab(tabId, e);
+                                }}
+                                className="hover:bg-accent rounded p-0.5 text-muted-foreground hover:text-foreground"
+                                title="Close"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {activeTabId && (
+                        <div className="border-border/40 border-t pt-1">
+                          <button
+                            onClick={() => {
+                              closeOtherTabs(activeTabId);
+                              setShowOpenTabsMenu(false);
+                            }}
+                            className="hover:bg-accent text-muted-foreground hover:text-foreground flex w-full items-center justify-center rounded-lg py-1 text-[11px] transition-colors"
+                          >
+                            Close Other Tabs
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {isDirty && (
                 <button
                   onClick={() => setIsDiffModalOpen(true)}
