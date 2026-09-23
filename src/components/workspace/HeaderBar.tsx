@@ -838,7 +838,7 @@ export function HeaderBar({
 
           {/* Notion Sleek Popover Menu */}
           {showMoreMenu && (
-            <div className="bg-card/95 border-border animate-in fade-in zoom-in-95 absolute top-9 right-0 z-50 max-h-[85vh] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border p-2.5 text-xs shadow-2xl backdrop-blur-xl duration-100 sm:w-80">
+            <div className="bg-card/80 glass-popover border-border animate-in fade-in zoom-in-95 absolute top-9 right-0 z-50 max-h-[85vh] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border p-2.5 text-xs shadow-2xl duration-100 sm:w-80">
               {/* Markdown Themes (7 Themes in both Light & Dark = 14) */}
               <div className="border-border/40 border-b p-1.5 pb-2.5">
                 <div className="text-muted-foreground mb-2 flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase">
@@ -933,7 +933,7 @@ export function HeaderBar({
               <div className="border-border/40 space-y-2 border-b p-2">
                 <div className="flex items-center justify-between">
                   <div className="text-muted-foreground flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
-                    <SunMedium className="h-3.5 w-3.5 text-amber-500" />
+                    <SunMedium className="h-3.5 w-3.5 text-foreground" />
                     <span>Blue Light Filter</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -958,7 +958,7 @@ export function HeaderBar({
                     max="100"
                     value={warmth}
                     onChange={(e) => setWarmth(parseInt(e.target.value, 10))}
-                    className="bg-muted h-1.5 w-full cursor-pointer appearance-none rounded-lg accent-amber-500 transition-all hover:accent-amber-400"
+                    className="bg-muted h-1.5 w-full cursor-pointer appearance-none rounded-lg accent-foreground blue-light-slider transition-all"
                   />
                 </div>
               </div>

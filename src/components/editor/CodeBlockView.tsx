@@ -501,8 +501,8 @@ export function CodeBlockView({
             )}
           </button>
         </div>
-        <pre className="p-3.5 font-mono text-xs overflow-x-auto leading-relaxed text-foreground">
-          <NodeViewContent as="div" className="outline-none" />
+        <pre className="p-3.5 font-mono text-xs overflow-x-auto m-0 whitespace-pre leading-relaxed text-foreground max-w-full">
+          <NodeViewContent as="div" className="outline-none block w-full whitespace-pre font-mono" />
         </pre>
       </NodeViewWrapper>
     );
@@ -704,10 +704,10 @@ export function CodeBlockView({
         }}
       >
         <div className="p-3 bg-muted/20 dark:bg-muted/10">
-          <pre className="p-3 font-mono text-xs leading-relaxed bg-background/80 dark:bg-background/60 border border-border/50 rounded-lg overflow-x-auto text-foreground focus-within:ring-1 focus-within:ring-primary/40">
+          <pre className="p-3 font-mono text-xs leading-relaxed bg-background/80 dark:bg-background/60 border border-border/50 rounded-lg overflow-x-auto whitespace-pre text-foreground max-w-full focus-within:ring-1 focus-within:ring-primary/40">
             <NodeViewContent
               as="div"
-              className="outline-none block w-full min-h-[4rem]"
+              className="outline-none block w-full whitespace-pre font-mono min-h-[4rem]"
             />
           </pre>
         </div>

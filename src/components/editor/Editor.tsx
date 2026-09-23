@@ -181,7 +181,11 @@ function replacePlaceholderWithImage(
       editorInstance.state.schema.nodes.imageResize ||
       editorInstance.state.schema.nodes.image;
     if (nodeType) {
-      const replacementNode = nodeType.create({ src });
+      const replacementNode = nodeType.create({
+        src,
+        width: "100%",
+        layout: "break",
+      });
       editorInstance.view.dispatch(
         editorInstance.state.tr.replaceWith(
           targetPos,
@@ -194,7 +198,11 @@ function replacePlaceholderWithImage(
   }
 
   // Fallback if placeholder was already cleared or moved
-  editorInstance.chain().focus().setImage({ src }).run();
+  editorInstance
+    .chain()
+    .focus()
+    .setImage({ src, width: "100%", layout: "break" })
+    .run();
 }
 
 export function Editor({

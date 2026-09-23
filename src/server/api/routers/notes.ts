@@ -20,6 +20,7 @@ import {
   listNoteRevisions,
   getNoteRevisionContent,
   pinNoteRevision,
+  uploadFileToFolder,
 } from "~/server/googleDrive";
 
 export const notesRouter = createTRPCRouter({
@@ -178,6 +179,26 @@ export const notesRouter = createTRPCRouter({
         input.fileId,
         input.revisionId,
         input.keepForever,
+      );
+    }),
+
+  uploadFile: protectedProcedure
+    .input(
+      z.object({
+        fileName: z.string(),
+        mimeType: z.string(),
+        base64Data: z.string(),
+        folderId: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const buffer = Buffer.from(input.base64Data, "base64");
+      return await uploadFileToFolder(
+        ctx.session,
+        input.fileName,
+        input.mimeType,
+        buffer,
+        input.folderId,
       );
     }),
 });

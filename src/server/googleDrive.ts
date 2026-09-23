@@ -1190,3 +1190,76 @@ export async function pinNoteRevision(
     return true;
   });
 }
+
+export async function uploadFileToFolder(
+  session: any,
+  fileName: string,
+  mimeType: string,
+  buffer: Buffer,
+  folderId?: string,
+) {
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    const targetParent = folderId || (await ensureNetheriteFolder(session));
+
+    const res = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [targetParent],
+      },
+      media: {
+        mimeType: mimeType || "application/octet-stream",
+        body: Readable.from(buffer),
+      },
+      fields: "id, name, mimeType, parents, modifiedTime, createdTime",
+    });
+
+    const fileId = res.data.id;
+    if (!fileId) throw new Error("Failed to upload file to Drive");
+
+    // Determine type for workspace metadata
+    let type: "note" | "drawing" | "image" | "folder" | "uml" | "mermaid" = "note";
+    const lowerName = fileName.toLowerCase();
+    if (mimeType.startsWith("image/")) {
+      type = "image";
+      // Make images publicly accessible if needed for markdown previews
+      try {
+        await drive.permissions.create({
+          fileId,
+          requestBody: { role: "reader", type: "anyone" },
+        });
+      } catch {}
+    } else if (lowerName.endsWith(".excalidraw")) {
+      type = "drawing";
+    } else if (lowerName.endsWith(".apollon") || lowerName.endsWith(".uml")) {
+      type = "uml";
+    } else if (lowerName.endsWith(".mmd") || lowerName.endsWith(".mermaid")) {
+      type = "mermaid";
+    }
+
+    try {
+      await saveWorkspaceMetadata(session, {
+        files: {
+          [fileId]: {
+            id: fileId,
+            name: fileName,
+            mimeType,
+            type,
+            parentId: targetParent,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      });
+    } catch (e) {
+      console.warn("Could not save file metadata for upload:", e);
+    }
+
+    return {
+      id: fileId,
+      name: fileName,
+      mimeType,
+      parents: [targetParent],
+    };
+  });
+}
+

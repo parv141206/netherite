@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   FileText,
   Plus,
@@ -31,6 +31,10 @@ import {
   Download,
   Archive,
   History,
+  UploadCloud,
+  ArrowUpDown,
+  SlidersHorizontal,
+  MoreVertical,
 } from "lucide-react";
 import JSZip from "jszip";
 import { useTheme } from "~/components/ThemeProvider";
@@ -361,6 +365,184 @@ export function Sidebar({
   } | null>(null);
 
   const utils = api.useUtils();
+  const uploadFileMutation = api.notes.uploadFile.useMutation();
+
+  // Folder Upload State
+  const folderUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const targetUploadFolderIdRef = useRef<string | undefined>(undefined);
+  const [isUploadingFolderFiles, setIsUploadingFolderFiles] = useState(false);
+
+  const handleTriggerFolderUpload = (folderId?: string) => {
+    targetUploadFolderIdRef.current = folderId;
+    if (folderUploadInputRef.current) {
+      folderUploadInputRef.current.value = "";
+      folderUploadInputRef.current.click();
+    }
+  };
+
+  const handleFolderFilesSelected = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const targetFolderId = targetUploadFolderIdRef.current;
+    setIsUploadingFolderFiles(true);
+    let successCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file) continue;
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const res = reader.result as string;
+            resolve(res.split(",")[1] || "");
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        await uploadFileMutation.mutateAsync({
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          base64Data: base64,
+          folderId: targetFolderId,
+        });
+        successCount++;
+      } catch (err) {
+        console.error("Failed to upload file to folder:", file.name, err);
+      }
+    }
+
+    setIsUploadingFolderFiles(false);
+    if (successCount > 0) {
+      utils.notes.list.invalidate();
+      if (targetFolderId) {
+        setExpandedFolders((prev) => ({ ...prev, [targetFolderId]: true }));
+      }
+      onToast?.(
+        `Uploaded ${successCount} file${successCount > 1 ? "s" : ""} successfully`,
+      );
+    }
+  };
+
+  // Sorting State
+  const [sortOption, setSortOption] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_sort_option") || "name-asc";
+    }
+    return "name-asc";
+  });
+  const [foldersFirst, setFoldersFirst] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_sort_folders_first");
+      return saved !== null ? saved === "true" : true;
+    }
+    return true;
+  });
+  const [showSortMenu, setShowSortMenu] = useState(false);
+
+  useEffect(() => {
+    const handleSortChange = () => {
+      const savedSort =
+        localStorage.getItem("netherite_sort_option") || "name-asc";
+      const savedFoldersFirst = localStorage.getItem(
+        "netherite_sort_folders_first",
+      );
+      setSortOption(savedSort);
+      setFoldersFirst(
+        savedFoldersFirst !== null ? savedFoldersFirst === "true" : true,
+      );
+    };
+    window.addEventListener("netherite_sort_changed", handleSortChange);
+    return () =>
+      window.removeEventListener("netherite_sort_changed", handleSortChange);
+  }, []);
+
+  const changeSortOption = (opt: string) => {
+    setSortOption(opt);
+    localStorage.setItem("netherite_sort_option", opt);
+    window.dispatchEvent(new Event("netherite_sort_changed"));
+    setShowSortMenu(false);
+  };
+
+  const toggleFoldersFirst = () => {
+    const nextVal = !foldersFirst;
+    setFoldersFirst(nextVal);
+    localStorage.setItem("netherite_sort_folders_first", String(nextVal));
+    window.dispatchEvent(new Event("netherite_sort_changed"));
+  };
+
+  const sortItems = useCallback(
+    (items: DriveItem[]): DriveItem[] => {
+      return [...items].sort((a, b) => {
+        const isAFolder = a.mimeType === "application/vnd.google-apps.folder";
+        const isBFolder = b.mimeType === "application/vnd.google-apps.folder";
+
+        if (foldersFirst) {
+          if (isAFolder && !isBFolder) return -1;
+          if (!isAFolder && isBFolder) return 1;
+        }
+
+        switch (sortOption) {
+          case "name-desc":
+            return b.name.localeCompare(a.name, undefined, {
+              numeric: true,
+              sensitivity: "base",
+            });
+          case "modified-desc": {
+            const timeA = new Date(a.modifiedTime || 0).getTime();
+            const timeB = new Date(b.modifiedTime || 0).getTime();
+            return timeB - timeA;
+          }
+          case "modified-asc": {
+            const timeA = new Date(a.modifiedTime || 0).getTime();
+            const timeB = new Date(b.modifiedTime || 0).getTime();
+            return timeA - timeB;
+          }
+          case "created-desc": {
+            const timeA = new Date(
+              (a as any).createdTime ||
+                (a as any).createdAt ||
+                a.modifiedTime ||
+                0,
+            ).getTime();
+            const timeB = new Date(
+              (b as any).createdTime ||
+                (b as any).createdAt ||
+                b.modifiedTime ||
+                0,
+            ).getTime();
+            return timeB - timeA;
+          }
+          case "created-asc": {
+            const timeA = new Date(
+              (a as any).createdTime ||
+                (a as any).createdAt ||
+                a.modifiedTime ||
+                0,
+            ).getTime();
+            const timeB = new Date(
+              (b as any).createdTime ||
+                (b as any).createdAt ||
+                b.modifiedTime ||
+                0,
+            ).getTime();
+            return timeA - timeB;
+          }
+          case "name-asc":
+          default:
+            return a.name.localeCompare(b.name, undefined, {
+              numeric: true,
+              sensitivity: "base",
+            });
+        }
+      });
+    },
+    [foldersFirst, sortOption],
+  );
 
   // Find all subfolder IDs excluding Netherite root folder itself and internal assets folder
   const subfolderIds = new Set(
@@ -375,18 +557,20 @@ export function Sidebar({
   );
 
   // Root items are non-Netherite items whose parents are NOT a subfolder inside Netherite
-  const rootItems = notes.filter((n) => {
-    if (n.name.startsWith(".")) return false;
-    if (n.name === "assets") return false;
-    if (
-      n.mimeType === "application/vnd.google-apps.folder" &&
-      n.name === "Netherite"
-    )
-      return false;
-    if (!n.parents || n.parents.length === 0) return true;
-    const isInsideSubfolder = n.parents.some((p) => subfolderIds.has(p));
-    return !isInsideSubfolder;
-  });
+  const rootItems = sortItems(
+    notes.filter((n) => {
+      if (n.name.startsWith(".")) return false;
+      if (n.name === "assets") return false;
+      if (
+        n.mimeType === "application/vnd.google-apps.folder" &&
+        n.name === "Netherite"
+      )
+        return false;
+      if (!n.parents || n.parents.length === 0) return true;
+      const isInsideSubfolder = n.parents.some((p) => subfolderIds.has(p));
+      return !isInsideSubfolder;
+    }),
+  );
 
   const filterItem = (item: DriveItem): boolean => {
     if (item.name.startsWith(".")) return false;
@@ -859,7 +1043,9 @@ export function Sidebar({
 
     if (isFolder) {
       const isExpanded = expandedFolders[item.id];
-      const children = notes.filter((n) => n.parents?.includes(item.id));
+      const children = sortItems(
+        notes.filter((n) => n.parents?.includes(item.id)),
+      );
       const isTarget = dragOverFolderId === item.id;
 
       return (
@@ -946,6 +1132,18 @@ export function Sidebar({
                   {item.name.replace(/\.md$/i, "")}
                 </span>
               )}
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemContextMenu(e, item.id, item.name, true);
+                }}
+                className="ml-auto opacity-0 group-hover:opacity-100 hover:bg-accent/80 rounded p-0.5 text-muted-foreground hover:text-foreground transition-opacity shrink-0 cursor-pointer"
+                title="Folder Options"
+              >
+                <MoreVertical className="h-3 w-3" />
+              </button>
             </div>
           </div>
 
@@ -962,7 +1160,7 @@ export function Sidebar({
                   Empty folder
                 </div>
               ) : (
-                children.map((child) => renderTreeItem(child))
+                children.map((child: DriveItem) => renderTreeItem(child))
               )}
             </div>
           )}
@@ -1476,24 +1674,93 @@ export function Sidebar({
           className="border-border/30 space-y-1.5 border-b p-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="relative cursor-pointer"
-            onClick={() => {
-              if (onOpenGlobalSearch) onOpenGlobalSearch();
-            }}
-          >
-            <Search className="text-muted-foreground/70 absolute top-2 left-2.5 h-3.5 w-3.5" />
-            <input
-              type="text"
-              placeholder="Search notes (Ctrl+K)..."
-              value={searchQuery}
-              readOnly={!!onOpenGlobalSearch}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-accent/40 hover:bg-accent/60 focus:border-border text-foreground placeholder:text-muted-foreground/60 w-full cursor-pointer rounded-md border border-transparent py-1 pr-8 pl-7 font-sans text-xs transition-colors focus:outline-none"
-            />
-            <kbd className="text-muted-foreground/80 bg-muted/60 border-border/40 pointer-events-none absolute top-1.5 right-2 hidden items-center rounded border px-1.5 py-0.5 font-mono text-[9px] sm:inline-flex">
-              ⌘K
-            </kbd>
+          <div className="flex items-center gap-1.5">
+            <div
+              className="relative flex-1 cursor-pointer"
+              onClick={() => {
+                if (onOpenGlobalSearch) onOpenGlobalSearch();
+              }}
+            >
+              <Search className="text-muted-foreground/70 absolute top-2 left-2.5 h-3.5 w-3.5" />
+              <input
+                type="text"
+                placeholder="Search notes (Ctrl+K)..."
+                value={searchQuery}
+                readOnly={!!onOpenGlobalSearch}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-accent/40 hover:bg-accent/60 focus:border-border text-foreground placeholder:text-muted-foreground/60 w-full cursor-pointer rounded-md border border-transparent py-1 pr-8 pl-7 font-sans text-xs transition-colors focus:outline-none"
+              />
+              <kbd className="text-muted-foreground/80 bg-muted/60 border-border/40 pointer-events-none absolute top-1.5 right-2 hidden items-center rounded border px-1.5 py-0.5 font-mono text-[9px] sm:inline-flex">
+                ⌘K
+              </kbd>
+            </div>
+
+            {/* Quick Sort Dropdown Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSortMenu(!showSortMenu);
+                }}
+                className={`p-1.5 rounded-md border transition-colors cursor-pointer ${
+                  showSortMenu
+                    ? "bg-accent text-foreground border-border/60"
+                    : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                }`}
+                title="Sort files and folders"
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+              </button>
+
+              {showSortMenu && (
+                <div
+                  className="absolute right-0 top-8 z-50 min-w-[200px] rounded-xl border border-border/80 bg-card/95 p-1.5 text-xs shadow-2xl backdrop-blur-2xl glass-panel space-y-0.5 select-none animate-in fade-in zoom-in-95 duration-100"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Sort Files & Folders
+                  </div>
+                  {(
+                    [
+                      { id: "name-asc", label: "Name (A → Z)" },
+                      { id: "name-desc", label: "Name (Z → A)" },
+                      { id: "modified-desc", label: "Recently Modified" },
+                      { id: "modified-asc", label: "Oldest Modified" },
+                      { id: "created-desc", label: "Date Created (Newest)" },
+                      { id: "created-asc", label: "Date Created (Oldest)" },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => changeSortOption(opt.id)}
+                      className={`flex w-full items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                        sortOption === opt.id
+                          ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : "text-foreground hover:bg-accent/70"
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      {sortOption === opt.id && <span className="text-xs">✓</span>}
+                    </button>
+                  ))}
+
+                  <div className="h-[1px] bg-border/50 my-1" />
+
+                  <button
+                    type="button"
+                    onClick={toggleFoldersFirst}
+                    className="flex w-full items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-foreground hover:bg-accent/70 transition-colors cursor-pointer text-[11px]"
+                  >
+                    <span>Keep Folders on Top</span>
+                    <span className="font-semibold text-primary">
+                      {foldersFirst ? "On" : "Off"}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Apple Pinned Item: Google Calendar Studio */}
@@ -1598,7 +1865,7 @@ export function Sidebar({
                   No files found
                 </div>
               ) : (
-                rootItems.map((item) => renderTreeItem(item))
+                rootItems.map((item: DriveItem) => renderTreeItem(item))
               )}
             </div>
           )}
@@ -1678,6 +1945,15 @@ export function Sidebar({
                   className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 >
                   <FolderPlus className="h-3.5 w-3.5" /> New Folder
+                </button>
+                <button
+                  onClick={() => {
+                    handleTriggerFolderUpload(undefined);
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-primary cursor-pointer"
+                >
+                  <UploadCloud className="h-3.5 w-3.5" /> Upload Files
                 </button>
                 <div className="bg-border my-1 h-[1px]" />
                 {/* Root Folder Color Picker */}
@@ -1845,6 +2121,16 @@ export function Sidebar({
                     })}
                   </div>
                 </div>
+
+                <button
+                  onClick={() => {
+                    handleTriggerFolderUpload(contextMenu.itemId);
+                    setContextMenu(null);
+                  }}
+                  className="hover:bg-accent text-foreground flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-primary cursor-pointer"
+                >
+                  <UploadCloud className="h-3.5 w-3.5" /> Upload Files to Folder
+                </button>
 
                 <button
                   onClick={() => {
@@ -2105,6 +2391,15 @@ export function Sidebar({
         >
           <div className="group-hover/resizer:bg-primary/80 mx-auto h-full w-[1px]" />
         </div>
+
+        {/* Hidden File Input for Folder Uploads */}
+        <input
+          type="file"
+          multiple
+          ref={folderUploadInputRef}
+          onChange={handleFolderFilesSelected}
+          className="hidden"
+        />
       </aside>
     </>
   );

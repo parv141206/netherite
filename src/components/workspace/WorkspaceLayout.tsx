@@ -91,6 +91,9 @@ import {
   Loader2,
   Calendar,
   ArrowLeftRight,
+  ArrowLeft,
+  ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { AppleSpinner } from "~/components/ui/AppleSpinner";
@@ -632,6 +635,19 @@ export function WorkspaceLayout({
   const [isSyncing, setIsSyncing] = useState(false);
   const [contentRevision, setContentRevision] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Tab Context Menu State (4 options: Close, Close Left, Close Right, Close Others)
+  const [tabContextMenu, setTabContextMenu] = useState<{
+    x: number;
+    y: number;
+    tabId: string;
+  } | null>(null);
+
+  // Unsaved Tabs Warning State
+  const [unsavedTabsWarning, setUnsavedTabsWarning] = useState<{
+    tabIdsToClose: string[];
+    dirtyTabIds: string[];
+  } | null>(null);
 
   // Cloud Auto-Save Enabled & Cadence (GCP Free Tier Safe)
   const [cloudAutoSaveEnabled, setCloudAutoSaveEnabled] = useState<boolean>(
@@ -2666,17 +2682,134 @@ export function WorkspaceLayout({
     }
   };
 
+  const executeCloseTabs = (tabIdsToClose: string[]) => {
+    const toCloseSet = new Set(tabIdsToClose);
+    const updated = openTabIds.filter((id) => !toCloseSet.has(id));
+    setOpenTabIds(updated);
+
+    if (activeTabId && toCloseSet.has(activeTabId)) {
+      if (updated.length === 0) {
+        contentFileIdRef.current = null;
+        setActiveTabId(undefined);
+        setNoteContent("");
+        setLastSavedContent("");
+        setNoteTitle("");
+      } else {
+        const closedIndex = openTabIds.indexOf(activeTabId);
+        const nextIndex = Math.min(closedIndex, updated.length - 1);
+        const nextTabId = updated[nextIndex >= 0 ? nextIndex : 0];
+        if (nextTabId) {
+          openFileInTab(nextTabId);
+        }
+      }
+    }
+
+    if (splitTabId && toCloseSet.has(splitTabId)) {
+      const remainingSplit = updated.find((id) => id !== activeTabId);
+      setSplitTabId(remainingSplit);
+      if (!remainingSplit) {
+        setIsSplitView(false);
+      }
+    }
+  };
+
+  const requestCloseTabs = (tabIdsToClose: string[]) => {
+    if (tabIdsToClose.length === 0) return;
+
+    // Check which of these tabs have unsaved changes or drafts
+    const dirtyTabIds = tabIdsToClose.filter((id) => {
+      const item = localNotes.find((n) => n.id === id);
+      const isDrawing =
+        item?.name.endsWith(".excalidraw") ||
+        item?.mimeType === "application/vnd.excalidraw+json";
+      const isThisTabDirty = activeTabId === id && isDirty;
+      const hasDraft = Boolean(getUnsavedDraft(id, isDrawing));
+      return isThisTabDirty || hasDraft;
+    });
+
+    if (dirtyTabIds.length > 0) {
+      setUnsavedTabsWarning({ tabIdsToClose, dirtyTabIds });
+    } else {
+      executeCloseTabs(tabIdsToClose);
+    }
+  };
+
+  const handleConfirmSaveAndClose = async () => {
+    if (!unsavedTabsWarning) return;
+    const { tabIdsToClose, dirtyTabIds } = unsavedTabsWarning;
+
+    // Save all dirty tabs
+    for (const fileId of dirtyTabIds) {
+      const item = localNotes.find((n) => n.id === fileId);
+      let contentToPersist =
+        activeTabId === fileId
+          ? noteContent
+          : typeof window !== "undefined"
+            ? localStorage.getItem(`netherite_draft_${fileId}`)
+            : null;
+      if (activeTabId === fileId && activeCanvasRef.current) {
+        try {
+          contentToPersist = activeCanvasRef.current.flush();
+        } catch {}
+      }
+      if (contentToPersist) {
+        await saveDocument(fileId, contentToPersist, item);
+      }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`netherite_draft_${fileId}`);
+      }
+    }
+
+    executeCloseTabs(tabIdsToClose);
+    setUnsavedTabsWarning(null);
+  };
+
+  const handleConfirmDiscardAndClose = () => {
+    if (!unsavedTabsWarning) return;
+    const { tabIdsToClose, dirtyTabIds } = unsavedTabsWarning;
+
+    // Discard drafts
+    for (const fileId of dirtyTabIds) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`netherite_draft_${fileId}`);
+      }
+    }
+    if (activeTabId && dirtyTabIds.includes(activeTabId)) {
+      setNoteContent(lastSavedContent);
+    }
+
+    executeCloseTabs(tabIdsToClose);
+    setUnsavedTabsWarning(null);
+  };
+
+  const handleTabContextMenu = (e: React.MouseEvent, tabId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const x = Math.min(
+      e.clientX,
+      typeof window !== "undefined" ? window.innerWidth - 200 : e.clientX,
+    );
+    const y = Math.min(
+      e.clientY,
+      typeof window !== "undefined" ? window.innerHeight - 200 : e.clientY,
+    );
+    setTabContextMenu({ x, y, tabId });
+  };
+
+  useEffect(() => {
+    if (!tabContextMenu) return;
+    const handleDismiss = () => setTabContextMenu(null);
+    window.addEventListener("click", handleDismiss);
+    return () => window.removeEventListener("click", handleDismiss);
+  }, [tabContextMenu]);
+
   const closeOtherTabs = (keepTabId: string) => {
     const tabsToClose = openTabIds.filter((id) => id !== keepTabId);
-    tabsToClose.forEach((id) => {
-      closeTab(id, { stopPropagation: () => {} } as React.MouseEvent);
-    });
+    requestCloseTabs(tabsToClose);
   };
 
   const closeAllTabs = () => {
-    [...openTabIds].forEach((id) => {
-      closeTab(id, { stopPropagation: () => {} } as React.MouseEvent);
-    });
+    requestCloseTabs([...openTabIds]);
   };
 
   const handleImageUpload = async (file: File): Promise<string> => {
@@ -3244,6 +3377,7 @@ export function WorkspaceLayout({
                         openFileInTab(tabId);
                       }
                     }}
+                    onContextMenu={(e) => handleTabContextMenu(e, tabId)}
                     className={`group flex cursor-pointer items-center transition-all ${
                       modernUi
                         ? `h-7.5 shrink-0 gap-1.5 rounded-md px-2.5 text-xs min-w-[110px] max-w-[200px] lg:max-w-[250px] ${
@@ -3400,6 +3534,10 @@ export function WorkspaceLayout({
                               onClick={() => {
                                 openFileInTab(tabId);
                                 setShowOpenTabsMenu(false);
+                              }}
+                              onContextMenu={(e) => {
+                                setShowOpenTabsMenu(false);
+                                handleTabContextMenu(e, tabId);
                               }}
                               className={`flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 transition-colors ${
                                 isCur
@@ -4417,6 +4555,146 @@ export function WorkspaceLayout({
         onCreateNote={() => handleCreateFile()}
         onOpenCalendar={() => setActiveView("calendar")}
       />
+
+      {/* Tab Context Menu (Close, Close Left, Close Right, Close Others) */}
+      {tabContextMenu && (() => {
+        const targetIndex = openTabIds.indexOf(tabContextMenu.tabId);
+        const canCloseLeft = targetIndex > 0;
+        const canCloseRight = targetIndex >= 0 && targetIndex < openTabIds.length - 1;
+        const canCloseOthers = openTabIds.length > 1;
+
+        return (
+          <div
+            style={{ top: tabContextMenu.y, left: tabContextMenu.x }}
+            className="fixed z-[160] w-48 rounded-xl border border-border/80 bg-card/90 glass-popover py-1.5 text-xs shadow-2xl animate-in fade-in zoom-in-95 duration-100 select-none"
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <button
+              onClick={() => {
+                requestCloseTabs([tabContextMenu.tabId]);
+                setTabContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-foreground hover:bg-accent/80 cursor-pointer transition-colors"
+            >
+              <span>Close</span>
+              <span className="text-[10px] font-mono text-muted-foreground">Ctrl+W</span>
+            </button>
+            <button
+              disabled={!canCloseLeft}
+              onClick={() => {
+                if (canCloseLeft) {
+                  requestCloseTabs(openTabIds.slice(0, targetIndex));
+                }
+                setTabContextMenu(null);
+              }}
+              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors ${
+                canCloseLeft
+                  ? "text-foreground hover:bg-accent/80 cursor-pointer"
+                  : "text-muted-foreground/40 cursor-not-allowed"
+              }`}
+            >
+              <ArrowLeft className="h-3.5 w-3.5 opacity-70" />
+              <span>Close to the Left</span>
+            </button>
+            <button
+              disabled={!canCloseRight}
+              onClick={() => {
+                if (canCloseRight) {
+                  requestCloseTabs(openTabIds.slice(targetIndex + 1));
+                }
+                setTabContextMenu(null);
+              }}
+              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors ${
+                canCloseRight
+                  ? "text-foreground hover:bg-accent/80 cursor-pointer"
+                  : "text-muted-foreground/40 cursor-not-allowed"
+              }`}
+            >
+              <ArrowRight className="h-3.5 w-3.5 opacity-70" />
+              <span>Close to the Right</span>
+            </button>
+            <div className="my-1 border-t border-border/40" />
+            <button
+              disabled={!canCloseOthers}
+              onClick={() => {
+                if (canCloseOthers) {
+                  requestCloseTabs(
+                    openTabIds.filter((id) => id !== tabContextMenu.tabId),
+                  );
+                }
+                setTabContextMenu(null);
+              }}
+              className={`flex w-full items-center justify-between px-3 py-1.5 text-left transition-colors ${
+                canCloseOthers
+                  ? "text-foreground hover:bg-accent/80 cursor-pointer"
+                  : "text-muted-foreground/40 cursor-not-allowed"
+              }`}
+            >
+              <span>Close Others</span>
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* Unsaved Changes Confirmation Modal */}
+      {unsavedTabsWarning && (
+        <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border-border w-full max-w-md rounded-2xl border p-5 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-amber-500/10 p-2 text-amber-500 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-foreground text-sm">
+                  Unsaved Changes
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  Do you want to save the changes you made to the following note(s) before closing?
+                </p>
+                <div className="mt-3 max-h-36 overflow-y-auto rounded-lg border border-border/60 bg-muted/30 p-2 space-y-1">
+                  {unsavedTabsWarning.dirtyTabIds.map((id) => {
+                    const note = localNotes.find((n) => n.id === id);
+                    return (
+                      <div
+                        key={id}
+                        className="flex items-center gap-2 text-xs text-foreground font-medium truncate"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                        <span className="truncate">{note?.name || "Untitled"}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2 border-t border-border/40 pt-3">
+              <button
+                type="button"
+                onClick={() => setUnsavedTabsWarning(null)}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDiscardAndClose}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 cursor-pointer transition-colors"
+              >
+                Discard & Close
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSaveAndClose}
+                className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer transition-colors"
+              >
+                Save & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Sync / Status Notification Toast */}
       {toastMessage && (

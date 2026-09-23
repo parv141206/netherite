@@ -90,7 +90,7 @@ export function VersionHistoryModal({
       void utils.notes.listRevisions.invalidate({ fileId: noteId });
       toast.success("Revision pin status updated");
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(`Failed to pin revision: ${err.message}`);
     },
   });
@@ -316,7 +316,7 @@ export function VersionHistoryModal({
 
   const currentGitItem = gitCommits.find((c) => c.oid === selectedCommitOid);
   const currentDriveItem = revisionsQuery.data?.find(
-    (r) => r.id === selectedDriveRevId,
+    (r: any) => r.id === selectedDriveRevId,
   );
 
   return (
@@ -549,7 +549,7 @@ export function VersionHistoryModal({
                   </p>
                 </div>
               ) : (
-                revisionsQuery.data.map((rev, index) => {
+                revisionsQuery.data.map((rev: any, index: number) => {
                   const isSelected = selectedDriveRevId === rev.id;
                   const formattedDate = new Date(
                     rev.modifiedTime,

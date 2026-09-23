@@ -1,7 +1,7 @@
 import StarterKit from "@tiptap/starter-kit";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { all, createLowlight } from "lowlight";
-import ResizeImage from "tiptap-extension-resize-image";
+import { NetheriteImageNode } from "./NetheriteImageNode";
 import { Link } from "@tiptap/extension-link";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { Markdown } from "tiptap-markdown";
@@ -80,33 +80,8 @@ export function buildExtensions() {
       bulletListMarker: "-",
       transformCopiedText: true,
     }),
-    ResizeImage.extend({
-      addStorage() {
-        return {
-          markdown: {
-            serialize(state: any, node: any) {
-              const src = node.attrs?.src ?? "";
-              const alt = node.attrs?.alt ?? "";
-              const title = node.attrs?.title ? ` "${node.attrs.title}"` : "";
-              const width = node.attrs?.width;
-              const height = node.attrs?.height;
-              if (width || height) {
-                const widthAttr = width ? ` width="${width}"` : "";
-                const heightAttr = height ? ` height="${height}"` : "";
-                const altAttr = alt ? ` alt="${alt}"` : "";
-                state.write(`<img src="${src}"${altAttr}${widthAttr}${heightAttr} />`);
-              } else {
-                state.write(`![${alt}](${src}${title})`);
-              }
-            },
-            parse: {
-              // handled by markdown-it
-            },
-          },
-        };
-      },
-    }).configure({
-      inline: true,
+    NetheriteImageNode.configure({
+      inline: false,
       allowBase64: true,
     }),
     Link.configure({

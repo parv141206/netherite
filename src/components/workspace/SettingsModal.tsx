@@ -28,6 +28,7 @@ import {
   GitCommit,
   History,
   RotateCcw,
+  ArrowUpDown,
 } from "lucide-react";
 import JSZip from "jszip";
 import {
@@ -591,10 +592,10 @@ export function SettingsModal({
     try {
       const zip = new JSZip();
       const filesMap = new Map<string, any>();
-      notesData.forEach((f) => filesMap.set(f.id, f));
+      notesData.forEach((f: any) => filesMap.set(f.id, f));
 
       const nonFolders = notesData.filter(
-        (f) => f.mimeType !== "application/vnd.google-apps.folder",
+        (f: any) => f.mimeType !== "application/vnd.google-apps.folder",
       );
 
       let completed = 0;
@@ -682,7 +683,7 @@ export function SettingsModal({
               currentParent = folderIdMap.get(currentPath);
             } else {
               const existingFolder = notesData?.find(
-                (f) =>
+                (f: any) =>
                   f.mimeType === "application/vnd.google-apps.folder" &&
                   f.name.toLowerCase() === segment.toLowerCase(),
               );
@@ -744,6 +745,32 @@ export function SettingsModal({
     | "backup"
     | "shortcuts"
   >("appearance");
+
+  const [sortOption, setSortOption] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("netherite_sort_option") || "name-asc";
+    }
+    return "name-asc";
+  });
+  const [foldersFirst, setFoldersFirst] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_sort_folders_first");
+      return saved !== null ? saved === "true" : true;
+    }
+    return true;
+  });
+
+  const handleUpdateSort = (newSort: string) => {
+    setSortOption(newSort);
+    localStorage.setItem("netherite_sort_option", newSort);
+    window.dispatchEvent(new Event("netherite_sort_changed"));
+  };
+
+  const handleToggleFoldersFirst = (enabled: boolean) => {
+    setFoldersFirst(enabled);
+    localStorage.setItem("netherite_sort_folders_first", String(enabled));
+    window.dispatchEvent(new Event("netherite_sort_changed"));
+  };
 
   if (!isOpen) return null;
 
@@ -994,6 +1021,73 @@ export function SettingsModal({
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* File Explorer & Sorting Organization */}
+                <div className="border-border/60 bg-card space-y-3.5 rounded-xl border p-4 shadow-2xs">
+                  <div className="flex items-center gap-1.5">
+                    <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-foreground text-xs font-semibold">
+                      File Explorer & Organization
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground text-[11px]">
+                    Configure how files and folders are arranged in the sidebar tree.
+                  </p>
+
+                  <div className="space-y-3 pt-1">
+                    <div className="space-y-1.5">
+                      <label className="text-muted-foreground block text-[11px] font-medium">
+                        Default Sort Order
+                      </label>
+                      <select
+                        value={sortOption}
+                        onChange={(e) => handleUpdateSort(e.target.value)}
+                        className="bg-background border-border text-foreground w-full rounded-lg border py-1.5 px-3 text-xs focus:outline-none"
+                      >
+                        <option value="name-asc">Alphanumeric (A → Z)</option>
+                        <option value="name-desc">Alphanumeric (Z → A)</option>
+                        <option value="modified-desc">
+                          Recently Modified (Newest first)
+                        </option>
+                        <option value="modified-asc">
+                          Oldest Modified (Oldest first)
+                        </option>
+                        <option value="created-desc">
+                          Date Created (Newest first)
+                        </option>
+                        <option value="created-asc">
+                          Date Created (Oldest first)
+                        </option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div>
+                        <span className="text-foreground text-xs font-medium block">
+                          Keep Folders on Top
+                        </span>
+                        <span className="text-muted-foreground text-[10px]">
+                          Display all directory folders before individual notes and drawings
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFoldersFirst(!foldersFirst)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          foldersFirst ? "bg-primary" : "bg-muted"
+                        }`}
+                        role="switch"
+                        aria-checked={foldersFirst}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                            foldersFirst ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1306,3 +1306,73 @@ html.dark [data-landing-page] {
   border-radius: 9999px;
 }
 
+/* Blue light filter slider styling: thumb circle black in light mode, white in dark mode */
+.blue-light-slider {
+  accent-color: currentColor;
+}
+.blue-light-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #000000;
+  cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+.dark .blue-light-slider::-webkit-slider-thumb {
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 0, 0, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.blue-light-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #000000;
+  cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.dark .blue-light-slider::-moz-range-thumb {
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 0, 0, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Glass popover backdrop blur to ensure underlying note content is frosted/blurred */
+.glass-popover {
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+}
+
+/* ASCII & pre block mobile preservation */
+.ProseMirror pre,
+.ProseMirror pre * {
+  white-space: pre !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.ProseMirror pre {
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .ProseMirror pre,
+  .ProseMirror pre code,
+  .ProseMirror pre span,
+  .ProseMirror pre div {
+    white-space: pre !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+}
+
+
