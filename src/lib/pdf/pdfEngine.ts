@@ -330,6 +330,21 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       word-break: break-all;
     }
 
+    /* ASCII Diagrams & Wide Preformatted Blocks: Never wrap, preserve grid alignment */
+    .pdf-code-ascii .pdf-code-line-content,
+    .pdf-code-wide .pdf-code-line-content {
+      white-space: pre !important;
+      word-break: normal !important;
+      overflow-wrap: normal !important;
+    }
+
+    .pdf-code-ascii pre,
+    .pdf-code-ascii code,
+    .pdf-code-ascii .pdf-code-line-content {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+      letter-spacing: 0px !important;
+    }
+
     .pdf-inline-code {
       font-family: 'JetBrains Mono', 'Fira Code', monospace;
       font-size: 0.86em;
@@ -669,6 +684,16 @@ export async function generatePdfFile(
   const pageSpec = PAGE_SPECS[pageSize][orientation];
   const marginMm = MARGIN_SPECS[margin];
 
+  // Target sheet width in pixels (1 mm ~= 3.7795 px at 96 DPI)
+  const targetWidth =
+    containerEl.offsetWidth > 100
+      ? containerEl.offsetWidth
+      : Math.round(pageSpec.widthMm * 3.7795);
+
+  const singlePageHeightPx = Math.round(
+    (targetWidth * pageSpec.heightMm) / pageSpec.widthMm
+  );
+
   // Initialize jsPDF document
   const doc = new jsPDF({
     orientation,
@@ -677,109 +702,151 @@ export async function generatePdfFile(
     compress: true,
   });
 
-  onProgress?.("Synthesizing document canvas…");
-
-  // Create an off-screen clone with transform: none and exact width
-  // to ensure html2canvas captures full-res Retina pixels without zoom scale distortion
+  // Create an off-screen clone with exact width, transform: none, and inject the full stylesheet
   const clone = containerEl.cloneNode(true) as HTMLElement;
+  const styleEl = document.createElement("style");
+  styleEl.textContent = buildPdfStylesheet(config);
+  clone.prepend(styleEl);
+
   clone.style.transform = "none";
   clone.style.margin = "0";
   clone.style.position = "fixed";
-  clone.style.left = "-99999px";
+  clone.style.left = "0";
   clone.style.top = "0";
-  clone.style.zIndex = "-1000";
-  clone.style.width = `${containerEl.offsetWidth}px`;
+  clone.style.zIndex = "-999";
+  clone.style.pointerEvents = "none";
+  clone.style.width = `${targetWidth}px`;
   document.body.appendChild(clone);
 
-  let canvas: HTMLCanvasElement;
   try {
-    canvas = await html2canvas(clone, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: config.colorMode === "dark" ? "#121215" : "#ffffff",
-      windowWidth: containerEl.offsetWidth,
-      width: containerEl.offsetWidth,
-    });
-  } finally {
-    document.body.removeChild(clone);
-  }
+    // Allow browser layout engine to paint clone and compute fonts
+    await new Promise((r) => setTimeout(r, 80));
 
-  onProgress?.("Slicing multi-page sheets…");
-
-  // The container already represents the full paper sheet with built-in padding for margins.
-  // We place the full-width canvas across the sheet (x = 0, y = 0) with width = pageSpec.widthMm,
-  // preventing double-margin compression.
-  const pageHeightPx = (canvas.width * pageSpec.heightMm) / pageSpec.widthMm;
-  const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx));
-
-  for (let p = 0; p < totalPages; p++) {
-    if (p > 0) {
-      doc.addPage(pageSize, orientation);
-    }
-    const sourceY = p * pageHeightPx;
-    const sliceHeight = Math.min(pageHeightPx, canvas.height - sourceY);
-
-    const pageCanvas = document.createElement("canvas");
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeightPx;
-    const ctx = pageCanvas.getContext("2d");
-    if (ctx) {
-      ctx.fillStyle = config.colorMode === "dark" ? "#121215" : "#ffffff";
-      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-      ctx.drawImage(
-        canvas,
-        0,
-        sourceY,
-        canvas.width,
-        sliceHeight,
-        0,
-        0,
-        canvas.width,
-        sliceHeight
-      );
-    }
-
-    const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.96);
-    doc.addImage(
-      pageImgData,
-      "JPEG",
-      0,
-      0,
-      pageSpec.widthMm,
-      pageSpec.heightMm,
-      undefined,
-      "FAST"
+    const totalHeightPx = Math.max(
+      singlePageHeightPx,
+      clone.scrollHeight || clone.offsetHeight || containerEl.scrollHeight
     );
+    const totalPages = Math.max(1, Math.ceil(totalHeightPx / singlePageHeightPx));
 
-    // Running Header (from page 2 onwards)
-    if (config.showHeaderTitle && p > 0) {
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        config.fileName.replace(/\.[^/.]+$/, ""),
-        marginMm.leftMm,
-        marginMm.topMm > 10 ? marginMm.topMm - 4 : 8,
-        { align: "left" }
+    // Safe chunking to prevent browser canvas height limit crash (Chrome canvas limit is 32,767px)
+    // We keep each chunk height under 6,500px (~13,000px at 2x Retina scale)
+    const pagesPerChunk = Math.max(1, Math.floor(6500 / singlePageHeightPx));
+    const totalChunks = Math.ceil(totalPages / pagesPerChunk);
+
+    let globalPageIdx = 0;
+
+    for (let c = 0; c < totalChunks; c++) {
+      const startPage = c * pagesPerChunk;
+      const endPage = Math.min(totalPages, (c + 1) * pagesPerChunk);
+      const chunkPages = endPage - startPage;
+      const chunkStartY = startPage * singlePageHeightPx;
+      const chunkHeight = Math.min(
+        chunkPages * singlePageHeightPx,
+        totalHeightPx - chunkStartY
       );
+
+      if (totalChunks > 1) {
+        onProgress?.(
+          `Synthesizing pages ${startPage + 1}–${endPage} of ${totalPages}…`
+        );
+      } else {
+        onProgress?.("Synthesizing document canvas…");
+      }
+
+      const chunkCanvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: config.colorMode === "dark" ? "#121215" : "#ffffff",
+        windowWidth: targetWidth,
+        width: targetWidth,
+        x: 0,
+        y: chunkStartY,
+        height: chunkHeight,
+      });
+
+      const chunkPageHeightPx =
+        (chunkCanvas.width * pageSpec.heightMm) / pageSpec.widthMm;
+
+      for (let p = 0; p < chunkPages; p++) {
+        if (globalPageIdx > 0) {
+          doc.addPage(pageSize, orientation);
+        }
+
+        const pageSourceY = p * chunkPageHeightPx;
+        const pageSliceHeight = Math.min(
+          chunkPageHeightPx,
+          chunkCanvas.height - pageSourceY
+        );
+
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = chunkCanvas.width;
+        pageCanvas.height = chunkPageHeightPx;
+        const ctx = pageCanvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = config.colorMode === "dark" ? "#121215" : "#ffffff";
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(
+            chunkCanvas,
+            0,
+            pageSourceY,
+            chunkCanvas.width,
+            pageSliceHeight,
+            0,
+            0,
+            chunkCanvas.width,
+            pageSliceHeight
+          );
+        }
+
+        const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.95);
+        doc.addImage(
+          pageImgData,
+          "JPEG",
+          0,
+          0,
+          pageSpec.widthMm,
+          pageSpec.heightMm,
+          undefined,
+          "FAST"
+        );
+
+        // Running Header (from page 2 onwards)
+        if (config.showHeaderTitle && globalPageIdx > 0) {
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(
+            config.fileName.replace(/\.[^/.]+$/, ""),
+            marginMm.leftMm,
+            marginMm.topMm > 10 ? marginMm.topMm - 4 : 8,
+            { align: "left" }
+          );
+        }
+
+        // Running Footer
+        if (config.showPageNumbers) {
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(
+            `Page ${globalPageIdx + 1} of ${totalPages}`,
+            pageSpec.widthMm - marginMm.rightMm,
+            pageSpec.heightMm - (marginMm.bottomMm > 10 ? marginMm.bottomMm - 4 : 6),
+            { align: "right" }
+          );
+        }
+
+        globalPageIdx++;
+      }
     }
 
-    // Running Footer
-    if (config.showPageNumbers) {
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Page ${p + 1} of ${totalPages}`,
-        pageSpec.widthMm - marginMm.rightMm,
-        pageSpec.heightMm - (marginMm.bottomMm > 10 ? marginMm.bottomMm - 4 : 6),
-        { align: "right" }
-      );
+    onProgress?.("Finalizing and saving PDF…");
+
+    const cleanName = fileName.replace(/\.[^/.]+$/, "") || "Document";
+    doc.save(`${cleanName}.pdf`);
+    onProgress?.("Download complete!");
+  } finally {
+    if (clone.parentNode) {
+      clone.parentNode.removeChild(clone);
     }
   }
-
-  onProgress?.("Finalizing and saving PDF…");
-
-  const cleanName = fileName.replace(/\.[^/.]+$/, "") || "Document";
-  doc.save(`${cleanName}.pdf`);
-  onProgress?.("Download complete!");
 }

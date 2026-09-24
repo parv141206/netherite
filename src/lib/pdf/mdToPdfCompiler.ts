@@ -505,34 +505,70 @@ export async function compileMarkdownForPdf(
     }
   }
 
-  // 16. Render Highlighted Code Blocks
+  // 16. Render Highlighted Code Blocks & Auto-Fit ASCII Diagrams
   codeBlocks.forEach(({ lang, code, placeholder }) => {
+    const cleanLang = (lang || "").toLowerCase().trim();
+    const rawLines = code.split("\n");
+    const maxLineLength = Math.max(...rawLines.map((l) => l.length), 0);
+
+    const isTextLang =
+      !cleanLang ||
+      ["text", "txt", "plaintext", "ascii", "diagram", "output", "log"].includes(cleanLang);
+    // Detect ASCII art / box diagrams: presence of horizontal/vertical box connectors (+---+, |====|, etc.)
+    const hasBoxChars = /[+\-|]{3,}|={3,}|\|[\s\S]*\|/.test(code);
+    const isAsciiDiagram = (isTextLang && hasBoxChars) || cleanLang === "ascii" || cleanLang === "diagram";
+    const isWide = maxLineLength > 68;
+
     let highlighted = "";
-    try {
-      if (lang && hljs.getLanguage(lang)) {
-        highlighted = hljs.highlight(code, { language: lang }).value;
-      } else {
-        highlighted = hljs.highlightAuto(code).value;
-      }
-    } catch {
+    if (isAsciiDiagram || isTextLang) {
+      // Do not run syntax highlightAuto on pure text/ASCII diagrams to prevent spurious color spans
       highlighted = escapeHtml(code);
+    } else {
+      try {
+        if (cleanLang && hljs.getLanguage(cleanLang)) {
+          highlighted = hljs.highlight(code, { language: cleanLang }).value;
+        } else {
+          highlighted = hljs.highlightAuto(code).value;
+        }
+      } catch {
+        highlighted = escapeHtml(code);
+      }
     }
 
     const lines = highlighted.split("\n");
     const numberedLines = lines
       .map(
         (line, idx) =>
-          `<div class="pdf-code-line"><span class="pdf-code-line-num">${idx + 1}</span><span class="pdf-code-line-content">${line || " "}</span></div>`
+          `<div class="pdf-code-line">${
+            isAsciiDiagram
+              ? ""
+              : `<span class="pdf-code-line-num">${idx + 1}</span>`
+          }<span class="pdf-code-line-content">${line || " "}</span></div>`
       )
       .join("");
 
+    // Calculate dynamic auto-fit font size for wide diagrams and wide code
+    let fontSizeStyle = "";
+    let extraContainerClass = "";
+
+    if (isAsciiDiagram || isWide) {
+      extraContainerClass = isAsciiDiagram ? " pdf-code-ascii" : " pdf-code-wide";
+      const baseChars = isAsciiDiagram ? 78 : 68;
+      if (maxLineLength > baseChars) {
+        const scaleFactor = Math.max(0.42, Math.min(1, baseChars / maxLineLength));
+        const scaledSize = (0.85 * scaleFactor).toFixed(3);
+        const scaledLineHeight = Math.max(1.15, 1.45 * scaleFactor).toFixed(2);
+        fontSizeStyle = ` style="font-size: ${scaledSize}em; line-height: ${scaledLineHeight};"`;
+      }
+    }
+
     const blockHtml = `
-      <div class="pdf-code-container">
+      <div class="pdf-code-container${extraContainerClass}">
         <div class="pdf-code-header">
-          <span class="pdf-code-lang-badge">${escapeHtml(lang || "text")}</span>
+          <span class="pdf-code-lang-badge">${escapeHtml(cleanLang || "text")}</span>
           <span class="pdf-code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span>
         </div>
-        <pre class="pdf-code-pre"><code>${numberedLines}</code></pre>
+        <pre class="pdf-code-pre"${fontSizeStyle}><code>${numberedLines}</code></pre>
       </div>
     `;
     text = text.replace(placeholder, blockHtml);

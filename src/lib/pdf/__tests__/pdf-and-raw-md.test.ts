@@ -34,6 +34,17 @@ describe("PDF Export Compiler Fixes", () => {
     expect(html).toContain("NOTE");
     expect(html).toContain("<strong>bold text</strong>");
   });
+
+  it("detects wide ASCII diagrams, hides line numbers and scales font size", async () => {
+    const asciiInput = "```plaintext\n+-----------------------------------+               +------------+\n|   Host A - IP 192.168.1.10        |               |   Host B   |\n+-----------------------------------+               +------------+\n```";
+    const { html } = await compileMarkdownForPdf(asciiInput);
+
+    expect(html).toContain("pdf-code-ascii");
+    // Line numbers should be omitted for ASCII diagrams to save width
+    expect(html).not.toContain("pdf-code-line-num");
+    expect(html).toContain("Host A");
+    expect(html).toContain("Host B");
+  });
 });
 
 describe("Markdown View Math Pre/Post-processing", () => {
