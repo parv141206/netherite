@@ -689,11 +689,16 @@ export function PdfExportModal({
                     style={{
                       width: `${sheetWidthPx}px`,
                       minHeight: `${sheetMinHeightPx}px`,
+                      border:
+                        colorMode === "dark"
+                          ? "1px solid rgba(255,255,255,0.1)"
+                          : "1px solid rgba(0,0,0,0.1)",
+                      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25)",
                     }}
-                    className={`pdf-root-container relative rounded-sm shadow-2xl transition-all ${
+                    className={`pdf-root-container relative rounded-sm ${
                       colorMode === "dark"
-                        ? "bg-[#121215] text-[#f4f4f6] ring-1 ring-white/10"
-                        : "bg-white text-[#1a1a1d] ring-1 ring-black/10"
+                        ? "bg-[#121215] text-[#f4f4f6]"
+                        : "bg-white text-[#1a1a1d]"
                     }`}
                   >
                     {/* Running Header on Preview */}

@@ -705,9 +705,21 @@ export async function generatePdfFile(
   // Create an off-screen clone with exact width, transform: none, and inject the full stylesheet
   const clone = containerEl.cloneNode(true) as HTMLElement;
   const styleEl = document.createElement("style");
+  styleEl.id = "pdf-engine-stylesheet";
   styleEl.textContent = buildPdfStylesheet(config);
   clone.prepend(styleEl);
 
+  clone.classList.remove(
+    "shadow-2xl",
+    "shadow-xl",
+    "shadow-lg",
+    "ring-1",
+    "ring-white/10",
+    "ring-black/10",
+    "transition-all"
+  );
+  clone.style.boxShadow = "none";
+  clone.style.outline = "none";
   clone.style.transform = "none";
   clone.style.margin = "0";
   clone.style.position = "fixed";
@@ -763,6 +775,67 @@ export async function generatePdfFile(
         x: 0,
         y: chunkStartY,
         height: chunkHeight,
+        onclone: (clonedDoc: Document, clonedEl: HTMLElement) => {
+          // 1. Strip all parent web-app stylesheets from clonedDoc (which contain Tailwind v4 oklab rules)
+          const allStyles = Array.from(
+            clonedDoc.querySelectorAll("style, link[rel='stylesheet']")
+          );
+          allStyles.forEach((el) => {
+            const isPdfStyle =
+              el.id === "pdf-engine-stylesheet" ||
+              el.textContent?.includes(".pdf-compiled-document");
+            const isKatex =
+              (el as HTMLLinkElement).href?.includes("katex") ||
+              el.textContent?.includes(".katex");
+            if (!isPdfStyle && !isKatex) {
+              el.remove();
+            }
+          });
+
+          // 2. Remove any ring / shadow classes from the cloned root element
+          clonedEl.classList.remove(
+            "shadow-2xl",
+            "shadow-xl",
+            "shadow-lg",
+            "ring-1",
+            "ring-white/10",
+            "ring-black/10",
+            "transition-all"
+          );
+          clonedEl.style.boxShadow = "none";
+          clonedEl.style.outline = "none";
+
+          // 3. Fallback color converter: convert any element style with oklab/oklch/color-mix to safe rgb
+          try {
+            const canvas = clonedDoc.createElement("canvas");
+            canvas.width = 1;
+            canvas.height = 1;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              const allEls = clonedDoc.querySelectorAll<HTMLElement>("*");
+              allEls.forEach((node) => {
+                if (node.style) {
+                  ["color", "backgroundColor", "borderColor", "outlineColor"].forEach((prop) => {
+                    const val = (node.style as any)[prop];
+                    if (val && (val.includes("oklab") || val.includes("oklch") || val.includes("color-mix"))) {
+                      try {
+                        ctx.fillStyle = val;
+                        (node.style as any)[prop] = ctx.fillStyle;
+                      } catch {
+                        (node.style as any)[prop] = "transparent";
+                      }
+                    }
+                  });
+                  if (node.style.boxShadow && (node.style.boxShadow.includes("oklab") || node.style.boxShadow.includes("oklch"))) {
+                    node.style.boxShadow = "none";
+                  }
+                }
+              });
+            }
+          } catch {
+            // Silently continue
+          }
+        },
       });
 
       const chunkPageHeightPx =
