@@ -37,7 +37,7 @@ export const PAGE_SPECS = {
 export const MARGIN_SPECS = {
   normal: { topMm: 18, bottomMm: 18, leftMm: 20, rightMm: 20 },
   compact: { topMm: 12, bottomMm: 12, leftMm: 12, rightMm: 12 },
-  wide: { topMm: 24, bottomMm: 24, leftMm: 28, rightMm: 28 },
+  wide: { topMm: 24, bottomMm: 24, leftMm: 26, rightMm: 26 },
   none: { topMm: 0, bottomMm: 0, leftMm: 0, rightMm: 0 },
 };
 
@@ -64,10 +64,10 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
   const mutedColor = isDark ? "#a1a1aa" : isMono ? "#444444" : "#64748b";
   const borderColor = isDark ? "#27272a" : isMono ? "#000000" : "#e2e8f0";
   const codeBg = isDark ? "#18181c" : isMono ? "#f5f5f5" : "#f8fafc";
-  const calloutNoteBg = isDark ? "#1e293b" : isMono ? "#f5f5f5" : "#f0f9ff";
-  const calloutTipBg = isDark ? "#143328" : isMono ? "#f5f5f5" : "#f0fdf4";
-  const calloutWarnBg = isDark ? "#382914" : isMono ? "#f5f5f5" : "#fefce8";
-  const calloutDangerBg = isDark ? "#381919" : isMono ? "#f5f5f5" : "#fef2f2";
+  const calloutNoteBg = isDark ? "#172338" : isMono ? "#f5f5f5" : "#f0f9ff";
+  const calloutTipBg = isDark ? "#112b20" : isMono ? "#f5f5f5" : "#f0fdf4";
+  const calloutWarnBg = isDark ? "#2c2010" : isMono ? "#f5f5f5" : "#fefce8";
+  const calloutDangerBg = isDark ? "#2d1515" : isMono ? "#f5f5f5" : "#fef2f2";
   const tableZebraBg = isDark ? "#16161a" : isMono ? "#f9f9f9" : "#f8fafc";
 
   const marginMm = MARGIN_SPECS[margin];
@@ -86,16 +86,57 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       print-color-adjust: exact !important;
     }
 
-    body, .pdf-root-container {
+    :root, body, .pdf-root-container {
       margin: 0;
       padding: 0;
       background-color: ${bgColor};
       color: ${fgColor};
       font-family: ${fontFamily};
       font-size: ${baseFontSize};
-      line-height: 1.65;
+      line-height: 1.5;
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
+
+      /* Highlight Color Variables */
+      --highlight-yellow: ${isDark ? "#854d0e" : "#fef08a"};
+      --highlight-green: ${isDark ? "#166534" : "#bbf7d0"};
+      --highlight-blue: ${isDark ? "#1e40af" : "#bfdbfe"};
+      --highlight-pink: ${isDark ? "#9d174d" : "#fbcfe8"};
+      --highlight-purple: ${isDark ? "#6b21a8" : "#e9d5ff"};
+    }
+
+    /* Highlights */
+    mark, .pdf-highlight {
+      background-color: var(--highlight-yellow);
+      color: inherit;
+      padding: 0.12em 0.35em;
+      border-radius: 4px;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+      font-weight: 500;
+    }
+
+    mark[data-color*="pink"], .pdf-highlight-pink { background-color: var(--highlight-pink) !important; }
+    mark[data-color*="yellow"], .pdf-highlight-yellow { background-color: var(--highlight-yellow) !important; }
+    mark[data-color*="green"], .pdf-highlight-green { background-color: var(--highlight-green) !important; }
+    mark[data-color*="blue"], .pdf-highlight-blue { background-color: var(--highlight-blue) !important; }
+    mark[data-color*="purple"], .pdf-highlight-purple { background-color: var(--highlight-purple) !important; }
+
+    ${
+      isMono
+        ? `
+      mark, .pdf-highlight,
+      mark[data-color*="pink"],
+      mark[data-color*="yellow"],
+      mark[data-color*="green"],
+      mark[data-color*="blue"],
+      mark[data-color*="purple"] {
+        background-color: #e5e5e5 !important;
+        color: #000000 !important;
+        border-bottom: 1.5px solid #000000;
+      }
+    `
+        : ""
     }
 
     /* Document Sheet Wrapper */
@@ -110,10 +151,11 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       color: ${fgColor};
       font-weight: 700;
       letter-spacing: -0.02em;
-      margin-top: 1.6em;
-      margin-bottom: 0.5em;
+      margin-top: 1.2em;
+      margin-bottom: 0.35em;
       page-break-after: avoid;
       break-after: avoid;
+      line-height: 1.25;
     }
 
     .pdf-heading-num {
@@ -123,36 +165,38 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     }
 
     .pdf-h1 {
-      font-size: 1.85em;
+      font-size: 1.75em;
       border-bottom: 2px solid ${borderColor};
-      padding-bottom: 0.3em;
+      padding-bottom: 0.25em;
       margin-top: 0.8em;
     }
 
     .pdf-h2 {
-      font-size: 1.45em;
+      font-size: 1.35em;
       border-bottom: 1px solid ${borderColor};
-      padding-bottom: 0.25em;
+      padding-bottom: 0.2em;
+      margin-top: 1em;
     }
 
-    .pdf-h3 { font-size: 1.2em; }
-    .pdf-h4 { font-size: 1.05em; }
-    .pdf-h5 { font-size: 0.95em; }
-    .pdf-h6 { font-size: 0.85em; text-transform: uppercase; color: ${mutedColor}; }
+    .pdf-h3 { font-size: 1.15em; margin-top: 0.9em; }
+    .pdf-h4 { font-size: 1.02em; margin-top: 0.8em; }
+    .pdf-h5 { font-size: 0.92em; margin-top: 0.7em; }
+    .pdf-h6 { font-size: 0.82em; text-transform: uppercase; color: ${mutedColor}; margin-top: 0.6em; }
 
     /* Paragraphs & Text */
     .pdf-paragraph {
       margin-top: 0;
-      margin-bottom: 1em;
+      margin-bottom: 0.65em;
       color: ${fgColor};
       text-align: ${themePreset === "academic" ? "justify" : "left"};
       hyphens: auto;
+      line-height: 1.5;
     }
 
     /* Mathematical Formulas (KaTeX) */
     .pdf-math-display {
-      margin: 1.2em 0;
-      padding: 0.8em 0;
+      margin: 0.9em 0;
+      padding: 0.5em 0;
       text-align: center;
       overflow-x: auto;
       page-break-inside: avoid;
@@ -166,13 +210,13 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     }
 
     .katex {
-      font-size: 1.08em;
+      font-size: 1.06em;
       color: ${fgColor};
     }
 
     /* Diagrams & SVGs */
     .pdf-diagram-wrapper {
-      margin: 1.5em auto;
+      margin: 1.2em auto;
       text-align: center;
       page-break-inside: avoid;
       break-inside: avoid;
@@ -193,7 +237,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
 
     /* Images */
     .pdf-image-container {
-      margin: 1.5em 0;
+      margin: 1.2em 0;
       text-align: center;
       page-break-inside: avoid;
       break-inside: avoid;
@@ -201,7 +245,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
 
     .pdf-image {
       max-width: 100%;
-      max-height: 480px;
+      max-height: 440px;
       height: auto;
       border-radius: 8px;
       border: 1px solid ${borderColor};
@@ -210,15 +254,15 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     }
 
     .pdf-figcaption {
-      margin-top: 0.5em;
-      font-size: 0.85em;
+      margin-top: 0.4em;
+      font-size: 0.82em;
       color: ${mutedColor};
       font-style: italic;
     }
 
     /* Code Blocks */
     .pdf-code-container {
-      margin: 1.3em 0;
+      margin: 0.9em 0;
       border: 1px solid ${borderColor};
       border-radius: 8px;
       background-color: ${codeBg};
@@ -232,10 +276,10 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 12px;
+      padding: 5px 12px;
       background-color: ${isDark ? "#202026" : isMono ? "#e5e5e5" : "#f1f5f9"};
       border-bottom: 1px solid ${borderColor};
-      font-size: 0.75em;
+      font-size: 0.72em;
       color: ${mutedColor};
       text-transform: uppercase;
       font-weight: 600;
@@ -248,8 +292,8 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     }
 
     .pdf-code-dots .dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
     }
 
@@ -259,10 +303,10 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
 
     .pdf-code-pre {
       margin: 0;
-      padding: 10px 0;
+      padding: 8px 0;
       overflow-x: auto;
-      font-size: 0.88em;
-      line-height: 1.5;
+      font-size: 0.85em;
+      line-height: 1.45;
     }
 
     .pdf-code-line {
@@ -271,7 +315,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     }
 
     .pdf-code-line-num {
-      width: 34px;
+      width: 32px;
       shrink: 0;
       user-select: none;
       color: ${mutedColor};
@@ -288,17 +332,58 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
 
     .pdf-inline-code {
       font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.88em;
-      padding: 0.15em 0.4em;
+      font-size: 0.86em;
+      padding: 0.12em 0.35em;
       background-color: ${codeBg};
       border: 1px solid ${borderColor};
       border-radius: 4px;
       color: ${isMono ? fgColor : isDark ? "#e2e8f0" : "#0f172a"};
     }
 
+    /* Syntax Highlighting */
+    .hljs-keyword,
+    .hljs-operator,
+    .hljs-selector-tag {
+      color: ${isDark ? "#ff7b72" : isMono ? fgColor : "#cf222e"};
+      font-weight: 600;
+    }
+    .hljs-string,
+    .hljs-doctag,
+    .hljs-regexp {
+      color: ${isDark ? "#a5d6ff" : isMono ? fgColor : "#0a3069"};
+    }
+    .hljs-comment,
+    .hljs-quote {
+      color: ${isDark ? "#8b949e" : isMono ? "#666" : "#6e7781"};
+      font-style: italic;
+    }
+    .hljs-title,
+    .hljs-title.function_,
+    .hljs-section {
+      color: ${isDark ? "#d2a8ff" : isMono ? fgColor : "#8250df"};
+      font-weight: 600;
+    }
+    .hljs-number,
+    .hljs-literal,
+    .hljs-type,
+    .hljs-built_in {
+      color: ${isDark ? "#79c0ff" : isMono ? fgColor : "#0550ae"};
+    }
+    .hljs-variable,
+    .hljs-attr,
+    .hljs-property {
+      color: ${isDark ? "#ffa657" : isMono ? fgColor : "#953800"};
+    }
+    .hljs-meta,
+    .hljs-subst {
+      color: ${isDark ? "#8b949e" : isMono ? "#666" : "#57606a"};
+    }
+    .hljs-emphasis { font-style: italic; }
+    .hljs-strong { font-weight: bold; }
+
     /* Tables */
     .pdf-table-wrapper {
-      margin: 1.4em 0;
+      margin: 1.1em 0;
       overflow-x: auto;
       page-break-inside: avoid;
       break-inside: avoid;
@@ -307,7 +392,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     .pdf-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.92em;
+      font-size: 0.9em;
       border: 1px solid ${borderColor};
     }
 
@@ -315,12 +400,12 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       background-color: ${isDark ? "#202026" : isMono ? "#e5e5e5" : "#f1f5f9"};
       color: ${fgColor};
       font-weight: 600;
-      padding: 8px 12px;
+      padding: 7px 11px;
       border: 1px solid ${borderColor};
     }
 
     .pdf-table td {
-      padding: 8px 12px;
+      padding: 7px 11px;
       border: 1px solid ${borderColor};
     }
 
@@ -328,10 +413,10 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       background-color: ${tableZebraBg};
     }
 
-    /* Callouts / Alerts */
+    /* Callouts / Text Boxes */
     .pdf-callout {
-      margin: 1.3em 0;
-      padding: 12px 16px;
+      margin: 0.9em 0;
+      padding: 10px 14px;
       border-left: 4px solid;
       border-radius: 0 8px 8px 0;
       page-break-inside: avoid;
@@ -341,54 +426,64 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     .pdf-callout-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       font-weight: 700;
       font-size: 0.85em;
-      margin-bottom: 6px;
-      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+      letter-spacing: 0.03em;
     }
 
     .pdf-callout-note { background-color: ${calloutNoteBg}; border-color: #3b82f6; color: ${isDark ? "#93c5fd" : "#1e40af"}; }
+    .pdf-callout-info { background-color: ${calloutNoteBg}; border-color: #0284c7; color: ${isDark ? "#7dd3fc" : "#0369a1"}; }
     .pdf-callout-tip { background-color: ${calloutTipBg}; border-color: #10b981; color: ${isDark ? "#86efac" : "#166534"}; }
-    .pdf-callout-important { background-color: ${calloutNoteBg}; border-color: #8b5cf6; color: ${isDark ? "#c4b5fd" : "#5b21b6"}; }
+    .pdf-callout-success { background-color: ${calloutTipBg}; border-color: #16a34a; color: ${isDark ? "#86efac" : "#15803d"}; }
+    .pdf-callout-important { background-color: ${isDark ? "#281b38" : "#f5f3ff"}; border-color: #8b5cf6; color: ${isDark ? "#c4b5fd" : "#5b21b6"}; }
     .pdf-callout-warning { background-color: ${calloutWarnBg}; border-color: #f59e0b; color: ${isDark ? "#fde68a" : "#854d0e"}; }
-    .pdf-callout-caution { background-color: ${calloutDangerBg}; border-color: #ef4444; color: ${isDark ? "#fca5a5" : "#991b1b"}; }
+    .pdf-callout-caution, .pdf-callout-danger { background-color: ${calloutDangerBg}; border-color: #ef4444; color: ${isDark ? "#fca5a5" : "#991b1b"}; }
+    .pdf-callout-question { background-color: ${isDark ? "#1e1e38" : "#eef2ff"}; border-color: #6366f1; color: ${isDark ? "#a5b4fc" : "#4338ca"}; }
+    .pdf-callout-example { background-color: ${isDark ? "#132b2a" : "#f0fdfa"}; border-color: #14b8a6; color: ${isDark ? "#99f6e4" : "#0f766e"}; }
+    .pdf-callout-quote { background-color: ${isDark ? "#18181c" : "#f8fafc"}; border-color: ${mutedColor}; color: ${fgColor}; }
 
     .pdf-callout-body {
-      font-size: 0.94em;
+      font-size: 0.92em;
       color: ${fgColor};
-      line-height: 1.55;
+      line-height: 1.5;
     }
 
     /* Blockquotes */
     .pdf-blockquote {
-      margin: 1.2em 0;
-      padding: 8px 16px;
-      border-left: 3px solid ${borderColor};
+      margin: 0.9em 0;
+      padding: 8px 14px;
+      border-left: 3.5px solid ${isMono ? fgColor : isDark ? "#6366f1" : "#4f46e5"};
+      background-color: ${isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)"};
+      border-radius: 0 6px 6px 0;
       color: ${mutedColor};
       font-style: italic;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
 
     /* Lists */
     .pdf-ul, .pdf-ol {
-      margin: 0.8em 0;
-      padding-left: 1.8em;
+      margin: 0.6em 0;
+      padding-left: 1.6em;
     }
 
     .pdf-li-bullet, .pdf-li-number {
-      margin-bottom: 0.35em;
+      margin-bottom: 0.25em;
+      line-height: 1.45;
     }
 
     /* Task items */
     .pdf-task-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin: 0.35em 0;
+      gap: 7px;
+      margin: 0.25em 0;
     }
 
     .pdf-checkbox {
-      font-size: 1.1em;
+      font-size: 1.05em;
       color: ${mutedColor};
     }
 
@@ -401,7 +496,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     .pdf-hr {
       border: none;
       border-top: 1px solid ${borderColor};
-      margin: 2em 0;
+      margin: 1.6em 0;
     }
 
     /* Links */
@@ -416,7 +511,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 40px 0;
+      padding: 30px 0;
       page-break-after: always;
       break-after: page;
     }
@@ -428,43 +523,43 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: ${isMono ? fgColor : "#6366f1"};
-      margin-bottom: 1.2em;
+      margin-bottom: 1em;
     }
 
     .pdf-cover-title {
-      font-size: 2.8em;
+      font-size: 2.6em;
       font-weight: 800;
       line-height: 1.15;
-      margin: 0 0 0.3em 0;
+      margin: 0 0 0.25em 0;
       color: ${fgColor};
     }
 
     .pdf-cover-subtitle {
-      font-size: 1.3em;
+      font-size: 1.2em;
       font-weight: 400;
       color: ${mutedColor};
-      margin: 0 0 1.5em 0;
+      margin: 0 0 1.2em 0;
     }
 
     .pdf-cover-divider {
       height: 3px;
-      width: 60px;
+      width: 50px;
       background-color: ${isMono ? fgColor : "#6366f1"};
-      margin-bottom: 2.5em;
+      margin-bottom: 2em;
     }
 
     .pdf-cover-meta-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 14px;
       max-width: 440px;
-      padding-top: 1.5em;
+      padding-top: 1.2em;
       border-top: 1px solid ${borderColor};
     }
 
     .pdf-cover-meta-item .label {
       display: block;
-      font-size: 0.72em;
+      font-size: 0.7em;
       text-transform: uppercase;
       font-weight: 600;
       color: ${mutedColor};
@@ -473,7 +568,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
 
     .pdf-cover-meta-item .val {
       display: block;
-      font-size: 0.92em;
+      font-size: 0.9em;
       font-weight: 600;
       color: ${fgColor};
       margin-top: 2px;
@@ -481,35 +576,35 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
 
     /* Table of Contents */
     .pdf-toc-card {
-      margin-bottom: 2.5em;
-      padding: 20px 0;
+      margin-bottom: 2em;
+      padding: 16px 0;
       page-break-after: always;
       break-after: page;
     }
 
     .pdf-toc-heading {
-      font-size: 1.5em;
+      font-size: 1.4em;
       font-weight: 700;
-      margin-bottom: 1em;
+      margin-bottom: 0.8em;
       border-bottom: 2px solid ${borderColor};
-      padding-bottom: 0.3em;
+      padding-bottom: 0.25em;
     }
 
     .pdf-toc-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .pdf-toc-item {
       display: flex;
       align-items: baseline;
-      font-size: 0.92em;
+      font-size: 0.9em;
     }
 
-    .pdf-toc-level-1 { font-weight: 600; margin-top: 6px; }
-    .pdf-toc-level-2 { padding-left: 16px; color: ${mutedColor}; font-size: 0.88em; }
-    .pdf-toc-level-3 { padding-left: 32px; color: ${mutedColor}; font-size: 0.84em; }
+    .pdf-toc-level-1 { font-weight: 600; margin-top: 5px; }
+    .pdf-toc-level-2 { padding-left: 14px; color: ${mutedColor}; font-size: 0.88em; }
+    .pdf-toc-level-3 { padding-left: 28px; color: ${mutedColor}; font-size: 0.84em; }
 
     .pdf-toc-item-title {
       white-space: nowrap;
@@ -533,21 +628,21 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
     .pdf-page-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.75em;
+      font-size: 0.72em;
       color: ${mutedColor};
       border-bottom: 1px solid ${borderColor};
       padding-bottom: 4px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .pdf-page-footer {
       display: flex;
       justify-content: space-between;
-      font-size: 0.75em;
+      font-size: 0.72em;
       color: ${mutedColor};
       border-top: 1px solid ${borderColor};
       padding-top: 4px;
-      margin-top: 24px;
+      margin-top: 18px;
     }
   `;
 }
@@ -574,10 +669,6 @@ export async function generatePdfFile(
   const pageSpec = PAGE_SPECS[pageSize][orientation];
   const marginMm = MARGIN_SPECS[margin];
 
-  // Printable area inside margins in mm
-  const printWidthMm = pageSpec.widthMm - marginMm.leftMm - marginMm.rightMm;
-  const printHeightMm = pageSpec.heightMm - marginMm.topMm - marginMm.bottomMm;
-
   // Initialize jsPDF document
   const doc = new jsPDF({
     orientation,
@@ -588,77 +679,87 @@ export async function generatePdfFile(
 
   onProgress?.("Synthesizing document canvas…");
 
-  // Render container using html2canvas with scale: 2 for sharp retina rendering
-  const canvas = await html2canvas(containerEl, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: config.colorMode === "dark" ? "#121215" : "#ffffff",
-    windowWidth: containerEl.scrollWidth,
-  });
+  // Create an off-screen clone with transform: none and exact width
+  // to ensure html2canvas captures full-res Retina pixels without zoom scale distortion
+  const clone = containerEl.cloneNode(true) as HTMLElement;
+  clone.style.transform = "none";
+  clone.style.margin = "0";
+  clone.style.position = "fixed";
+  clone.style.left = "-99999px";
+  clone.style.top = "0";
+  clone.style.zIndex = "-1000";
+  clone.style.width = `${containerEl.offsetWidth}px`;
+  document.body.appendChild(clone);
+
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await html2canvas(clone, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: config.colorMode === "dark" ? "#121215" : "#ffffff",
+      windowWidth: containerEl.offsetWidth,
+      width: containerEl.offsetWidth,
+    });
+  } finally {
+    document.body.removeChild(clone);
+  }
 
   onProgress?.("Slicing multi-page sheets…");
 
-  const imgWidth = printWidthMm;
-  const imgHeight = (canvas.height * printWidthMm) / canvas.width;
+  // The container already represents the full paper sheet with built-in padding for margins.
+  // We place the full-width canvas across the sheet (x = 0, y = 0) with width = pageSpec.widthMm,
+  // preventing double-margin compression.
+  const pageHeightPx = (canvas.width * pageSpec.heightMm) / pageSpec.widthMm;
+  const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx));
 
-  let heightLeft = imgHeight;
-  let position = marginMm.topMm;
-  let pageNumber = 1;
+  for (let p = 0; p < totalPages; p++) {
+    if (p > 0) {
+      doc.addPage(pageSize, orientation);
+    }
+    const sourceY = p * pageHeightPx;
+    const sliceHeight = Math.min(pageHeightPx, canvas.height - sourceY);
 
-  // Render first page
-  const pageImgData = canvas.toDataURL("image/jpeg", 0.95);
-  doc.addImage(
-    pageImgData,
-    "JPEG",
-    marginMm.leftMm,
-    position,
-    imgWidth,
-    imgHeight,
-    undefined,
-    "FAST"
-  );
+    const pageCanvas = document.createElement("canvas");
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = pageHeightPx;
+    const ctx = pageCanvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = config.colorMode === "dark" ? "#121215" : "#ffffff";
+      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+      ctx.drawImage(
+        canvas,
+        0,
+        sourceY,
+        canvas.width,
+        sliceHeight,
+        0,
+        0,
+        canvas.width,
+        sliceHeight
+      );
+    }
 
-  // Inset footer on first page
-  if (config.showPageNumbers) {
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text(
-      `Page ${pageNumber}`,
-      pageSpec.widthMm - marginMm.rightMm,
-      pageSpec.heightMm - 8,
-      { align: "right" }
-    );
-  }
-
-  heightLeft -= printHeightMm;
-
-  // Generate subsequent pages
-  while (heightLeft > 0) {
-    onProgress?.(`Generating Page ${pageNumber + 1}…`);
-    position = heightLeft - imgHeight + marginMm.topMm;
-    doc.addPage(pageSize, orientation);
-    pageNumber++;
-
+    const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.96);
     doc.addImage(
       pageImgData,
       "JPEG",
-      marginMm.leftMm,
-      position,
-      imgWidth,
-      imgHeight,
+      0,
+      0,
+      pageSpec.widthMm,
+      pageSpec.heightMm,
       undefined,
       "FAST"
     );
 
-    // Running Header
-    if (config.showHeaderTitle) {
+    // Running Header (from page 2 onwards)
+    if (config.showHeaderTitle && p > 0) {
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       doc.text(
         config.fileName.replace(/\.[^/.]+$/, ""),
         marginMm.leftMm,
-        8,
+        marginMm.topMm > 10 ? marginMm.topMm - 4 : 8,
         { align: "left" }
       );
     }
@@ -668,14 +769,12 @@ export async function generatePdfFile(
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       doc.text(
-        `Page ${pageNumber}`,
+        `Page ${p + 1} of ${totalPages}`,
         pageSpec.widthMm - marginMm.rightMm,
-        pageSpec.heightMm - 8,
+        pageSpec.heightMm - (marginMm.bottomMm > 10 ? marginMm.bottomMm - 4 : 6),
         { align: "right" }
       );
     }
-
-    heightLeft -= printHeightMm;
   }
 
   onProgress?.("Finalizing and saving PDF…");

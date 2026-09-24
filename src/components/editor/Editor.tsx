@@ -33,7 +33,10 @@ import {
   Minus,
   Workflow,
   Activity,
+  Eye,
+  FileCode,
 } from "lucide-react";
+import { RawMarkdownEditor, type RawMarkdownEditorRef } from "./RawMarkdownEditor";
 
 interface Props {
   initialContent?: string;
@@ -255,6 +258,9 @@ export function Editor({
 
   const isInternalUpdateRef = useRef(false);
   const lastLoadedContentRef = useRef<string>(initialContent);
+  const [viewMode, setViewMode] = useState<"display" | "raw">("display");
+  const [rawContent, setRawContent] = useState<string>(initialContent || "");
+  const rawEditorRef = useRef<RawMarkdownEditorRef>(null);
 
   const editor = useEditor({
     extensions: buildExtensions(),
@@ -446,6 +452,7 @@ export function Editor({
 
       isInternalUpdateRef.current = true;
       lastLoadedContentRef.current = formattedMarkdown;
+      setRawContent(formattedMarkdown);
 
       if (onChange) {
         onChange(formattedMarkdown);
@@ -477,6 +484,7 @@ export function Editor({
       const rawMarkdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getText();
       const formattedMarkdown = postprocessMathMarkdown(rawMarkdown);
       lastLoadedContentRef.current = formattedMarkdown;
+      setRawContent(formattedMarkdown);
     },
     immediatelyRender: false,
   });
@@ -503,6 +511,7 @@ export function Editor({
 
     // External content change (e.g. note fetched from Drive / switched tab)
     lastLoadedContentRef.current = initialContent;
+    setRawContent(initialContent);
     const processed = preprocessMarkdownMath(initialContent);
     editor.commands.setContent(processed, { emitUpdate: false });
     transformMathInEditor(editor);
@@ -791,11 +800,167 @@ export function Editor({
     };
   }, [fontSize, mounted, isLoading, editor]);
 
+  const handleToggleView = (mode: "display" | "raw") => {
+    if (mode === viewMode) return;
+    if (mode === "raw") {
+      const currentMd = (editor?.storage as any)?.markdown?.getMarkdown?.() || editor?.getText() || "";
+      const formatted = postprocessMathMarkdown(currentMd);
+      setRawContent(formatted);
+      setViewMode("raw");
+    } else {
+      const processed = preprocessMarkdownMath(rawContent);
+      isInternalUpdateRef.current = true;
+      lastLoadedContentRef.current = rawContent;
+      editor?.commands.setContent(processed, { emitUpdate: false });
+      transformMathInEditor(editor);
+      setViewMode("display");
+    }
+  };
+
+  const handleRawContentChange = (newVal: string) => {
+    setRawContent(newVal);
+    lastLoadedContentRef.current = newVal;
+    if (onChange) {
+      onChange(newVal);
+    }
+    if (onStatsChange) {
+      const trimmed = newVal.trim();
+      const words = trimmed ? trimmed.split(/\s+/).length : 0;
+      const chars = newVal.length;
+      onStatsChange({ words, chars });
+    }
+  };
+
+  const handleToggleBold = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.wrapSelection("**", "**", "bold text");
+    } else {
+      editor?.chain().focus().toggleBold().run();
+    }
+  };
+
+  const handleToggleItalic = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.wrapSelection("*", "*", "italic text");
+    } else {
+      editor?.chain().focus().toggleItalic().run();
+    }
+  };
+
+  const handleToggleUnderline = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.wrapSelection("<u>", "</u>", "underlined text");
+    } else {
+      editor?.chain().focus().toggleUnderline().run();
+    }
+  };
+
+  const handleToggleStrike = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.wrapSelection("~~", "~~", "strikethrough text");
+    } else {
+      editor?.chain().focus().toggleStrike().run();
+    }
+  };
+
+  const handleToggleHighlight = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.wrapSelection("<mark>", "</mark>", "highlighted text");
+    } else {
+      editor?.chain().focus().toggleHighlight().run();
+    }
+  };
+
+  const handleToggleHeading = (level: 1 | 2 | 3) => {
+    if (viewMode === "raw") {
+      const prefix = "#".repeat(level) + " ";
+      rawEditorRef.current?.prefixLine(prefix);
+    } else {
+      editor?.chain().focus().toggleHeading({ level }).run();
+    }
+  };
+
+  const handleToggleBlockquote = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.prefixLine("> ");
+    } else {
+      editor?.chain().focus().toggleBlockquote().run();
+    }
+  };
+
+  const handleToggleBulletList = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.prefixLine("- ");
+    } else {
+      editor?.chain().focus().toggleBulletList().run();
+    }
+  };
+
+  const handleToggleOrderedList = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.prefixLine("1. ");
+    } else {
+      editor?.chain().focus().toggleOrderedList().run();
+    }
+  };
+
+  const handleToggleTaskList = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.prefixLine("- [ ] ");
+    } else {
+      editor?.chain().focus().toggleTaskList().run();
+    }
+  };
+
+  const handleUndo = () => {
+    if (viewMode === "raw") {
+      document.execCommand("undo");
+    } else {
+      editor?.chain().focus().undo().run();
+    }
+  };
+
+  const handleRedo = () => {
+    if (viewMode === "raw") {
+      document.execCommand("redo");
+    } else {
+      editor?.chain().focus().redo().run();
+    }
+  };
+
   const handleImageFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
-    if (file && editor) {
+    if (!file) return;
+
+    if (viewMode === "raw") {
+      if (onImageUpload) {
+        try {
+          const src = await onImageUpload(file);
+          if (src) {
+            rawEditorRef.current?.insertText(`![${file.name}](${src})`);
+          }
+        } catch {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const tempSrc = reader.result as string;
+            rawEditorRef.current?.insertText(`![${file.name}](${tempSrc})`);
+          };
+          reader.readAsDataURL(file);
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const tempSrc = reader.result as string;
+          rawEditorRef.current?.insertText(`![${file.name}](${tempSrc})`);
+        };
+        reader.readAsDataURL(file);
+      }
+      return;
+    }
+
+    if (editor) {
       const uploadId = `up-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       const reader = new FileReader();
       reader.onload = () => {
@@ -836,36 +1001,63 @@ export function Editor({
   };
 
   const insertInlineMath = (defaultLatex?: string) => {
-    if (!editor) return;
     const latex = defaultLatex !== undefined ? defaultLatex : prompt("Enter Inline LaTeX Formula (e.g. \\sigma or E=mc^2):", "\\sigma");
-    if (latex) {
-      editor
-        .chain()
-        .focus()
-        .insertContent(`<span data-type="math-inline" data-latex="${encodeURIComponent(latex)}"></span> `)
-        .run();
+    if (!latex) return;
+
+    if (viewMode === "raw") {
+      rawEditorRef.current?.insertText(`$${latex}$`);
+      return;
     }
+
+    if (!editor) return;
+    editor
+      .chain()
+      .focus()
+      .insertContent(`<span data-type="math-inline" data-latex="${encodeURIComponent(latex)}"></span> `)
+      .run();
   };
 
   const insertBlockMath = (defaultLatex?: string) => {
-    if (!editor) return;
     const latex = defaultLatex !== undefined ? defaultLatex : prompt(
       "Enter Display Block LaTeX (e.g. \\text{Range} = 55 - 26 = 29):",
       "\\text{Range} = 55 - 26 = 29"
     );
-    if (latex) {
-      editor
-        .chain()
-        .focus()
-        .insertContent(`\n<div data-type="math-block" data-latex="${encodeURIComponent(latex)}"></div>\n`)
-        .run();
+    if (!latex) return;
+
+    if (viewMode === "raw") {
+      rawEditorRef.current?.insertText(`\n$$\n${latex}\n$$\n`);
+      return;
     }
+
+    if (!editor) return;
+    editor
+      .chain()
+      .focus()
+      .insertContent(`\n<div data-type="math-block" data-latex="${encodeURIComponent(latex)}"></div>\n`)
+      .run();
   };
 
   useEffect(() => {
     const handleCommand = (e: any) => {
-      if (!editor) return;
       const cmd = e.detail?.command;
+      if (viewMode === "raw") {
+        if (cmd === "math-inline") insertInlineMath(e.detail?.payload);
+        else if (cmd === "math-block") insertBlockMath(e.detail?.payload);
+        else if (cmd === "bold") handleToggleBold();
+        else if (cmd === "italic") handleToggleItalic();
+        else if (cmd === "h1") handleToggleHeading(1);
+        else if (cmd === "h2") handleToggleHeading(2);
+        else if (cmd === "bullet") handleToggleBulletList();
+        else if (cmd === "task") handleToggleTaskList();
+        else if (cmd === "ordered") handleToggleOrderedList();
+        else if (cmd === "quote") handleToggleBlockquote();
+        else if (cmd === "code") rawEditorRef.current?.wrapSelection("```\n", "\n```");
+        else if (cmd === "undo") handleUndo();
+        else if (cmd === "redo") handleRedo();
+        return;
+      }
+
+      if (!editor) return;
       if (cmd === "math-inline") {
         insertInlineMath(e.detail?.payload);
       } else if (cmd === "math-block") {
@@ -896,9 +1088,15 @@ export function Editor({
     };
     window.addEventListener("netherite:editor-command" as any, handleCommand);
     return () => window.removeEventListener("netherite:editor-command" as any, handleCommand);
-  }, [editor]);
+  }, [editor, viewMode]);
 
   const insertTable = () => {
+    if (viewMode === "raw") {
+      rawEditorRef.current?.insertText(
+        "\n| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| Cell 1 | Cell 2 | Cell 3 |\n"
+      );
+      return;
+    }
     if (!editor) return;
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   };
@@ -1075,6 +1273,18 @@ export function Editor({
     { name: "Purple", color: "var(--highlight-purple)" },
   ];
 
+  const currentWordCount =
+    viewMode === "raw"
+      ? rawContent.trim()
+        ? rawContent.trim().split(/\s+/).length
+        : 0
+      : editor.storage.characterCount?.words() || 0;
+
+  const currentCharCount =
+    viewMode === "raw"
+      ? rawContent.length
+      : editor.storage.characterCount?.characters() || 0;
+
   return (
     <div
       ref={editorContainerRef}
@@ -1096,45 +1306,45 @@ export function Editor({
           {/* Group 1: Text Styles */}
           <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
             <button
-              onClick={() => editor.chain().focus().toggleBold().run()}
+              onClick={handleToggleBold}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("bold") ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("bold") ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
               }`}
               title="Bold (Ctrl+B)"
             >
               <Bold className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleItalic().run()}
+              onClick={handleToggleItalic}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("italic") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("italic") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Italic (Ctrl+I)"
             >
               <Italic className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              onClick={handleToggleUnderline}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("underline") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("underline") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Underline (Ctrl+U)"
             >
               <UnderlineIcon className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleStrike().run()}
+              onClick={handleToggleStrike}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("strike") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("strike") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Strikethrough"
             >
               <Strikethrough className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleHighlight().run()}
+              onClick={handleToggleHighlight}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("highlight") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("highlight") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Highlight"
             >
@@ -1145,36 +1355,36 @@ export function Editor({
           {/* Group 2: Headings & Blockquote */}
           <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
             <button
-              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              onClick={() => handleToggleHeading(1)}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("heading", { level: 1 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("heading", { level: 1 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
               }`}
               title="Heading 1"
             >
               <Heading1 className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              onClick={() => handleToggleHeading(2)}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("heading", { level: 2 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("heading", { level: 2 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
               }`}
               title="Heading 2"
             >
               <Heading2 className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              onClick={() => handleToggleHeading(3)}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("heading", { level: 3 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("heading", { level: 3 }) ? "bg-accent text-foreground font-bold shadow-2xs" : "text-muted-foreground"
               }`}
               title="Heading 3"
             >
               <Heading3 className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              onClick={handleToggleBlockquote}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("blockquote") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("blockquote") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Quote"
             >
@@ -1185,27 +1395,27 @@ export function Editor({
           {/* Group 3: Lists */}
           <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
             <button
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              onClick={handleToggleBulletList}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("bulletList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("bulletList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Bullet List"
             >
               <List className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              onClick={handleToggleOrderedList}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("orderedList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("orderedList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Numbered List"
             >
               <ListOrdered className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              onClick={handleToggleTaskList}
               className={`p-1.5 rounded-md hover:bg-accent/80 transition-colors ${
-                editor.isActive("taskList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
+                viewMode === "display" && editor.isActive("taskList") ? "bg-accent text-foreground shadow-2xs" : "text-muted-foreground"
               }`}
               title="Task List"
             >
@@ -1247,19 +1457,49 @@ export function Editor({
             </button>
           </div>
 
-          {/* Group 5: History */}
+          {/* Group 5: View Mode Switcher (Display vs Pure MD) */}
+          <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
+            <button
+              type="button"
+              onClick={() => handleToggleView("display")}
+              className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer ${
+                viewMode === "display"
+                  ? "bg-accent text-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              }`}
+              title="Display View (Rendered Rich Text / WYSIWYG)"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Display</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleView("raw")}
+              className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer ${
+                viewMode === "raw"
+                  ? "bg-accent text-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              }`}
+              title="Pure Markdown View (Direct Text Editing)"
+            >
+              <FileCode className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Pure MD</span>
+            </button>
+          </div>
+
+          {/* Group 6: History */}
           <div className="ml-auto flex items-center gap-0.5 bg-accent/25 p-0.5 rounded-lg border border-border/25">
             <button
-              onClick={() => editor.chain().focus().undo().run()}
-              disabled={!editor.can().undo()}
+              onClick={handleUndo}
+              disabled={viewMode === "display" && !editor.can().undo()}
               className="p-1.5 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
               title="Undo (Ctrl+Z)"
             >
               <Undo className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().redo().run()}
-              disabled={!editor.can().redo()}
+              onClick={handleRedo}
+              disabled={viewMode === "display" && !editor.can().redo()}
               className="p-1.5 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
               title="Redo (Ctrl+Y)"
             >
@@ -1427,18 +1667,50 @@ export function Editor({
             <ImageIcon className="w-3.5 h-3.5" />
           </button>
 
+          <div className="h-4 w-[1px] bg-border mx-1" />
+
+          {/* View Mode Switcher */}
+          <div className="flex items-center gap-0.5 bg-accent/25 p-0.5 rounded border border-border/30">
+            <button
+              type="button"
+              onClick={() => handleToggleView("display")}
+              className={`px-2 py-0.5 rounded flex items-center gap-1 text-xs cursor-pointer ${
+                viewMode === "display"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              }`}
+              title="Display View"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Display</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleView("raw")}
+              className={`px-2 py-0.5 rounded flex items-center gap-1 text-xs cursor-pointer ${
+                viewMode === "raw"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              }`}
+              title="Pure Markdown View"
+            >
+              <FileCode className="w-3.5 h-3.5" />
+              <span>Pure MD</span>
+            </button>
+          </div>
+
           <div className="ml-auto flex items-center gap-1">
             <button
-              onClick={() => editor.chain().focus().undo().run()}
-              disabled={!editor.can().undo()}
+              onClick={handleUndo}
+              disabled={viewMode === "display" && !editor.can().undo()}
               className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
               title="Undo"
             >
               <Undo className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => editor.chain().focus().redo().run()}
-              disabled={!editor.can().redo()}
+              onClick={handleRedo}
+              disabled={viewMode === "display" && !editor.can().redo()}
               className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
               title="Redo"
             >
@@ -1449,7 +1721,7 @@ export function Editor({
       )}
 
       {/* Floating Selection Bubble Menu with Color Highlighting */}
-      {editor && (
+      {editor && viewMode === "display" && (
         <BubbleMenu
           editor={editor}
           className="flex items-center gap-1 p-1 bg-card border border-border rounded-xl shadow-xl z-50 text-xs backdrop-blur-md"
@@ -1519,7 +1791,7 @@ export function Editor({
       )}
 
       {/* Floating Slash Menu Popover */}
-      {showSlashMenu && (
+      {showSlashMenu && viewMode === "display" && (
         <div className="absolute left-12 top-24 w-64 max-h-72 bg-card border border-border rounded-xl shadow-2xl overflow-y-auto p-1 z-50 animate-in fade-in zoom-in-95 duration-150">
           <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
             Insert Block
@@ -1562,8 +1834,20 @@ export function Editor({
             <DocumentTitleInput title={title} onTitleChange={onTitleChange} />
           </div>
 
-          {/* TipTap Document Area */}
-          <EditorContent editor={editor} className={`w-full ${fontClass}`} />
+          {/* Document Area: Rendered Rich Text (TipTap) vs Pure Markdown Editor */}
+          {viewMode === "display" ? (
+            <EditorContent editor={editor} className={`w-full ${fontClass}`} />
+          ) : (
+            <div className="w-full flex-1 flex flex-col min-h-[500px]">
+              <RawMarkdownEditor
+                ref={rawEditorRef}
+                content={rawContent}
+                onChange={handleRawContentChange}
+                onSave={onSave}
+                fontSize={fontSize}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -1579,14 +1863,14 @@ export function Editor({
       {modernUi ? (
         <div className="hidden sm:flex px-6 py-1.5 border-t border-border/20 bg-background/40 backdrop-blur-xs text-[11px] text-muted-foreground/80 justify-between items-center select-none">
           <div className="flex items-center gap-2.5">
-            <span>{editor.storage.characterCount?.words() || 0} words</span>
+            <span>{currentWordCount} words</span>
             <span className="text-border">•</span>
-            <span>{editor.storage.characterCount?.characters() || 0} characters</span>
+            <span>{currentCharCount} characters</span>
             <span className="text-border">•</span>
             <span>
               {Math.max(
                 1,
-                Math.ceil((editor.storage.characterCount?.words() || 0) / 200),
+                Math.ceil(currentWordCount / 200),
               )}{" "}
               min read
             </span>
@@ -1611,15 +1895,17 @@ export function Editor({
               Zoom: {Math.round((fontSize / 15) * 100)}%
             </button>
             <span className="text-border">•</span>
-            <span className="text-muted-foreground/60">Markdown + KaTeX</span>
+            <span className="text-muted-foreground/60">
+              {viewMode === "raw" ? "Pure Markdown" : "Markdown + KaTeX"}
+            </span>
           </div>
         </div>
       ) : (
         <div className="hidden sm:flex px-6 py-2 border-t border-border/30 bg-background/50 text-[11px] text-muted-foreground justify-between items-center select-none">
           <div className="flex items-center gap-3">
-            <span>{editor.storage.characterCount?.words() || 0} words</span>
+            <span>{currentWordCount} words</span>
             <span>•</span>
-            <span>{editor.storage.characterCount?.characters() || 0} characters</span>
+            <span>{currentCharCount} characters</span>
           </div>
           <div className="flex items-center gap-3 font-mono text-[10px]">
             <button
@@ -1641,7 +1927,9 @@ export function Editor({
               Zoom: {Math.round((fontSize / 15) * 100)}%
             </button>
             <span>•</span>
-            <span>Markdown + LaTeX KaTeX</span>
+            <span>
+              {viewMode === "raw" ? "Pure Markdown" : "Markdown + LaTeX KaTeX"}
+            </span>
           </div>
         </div>
       )}

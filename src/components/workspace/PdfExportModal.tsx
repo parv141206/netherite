@@ -269,7 +269,7 @@ export function PdfExportModal({
           <style>${dynamicStylesheet}</style>
         </head>
         <body class="pdf-root-container">
-          <div style="padding: 10px;">
+          <div class="pdf-print-container">
             ${compiledHtml}
           </div>
         </body>

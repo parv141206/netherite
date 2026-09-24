@@ -3,6 +3,7 @@
 import katex from "katex";
 import hljs from "highlight.js";
 import { renderMermaidQueued } from "~/components/editor/mermaidQueue";
+import { renderTikzQueued } from "~/components/editor/tikzQueue";
 
 export interface CompilePdfOptions {
   title?: string;
@@ -72,6 +73,64 @@ function escapeHtml(str: string): string {
 }
 
 /**
+ * Strips HTML tags and markdown symbols to produce clean plain text for IDs and Table of Contents
+ */
+function stripFormattingToPlainText(str: string): string {
+  return str
+    .replace(/<[^>]*>/g, "")
+    .replace(/[*_~`+=]/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .trim();
+}
+
+/**
+ * Formats inline markdown elements (bold, italic, code, links, highlights)
+ * and normalizes HTML mark tags so they match document color tokens.
+ */
+function formatInlineMarkdown(str: string): string {
+  let s = str;
+
+  // Code spans
+  s = s.replace(/`([^`]+)`/g, '<code class="pdf-inline-code">$1</code>');
+
+  // Bold & Italic
+  s = s.replace(/\*\*\*(.*?)\*\*\*/g, "<strong><em>$1</em></strong>");
+  s = s.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__(.*?)__/g, "<strong>$1</strong>");
+  s = s.replace(/\*(.*?)\*/g, "<em>$1</em>");
+  s = s.replace(/_(.*?)_/g, "<em>$1</em>");
+
+  // Strikethrough
+  s = s.replace(/~~(.*?)~~/g, "<del>$1</del>");
+
+  // Underline
+  s = s.replace(/\+\+(.*?)\+\+/g, "<u>$1</u>");
+
+  // Highlight standard markdown: ==highlight==
+  s = s.replace(/==(.*?)==/g, '<mark class="pdf-highlight pdf-highlight-yellow">$1</mark>');
+
+  // Normalize TipTap / HTML <mark> tags to assign clean highlight classes
+  s = s.replace(/<mark\b([^>]*)>/gi, (match: string, attrs: string) => {
+    if (attrs.includes("pdf-highlight")) return match;
+    let colorClass = "pdf-highlight-yellow";
+    if (/pink/i.test(attrs)) colorClass = "pdf-highlight-pink";
+    else if (/green/i.test(attrs)) colorClass = "pdf-highlight-green";
+    else if (/blue/i.test(attrs)) colorClass = "pdf-highlight-blue";
+    else if (/purple/i.test(attrs)) colorClass = "pdf-highlight-purple";
+
+    if (/class=["']/i.test(attrs)) {
+      return match.replace(/class=["']([^"']*)["']/i, `class="$1 pdf-highlight ${colorClass}"`);
+    }
+    return `<mark class="pdf-highlight ${colorClass}" ${attrs}>`;
+  });
+
+  // Links
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="pdf-link">$1</a>');
+
+  return s;
+}
+
+/**
  * High-performance, rich In-House Markdown to Structured HTML compiler
  * designed specifically for publication-grade PDF generation.
  */
@@ -96,39 +155,52 @@ export async function compileMarkdownForPdf(
 
   let text = rawMarkdown || "";
 
+  // Normalize CRLF to LF
+  text = text.replace(/\r\n/g, "\n");
+
   // Compute word count and reading time
-  const cleanWords = text.replace(/```[\s\S]*?```/g, "").match(/\b\w+\b/g) || [];
+  const cleanWords = text.replace(/```[\s\S]*?```/g, "").match(/\b\w+\b/g) ?? [];
   const wordCount = cleanWords.length;
   const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
 
-  // Store extracted complex blocks to prevent interference during regex processing
+  // Store extracted complex blocks to prevent interference during regex processing.
+  // Note: Placeholders use hyphens (NOT underscores) to prevent collision with markdown italics `_(.*?)_`.
   const codeBlocks: { lang: string; code: string; placeholder: string }[] = [];
   const mathBlocks: { latex: string; isDisplay: boolean; placeholder: string }[] = [];
   const mermaidBlocks: { code: string; placeholder: string }[] = [];
+  const tikzBlocks: { code: string; placeholder: string }[] = [];
 
-  // 1. Extract fenced code blocks
-  text = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const cleanLang = (lang || "").toLowerCase().trim();
-    if (cleanLang === "mermaid") {
-      const placeholder = `<!--NETHERITE_MMD_${mermaidBlocks.length}-->`;
-      mermaidBlocks.push({ code: code.trim(), placeholder });
-      return placeholder;
+  // 1. Extract fenced code blocks (supporting arbitrary backticks/tildes, trailing spaces, CRLF)
+  text = text.replace(
+    /(?:^|\n)(`{3,}|~{3,})([^\n`~]*)\n([\s\S]*?)\n\1(?:\n|$)/g,
+    (_, _fence: string, langSpec: string, code: string) => {
+      const cleanLang = (langSpec ?? "").trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+      if (cleanLang === "mermaid") {
+        const placeholder = `<!--NETHERITE-MMD-${mermaidBlocks.length}-->`;
+        mermaidBlocks.push({ code: code.trim(), placeholder });
+        return `\n\n${placeholder}\n\n`;
+      }
+      if (cleanLang === "tikz" || cleanLang === "latex-tikz" || cleanLang === "pgf") {
+        const placeholder = `<!--NETHERITE-TIKZ-${tikzBlocks.length}-->`;
+        tikzBlocks.push({ code: code.trim(), placeholder });
+        return `\n\n${placeholder}\n\n`;
+      }
+      const placeholder = `<!--NETHERITE-CODE-${codeBlocks.length}-->`;
+      codeBlocks.push({ lang: cleanLang, code: code, placeholder });
+      return `\n\n${placeholder}\n\n`;
     }
-    const placeholder = `<!--NETHERITE_CODE_${codeBlocks.length}-->`;
-    codeBlocks.push({ lang: cleanLang, code, placeholder });
-    return placeholder;
-  });
+  );
 
   // 2. Extract display math blocks $$ ... $$
   text = text.replace(/\$\$([\s\S]*?)\$\$/g, (_, latex) => {
-    const placeholder = `<!--NETHERITE_MATH_BLOCK_${mathBlocks.length}-->`;
+    const placeholder = `<!--NETHERITE-MATH-BLOCK-${mathBlocks.length}-->`;
     mathBlocks.push({ latex: latex.trim(), isDisplay: true, placeholder });
-    return placeholder;
+    return `\n\n${placeholder}\n\n`;
   });
 
   // 3. Extract inline math $ ... $
   text = text.replace(/(?<!\\)\$([^\n$]+?)(?<!\\)\$/g, (_, latex) => {
-    const placeholder = `<!--NETHERITE_MATH_INLINE_${mathBlocks.length}-->`;
+    const placeholder = `<!--NETHERITE-MATH-INLINE-${mathBlocks.length}-->`;
     mathBlocks.push({ latex: latex.trim(), isDisplay: false, placeholder });
     return placeholder;
   });
@@ -177,9 +249,9 @@ export async function compileMarkdownForPdf(
     const captionHtml = caption
       ? `<figcaption class="pdf-figcaption">${escapeHtml(caption)}</figcaption>`
       : "";
-    return `<figure class="pdf-image-container"><img src="${resolved}" alt="${escapeHtml(
+    return `\n\n<figure class="pdf-image-container"><img src="${resolved}" alt="${escapeHtml(
       alt
-    )}" class="pdf-image" />${captionHtml}</figure>`;
+    )}" class="pdf-image" />${captionHtml}</figure>\n\n`;
   });
 
   text = text.replace(htmlImgRegex, (tag, src) => {
@@ -187,7 +259,7 @@ export async function compileMarkdownForPdf(
     return tag.replace(src, resolved);
   });
 
-  // 5. Extract Headings and build section numbers
+  // 5. Extract Headings and build section numbers safely without escaping HTML tags
   const headings: HeadingItem[] = [];
   let h1Counter = 0;
   let h2Counter = 0;
@@ -196,8 +268,14 @@ export async function compileMarkdownForPdf(
   text = text.replace(/^(#{1,6})\s+(.+)$/gm, (_, hashes, headingText) => {
     const level = hashes.length;
     const rawHeading = headingText.trim();
-    let numberPrefix = "";
+    const plainText = stripFormattingToPlainText(rawHeading);
 
+    // Detect if the heading already has manual numbers like "1.2 ", "1.4. ", etc.
+    const manualNumMatch = plainText.match(/^(\d+(?:\.\d+)*\.?)\s+(.*)$/);
+    const existingManualNum = manualNumMatch ? manualNumMatch[1] : null;
+    const headingTitleWithoutNum = manualNumMatch ? manualNumMatch[2] : plainText;
+
+    let numberPrefix = "";
     if (sectionNumbering) {
       if (level === 1) {
         h1Counter++;
@@ -214,56 +292,76 @@ export async function compileMarkdownForPdf(
       }
     }
 
-    const id = `sec-${headings.length + 1}-${rawHeading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    const tocTitle = sectionNumbering ? headingTitleWithoutNum : plainText;
+    const id = `sec-${headings.length + 1}-${tocTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "heading"}`;
+
     headings.push({
       id,
       level,
-      text: rawHeading,
-      numberPrefix,
+      text: tocTitle,
+      numberPrefix: sectionNumbering ? numberPrefix : (existingManualNum ? `${existingManualNum} ` : ""),
     });
 
-    return `<h${level} id="${id}" class="pdf-heading pdf-h${level}"><span class="pdf-heading-num">${numberPrefix}</span>${escapeHtml(
-      rawHeading
-    )}</h${level}>`;
+    // Reconcile manual numbering so it never duplicates into "1.1.2. 1.2"
+    let headingInnerContent = rawHeading;
+    if (sectionNumbering && existingManualNum) {
+      headingInnerContent = headingInnerContent.replace(
+        new RegExp(`(^|>)\\s*${existingManualNum.replace(/\./g, "\\.")}\\s*`, "i"),
+        "$1"
+      );
+    }
+
+    const formattedHeading = formatInlineMarkdown(headingInnerContent);
+
+    return `\n\n<h${level} id="${id}" class="pdf-heading pdf-h${level}"><span class="pdf-heading-num">${numberPrefix}</span>${formattedHeading}</h${level}>\n\n`;
   });
 
-  // 6. GitHub-style Alert / Callout Boxes
-  // e.g. > [!NOTE]
-  //      > message
-  const alertRegex = /^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*\n((?:^>.*(?:\n|$))+)/gim;
-  text = text.replace(alertRegex, (_, type, body) => {
+  // 6. GitHub / Obsidian-style Alert / Callout Boxes
+  const alertRegex = /^>[ \t]*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION|INFO|SUCCESS|DANGER|QUESTION|EXAMPLE|QUOTE)\][ \t]*(.*?)\n((?:^[ \t]*>.*(?:\n|$))*)/gim;
+  text = text.replace(alertRegex, (_, type, customTitle, body) => {
     const alertType = type.toUpperCase();
-    const cleanBody = body
-      .replace(/^>\s?/gm, "")
-      .trim()
-      .replace(/\n/g, "<br/>");
+    const cleanTitle = customTitle.trim() || alertType;
+    const cleanBodyLines = (body || "")
+      .split("\n")
+      .map((l: string) => l.replace(/^[ \t]*>[ \t]?/, "").trim())
+      .filter((l: string) => l.length > 0);
+    const cleanBody = formatInlineMarkdown(cleanBodyLines.join("<br/>"));
 
-    return `<div class="pdf-callout pdf-callout-${alertType.toLowerCase()}">
+    return `\n\n<div class="pdf-callout pdf-callout-${alertType.toLowerCase()}">
       <div class="pdf-callout-header">
         <span class="pdf-callout-icon">${getCalloutIcon(alertType)}</span>
-        <span class="pdf-callout-type">${alertType}</span>
+        <span class="pdf-callout-type">${escapeHtml(cleanTitle)}</span>
       </div>
       <div class="pdf-callout-body">${cleanBody}</div>
-    </div>`;
+    </div>\n\n`;
   });
 
-  // Standard blockquotes
-  text = text.replace(/^>\s?(.*)$/gm, '<blockquote class="pdf-blockquote">$1</blockquote>');
+  // Standard multi-line blockquotes (group consecutive `>` lines into a single <blockquote>)
+  const blockquoteRegex = /(?:^[ \t]*>[ \t]?[^\n]*(?:\n|$))+/gm;
+  text = text.replace(blockquoteRegex, (block) => {
+    if (block.includes("pdf-callout")) return block;
+    const lines = block
+      .split("\n")
+      .map((l) => l.replace(/^[ \t]*>[ \t]?/, "").trim())
+      .filter((l) => l.length > 0);
+    if (lines.length === 0) return "";
+    const innerHtml = formatInlineMarkdown(lines.join("<br/>"));
+    return `\n\n<blockquote class="pdf-blockquote">${innerHtml}</blockquote>\n\n`;
+  });
 
   // 7. Markdown Tables
   text = text.replace(
-    /((?:^\|[^\n]+\|\r?\n)+)/gm,
+    /((?:^[ \t]*\|[^\n]+\|\n)+)/gm,
     (tableBlock) => {
       const lines = tableBlock.trim().split("\n").map((l) => l.trim());
       if (lines.length < 2) return tableBlock;
 
-      const headerRow = lines[0];
-      const separatorRow = lines[1];
+      const headerRow = lines[0]!;
+      const separatorRow = lines[1]!;
       const bodyRows = lines.slice(2);
 
       if (!separatorRow.includes("-")) return tableBlock;
 
-      // Parse alignment from separator line (e.g. :---: or ---: or :---)
       const aligns = separatorRow
         .split("|")
         .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
@@ -278,7 +376,7 @@ export async function compileMarkdownForPdf(
         row
           .split("|")
           .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
-          .map((c) => c.trim());
+          .map((c) => formatInlineMarkdown(c.trim()));
 
       const headerCells = parseCells(headerRow);
 
@@ -301,7 +399,7 @@ export async function compileMarkdownForPdf(
       });
 
       html += "</tbody></table></div>";
-      return html;
+      return `\n\n${html}\n\n`;
     }
   );
 
@@ -320,41 +418,36 @@ export async function compileMarkdownForPdf(
   // 10. Horizontal Rules
   text = text.replace(/^(\*{3,}|-{3,}|_{3,})$/gm, '<hr class="pdf-hr" />');
 
-  // 11. Inline Styling (Bold, Italic, Strikethrough, Underline, Code, Links)
-  text = text.replace(/\*\*\*(.*?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  text = text.replace(/__(.*?)__/g, "<strong>$1</strong>");
-  text = text.replace(/\*(.*?)\*/g, "<em>$1</em>");
-  text = text.replace(/_(.*?)_/g, "<em>$1</em>");
-  text = text.replace(/~~(.*?)~~/g, "<del>$1</del>");
-  text = text.replace(/\+\+(.*?)\+\+/g, "<u>$1</u>");
-  text = text.replace(/`([^`]+)`/g, '<code class="pdf-inline-code">$1</code>');
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="pdf-link">$1</a>');
+  // 11. Inline Styling (Bold, Italic, Strikethrough, Underline, Code, Links, Highlights)
+  text = formatInlineMarkdown(text);
 
-  // Paragraph wrapping for loose lines
+  // 12. Paragraph wrapping for loose lines without duplicate margins
   text = text
-    .split("\n\n")
+    .split(/\n\s*\n/)
     .map((chunk) => {
       const trimmed = chunk.trim();
       if (!trimmed) return "";
+      // Don't wrap blocks that are already block-level elements
       if (
         trimmed.startsWith("<h") ||
         trimmed.startsWith("<div") ||
+        trimmed.startsWith("<p") ||
         trimmed.startsWith("<table") ||
         trimmed.startsWith("<figure") ||
         trimmed.startsWith("<ul") ||
         trimmed.startsWith("<ol") ||
         trimmed.startsWith("<blockquote") ||
         trimmed.startsWith("<hr") ||
-        trimmed.startsWith("<!--NETHERITE_")
+        trimmed.startsWith("<!--NETHERITE")
       ) {
         return trimmed;
       }
       return `<p class="pdf-paragraph">${trimmed.replace(/\n/g, "<br/>")}</p>`;
     })
+    .filter(Boolean)
     .join("\n\n");
 
-  // 12. Render KaTeX Math Blocks
+  // 13. Render KaTeX Math Blocks
   mathBlocks.forEach(({ latex, isDisplay, placeholder }) => {
     try {
       const rendered = katex.renderToString(latex, {
@@ -370,7 +463,7 @@ export async function compileMarkdownForPdf(
     }
   });
 
-  // 13. Render Mermaid Diagrams Asynchronously
+  // 14. Render Mermaid Diagrams Asynchronously
   for (const { code, placeholder } of mermaidBlocks) {
     try {
       const { svg } = await renderMermaidQueued(placeholder, code, isDark);
@@ -391,7 +484,28 @@ export async function compileMarkdownForPdf(
     }
   }
 
-  // 14. Render Highlighted Code Blocks
+  // 15. Render TikZ LaTeX Diagrams Asynchronously
+  for (const { code, placeholder } of tikzBlocks) {
+    try {
+      const { svg } = await renderTikzQueued(code, isDark);
+      if (svg) {
+        const svgWrapper = `<div class="pdf-diagram-wrapper">${svg}</div>`;
+        text = text.replace(placeholder, svgWrapper);
+      } else {
+        text = text.replace(
+          placeholder,
+          `<div class="pdf-diagram-fallback"><pre>${escapeHtml(code)}</pre></div>`
+        );
+      }
+    } catch {
+      text = text.replace(
+        placeholder,
+        `<div class="pdf-diagram-fallback"><pre>${escapeHtml(code)}</pre></div>`
+      );
+    }
+  }
+
+  // 16. Render Highlighted Code Blocks
   codeBlocks.forEach(({ lang, code, placeholder }) => {
     let highlighted = "";
     try {
@@ -424,7 +538,7 @@ export async function compileMarkdownForPdf(
     text = text.replace(placeholder, blockHtml);
   });
 
-  // 15. Generate Table of Contents (if enabled)
+  // 17. Generate Table of Contents (if enabled)
   let tocHtml = "";
   if (includeTableOfContents && headings.length > 0) {
     tocHtml = `
@@ -436,7 +550,7 @@ export async function compileMarkdownForPdf(
               (h) => `
             <div class="pdf-toc-item pdf-toc-level-${h.level}">
               <span class="pdf-toc-item-title">
-                ${h.numberPrefix ? `<span class="pdf-toc-num">${h.numberPrefix}</span>` : ""}
+                ${h.numberPrefix ? `<span class="pdf-toc-num">${escapeHtml(h.numberPrefix)}</span>` : ""}
                 ${escapeHtml(h.text)}
               </span>
               <span class="pdf-toc-dots"></span>
@@ -450,7 +564,7 @@ export async function compileMarkdownForPdf(
     `;
   }
 
-  // 16. Generate Cover Page (if enabled)
+  // 18. Generate Cover Page (if enabled)
   let coverPageHtml = "";
   if (includeCoverPage) {
     coverPageHtml = `
@@ -501,17 +615,27 @@ export async function compileMarkdownForPdf(
 }
 
 function getCalloutIcon(type: string): string {
-  switch (type) {
+  switch (type.toUpperCase()) {
     case "NOTE":
+    case "INFO":
       return "ℹ";
     case "TIP":
       return "💡";
+    case "SUCCESS":
+      return "✓";
     case "IMPORTANT":
       return "★";
     case "WARNING":
       return "⚠";
     case "CAUTION":
+    case "DANGER":
       return "🛑";
+    case "QUESTION":
+      return "❓";
+    case "EXAMPLE":
+      return "📋";
+    case "QUOTE":
+      return "❝";
     default:
       return "ℹ";
   }

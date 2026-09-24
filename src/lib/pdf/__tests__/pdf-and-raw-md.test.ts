@@ -1,0 +1,48 @@
+import { describe, expect, it } from "bun:test";
+import { compileMarkdownForPdf } from "../mdToPdfCompiler";
+import { preprocessMarkdownMath, postprocessMathMarkdown } from "~/components/editor/MathExtension";
+
+describe("PDF Export Compiler Fixes", () => {
+  it("strips raw <mark> tags from headings and TOC", async () => {
+    const input = "# <mark>Important Section</mark>\n\nSome text.";
+    const { html, headings } = await compileMarkdownForPdf(input, { includeTableOfContents: true });
+
+    expect(headings).toHaveLength(1);
+    expect(headings[0].text).toBe("Important Section");
+    expect(headings[0].text).not.toContain("<mark>");
+
+    expect(html).toContain("Important Section");
+    expect(html).toContain("pdf-highlight");
+    expect(html).not.toContain("&lt;mark&gt;");
+  });
+
+  it("exports code blocks with syntax highlighting and avoids swallow by italics", async () => {
+    const input = "*Notice this italic text* before code:\n\n```python\ndef solve(x):\n    return x * 2\n```\n\n*Notice this italic text* after code.";
+    const { html } = await compileMarkdownForPdf(input);
+
+    expect(html).toContain("pdf-code-container");
+    expect(html).toContain("hljs-keyword");
+    expect(html).toContain("solve");
+  });
+
+  it("handles Callout / Text boxes cleanly without nesting issues", async () => {
+    const input = "> [!NOTE]\n> This is an important callout box with **bold text**.";
+    const { html } = await compileMarkdownForPdf(input);
+
+    expect(html).toContain("pdf-callout");
+    expect(html).toContain("pdf-callout-note");
+    expect(html).toContain("NOTE");
+    expect(html).toContain("<strong>bold text</strong>");
+  });
+});
+
+describe("Markdown View Math Pre/Post-processing", () => {
+  it("preserves inline and block math through preprocessing and postprocessing", () => {
+    const original = "Here is inline $\\sigma = 42$ and block:\n\n$$\n\\sum_{i=1}^n i = \\frac{n(n+1)}{2}\n$$\n\nDone.";
+    const preprocessed = preprocessMarkdownMath(original);
+    const postprocessed = postprocessMathMarkdown(preprocessed);
+
+    expect(postprocessed).toContain("$\\sigma = 42$");
+    expect(postprocessed).toContain("\\sum_{i=1}^n i = \\frac{n(n+1)}{2}");
+  });
+});
