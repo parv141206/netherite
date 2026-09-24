@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { compileMarkdownForPdf } from "../mdToPdfCompiler";
-import { preprocessMarkdownMath, postprocessMathMarkdown } from "~/components/editor/MathExtension";
+import { preprocessMarkdownMath, postprocessMathMarkdown, cleanLatexString } from "~/components/editor/MathExtension";
 
 describe("PDF Export Compiler Fixes", () => {
   it("strips raw <mark> tags from headings and TOC", async () => {
@@ -56,4 +56,49 @@ describe("Markdown View Math Pre/Post-processing", () => {
     expect(postprocessed).toContain("$\\sigma = 42$");
     expect(postprocessed).toContain("\\sum_{i=1}^n i = \\frac{n(n+1)}{2}");
   });
+
+  it("safely escapes pipe characters in math attributes to protect markdown tables", () => {
+    const tableWithPipes = "| Event | Probability |\n| --- | --- |\n| Conditional | $P(A|B) = \\frac{P(B|A)P(A)}{P(B)}$ |";
+    const preprocessed = preprocessMarkdownMath(tableWithPipes);
+    // Attribute should contain &#124; instead of raw pipe so table cell doesn't split
+    expect(preprocessed).toContain("&#124;");
+    expect(preprocessed).not.toContain("data-latex=\"P(A|B)");
+
+    const postprocessed = postprocessMathMarkdown(preprocessed);
+    expect(postprocessed).toContain("$P(A|B) = \\frac{P(B|A)P(A)}{P(B)}$");
+  });
+
+  it("rejects corrupted HTML tags and fragments from being parsed as math", () => {
+    // These caused the < spandata - type = bug
+    expect(cleanLatexString('<span data-type="math-inline"')).toBe("");
+    expect(cleanLatexString('data-type="math-inline"')).toBe("");
+    expect(cleanLatexString('< spandata - type =')).toBe("");
+    expect(cleanLatexString('<div data-type="math-block"')).toBe("");
+    expect(cleanLatexString('<span')).toBe("");
+
+    // Valid LaTeX math remains intact
+    expect(cleanLatexString("x < 5")).toBe("x < 5");
+    expect(cleanLatexString("a > b")).toBe("a > b");
+    expect(cleanLatexString("\\frac{a}{b}")).toBe("\\frac{a}{b}");
+  });
+
+  it("never converts naked equations without delimiters into math blocks", () => {
+    const regularText = "The loss event reaction is:\nTCP Tahoe = cwnd reset to 1 MSS\nTCP Reno = cwnd reset to cwnd / 2\n";
+    const preprocessed = preprocessMarkdownMath(regularText);
+    expect(preprocessed).not.toContain("data-type=\"math-block\"");
+    expect(preprocessed).toContain("TCP Tahoe = cwnd reset to 1 MSS");
+  });
+
+  it("isolates starting frontmatter without corrupting yaml code blocks", () => {
+    const noteWithFrontmatter = "---\ntitle: My Document\nauthor: Parv\n---\n\n# Body content\n\n```yaml\napiVersion: v1\nkind: Pod\n```";
+    const preprocessed = preprocessMarkdownMath(noteWithFrontmatter);
+    expect(preprocessed).toContain("```yaml frontmatter");
+    expect(preprocessed).toContain("```yaml\napiVersion: v1");
+
+    const postprocessed = postprocessMathMarkdown(preprocessed);
+    expect(postprocessed).toContain("---\ntitle: My Document\nauthor: Parv\n---");
+    // Normal YAML code block in body must stay a code block, never mutated into frontmatter
+    expect(postprocessed).toContain("```yaml\napiVersion: v1\nkind: Pod\n```");
+  });
 });
+

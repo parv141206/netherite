@@ -256,6 +256,9 @@ export function Editor({
       : "font-sans"
   }`;
 
+  const isProgrammaticUpdateRef = useRef(true);
+  const isEditorReadyRef = useRef(false);
+  const hasUserEditedRef = useRef(false);
   const isInternalUpdateRef = useRef(false);
   const lastLoadedContentRef = useRef<string>(initialContent);
   const [viewMode, setViewMode] = useState<"display" | "raw">("display");
@@ -445,11 +448,16 @@ export function Editor({
       },
     },
     onUpdate({ editor, transaction }) {
+      if (!isEditorReadyRef.current || isProgrammaticUpdateRef.current) return;
       if (!transaction.docChanged) return;
+      if (transaction.getMeta("programmatic")) return;
 
       const rawMarkdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getText();
       const formattedMarkdown = postprocessMathMarkdown(rawMarkdown);
 
+      if (formattedMarkdown === lastLoadedContentRef.current) return;
+
+      hasUserEditedRef.current = true;
       isInternalUpdateRef.current = true;
       lastLoadedContentRef.current = formattedMarkdown;
       setRawContent(formattedMarkdown);
@@ -480,11 +488,19 @@ export function Editor({
       }
     },
     onCreate({ editor }) {
+      isProgrammaticUpdateRef.current = true;
       transformMathInEditor(editor);
-      const rawMarkdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getText();
-      const formattedMarkdown = postprocessMathMarkdown(rawMarkdown);
-      lastLoadedContentRef.current = formattedMarkdown;
-      setRawContent(formattedMarkdown);
+      lastLoadedContentRef.current = initialContent ?? "";
+      setRawContent(initialContent ?? "");
+      isProgrammaticUpdateRef.current = false;
+      isEditorReadyRef.current = true;
+
+      // Report initial document stats cleanly without triggering onChange
+      if (onStatsChange) {
+        const words = editor.storage.characterCount?.words() || 0;
+        const chars = editor.storage.characterCount?.characters() || 0;
+        onStatsChange({ words, chars });
+      }
     },
     immediatelyRender: false,
   });
@@ -510,11 +526,14 @@ export function Editor({
     }
 
     // External content change (e.g. note fetched from Drive / switched tab)
+    isProgrammaticUpdateRef.current = true;
     lastLoadedContentRef.current = initialContent;
     setRawContent(initialContent);
+    hasUserEditedRef.current = false;
     const processed = preprocessMarkdownMath(initialContent);
     editor.commands.setContent(processed, { emitUpdate: false });
     transformMathInEditor(editor);
+    isProgrammaticUpdateRef.current = false;
   }, [editor, initialContent]);
 
   // Expose editor instance via onEditorReady
@@ -803,21 +822,27 @@ export function Editor({
   const handleToggleView = (mode: "display" | "raw") => {
     if (mode === viewMode) return;
     if (mode === "raw") {
-      const currentMd = (editor?.storage as any)?.markdown?.getMarkdown?.() || editor?.getText() || "";
-      const formatted = postprocessMathMarkdown(currentMd);
-      setRawContent(formatted);
+      // Only re-serialize from TipTap if the user actually edited in display mode
+      if (hasUserEditedRef.current && editor) {
+        const currentMd = (editor.storage as any)?.markdown?.getMarkdown?.() || editor.getText() || "";
+        const formatted = postprocessMathMarkdown(currentMd);
+        setRawContent(formatted);
+        lastLoadedContentRef.current = formatted;
+      }
       setViewMode("raw");
     } else {
+      isProgrammaticUpdateRef.current = true;
       const processed = preprocessMarkdownMath(rawContent);
-      isInternalUpdateRef.current = true;
-      lastLoadedContentRef.current = rawContent;
       editor?.commands.setContent(processed, { emitUpdate: false });
       transformMathInEditor(editor);
+      isProgrammaticUpdateRef.current = false;
       setViewMode("display");
     }
   };
 
   const handleRawContentChange = (newVal: string) => {
+    if (newVal === lastLoadedContentRef.current) return;
+    hasUserEditedRef.current = true;
     setRawContent(newVal);
     lastLoadedContentRef.current = newVal;
     if (onChange) {

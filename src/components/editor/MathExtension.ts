@@ -2,8 +2,17 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import katex from "katex";
 
 export function cleanLatexString(str: string): string {
-  if (!str) return "";
+  if (!str || typeof str !== "string") return "";
   let s = str;
+
+  // 0. Immediate rejection of HTML tag strings or fragments
+  if (
+    /<\/?(?:span|div|p|mark|script|style|table|tr|td|th)\b/i.test(s) ||
+    /data-(?:type|latex)\s*=/i.test(s) ||
+    /spandata\s*-\s*type/i.test(s)
+  ) {
+    return "";
+  }
 
   // 1. Decode HTML entities
   s = s
@@ -11,7 +20,16 @@ export function cleanLatexString(str: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#124;/g, "|")
     .replace(/&amp;/g, "&");
+
+  // Secondary check after entity decoding
+  if (
+    /<\/?(?:span|div|p|mark|script|style|table|tr|td|th)\b/i.test(s) ||
+    /data-(?:type|latex)\s*=/i.test(s)
+  ) {
+    return "";
+  }
 
   // 2. Specific known corrupted/legacy math tokens
   s = s.replace(/%([Ss])%[Ee]2/g, "$1^2");
@@ -52,7 +70,13 @@ export function cleanLatexString(str: string): string {
   // 5. Strip trailing unescaped backslashes (e.g. "\sigma\" -> "\sigma", "s_f\" -> "s_f")
   s = s.replace(/\\+$/, "");
 
-  return s.trim();
+  const trimmed = s.trim();
+  // Final safety check: if it looks like an HTML tag artifact like "<span..."
+  if (trimmed.startsWith("<") && /<\s*[a-zA-Z]/.test(trimmed)) {
+    return "";
+  }
+
+  return trimmed;
 }
 
 export function insertMathTextIntoEditor(editor: any, text: string) {
@@ -110,8 +134,10 @@ export function escapeHtmlAttr(str: string): string {
   return str
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/\|/g, "&#124;");
 }
 
 /**
@@ -159,9 +185,9 @@ export function preprocessMarkdownMath(content: string): string {
     return placeholder;
   });
 
-  // 2. Frontmatter protection: convert starting YAML frontmatter to a ```yaml code block so it doesn't become a giant Setext <h2> heading
+  // 2. Frontmatter protection: convert starting YAML frontmatter strictly to a ```yaml frontmatter code block
   s = s.replace(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/, (_, yaml) => {
-    return `\`\`\`yaml\n${yaml.trim()}\n\`\`\`\n\n`;
+    return `\`\`\`yaml frontmatter\n${yaml.trim()}\n\`\`\`\n\n`;
   });
 
   // 3. Heal existing/legacy or corrupted HTML math tags (closed, unclosed, or HTML-escaped)
@@ -208,17 +234,7 @@ export function preprocessMarkdownMath(content: string): string {
     return clean ? `\n\n<div data-type="math-block" data-latex="${escapeHtmlAttr(clean)}"></div>\n\n` : "";
   });
 
-  // 8. Standalone naked LaTeX formulas (only when not already in data-latex tags)
-  s = s.replace(/(?:^|\n)[ \t]*(\\+(?:text|frac|sum|prod|int)\b[^\n<]+)(?=\n|$)/g, (match, eq) => {
-    if (eq.includes("data-type") || eq.includes("data-latex")) return match;
-    const clean = cleanLatexString(eq);
-    return clean ? `\n\n<div data-type="math-block" data-latex="${escapeHtmlAttr(clean)}"></div>\n\n` : match;
-  });
-  s = s.replace(/(?:^|\n)[ \t]*([a-zA-Z_0-9\^\{\}\[\]\s]+\s*=\s*\\+(?:frac|sum|prod|int|text)\b[^\n<]+)(?=\n|$)/g, (match, eq) => {
-    if (eq.includes("data-type") || eq.includes("data-latex")) return match;
-    const clean = cleanLatexString(eq);
-    return clean ? `\n\n<div data-type="math-block" data-latex="${escapeHtmlAttr(clean)}"></div>\n\n` : match;
-  });
+  // 8. (Naked equation regex removed to prevent guessing plain text/HTML as math formulas)
 
   // 9. Inline math: \\( ... \\) or \( ... \)
   s = s.replace(/\\+\(([\s\S]+?)\\+\)/g, (_, latex) => {
@@ -334,6 +350,9 @@ export function transformMathInEditor(editor: any) {
         tr.replaceWith(from, to, node);
       }
     });
+    // Mark as programmatic and do not add to user undo history
+    tr.setMeta("programmatic", true);
+    tr.setMeta("addToHistory", false);
     view.dispatch(tr);
   }
 }
@@ -384,19 +403,25 @@ export function postprocessMathMarkdown(text: string): string {
   if (!text) return "";
   let result = text;
 
-  // Restore YAML frontmatter from protected code block to standard markdown frontmatter
-  result = result.replace(/^```yaml[ \t]*\r?\n([\s\S]*?)\r?\n```[ \t]*(?:\r?\n|$)/, (_, yaml) => {
+  // Restore YAML frontmatter strictly from yaml frontmatter code block at start of document
+  result = result.replace(/^```yaml[ \t]+frontmatter[ \t]*\r?\n([\s\S]*?)\r?\n```[ \t]*(?:\r?\n|$)/, (_, yaml) => {
     return `---\n${yaml.trim()}\n---\n\n`;
   });
 
   // Replace any leftover HTML math tags with standard LaTeX markdown syntax
   result = result.replace(/(?:<div|&lt;div)[^>]*?data-latex=(?:"([^"]+)"|&quot;([^&]+)&quot;|'([^']+)')(?:[^>]*?>|.*?&gt;)(?:<\/div>|&lt;\/div&gt;)?/gi, (_, l1, l2, l3) => {
-    return `\n\n$$\n${cleanLatexString(l1 || l2 || l3 || "")}\n$$\n\n`;
+    const clean = cleanLatexString(l1 || l2 || l3 || "");
+    return clean ? `\n\n$$\n${clean}\n$$\n\n` : "";
   });
 
   result = result.replace(/(?:<span|&lt;span)[^>]*?data-latex=(?:"([^"]+)"|&quot;([^&]+)&quot;|'([^']+)')(?:[^>]*?>|.*?&gt;)(?:<\/span>|&lt;\/span&gt;)?/gi, (_, l1, l2, l3) => {
-    return `$${cleanLatexString(l1 || l2 || l3 || "")}$`;
+    const clean = cleanLatexString(l1 || l2 || l3 || "");
+    return clean ? `$${clean}$` : "";
   });
+
+  // Clean up any remaining broken/empty math tags
+  result = result.replace(/<(?:span|div)[^>]*data-type="math-(?:inline|block)"[^>]*>.*?<\/(?:span|div)>/gi, "");
+  result = result.replace(/<(?:span|div)[^>]*data-type="math-(?:inline|block)"[^>]*>/gi, "");
 
   return result;
 }
@@ -414,10 +439,20 @@ export const MathInline = Node.create({
         default: "",
         parseHTML: (element: HTMLElement) => {
           const enc = element.getAttribute("data-latex");
-          if (enc) return cleanLatexString(enc);
+          if (enc) {
+            const clean = cleanLatexString(enc);
+            if (clean) return clean;
+          }
           const annotation = element.querySelector('annotation[encoding="application/x-tex"]');
-          if (annotation) return cleanLatexString(annotation.textContent || "");
-          return cleanLatexString(element.textContent || "");
+          if (annotation?.textContent) {
+            const clean = cleanLatexString(annotation.textContent);
+            if (clean) return clean;
+          }
+          const text = element.textContent || "";
+          if (text.includes("data-type") || text.includes("<span") || text.includes("<div")) {
+            return "";
+          }
+          return cleanLatexString(text);
         },
         renderHTML: (attributes) => ({
           "data-latex": attributes.latex || "",
@@ -470,8 +505,13 @@ export const MathInline = Node.create({
       const rawLatex = cleanLatexString(node.attrs.latex || "");
 
       const render = () => {
+        if (!rawLatex) {
+          dom.style.display = "none";
+          return;
+        }
+        dom.style.display = "";
         try {
-          katex.render(rawLatex || "\\text{math}", dom, {
+          katex.render(rawLatex, dom, {
             displayMode: false,
             throwOnError: false,
           });
@@ -519,10 +559,20 @@ export const MathBlock = Node.create({
         default: "",
         parseHTML: (element: HTMLElement) => {
           const enc = element.getAttribute("data-latex");
-          if (enc) return cleanLatexString(enc);
+          if (enc) {
+            const clean = cleanLatexString(enc);
+            if (clean) return clean;
+          }
           const annotation = element.querySelector('annotation[encoding="application/x-tex"]');
-          if (annotation) return cleanLatexString(annotation.textContent || "");
-          return cleanLatexString(element.textContent || "");
+          if (annotation?.textContent) {
+            const clean = cleanLatexString(annotation.textContent);
+            if (clean) return clean;
+          }
+          const text = element.textContent || "";
+          if (text.includes("data-type") || text.includes("<span") || text.includes("<div")) {
+            return "";
+          }
+          return cleanLatexString(text);
         },
         renderHTML: (attributes) => ({
           "data-latex": attributes.latex || "",
@@ -574,8 +624,13 @@ export const MathBlock = Node.create({
       const rawLatex = cleanLatexString(node.attrs.latex || "");
 
       const render = () => {
+        if (!rawLatex) {
+          dom.style.display = "none";
+          return;
+        }
+        dom.style.display = "";
         try {
-          katex.render(rawLatex || "\\text{Display Equation}", dom, {
+          katex.render(rawLatex, dom, {
             displayMode: true,
             throwOnError: false,
           });

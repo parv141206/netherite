@@ -481,7 +481,7 @@ export function CodeBlockView({
       <NodeViewWrapper className="relative group/code my-4 rounded-xl border border-border/70 bg-muted/20 dark:bg-muted/10 overflow-hidden shadow-xs">
         <div className="flex items-center justify-between px-3 py-1.5 bg-muted/60 dark:bg-muted/40 border-b border-border/50 text-xs font-mono text-muted-foreground select-none">
           <span className="font-semibold uppercase tracking-wider text-[10px] text-foreground/80">
-            {language || "code"}
+            {language.startsWith("yaml frontmatter") ? "frontmatter" : language || "code"}
           </span>
           <button
             onClick={handleCopy}
