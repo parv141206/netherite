@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import { useEffect, useState, useRef } from "react";
 import { buildExtensions } from "./extensions";
+import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model";
 import {
   preprocessMarkdownMath,
   postprocessMathMarkdown,
@@ -397,6 +398,18 @@ export function Editor({
             if (markdownParser && typeof markdownParser.parse === "function") {
               const parsedDoc = markdownParser.parse(processedText);
               if (parsedDoc) {
+                // Parse HTML into a ProseMirror Fragment/Slice directly so TipTap/ProseMirror preserves
+                // all code blocks, indentation, multi-line blocks with empty lines (e.g. after imports),
+                // without tiptap-markdown double-parsing the HTML with markdown-it on insertContentAt
+                if (typeof window !== "undefined" && typeof window.DOMParser !== "undefined") {
+                  const domBody = new window.DOMParser().parseFromString(`<body>${parsedDoc}</body>`, "text/html").body;
+                  const pmSlice = ProseMirrorDOMParser.fromSchema(editor.schema).parseSlice(domBody, { preserveWhitespace: true });
+                  if (pmSlice && pmSlice.content && pmSlice.content.size > 0) {
+                    editor.commands.insertContent(pmSlice.content);
+                    transformMathInEditor(editor);
+                    return true;
+                  }
+                }
                 editor.commands.insertContent(parsedDoc);
                 transformMathInEditor(editor);
                 return true;

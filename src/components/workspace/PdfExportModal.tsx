@@ -217,6 +217,7 @@ export function PdfExportModal({
     showDate,
     showPageNumbers,
     customSubtitle,
+    includeCoverPage,
   };
 
   const dynamicStylesheet = buildPdfStylesheet(engineConfig);
@@ -331,7 +332,7 @@ export function PdfExportModal({
               {isExporting ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>{exportProgress || "Generating PDF…"}</span>
+                  <span className="max-w-[200px] truncate">{exportProgress || "Generating PDF…"}</span>
                 </>
               ) : (
                 <>
@@ -341,15 +342,15 @@ export function PdfExportModal({
               )}
             </button>
 
-            {/* Secondary Native Print */}
+            {/* High-DPI Native Print / Vector PDF */}
             <button
               onClick={handleNativePrint}
               disabled={isCompiling || isExporting}
-              title="Send directly to physical printer spooler"
+              title="Instant vector PDF via Chrome Print (Save as PDF) with searchable text and 0% lag"
               className="hidden sm:flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-accent cursor-pointer"
             >
               <Printer className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Native Print</span>
+              <span>Save as PDF (Vector)</span>
             </button>
 
             <button
@@ -663,7 +664,15 @@ export function PdfExportModal({
             </div>
 
             {/* Scrollable Canvas for Sheets */}
-            <div className="flex-1 overflow-auto p-6 flex justify-center custom-scrollbar">
+            <div className="relative flex-1 overflow-auto p-6 flex justify-center custom-scrollbar">
+              {/* Floating Export Progress Pill */}
+              {isExporting && (
+                <div className="fixed top-18 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-primary/30 bg-background/95 px-5 py-2.5 text-xs font-semibold text-foreground shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                  <span>{exportProgress || "Synthesizing document…"}</span>
+                </div>
+              )}
+
               {isCompiling ? (
                 <div className="flex flex-col items-center justify-center gap-3 my-auto">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />

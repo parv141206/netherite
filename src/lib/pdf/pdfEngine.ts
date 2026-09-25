@@ -1,7 +1,6 @@
 "use client";
 
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 
 export interface PdfEngineConfig {
   fileName: string;
@@ -16,6 +15,7 @@ export interface PdfEngineConfig {
   showDate?: boolean;
   showPageNumbers?: boolean;
   customSubtitle?: string;
+  includeCoverPage?: boolean;
   onProgress?: (status: string) => void;
 }
 
@@ -188,9 +188,11 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       margin-top: 0;
       margin-bottom: 0.65em;
       color: ${fgColor};
-      text-align: ${themePreset === "academic" ? "justify" : "left"};
-      hyphens: auto;
-      line-height: 1.5;
+      text-align: left !important;
+      hyphens: none;
+      line-height: 1.55;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
 
     /* Mathematical Formulas (KaTeX) */
@@ -411,17 +413,30 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       border: 1px solid ${borderColor};
     }
 
+    .pdf-table thead {
+      display: table-header-group !important;
+    }
+
+    .pdf-table tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
     .pdf-table th {
       background-color: ${isDark ? "#202026" : isMono ? "#e5e5e5" : "#f1f5f9"};
       color: ${fgColor};
       font-weight: 600;
       padding: 7px 11px;
       border: 1px solid ${borderColor};
+      text-align: left !important;
     }
 
     .pdf-table td {
       padding: 7px 11px;
       border: 1px solid ${borderColor};
+      text-align: left !important;
+      vertical-align: top;
+      word-break: normal;
     }
 
     .pdf-row-zebra td {
@@ -463,6 +478,7 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       font-size: 0.92em;
       color: ${fgColor};
       line-height: 1.5;
+      text-align: left !important;
     }
 
     /* Blockquotes */
@@ -663,8 +679,180 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
 }
 
 /**
- * Executes direct in-house client-side PDF document generation using jsPDF and html2canvas.
- * Downloads the resulting `.pdf` file directly to the user's computer.
+ * Calculates page breaks by inspecting DOM element boundaries in the document clone,
+ * ensuring table rows, headings, code boxes, callouts, and math displays are never bisected.
+ */
+export function calculateSmartPageBreaks(
+  contentEl: HTMLElement,
+  maxPageHeightPx: number
+): number[] {
+  const totalHeightPx = Math.max(contentEl.scrollHeight, contentEl.offsetHeight);
+  if (totalHeightPx <= maxPageHeightPx) {
+    return [0, totalHeightPx];
+  }
+
+  const containerRect = contentEl.getBoundingClientRect();
+
+  // Candidate selectors that should avoid being split or serve as break boundaries
+  const candidateSelectors = [
+    ".pdf-cover-page",
+    ".pdf-toc-card",
+    ".pdf-page-break",
+    ".pdf-heading",
+    "tr",
+    ".pdf-code-container",
+    ".pdf-code-line",
+    ".pdf-callout",
+    ".pdf-blockquote",
+    ".pdf-math-display",
+    ".pdf-diagram-wrapper",
+    ".pdf-image-container",
+    ".pdf-paragraph",
+    "li",
+  ];
+
+  const elements = Array.from(
+    contentEl.querySelectorAll<HTMLElement>(candidateSelectors.join(", "))
+  );
+
+  interface Box {
+    el: HTMLElement;
+    top: number;
+    bottom: number;
+    height: number;
+    isCover: boolean;
+    isToc: boolean;
+    isPageBreak: boolean;
+    isRow: boolean;
+    isHeading: boolean;
+    isBlock: boolean;
+    isCodeLine: boolean;
+  }
+
+  const boxes: Box[] = elements.map((el) => {
+    const rect = el.getBoundingClientRect();
+    const top = Math.round(rect.top - containerRect.top);
+    const height = Math.round(rect.height);
+    return {
+      el,
+      top,
+      bottom: top + height,
+      height,
+      isCover: el.classList.contains("pdf-cover-page"),
+      isToc: el.classList.contains("pdf-toc-card"),
+      isPageBreak: el.classList.contains("pdf-page-break"),
+      isRow: el.tagName.toLowerCase() === "tr",
+      isHeading: el.classList.contains("pdf-heading") || /^H[1-6]$/.test(el.tagName),
+      isBlock:
+        el.classList.contains("pdf-callout") ||
+        el.classList.contains("pdf-diagram-wrapper") ||
+        el.classList.contains("pdf-image-container") ||
+        el.classList.contains("pdf-math-display") ||
+        el.classList.contains("pdf-code-container"),
+      isCodeLine: el.classList.contains("pdf-code-line"),
+    };
+  });
+
+  const breaks: number[] = [0];
+  let currentY = 0;
+
+  while (currentY < totalHeightPx) {
+    const maxTargetY = currentY + maxPageHeightPx;
+    if (maxTargetY >= totalHeightPx) {
+      breaks.push(totalHeightPx);
+      break;
+    }
+
+    // 1. Explicit forced page breaks (cover page, toc card, explicit page break)
+    const explicit = boxes.find(
+      (b) =>
+        (b.isCover || b.isToc || b.isPageBreak) &&
+        b.bottom > currentY + 60 &&
+        b.bottom <= maxTargetY
+    );
+    if (explicit) {
+      currentY = explicit.bottom;
+      breaks.push(currentY);
+      continue;
+    }
+
+    // 2. Find natural break point <= maxTargetY
+    let bestCutY = maxTargetY;
+    let snapped = false;
+
+    // A. Check for table rows crossing maxTargetY
+    const crossingRow = boxes.find(
+      (b) => b.isRow && b.top < maxTargetY && b.bottom > maxTargetY
+    );
+    if (crossingRow && crossingRow.top > currentY + 80) {
+      bestCutY = crossingRow.top;
+      snapped = true;
+    }
+
+    // B. Check for headings crossing or orphan headings within 85px of page bottom
+    if (!snapped) {
+      const orphanHeading = boxes.find(
+        (b) =>
+          b.isHeading &&
+          b.top > currentY + 80 &&
+          b.top < maxTargetY &&
+          maxTargetY - b.top < 85
+      );
+      if (orphanHeading) {
+        bestCutY = orphanHeading.top;
+        snapped = true;
+      }
+    }
+
+    // C. Check for blocks (callouts, diagrams, images, math, code blocks)
+    if (!snapped) {
+      const crossingBlock = boxes.find(
+        (b) => b.isBlock && b.top < maxTargetY && b.bottom > maxTargetY
+      );
+      if (crossingBlock) {
+        if (crossingBlock.height <= maxPageHeightPx && crossingBlock.top > currentY + 80) {
+          bestCutY = crossingBlock.top;
+          snapped = true;
+        } else if (crossingBlock.el.classList.contains("pdf-code-container")) {
+          // For long code containers, find the code line crossing maxTargetY
+          const crossingLine = boxes.find(
+            (b) => b.isCodeLine && b.top < maxTargetY && b.bottom > maxTargetY
+          );
+          if (crossingLine && crossingLine.top > currentY + 80) {
+            bestCutY = crossingLine.top;
+            snapped = true;
+          }
+        }
+      }
+    }
+
+    // D. Check for list items
+    if (!snapped) {
+      const crossingLi = boxes.find(
+        (b) => b.el.tagName.toLowerCase() === "li" && b.top < maxTargetY && b.bottom > maxTargetY
+      );
+      if (crossingLi && crossingLi.top > currentY + 60) {
+        bestCutY = crossingLi.top;
+        snapped = true;
+      }
+    }
+
+    // Ensure progress: never cut less than 120px from currentY
+    if (bestCutY <= currentY + 120) {
+      bestCutY = maxTargetY;
+    }
+
+    currentY = bestCutY;
+    breaks.push(currentY);
+  }
+
+  return breaks;
+}
+
+/**
+ * Executes high-performance client-side PDF document generation using jsPDF and html2canvas.
+ * Uses element-aware page break snapping, dedicated header/footer margin reservation,
+ * and responsive event-loop yielding to maintain 60 FPS without freezing the browser.
  */
 export async function generatePdfFile(
   containerEl: HTMLElement,
@@ -678,20 +866,22 @@ export async function generatePdfFile(
     onProgress,
   } = config;
 
-  onProgress?.("Rendering math, diagrams, and high-resolution typography…");
+  onProgress?.("Preparing publication-grade document layout…");
+  await new Promise((r) => setTimeout(r, 16));
 
   // Page dimensions in mm
   const pageSpec = PAGE_SPECS[pageSize][orientation];
   const marginMm = MARGIN_SPECS[margin];
 
-  // Target sheet width in pixels (1 mm ~= 3.7795 px at 96 DPI)
-  const targetWidth =
-    containerEl.offsetWidth > 100
-      ? containerEl.offsetWidth
-      : Math.round(pageSpec.widthMm * 3.7795);
+  // Printable content dimensions in mm
+  const contentWidthMm = Math.max(20, pageSpec.widthMm - marginMm.leftMm - marginMm.rightMm);
+  const contentHeightMm = Math.max(20, pageSpec.heightMm - marginMm.topMm - marginMm.bottomMm);
 
-  const singlePageHeightPx = Math.round(
-    (targetWidth * pageSpec.heightMm) / pageSpec.widthMm
+  // Target content width in pixels at standard 96 DPI: 1mm ~= 3.7795px
+  // We use contentWidthMm * 4.0 for crisp high-DPI font rasterization
+  const targetContentWidthPx = Math.round(contentWidthMm * 4.0);
+  const maxPageHeightPx = Math.round(
+    (targetContentWidthPx * contentHeightMm) / contentWidthMm
   );
 
   // Initialize jsPDF document
@@ -702,81 +892,87 @@ export async function generatePdfFile(
     compress: true,
   });
 
-  // Create an off-screen clone with exact width, transform: none, and inject the full stylesheet
-  const clone = containerEl.cloneNode(true) as HTMLElement;
-  const styleEl = document.createElement("style");
-  styleEl.id = "pdf-engine-stylesheet";
-  styleEl.textContent = buildPdfStylesheet(config);
-  clone.prepend(styleEl);
+  // Extract the inner compiled document or containerEl
+  const compiledContentEl =
+    containerEl.querySelector<HTMLElement>(".pdf-compiled-document") ||
+    containerEl.querySelector<HTMLElement>("[dangerouslySetInnerHTML]") ||
+    containerEl;
 
-  clone.classList.remove(
-    "shadow-2xl",
-    "shadow-xl",
-    "shadow-lg",
-    "ring-1",
-    "ring-white/10",
-    "ring-black/10",
-    "transition-all"
-  );
-  clone.style.boxShadow = "none";
-  clone.style.outline = "none";
-  clone.style.transform = "none";
+  // Create an off-screen clone with exact printable content width, transform: none
+  const clone = document.createElement("div");
+  clone.className = "pdf-root-container";
+  clone.style.width = `${targetContentWidthPx}px`;
+  clone.style.minWidth = `${targetContentWidthPx}px`;
+  clone.style.maxWidth = `${targetContentWidthPx}px`;
+  clone.style.padding = "0";
   clone.style.margin = "0";
   clone.style.position = "fixed";
-  clone.style.left = "0";
+  clone.style.left = "-9999px";
   clone.style.top = "0";
   clone.style.zIndex = "-999";
   clone.style.pointerEvents = "none";
-  clone.style.width = `${targetWidth}px`;
+  clone.style.backgroundColor = config.colorMode === "dark" ? "#121215" : "#ffffff";
+  clone.style.color = config.colorMode === "dark" ? "#f4f4f6" : "#1a1a1d";
+
+  const styleEl = document.createElement("style");
+  styleEl.id = "pdf-engine-stylesheet";
+  styleEl.textContent = buildPdfStylesheet(config);
+  clone.appendChild(styleEl);
+
+  const contentClone = compiledContentEl.cloneNode(true) as HTMLElement;
+  // Ensure any preview-only header or footer elements are stripped from clone
+  contentClone.querySelectorAll(".pdf-page-header, .pdf-page-footer").forEach((el) => el.remove());
+  contentClone.style.padding = "0";
+  contentClone.style.margin = "0";
+  contentClone.style.width = "100%";
+  clone.appendChild(contentClone);
+
   document.body.appendChild(clone);
 
   try {
-    // Allow browser layout engine to paint clone and compute fonts
-    await new Promise((r) => setTimeout(r, 80));
+    // Allow browser layout engine to paint clone, compute fonts, KaTeX formulas and diagrams
+    await new Promise((r) => setTimeout(r, 100));
 
-    const totalHeightPx = Math.max(
-      singlePageHeightPx,
-      clone.scrollHeight || clone.offsetHeight || containerEl.scrollHeight
-    );
-    const totalPages = Math.max(1, Math.ceil(totalHeightPx / singlePageHeightPx));
+    onProgress?.("Calculating smart element-aware page boundaries…");
+    await new Promise((r) => setTimeout(r, 16));
 
-    // Safe chunking to prevent browser canvas height limit crash (Chrome canvas limit is 32,767px)
-    // We keep each chunk height under 6,500px (~13,000px at 2x Retina scale)
-    const pagesPerChunk = Math.max(1, Math.floor(6500 / singlePageHeightPx));
+    const pageBreaks = calculateSmartPageBreaks(contentClone, maxPageHeightPx);
+    const totalPages = Math.max(1, pageBreaks.length - 1);
+
+    // Group pages into chunks (~4-5 pages per chunk) to prevent canvas height overflow and memory spikes
+    const pagesPerChunk = Math.max(1, Math.floor(5500 / maxPageHeightPx));
     const totalChunks = Math.ceil(totalPages / pagesPerChunk);
 
     let globalPageIdx = 0;
+    const cleanTitle = fileName.replace(/\.[^/.]+$/, "") || "Document";
+    const html2canvas = (await import("html2canvas")).default;
 
     for (let c = 0; c < totalChunks; c++) {
       const startPage = c * pagesPerChunk;
       const endPage = Math.min(totalPages, (c + 1) * pagesPerChunk);
-      const chunkPages = endPage - startPage;
-      const chunkStartY = startPage * singlePageHeightPx;
-      const chunkHeight = Math.min(
-        chunkPages * singlePageHeightPx,
-        totalHeightPx - chunkStartY
-      );
+      const chunkStartY = pageBreaks[startPage]!;
+      const chunkEndY = pageBreaks[endPage]!;
+      const chunkHeight = Math.max(10, chunkEndY - chunkStartY);
 
-      if (totalChunks > 1) {
-        onProgress?.(
-          `Synthesizing pages ${startPage + 1}–${endPage} of ${totalPages}…`
-        );
-      } else {
-        onProgress?.("Synthesizing document canvas…");
-      }
+      const percent = Math.round((startPage / totalPages) * 100);
+      onProgress?.(
+        `Synthesizing pages ${startPage + 1}–${endPage} of ${totalPages} (${percent}%)…`
+      );
+      // Yield to browser event loop to keep UI at 60 FPS
+      await new Promise((r) => setTimeout(r, 16));
 
       const chunkCanvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: config.colorMode === "dark" ? "#121215" : "#ffffff",
-        windowWidth: targetWidth,
-        width: targetWidth,
+        windowWidth: targetContentWidthPx,
+        width: targetContentWidthPx,
         x: 0,
         y: chunkStartY,
         height: chunkHeight,
-        onclone: (clonedDoc: Document, clonedEl: HTMLElement) => {
-          // 1. Strip all parent web-app stylesheets from clonedDoc (which contain Tailwind v4 oklab rules)
+        onclone: (clonedDoc: Document) => {
+          // Fast strip of external app stylesheets containing unsupported CSS
           const allStyles = Array.from(
             clonedDoc.querySelectorAll("style, link[rel='stylesheet']")
           );
@@ -791,70 +987,25 @@ export async function generatePdfFile(
               el.remove();
             }
           });
-
-          // 2. Remove any ring / shadow classes from the cloned root element
-          clonedEl.classList.remove(
-            "shadow-2xl",
-            "shadow-xl",
-            "shadow-lg",
-            "ring-1",
-            "ring-white/10",
-            "ring-black/10",
-            "transition-all"
-          );
-          clonedEl.style.boxShadow = "none";
-          clonedEl.style.outline = "none";
-
-          // 3. Fallback color converter: convert any element style with oklab/oklch/color-mix to safe rgb
-          try {
-            const canvas = clonedDoc.createElement("canvas");
-            canvas.width = 1;
-            canvas.height = 1;
-            const ctx = canvas.getContext("2d");
-            if (ctx) {
-              const allEls = clonedDoc.querySelectorAll<HTMLElement>("*");
-              allEls.forEach((node) => {
-                if (node.style) {
-                  ["color", "backgroundColor", "borderColor", "outlineColor"].forEach((prop) => {
-                    const val = (node.style as any)[prop];
-                    if (val && (val.includes("oklab") || val.includes("oklch") || val.includes("color-mix"))) {
-                      try {
-                        ctx.fillStyle = val;
-                        (node.style as any)[prop] = ctx.fillStyle;
-                      } catch {
-                        (node.style as any)[prop] = "transparent";
-                      }
-                    }
-                  });
-                  if (node.style.boxShadow && (node.style.boxShadow.includes("oklab") || node.style.boxShadow.includes("oklch"))) {
-                    node.style.boxShadow = "none";
-                  }
-                }
-              });
-            }
-          } catch {
-            // Silently continue
-          }
         },
       });
 
-      const chunkPageHeightPx =
-        (chunkCanvas.width * pageSpec.heightMm) / pageSpec.widthMm;
-
-      for (let p = 0; p < chunkPages; p++) {
+      // Render each page slice from this chunk canvas
+      for (let p = startPage; p < endPage; p++) {
         if (globalPageIdx > 0) {
           doc.addPage(pageSize, orientation);
         }
 
-        const pageSourceY = p * chunkPageHeightPx;
-        const pageSliceHeight = Math.min(
-          chunkPageHeightPx,
-          chunkCanvas.height - pageSourceY
-        );
+        const slicePageStartY = pageBreaks[p]!;
+        const slicePageEndY = pageBreaks[p + 1]!;
+        const sliceHeightPx = Math.max(1, slicePageEndY - slicePageStartY);
+
+        const canvasSliceStartY = (slicePageStartY - chunkStartY) * 2;
+        const canvasSliceHeight = sliceHeightPx * 2;
 
         const pageCanvas = document.createElement("canvas");
         pageCanvas.width = chunkCanvas.width;
-        pageCanvas.height = chunkPageHeightPx;
+        pageCanvas.height = Math.max(1, canvasSliceHeight);
         const ctx = pageCanvas.getContext("2d");
         if (ctx) {
           ctx.fillStyle = config.colorMode === "dark" ? "#121215" : "#ffffff";
@@ -862,60 +1013,74 @@ export async function generatePdfFile(
           ctx.drawImage(
             chunkCanvas,
             0,
-            pageSourceY,
+            canvasSliceStartY,
             chunkCanvas.width,
-            pageSliceHeight,
+            canvasSliceHeight,
             0,
             0,
-            chunkCanvas.width,
-            pageSliceHeight
+            pageCanvas.width,
+            pageCanvas.height
           );
         }
 
-        const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.95);
+        // Calculate rendered content height in mm on the PDF page
+        const renderedHeightMm =
+          (sliceHeightPx * contentWidthMm) / targetContentWidthPx;
+
+        // Draw content slice strictly inside printable margins
         doc.addImage(
-          pageImgData,
+          pageCanvas,
           "JPEG",
-          0,
-          0,
-          pageSpec.widthMm,
-          pageSpec.heightMm,
+          marginMm.leftMm,
+          marginMm.topMm,
+          contentWidthMm,
+          renderedHeightMm,
           undefined,
           "FAST"
         );
 
-        // Running Header (from page 2 onwards)
-        if (config.showHeaderTitle && globalPageIdx > 0) {
+        const isCoverPage = p === 0 && config.includeCoverPage;
+
+        // Running Header (only on non-cover pages, from page 2 onwards or when configured)
+        if (config.showHeaderTitle && !isCoverPage && globalPageIdx > 0 && marginMm.topMm >= 8) {
           doc.setFontSize(8);
-          doc.setTextColor(150, 150, 150);
-          doc.text(
-            config.fileName.replace(/\.[^/.]+$/, ""),
-            marginMm.leftMm,
-            marginMm.topMm > 10 ? marginMm.topMm - 4 : 8,
-            { align: "left" }
-          );
+          doc.setTextColor(140, 140, 140);
+          const headerY = marginMm.topMm - 4;
+          doc.text(cleanTitle, marginMm.leftMm, headerY, { align: "left" });
+          if (config.showDate) {
+            doc.text(
+              new Date().toLocaleDateString(),
+              pageSpec.widthMm - marginMm.rightMm,
+              headerY,
+              { align: "right" }
+            );
+          }
         }
 
-        // Running Footer
-        if (config.showPageNumbers) {
+        // Running Footer (on all non-cover pages when bottom margin allows)
+        if (config.showPageNumbers && !isCoverPage && marginMm.bottomMm >= 8) {
           doc.setFontSize(8);
-          doc.setTextColor(150, 150, 150);
+          doc.setTextColor(140, 140, 140);
+          const footerY = pageSpec.heightMm - marginMm.bottomMm + 5;
+          doc.text("Netherite Sovereign Studio", marginMm.leftMm, footerY, { align: "left" });
           doc.text(
             `Page ${globalPageIdx + 1} of ${totalPages}`,
             pageSpec.widthMm - marginMm.rightMm,
-            pageSpec.heightMm - (marginMm.bottomMm > 10 ? marginMm.bottomMm - 4 : 6),
+            footerY,
             { align: "right" }
           );
         }
 
+        // Yield to event loop to keep browser responsive at 60 FPS
+        await new Promise((r) => setTimeout(r, 12));
         globalPageIdx++;
       }
     }
 
     onProgress?.("Finalizing and saving PDF…");
+    await new Promise((r) => setTimeout(r, 16));
 
-    const cleanName = fileName.replace(/\.[^/.]+$/, "") || "Document";
-    doc.save(`${cleanName}.pdf`);
+    doc.save(`${cleanTitle}.pdf`);
     onProgress?.("Download complete!");
   } finally {
     if (clone.parentNode) {

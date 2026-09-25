@@ -325,7 +325,11 @@ export async function compileMarkdownForPdf(
       .split("\n")
       .map((l: string) => l.replace(/^[ \t]*>[ \t]?/, "").trim())
       .filter((l: string) => l.length > 0);
-    const cleanBody = formatInlineMarkdown(cleanBodyLines.join("<br/>"));
+    const bodyText = cleanBodyLines
+      .join("\n")
+      .replace(/( {2,}|\\)\n/g, "<br/>")
+      .replace(/\n/g, " ");
+    const cleanBody = formatInlineMarkdown(bodyText);
 
     return `\n\n<div class="pdf-callout pdf-callout-${alertType.toLowerCase()}">
       <div class="pdf-callout-header">
@@ -345,7 +349,11 @@ export async function compileMarkdownForPdf(
       .map((l) => l.replace(/^[ \t]*>[ \t]?/, "").trim())
       .filter((l) => l.length > 0);
     if (lines.length === 0) return "";
-    const innerHtml = formatInlineMarkdown(lines.join("<br/>"));
+    const quoteText = lines
+      .join("\n")
+      .replace(/( {2,}|\\)\n/g, "<br/>")
+      .replace(/\n/g, " ");
+    const innerHtml = formatInlineMarkdown(quoteText);
     return `\n\n<blockquote class="pdf-blockquote">${innerHtml}</blockquote>\n\n`;
   });
 
@@ -442,7 +450,10 @@ export async function compileMarkdownForPdf(
       ) {
         return trimmed;
       }
-      return `<p class="pdf-paragraph">${trimmed.replace(/\n/g, "<br/>")}</p>`;
+      const formatted = trimmed
+        .replace(/( {2,}|\\)\n/g, "<br/>")
+        .replace(/\n/g, " ");
+      return `<p class="pdf-paragraph">${formatted}</p>`;
     })
     .filter(Boolean)
     .join("\n\n");

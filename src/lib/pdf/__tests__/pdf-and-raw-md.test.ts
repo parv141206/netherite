@@ -102,3 +102,104 @@ describe("Markdown View Math Pre/Post-processing", () => {
   });
 });
 
+describe("PDF Engine Typography & Pagination Invariants", () => {
+  it("enforces text-align: left on paragraphs in academic preset to avoid word gaps", async () => {
+    const { buildPdfStylesheet } = await import("../pdfEngine");
+    const stylesheet = buildPdfStylesheet({
+      fileName: "Test.pdf",
+      themePreset: "academic",
+    });
+
+    expect(stylesheet).toContain(".pdf-paragraph");
+    expect(stylesheet).toContain("text-align: left !important;");
+    expect(stylesheet).not.toContain("text-align: justify");
+  });
+
+  it("enforces break-inside: avoid on table rows and table-header-group on thead", async () => {
+    const { buildPdfStylesheet } = await import("../pdfEngine");
+    const stylesheet = buildPdfStylesheet({ fileName: "Test.pdf" });
+
+    expect(stylesheet).toContain(".pdf-table thead");
+    expect(stylesheet).toContain("display: table-header-group !important;");
+    expect(stylesheet).toContain(".pdf-table tr");
+    expect(stylesheet).toContain("page-break-inside: avoid !important;");
+  });
+
+  it("compiles paragraphs with natural soft newlines as spaces rather than forced br tags", async () => {
+    const input = "An integer ranging from 0 to 65,535 that uniquely identifies a specific application\nprocess running inside a host operating system.";
+    const { html } = await compileMarkdownForPdf(input);
+
+    expect(html).toContain("An integer ranging from 0 to 65,535 that uniquely identifies a specific application process running inside a host operating system.");
+    expect(html).not.toContain("<br/>");
+  });
+
+  it("preserves explicit markdown hard line breaks (two trailing spaces)", async () => {
+    const input = "Line 1 with hard break  \nLine 2 continued.";
+    const { html } = await compileMarkdownForPdf(input);
+
+    expect(html).toContain("Line 1 with hard break<br/>Line 2 continued.");
+  });
+});
+
+describe("Editor Markdown Paste Invariants", () => {
+  it("preserves multi-line code blocks with multiple imports and blank lines without prematurely ending", async () => {
+    const { JSDOM } = await import("jsdom");
+    const dom = new JSDOM("");
+    (global as any).window = dom.window;
+    (global as any).document = dom.window.document;
+    (global as any).DOMParser = dom.window.DOMParser;
+    (global as any).Node = dom.window.Node;
+    (global as any).requestAnimationFrame = (cb: any) => setTimeout(cb, 0);
+
+    const { Editor } = await import("@tiptap/core");
+    const { buildExtensions } = await import("~/components/editor/extensions");
+    const { DOMParser: ProseMirrorDOMParser } = await import("@tiptap/pm/model");
+
+    const editor = new Editor({
+      extensions: buildExtensions(),
+    });
+
+    const markdownWithImports = `Here is the server code:
+
+\`\`\`java
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+    public static void main(String[] args) {
+        System.out.println("Hello Server");
+    }
+}
+\`\`\`
+
+End of note.`;
+
+    const markdownParser = (editor.storage as any).markdown?.parser;
+    const parsedDoc = markdownParser.parse(markdownWithImports);
+    const domBody = new (global as any).DOMParser().parseFromString(`<body>${parsedDoc}</body>`, "text/html").body;
+    const pmSlice = ProseMirrorDOMParser.fromSchema(editor.schema).parseSlice(domBody, { preserveWhitespace: true });
+
+    editor.commands.setContent("<p></p>");
+    editor.commands.insertContent(pmSlice.content);
+
+    const json = editor.getJSON();
+    const codeBlockNode = json.content?.find((node) => node.type === "codeBlock");
+
+    expect(codeBlockNode).toBeDefined();
+    expect(codeBlockNode?.attrs?.language).toBe("java");
+    expect(codeBlockNode?.content?.[0]?.text).toContain("import java.io.BufferedReader;");
+    expect(codeBlockNode?.content?.[0]?.text).toContain("import java.net.Socket;");
+    expect(codeBlockNode?.content?.[0]?.text).toContain("public class Server {");
+    expect(codeBlockNode?.content?.[0]?.text).toContain('System.out.println("Hello Server");');
+
+    // Ensure it was NOT split into a paragraph with code mark
+    const splitParagraphWithCode = json.content?.find(
+      (node) => node.type === "paragraph" && node.content?.some((c) => c.marks?.some((m) => m.type === "code"))
+    );
+    expect(splitParagraphWithCode).toBeUndefined();
+  });
+});
+
