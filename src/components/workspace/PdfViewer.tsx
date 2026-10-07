@@ -301,8 +301,38 @@ export function PdfViewer({
     };
 
     window.addEventListener("netherite-delete-pdf-highlight", handleDeleteEvent);
-    return () =>
-      window.removeEventListener("netherite-delete-pdf-highlight", handleDeleteEvent);
+
+    const handleChangeColorEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        fileId?: string;
+        highlightId: string;
+        color: PdfHighlightColor;
+      }>;
+      if (!customEvent.detail?.fileId || customEvent.detail.fileId === fileId) {
+        updatePdfHighlightColor(
+          fileId,
+          customEvent.detail.highlightId,
+          customEvent.detail.color,
+        );
+        triggerSaveToDrive();
+      }
+    };
+
+    window.addEventListener(
+      "netherite-change-pdf-highlight-color",
+      handleChangeColorEvent,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "netherite-delete-pdf-highlight",
+        handleDeleteEvent,
+      );
+      window.removeEventListener(
+        "netherite-change-pdf-highlight-color",
+        handleChangeColorEvent,
+      );
+    };
   }, [fileId, triggerSaveToDrive]);
 
   // Jump to specific page / highlight via custom window events (fired by OutlineSidebar)
@@ -606,18 +636,51 @@ export function PdfViewer({
       if (!pageNumber) return;
 
       const pageRect = textLayerEl.getBoundingClientRect();
-      const clientRects = Array.from(range.getClientRects());
+      const clientRects = Array.from(range.getClientRects()).filter(
+        (r) => r.width > 0.5 && r.height > 0.5,
+      );
       if (clientRects.length === 0) return;
 
-      const relativeRects = clientRects.map((rect) => ({
+      // Merge contiguous/overlapping rects on the same vertical line
+      // to avoid multiple overlay rects causing darker middle bands
+      const sortedRects = [...clientRects].sort((a, b) =>
+        Math.abs(a.top - b.top) > 4 ? a.top - b.top : a.left - b.left,
+      );
+
+      const mergedClientRects: DOMRect[] = [];
+      for (const current of sortedRects) {
+        const last = mergedClientRects[mergedClientRects.length - 1];
+        if (
+          last &&
+          Math.abs(last.top - current.top) < 4 &&
+          Math.abs(last.bottom - current.bottom) < 4 &&
+          current.left <= last.right + 2
+        ) {
+          // Merge with last
+          const mergedLeft = Math.min(last.left, current.left);
+          const mergedRight = Math.max(last.right, current.right);
+          const mergedTop = Math.min(last.top, current.top);
+          const mergedBottom = Math.max(last.bottom, current.bottom);
+          mergedClientRects[mergedClientRects.length - 1] = new DOMRect(
+            mergedLeft,
+            mergedTop,
+            mergedRight - mergedLeft,
+            mergedBottom - mergedTop,
+          );
+        } else {
+          mergedClientRects.push(current);
+        }
+      }
+
+      const relativeRects = mergedClientRects.map((rect) => ({
         top: ((rect.top - pageRect.top) / pageRect.height) * 100,
         left: ((rect.left - pageRect.left) / pageRect.width) * 100,
         width: (rect.width / pageRect.width) * 100,
         height: (rect.height / pageRect.height) * 100,
       }));
 
-      const firstRect = clientRects[0]!;
-      const lastRect = clientRects[clientRects.length - 1]!;
+      const firstRect = mergedClientRects[0]!;
+      const lastRect = mergedClientRects[mergedClientRects.length - 1]!;
       const menuX = Math.min(
         window.innerWidth - 220,
         Math.max(20, (firstRect.left + lastRect.right) / 2 - 100),
@@ -1232,16 +1295,13 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
           <>
             <canvas
               ref={canvasRef}
-              className={`block select-none ${
+              className={`block select-none pdf-canvas-underlay ${
                 isNightMode ? "pdf-canvas-night-mode" : ""
               }`}
             />
 
-            {/* Interactive Text Layer for selection */}
-            <div ref={textLayerRef} className="pdf-text-layer" />
-
-            {/* Rendered Highlights Overlay */}
-            <div className="absolute inset-0 pointer-events-none z-1">
+            {/* Rendered Highlights Overlay (behind text layer in z-axis) */}
+            <div className="pdf-highlights-underlay">
               {highlights.map((highlight) =>
                 highlight.rects.map((r, rectIndex) => (
                   <div
@@ -1262,6 +1322,9 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
                 )),
               )}
             </div>
+
+            {/* Interactive Text Layer for selection (above highlights in z-axis) */}
+            <div ref={textLayerRef} className="pdf-text-layer" />
           </>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground/40 font-mono">

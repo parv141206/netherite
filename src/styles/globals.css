@@ -1415,7 +1415,7 @@ html.dark [data-landing-page] {
   text-size-adjust: none;
   forced-color-adjust: none;
   transform-origin: 0 0;
-  z-index: 2;
+  z-index: 3;
   user-select: text;
   -webkit-user-select: text;
 }
@@ -1428,9 +1428,21 @@ html.dark [data-landing-page] {
   transform-origin: 0% 0%;
 }
 
+.pdf-canvas-underlay {
+  position: relative;
+  z-index: 1;
+}
+
+.pdf-highlights-underlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .pdf-text-layer ::selection {
   background: rgba(59, 130, 246, 0.35) !important;
-  color: transparent !important;
+  color: inherit !important;
 }
 
 .pdf-highlight-mark {

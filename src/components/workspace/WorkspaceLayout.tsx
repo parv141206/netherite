@@ -4650,6 +4650,15 @@ export function WorkspaceLayout({
                     }
                   }
                 }}
+                onUpdateHighlightColor={(id, color) => {
+                  if (isCurrentPdf) {
+                    window.dispatchEvent(
+                      new CustomEvent("netherite-change-pdf-highlight-color", {
+                        detail: { fileId: activeTabId, highlightId: id, color },
+                      }),
+                    );
+                  }
+                }}
               />
             )}
 

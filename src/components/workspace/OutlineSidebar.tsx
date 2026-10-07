@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { ListTree, X, AlignLeft, Highlighter, Sparkles, Hash, Search, Trash2 } from "lucide-react";
+import { ListTree, X, AlignLeft, Highlighter, Sparkles, Hash, Search, Trash2, Palette } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 
 export interface HeadingItem {
@@ -26,6 +26,7 @@ interface OutlineSidebarProps {
   onSelectHeading: (text: string, level: number, id?: string) => void;
   onSelectHighlight?: (text: string, id: string) => void;
   onDeleteHighlight?: (id: string, text: string) => void;
+  onUpdateHighlightColor?: (id: string, color: HighlightItem["color"]) => void;
 }
 
 const COLOR_MAP: Record<
@@ -85,11 +86,13 @@ export function OutlineSidebar({
   onSelectHeading,
   onSelectHighlight,
   onDeleteHighlight,
+  onUpdateHighlightColor,
 }: OutlineSidebarProps) {
   const { modernUi } = useTheme();
   const [activeTab, setActiveTab] = useState<"topics" | "highlights">("topics");
   const [selectedColorFilter, setSelectedColorFilter] = useState<string>("all");
   const [topicSearchQuery, setTopicSearchQuery] = useState<string>("");
+  const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Auto-scroll the topics list so the currently active heading stays visible
@@ -387,18 +390,66 @@ export function OutlineSidebar({
                         )}
                       </button>
 
-                      {onDeleteHighlight && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteHighlight(item.id, item.text);
-                          }}
-                          className="absolute top-1.5 right-1.5 p-1 rounded-md opacity-0 group-hover/item:opacity-100 hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-all duration-150 cursor-pointer"
-                          title="Remove Highlight"
-                          aria-label="Remove Highlight"
+                        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150">
+                          {onUpdateHighlightColor && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingHighlightId(
+                                  editingHighlightId === item.id ? null : item.id,
+                                );
+                              }}
+                              className="p-1 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                              title="Change Color"
+                              aria-label="Change Color"
+                            >
+                              <Palette className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {onDeleteHighlight && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteHighlight(item.id, item.text);
+                              }}
+                              className="p-1 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                              title="Remove Highlight"
+                              aria-label="Remove Highlight"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                      {/* Inline Color Selection Palette when Editing */}
+                      {editingHighlightId === item.id && onUpdateHighlightColor && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1.5 px-2 py-1.5 border-t border-border/40 bg-background/95 rounded-b-lg backdrop-blur-sm"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          <span className="text-[10px] text-muted-foreground font-medium mr-1">
+                            Color:
+                          </span>
+                          {(
+                            ["yellow", "green", "blue", "pink", "purple", "orange"] as const
+                          ).map((c) => {
+                            const cStyle = COLOR_MAP[c];
+                            const isCurrent = item.color === c;
+                            return (
+                              <button
+                                key={c}
+                                onClick={() => {
+                                  onUpdateHighlightColor(item.id, c);
+                                  setEditingHighlightId(null);
+                                }}
+                                className={`w-4 h-4 rounded-full ${cStyle.dot} transition-transform hover:scale-125 ${
+                                  isCurrent ? "ring-2 ring-foreground ring-offset-1" : ""
+                                }`}
+                                title={cStyle.label}
+                              />
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   );
