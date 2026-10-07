@@ -20,16 +20,26 @@ import {
   Copy,
   Trash2,
   Check,
-  Sparkles,
+  Moon,
+  Sun,
+  Save,
+  CheckCircle2,
+  Undo2,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
-import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 import { MacFileLoader } from "~/components/ui/MacFileLoader";
+import { useTheme } from "~/components/ThemeProvider";
+import { api } from "~/trpc/react";
 import {
   getPdfHighlights,
+  savePdfHighlights,
   addPdfHighlight,
   deletePdfHighlight,
   updatePdfHighlightColor,
+  getPdfLastPage,
+  savePdfLastPage,
+  mergePdfHighlights,
   type PdfHighlight,
   type PdfHighlightColor,
   PDF_HIGHLIGHTS_UPDATED_EVENT,
@@ -121,6 +131,7 @@ export function PdfViewer({
   onOutlineExtracted,
   onHighlightsChanged,
 }: PdfViewerProps) {
+  const { theme } = useTheme();
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -130,6 +141,23 @@ export function PdfViewer({
   const [basePageWidth, setBasePageWidth] = useState<number>(612);
   const [basePageHeight, setBasePageHeight] = useState<number>(792);
 
+  // Night Mode state with persistence
+  const [isNightMode, setIsNightMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("netherite_pdf_night_mode");
+      if (saved !== null) return saved === "true";
+    }
+    return theme === "dark";
+  });
+
+  const toggleNightMode = useCallback(() => {
+    setIsNightMode((prev) => {
+      const next = !prev;
+      localStorage.setItem("netherite_pdf_night_mode", String(next));
+      return next;
+    });
+  }, []);
+
   const [highlights, setHighlights] = useState<PdfHighlight[]>([]);
   const [floatingMenu, setFloatingMenu] = useState<FloatingMenuState | null>(
     null,
@@ -137,11 +165,23 @@ export function PdfViewer({
   const [actionMenu, setActionMenu] =
     useState<HighlightActionMenuState | null>(null);
   const [copiedNotification, setCopiedNotification] = useState<boolean>(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [resumeNotification, setResumeNotification] = useState<string | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  // Load saved highlights
+  // Cloud annotations TRPC mutation & query
+  const saveAnnotationsMutation = api.notes.savePdfAnnotations.useMutation();
+  const { data: driveAnnotations } = api.notes.getPdfAnnotations.useQuery(
+    { fileId },
+    {
+      enabled: !!fileId && !fileId.startsWith("temp-"),
+      staleTime: 60000,
+    },
+  );
+
+  // Load initial local highlights
   useEffect(() => {
     const loaded = getPdfHighlights(fileId);
     setHighlights(loaded);
@@ -161,6 +201,109 @@ export function PdfViewer({
       window.removeEventListener(PDF_HIGHLIGHTS_UPDATED_EVENT, handleUpdate);
     };
   }, [fileId, onHighlightsChanged]);
+
+  // Merge remote Drive annotations when retrieved
+  useEffect(() => {
+    if (driveAnnotations?.highlights && driveAnnotations.highlights.length > 0) {
+      setHighlights((prev) => {
+        const merged = mergePdfHighlights(prev, driveAnnotations.highlights);
+        savePdfHighlights(fileId, merged);
+        onHighlightsChanged?.(merged);
+        return merged;
+      });
+    }
+  }, [driveAnnotations, fileId, onHighlightsChanged]);
+
+  // Save annotations to Google Drive (manual or debounced)
+  const triggerSaveToDrive = useCallback(
+    (pageToSave = currentPage) => {
+      if (!fileId || fileId.startsWith("temp-")) return;
+      setSaveStatus("saving");
+      saveAnnotationsMutation.mutate(
+        {
+          fileId,
+          highlights,
+          lastPage: pageToSave,
+        },
+        {
+          onSuccess: () => {
+            setSaveStatus("saved");
+            setTimeout(() => setSaveStatus("idle"), 2500);
+          },
+          onError: () => {
+            setSaveStatus("idle");
+          },
+        },
+      );
+    },
+    [fileId, highlights, currentPage, saveAnnotationsMutation],
+  );
+
+  // History stack for undoing highlight creations
+  const highlightHistoryRef = useRef<string[]>([]);
+
+  // Track & persist last page viewed
+  useEffect(() => {
+    if (currentPage > 0) {
+      savePdfLastPage(fileId, currentPage);
+    }
+  }, [fileId, currentPage]);
+
+  // Undo highlight function
+  const handleUndoHighlight = useCallback(() => {
+    const lastCreatedId = highlightHistoryRef.current.pop();
+    if (lastCreatedId) {
+      deletePdfHighlight(fileId, lastCreatedId);
+      triggerSaveToDrive();
+      return;
+    }
+    // Fallback: undo the most recently added highlight if available
+    if (highlights.length > 0) {
+      const lastHl = highlights[highlights.length - 1];
+      if (lastHl) {
+        deletePdfHighlight(fileId, lastHl.id);
+        triggerSaveToDrive();
+      }
+    }
+  }, [fileId, highlights, triggerSaveToDrive]);
+
+  // Keyboard shortcuts in PDF viewer: Ctrl+S to save, Ctrl+Z to undo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        triggerSaveToDrive();
+      } else if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "z" &&
+        !e.shiftKey
+      ) {
+        // Prevent browser undo if we have highlights to undo
+        if (highlights.length > 0 || highlightHistoryRef.current.length > 0) {
+          e.preventDefault();
+          handleUndoHighlight();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [triggerSaveToDrive, handleUndoHighlight, highlights.length]);
+
+  // Handle external highlight deletion event (from OutlineSidebar)
+  useEffect(() => {
+    const handleDeleteEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ fileId?: string; highlightId: string }>;
+      if (!customEvent.detail?.fileId || customEvent.detail.fileId === fileId) {
+        deletePdfHighlight(fileId, customEvent.detail.highlightId);
+        triggerSaveToDrive();
+      }
+    };
+
+    window.addEventListener("netherite-delete-pdf-highlight", handleDeleteEvent);
+    return () =>
+      window.removeEventListener("netherite-delete-pdf-highlight", handleDeleteEvent);
+  }, [fileId, triggerSaveToDrive]);
 
   // Jump to specific page / highlight via custom window events (fired by OutlineSidebar)
   useEffect(() => {
@@ -264,6 +407,20 @@ export function PdfViewer({
       setBasePageWidth(viewport.width);
       setBasePageHeight(viewport.height);
 
+      // Restore last visited page
+      const savedLastPage = getPdfLastPage(fileId);
+      if (savedLastPage > 1 && savedLastPage <= doc.numPages) {
+        setTimeout(() => {
+          const targetEl = pageRefs.current.get(savedLastPage);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            setCurrentPage(savedLastPage);
+            setResumeNotification(`Resumed at Page ${savedLastPage}`);
+            setTimeout(() => setResumeNotification(null), 3000);
+          }
+        }, 200);
+      }
+
       // Extract outline / bookmarks
       try {
         const rawOutline = await doc.getOutline();
@@ -302,9 +459,8 @@ export function PdfViewer({
           if (parsedHeadings.length > 0) {
             onOutlineExtracted?.(parsedHeadings);
           } else {
-            // Fallback outline if empty
             const fallback: HeadingItem[] = Array.from(
-              { length: Math.min(doc.numPages, 30) },
+              { length: Math.min(doc.numPages, 40) },
               (_, i) => ({
                 id: `page-${i + 1}`,
                 text: `Page ${i + 1}`,
@@ -314,9 +470,8 @@ export function PdfViewer({
             onOutlineExtracted?.(fallback);
           }
         } else {
-          // Provide page bookmarks as topics
           const fallback: HeadingItem[] = Array.from(
-            { length: Math.min(doc.numPages, 30) },
+            { length: Math.min(doc.numPages, 40) },
             (_, i) => ({
               id: `page-${i + 1}`,
               text: `Page ${i + 1}`,
@@ -344,6 +499,51 @@ export function PdfViewer({
     };
   }, [loadDocument]);
 
+  // Trackpad pinch-to-zoom & smooth zoom centered on mouse cursor
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const scrollX = container.scrollLeft;
+        const scrollY = container.scrollTop;
+
+        setScale((prevScale) => {
+          // Smooth exponential zoom delta (matching Google Drive / modern PDF engines)
+          const zoomDelta = -e.deltaY * 0.0075;
+          const nextScale = Math.min(
+            3.5,
+            Math.max(0.4, prevScale * (1 + zoomDelta)),
+          );
+          const roundedScale = Math.round(nextScale * 100) / 100;
+
+          // Keep focal point steady under cursor
+          requestAnimationFrame(() => {
+            if (!container) return;
+            const contentX = (scrollX + mouseX) / prevScale;
+            const contentY = (scrollY + mouseY) / prevScale;
+            container.scrollLeft = contentX * roundedScale - mouseX;
+            container.scrollTop = contentY * roundedScale - mouseY;
+          });
+
+          return roundedScale;
+        });
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
   // Track currently active page via IntersectionObserver
   useEffect(() => {
     if (!scrollContainerRef.current || numPages === 0) return;
@@ -370,18 +570,17 @@ export function PdfViewer({
     return () => observer.disconnect();
   }, [numPages, scale]);
 
-  // Auto-fit to width on initial load
+  // Auto-fit to width
   const handleFitWidth = useCallback(() => {
     if (!scrollContainerRef.current || basePageWidth === 0) return;
     const containerWidth = scrollContainerRef.current.clientWidth;
-    const padding = 48; // Left & right gutter
+    const padding = 48;
     const idealScale = Math.max(0.4, (containerWidth - padding) / basePageWidth);
     setScale(Math.round(idealScale * 100) / 100);
   }, [basePageWidth]);
 
   // Handle Text Selection for Highlighting
   const handleSelectionEnd = useCallback(() => {
-    // Small delay to allow selection coordinates to resolve
     setTimeout(() => {
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
@@ -410,7 +609,6 @@ export function PdfViewer({
       const clientRects = Array.from(range.getClientRects());
       if (clientRects.length === 0) return;
 
-      // Convert client rects to page-relative percentages
       const relativeRects = clientRects.map((rect) => ({
         top: ((rect.top - pageRect.top) / pageRect.height) * 100,
         left: ((rect.left - pageRect.left) / pageRect.width) * 100,
@@ -418,7 +616,6 @@ export function PdfViewer({
         height: (rect.height / pageRect.height) * 100,
       }));
 
-      // Calculate placement for the floating highlight palette
       const firstRect = clientRects[0]!;
       const lastRect = clientRects[clientRects.length - 1]!;
       const menuX = Math.min(
@@ -442,14 +639,20 @@ export function PdfViewer({
   const handleApplyHighlight = (color: PdfHighlightColor) => {
     if (!floatingMenu) return;
 
-    addPdfHighlight(fileId, {
+    const newHl = addPdfHighlight(fileId, {
       pageNumber: floatingMenu.pageNumber,
       text: floatingMenu.text,
       color,
       rects: floatingMenu.rects,
     });
 
-    // Clear selection
+    highlightHistoryRef.current.push(newHl.id);
+
+    // Auto sync to Drive in background
+    setTimeout(() => {
+      triggerSaveToDrive();
+    }, 400);
+
     window.getSelection()?.removeAllRanges();
     setFloatingMenu(null);
   };
@@ -486,11 +689,13 @@ export function PdfViewer({
   ) => {
     updatePdfHighlightColor(fileId, highlight.id, color);
     setActionMenu(null);
+    triggerSaveToDrive();
   };
 
   const handleDeleteHighlight = (highlightId: string) => {
     deletePdfHighlight(fileId, highlightId);
     setActionMenu(null);
+    triggerSaveToDrive();
   };
 
   const handleDownload = useCallback(() => {
@@ -512,21 +717,29 @@ export function PdfViewer({
 
   return (
     <div
-      className="relative flex h-full w-full flex-col bg-muted/15 select-none overflow-hidden"
+      className={`relative flex h-full w-full flex-col select-none overflow-hidden transition-colors ${
+        isNightMode ? "bg-zinc-950 text-zinc-100" : "bg-muted/15 text-foreground"
+      }`}
       onClick={() => {
         if (floatingMenu) setFloatingMenu(null);
         if (actionMenu) setActionMenu(null);
       }}
     >
       {/* Top Cupertino Toolbar */}
-      <div className="flex h-11 shrink-0 items-center justify-between border-b border-border/40 px-3.5 bg-background/90 backdrop-blur-md z-10 select-none">
+      <div
+        className={`flex h-11 shrink-0 items-center justify-between border-b px-3.5 backdrop-blur-md z-10 select-none ${
+          isNightMode
+            ? "border-zinc-800 bg-zinc-900/90 text-zinc-100"
+            : "border-border/40 bg-background/90 text-foreground"
+        }`}
+      >
         {/* Left: Document info */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center justify-center rounded-md bg-rose-500/10 p-1 text-rose-500 dark:text-rose-400">
             <FileText className="h-4 w-4 shrink-0" />
           </div>
           <span
-            className="text-xs sm:text-sm font-medium truncate text-foreground max-w-[140px] sm:max-w-xs"
+            className="text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-xs"
             title={fileName}
           >
             {fileName}
@@ -573,8 +786,57 @@ export function PdfViewer({
           </button>
         </div>
 
-        {/* Right: Zoom & Export actions */}
+        {/* Right: Night mode, Zoom & Save actions */}
         <div className="flex items-center gap-1">
+          {/* Night Mode Toggle */}
+          <button
+            onClick={toggleNightMode}
+            className={`p-1.5 rounded-md transition-colors ${
+              isNightMode
+                ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            title={`Night Mode: ${isNightMode ? "On" : "Off"}`}
+          >
+            {isNightMode ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* Undo Highlight Button */}
+          <button
+            onClick={handleUndoHighlight}
+            disabled={highlights.length === 0}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            title="Undo Highlight (Ctrl+Z)"
+          >
+            <Undo2 className="h-4 w-4" />
+          </button>
+
+          {/* Cloud Save Button */}
+          <button
+            onClick={() => triggerSaveToDrive()}
+            className={`p-1.5 rounded-md transition-colors ${
+              saveStatus === "saved"
+                ? "text-emerald-500"
+                : saveStatus === "saving"
+                  ? "text-blue-500 animate-spin"
+                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            title="Save annotations to Google Drive (Ctrl+S)"
+          >
+            {saveStatus === "saved" ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+          </button>
+
+          <div className="w-[1px] h-4 bg-border/60 mx-0.5 hidden sm:block" />
+
+          {/* Zoom controls */}
           <button
             onClick={() => setScale((s) => Math.max(0.4, s - 0.15))}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors hidden sm:flex"
@@ -586,7 +848,7 @@ export function PdfViewer({
             {Math.round(scale * 100)}%
           </span>
           <button
-            onClick={() => setScale((s) => Math.min(3.0, s + 0.15))}
+            onClick={() => setScale((s) => Math.min(3.5, s + 0.15))}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors hidden sm:flex"
             title="Zoom In"
           >
@@ -599,7 +861,9 @@ export function PdfViewer({
           >
             <Maximize2 className="h-4 w-4" />
           </button>
-          <div className="w-[1px] h-4 bg-border/60 mx-1 hidden sm:block" />
+
+          <div className="w-[1px] h-4 bg-border/60 mx-0.5 hidden sm:block" />
+
           <button
             onClick={() => void loadDocument()}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -638,6 +902,21 @@ export function PdfViewer({
               fileType="pdf"
               message="Rendering PDF with interactive highlights…"
             />
+          </div>
+        )}
+
+        {/* Resume notification banner */}
+        {resumeNotification && (
+          <div className="fixed top-14 left-1/2 -translate-x-1/2 z-40 bg-card/90 text-foreground border border-border/80 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
+            {resumeNotification}
+          </div>
+        )}
+
+        {/* Save toast */}
+        {saveStatus === "saved" && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-emerald-600 text-white px-3.5 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Saved annotations to Google Drive</span>
           </div>
         )}
 
@@ -683,6 +962,7 @@ export function PdfViewer({
                 scale={scale}
                 defaultWidth={basePageWidth}
                 defaultHeight={basePageHeight}
+                isNightMode={isNightMode}
                 highlights={highlights.filter((h) => h.pageNumber === pageNum)}
                 onHighlightClick={handleOpenHighlightAction}
               />
@@ -702,7 +982,7 @@ export function PdfViewer({
             <button
               key={item.color}
               onClick={() => handleApplyHighlight(item.color)}
-              className="group relative flex h-7 w-7 items-center justify-center rounded-full hover:scale-110 active:scale-95 transition-transform"
+              className="group relative flex h-7 w-7 items-center justify-center rounded-full hover:scale-110 active:scale-95 transition-transform cursor-pointer"
               title={`Highlight ${item.label}`}
             >
               <span
@@ -714,7 +994,7 @@ export function PdfViewer({
           <div className="w-[1px] h-4 bg-border/60 mx-0.5" />
           <button
             onClick={handleCopySelectedText}
-            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             title="Copy Text"
           >
             {copiedNotification ? (
@@ -739,7 +1019,7 @@ export function PdfViewer({
               onClick={() =>
                 handleChangeHighlightColor(actionMenu.highlight, item.color)
               }
-              className={`group relative flex h-7 w-7 items-center justify-center rounded-full hover:scale-110 active:scale-95 transition-transform ${
+              className={`group relative flex h-7 w-7 items-center justify-center rounded-full hover:scale-110 active:scale-95 transition-transform cursor-pointer ${
                 actionMenu.highlight.color === item.color
                   ? "ring-2 ring-primary ring-offset-1"
                   : ""
@@ -758,14 +1038,14 @@ export function PdfViewer({
               navigator.clipboard.writeText(actionMenu.highlight.text);
               setActionMenu(null);
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             title="Copy Highlighted Text"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => handleDeleteHighlight(actionMenu.highlight.id)}
-            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-destructive/15 text-destructive transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-destructive/15 text-destructive transition-colors cursor-pointer"
             title="Delete Highlight"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -786,6 +1066,7 @@ interface VirtualPdfPageProps {
   scale: number;
   defaultWidth: number;
   defaultHeight: number;
+  isNightMode: boolean;
   highlights: PdfHighlight[];
   onHighlightClick: (e: React.MouseEvent, h: PdfHighlight) => void;
 }
@@ -798,6 +1079,7 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
       scale,
       defaultWidth,
       defaultHeight,
+      isNightMode,
       highlights,
       onHighlightClick,
     },
@@ -812,7 +1094,6 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
     const [pageHeight, setPageHeight] = useState<number>(defaultHeight * scale);
     const [isRendered, setIsRendered] = useState<boolean>(false);
 
-    // Merge internal and external refs
     const setRefs = useCallback(
       (node: HTMLDivElement | null) => {
         containerRef.current = node;
@@ -822,7 +1103,7 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
       [ref],
     );
 
-    // IntersectionObserver to only render visible pages
+    // Pre-buffer 500px around viewport
     useEffect(() => {
       const el = containerRef.current;
       if (!el) return;
@@ -834,14 +1115,14 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
             setIsVisible(entry.isIntersecting);
           }
         },
-        { rootMargin: "450px 0px" }, // Buffer 450px ahead of scroll
+        { rootMargin: "500px 0px" },
       );
 
       observer.observe(el);
       return () => observer.disconnect();
     }, []);
 
-    // Render page canvas and text layer when visible
+    // Render canvas and text layer when visible
     useEffect(() => {
       let isCancelled = false;
       let renderTask: any = null;
@@ -866,7 +1147,6 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
           const context = canvas.getContext("2d");
           if (!context) return;
 
-          // HiDPI / Retina pixel ratio scaling
           const pixelRatio = window.devicePixelRatio || 1;
           canvas.width = Math.floor(viewport.width * pixelRatio);
           canvas.height = Math.floor(viewport.height * pixelRatio);
@@ -883,7 +1163,6 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
           await renderTask.promise;
           if (isCancelled) return;
 
-          // Render interactive TextLayer for selection
           const textLayerContainer = textLayerRef.current;
           if (textLayerContainer) {
             textLayerContainer.innerHTML = "";
@@ -927,12 +1206,12 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
     }, [pdfDoc, pageNumber, scale, isVisible]);
 
     const colorClasses: Record<PdfHighlightColor, string> = {
-      yellow: "bg-amber-300/40 dark:bg-amber-400/35 border-b border-amber-400/60",
-      green: "bg-emerald-300/40 dark:bg-emerald-400/35 border-b border-emerald-400/60",
-      blue: "bg-sky-300/40 dark:bg-sky-400/35 border-b border-sky-400/60",
-      pink: "bg-pink-300/40 dark:bg-pink-400/35 border-b border-pink-400/60",
-      purple: "bg-purple-300/40 dark:bg-purple-400/35 border-b border-purple-400/60",
-      orange: "bg-orange-300/40 dark:bg-orange-400/35 border-b border-orange-400/60",
+      yellow: "bg-amber-300/40 dark:bg-amber-400/40 border-b border-amber-400/70",
+      green: "bg-emerald-300/40 dark:bg-emerald-400/40 border-b border-emerald-400/70",
+      blue: "bg-sky-300/40 dark:bg-sky-400/40 border-b border-sky-400/70",
+      pink: "bg-pink-300/40 dark:bg-pink-400/40 border-b border-pink-400/70",
+      purple: "bg-purple-300/40 dark:bg-purple-400/40 border-b border-purple-400/70",
+      orange: "bg-orange-300/40 dark:bg-orange-400/40 border-b border-orange-400/70",
     };
 
     return (
@@ -943,13 +1222,22 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
           width: `${Math.floor(pageWidth)}px`,
           minHeight: `${Math.floor(pageHeight)}px`,
         }}
-        className="pdf-page-container relative shadow-md bg-white dark:bg-zinc-950 border border-border/40 rounded-sm select-none transition-shadow"
+        className={`pdf-page-container relative shadow-md rounded-sm select-none transition-shadow ${
+          isNightMode
+            ? "bg-[#18181b] border border-zinc-800 text-zinc-100"
+            : "bg-white border border-border/40 text-black"
+        }`}
       >
         {isVisible ? (
           <>
-            <canvas ref={canvasRef} className="block select-none" />
+            <canvas
+              ref={canvasRef}
+              className={`block select-none ${
+                isNightMode ? "pdf-canvas-night-mode" : ""
+              }`}
+            />
 
-            {/* Interactive Text Layer for text selection */}
+            {/* Interactive Text Layer for selection */}
             <div ref={textLayerRef} className="pdf-text-layer" />
 
             {/* Rendered Highlights Overlay */}
@@ -976,7 +1264,6 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
             </div>
           </>
         ) : (
-          /* Lightweight virtual placeholder to keep scroll position intact */
           <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground/40 font-mono">
             Page {pageNumber}
           </div>

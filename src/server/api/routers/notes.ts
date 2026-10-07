@@ -21,6 +21,8 @@ import {
   getNoteRevisionContent,
   pinNoteRevision,
   uploadFileToFolder,
+  savePdfAnnotationsToDrive,
+  getPdfAnnotationsFromDrive,
 } from "~/server/googleDrive";
 
 export const notesRouter = createTRPCRouter({
@@ -143,6 +145,29 @@ export const notesRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       return await saveWorkspaceMetadata(ctx.session, input);
+    }),
+
+  getPdfAnnotations: protectedProcedure
+    .input(z.object({ fileId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await getPdfAnnotationsFromDrive(ctx.session, input.fileId);
+    }),
+
+  savePdfAnnotations: protectedProcedure
+    .input(
+      z.object({
+        fileId: z.string(),
+        highlights: z.array(z.any()),
+        lastPage: z.number().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await savePdfAnnotationsToDrive(
+        ctx.session,
+        input.fileId,
+        input.highlights,
+        input.lastPage,
+      );
     }),
 
   checkScope: protectedProcedure.query(async ({ ctx }) => {

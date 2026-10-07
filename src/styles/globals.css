@@ -1436,11 +1436,25 @@ html.dark [data-landing-page] {
 .pdf-highlight-mark {
   transition: all 0.2s ease-in-out;
   cursor: pointer;
+  mix-blend-mode: multiply;
+  pointer-events: auto;
+}
+
+.pdf-canvas-night-mode ~ .pdf-highlight-mark,
+.dark .pdf-highlight-mark {
+  mix-blend-mode: screen;
+  opacity: 0.85;
 }
 
 .pdf-highlight-mark:hover {
-  filter: brightness(0.92);
+  filter: brightness(0.88);
 }
+
+/* PDF Night Mode: Inverts paper white to charcoal while preserving natural hues */
+.pdf-canvas-night-mode {
+  filter: invert(0.92) hue-rotate(180deg) contrast(0.92) brightness(0.92);
+}
+
 
 
 

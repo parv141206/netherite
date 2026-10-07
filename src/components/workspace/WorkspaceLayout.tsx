@@ -4623,6 +4623,33 @@ export function WorkspaceLayout({
                     }, 1800);
                   }
                 }}
+                onDeleteHighlight={(id, text) => {
+                  if (isCurrentPdf) {
+                    window.dispatchEvent(
+                      new CustomEvent("netherite-delete-pdf-highlight", {
+                        detail: { fileId: activeTabId, highlightId: id },
+                      }),
+                    );
+                    return;
+                  }
+                  // For markdown notes, remove highlight markup (==...== or <mark>...</mark>)
+                  if (noteContent) {
+                    let updated = noteContent;
+                    const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                    // 1. Check for ==[color:]text==
+                    const mdRegex = new RegExp(`==(?:[a-zA-Z]+:)?\\s*${escaped}\\s*==`, "g");
+                    if (mdRegex.test(updated)) {
+                      updated = updated.replace(mdRegex, text);
+                    } else {
+                      // 2. Check for <mark ...>text</mark>
+                      const htmlRegex = new RegExp(`<mark[^>]*>\\s*${escaped}\\s*<\\/mark>`, "gi");
+                      updated = updated.replace(htmlRegex, text);
+                    }
+                    if (updated !== noteContent) {
+                      setNoteContent(updated);
+                    }
+                  }
+                }}
               />
             )}
 

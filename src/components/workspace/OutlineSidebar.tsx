@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { ListTree, X, AlignLeft, Highlighter, Sparkles, Hash } from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { ListTree, X, AlignLeft, Highlighter, Sparkles, Hash, Search, Trash2 } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 
 export interface HeadingItem {
@@ -25,6 +25,7 @@ interface OutlineSidebarProps {
   activeHeadingId?: string;
   onSelectHeading: (text: string, level: number, id?: string) => void;
   onSelectHighlight?: (text: string, id: string) => void;
+  onDeleteHighlight?: (id: string, text: string) => void;
 }
 
 const COLOR_MAP: Record<
@@ -83,10 +84,12 @@ export function OutlineSidebar({
   activeHeadingId,
   onSelectHeading,
   onSelectHighlight,
+  onDeleteHighlight,
 }: OutlineSidebarProps) {
   const { modernUi } = useTheme();
   const [activeTab, setActiveTab] = useState<"topics" | "highlights">("topics");
   const [selectedColorFilter, setSelectedColorFilter] = useState<string>("all");
+  const [topicSearchQuery, setTopicSearchQuery] = useState<string>("");
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Auto-scroll the topics list so the currently active heading stays visible
@@ -103,6 +106,13 @@ export function OutlineSidebar({
   }, [activeHeadingId, activeTab]);
 
   if (!isOpen) return null;
+
+  // Filtered headings by search query
+  const filteredHeadings = useMemo(() => {
+    if (!topicSearchQuery.trim()) return headings;
+    const q = topicSearchQuery.trim().toLowerCase();
+    return headings.filter((h) => h.text.toLowerCase().includes(q));
+  }, [headings, topicSearchQuery]);
 
   // Filtered highlights by color
   const filteredHighlights =
@@ -174,18 +184,46 @@ export function OutlineSidebar({
         {/* TAB 1: Topics / Headings Tree */}
         {/* ======================================================== */}
         {activeTab === "topics" && (
-          <div
-            className={`flex-1 overflow-y-auto px-2 py-2 text-xs space-y-0.5 ${
-              modernUi ? "modern-toc-guide" : ""
-            }`}
-          >
-            {headings.length === 0 ? (
-              <div className="px-3 py-10 text-center text-[11px] text-muted-foreground flex flex-col items-center gap-2">
-                <AlignLeft className="w-6 h-6 opacity-30" />
-                <span>No headings in document</span>
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {headings.length > 3 && (
+              <div className="px-2.5 pt-2 pb-1.5 border-b border-border/30">
+                <div className="relative flex items-center">
+                  <Search className="w-3.5 h-3.5 absolute left-2 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    value={topicSearchQuery}
+                    onChange={(e) => setTopicSearchQuery(e.target.value)}
+                    placeholder="Search topics & chapters…"
+                    className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border/40 focus:border-primary/50 text-[11px] rounded-md pl-7 pr-7 py-1 text-foreground placeholder:text-muted-foreground transition-all outline-none"
+                  />
+                  {topicSearchQuery && (
+                    <button
+                      onClick={() => setTopicSearchQuery("")}
+                      className="absolute right-2 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
-            ) : (
-              headings.map((h, index) => {
+            )}
+            <div
+              className={`flex-1 overflow-y-auto px-2 py-2 text-xs space-y-0.5 ${
+                modernUi ? "modern-toc-guide" : ""
+              }`}
+            >
+              {filteredHeadings.length === 0 ? (
+                <div className="px-3 py-10 text-center text-[11px] text-muted-foreground flex flex-col items-center gap-2">
+                  <AlignLeft className="w-6 h-6 opacity-30" />
+                  <span>
+                    {topicSearchQuery
+                      ? "No matching topics found"
+                      : "No headings in document"}
+                  </span>
+                </div>
+              ) : (
+                filteredHeadings.map((h: HeadingItem, index: number) => {
                 const isActive = h.id === activeHeadingId;
                 const isMainTitle = h.level <= 2;
 
@@ -241,6 +279,7 @@ export function OutlineSidebar({
                 );
               })
             )}
+            </div>
           </div>
         )}
 
@@ -314,36 +353,54 @@ export function OutlineSidebar({
                   const style = COLOR_MAP[item.color] || COLOR_MAP.other;
 
                   return (
-                    <button
+                    <div
                       key={`${item.id}-${idx}`}
-                      onClick={() => {
-                        onSelectHighlight?.(item.text, item.id);
-                        if (
-                          typeof window !== "undefined" &&
-                          window.innerWidth < 640
-                        ) {
-                          onClose();
-                        }
-                      }}
-                      className={`w-full text-left p-2 rounded-lg border border-border/40 hover:border-border transition-all group hover:shadow-2xs ${style.bg} flex flex-col gap-1`}
-                      title={`Jump to: "${item.text}"`}
+                      className={`relative group/item rounded-lg border border-border/40 hover:border-border transition-all hover:shadow-2xs ${style.bg}`}
                     >
-                      <div className="flex items-start gap-1.5">
-                        <span
-                          className={`w-2 h-2 rounded-full ${style.dot} shrink-0 mt-1`}
-                        />
-                        <span className="font-normal text-foreground line-clamp-3 leading-relaxed text-[11.5px]">
-                          {item.text}
-                        </span>
-                      </div>
-
-                      {item.sectionTitle && (
-                        <div className="text-[10px] text-muted-foreground flex items-center gap-1 pl-3.5 truncate opacity-80 group-hover:opacity-100">
-                          <Hash className="w-2.5 h-2.5 shrink-0" />
-                          <span className="truncate">{item.sectionTitle}</span>
+                      <button
+                        onClick={() => {
+                          onSelectHighlight?.(item.text, item.id);
+                          if (
+                            typeof window !== "undefined" &&
+                            window.innerWidth < 640
+                          ) {
+                            onClose();
+                          }
+                        }}
+                        className="w-full text-left p-2 pr-7 flex flex-col gap-1 cursor-pointer"
+                        title={`Jump to: "${item.text}"`}
+                      >
+                        <div className="flex items-start gap-1.5">
+                          <span
+                            className={`w-2 h-2 rounded-full ${style.dot} shrink-0 mt-1`}
+                          />
+                          <span className="font-normal text-foreground line-clamp-3 leading-relaxed text-[11.5px]">
+                            {item.text}
+                          </span>
                         </div>
+
+                        {item.sectionTitle && (
+                          <div className="text-[10px] text-muted-foreground flex items-center gap-1 pl-3.5 truncate opacity-80 group-hover/item:opacity-100">
+                            <Hash className="w-2.5 h-2.5 shrink-0" />
+                            <span className="truncate">{item.sectionTitle}</span>
+                          </div>
+                        )}
+                      </button>
+
+                      {onDeleteHighlight && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteHighlight(item.id, item.text);
+                          }}
+                          className="absolute top-1.5 right-1.5 p-1 rounded-md opacity-0 group-hover/item:opacity-100 hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-all duration-150 cursor-pointer"
+                          title="Remove Highlight"
+                          aria-label="Remove Highlight"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       )}
-                    </button>
+                    </div>
                   );
                 })
               )}

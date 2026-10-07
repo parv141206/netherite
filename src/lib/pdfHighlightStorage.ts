@@ -93,3 +93,41 @@ export function updatePdfHighlightColor(
   savePdfHighlights(fileId, updated);
   return updated;
 }
+
+const getLastPageKey = (fileId: string) => `netherite_pdf_last_page_${fileId}`;
+
+export function getPdfLastPage(fileId: string): number {
+  if (!fileId || typeof window === "undefined") return 1;
+  try {
+    const raw = localStorage.getItem(getLastPageKey(fileId));
+    if (!raw) return 1;
+    const num = parseInt(raw, 10);
+    return isNaN(num) || num < 1 ? 1 : num;
+  } catch {
+    return 1;
+  }
+}
+
+export function savePdfLastPage(fileId: string, pageNumber: number): void {
+  if (!fileId || typeof window === "undefined" || !pageNumber || pageNumber < 1) return;
+  try {
+    safeLocalStorageSet(getLastPageKey(fileId), String(pageNumber));
+  } catch {}
+}
+
+export function mergePdfHighlights(
+  local: PdfHighlight[],
+  remote: PdfHighlight[],
+): PdfHighlight[] {
+  const map = new Map<string, PdfHighlight>();
+  // Add remote first
+  for (const h of remote) {
+    if (h && h.id) map.set(h.id, h);
+  }
+  // Overlay local (keeps user's latest offline changes)
+  for (const h of local) {
+    if (h && h.id) map.set(h.id, h);
+  }
+  return Array.from(map.values());
+}
+

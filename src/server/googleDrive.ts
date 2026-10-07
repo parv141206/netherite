@@ -265,6 +265,14 @@ export async function saveWorkspaceMetadata(
         ...(metadata.folderColors ?? {}),
       },
       files: { ...(existing.files ?? {}), ...(metadata.files ?? {}) },
+      pdfHighlights: {
+        ...(existing.pdfHighlights ?? {}),
+        ...(metadata.pdfHighlights ?? {}),
+      },
+      pdfLastPages: {
+        ...(existing.pdfLastPages ?? {}),
+        ...(metadata.pdfLastPages ?? {}),
+      },
       updatedAt: new Date().toISOString(),
     };
     const jsonString = JSON.stringify(merged, null, 2);
@@ -1305,4 +1313,28 @@ export async function uploadFileToFolder(
     };
   });
 }
+
+export async function savePdfAnnotationsToDrive(
+  session: any,
+  fileId: string,
+  highlights: any[],
+  lastPage?: number,
+) {
+  return await saveWorkspaceMetadata(session, {
+    pdfHighlights: { [fileId]: highlights },
+    ...(lastPage !== undefined ? { pdfLastPages: { [fileId]: lastPage } } : {}),
+  });
+}
+
+export async function getPdfAnnotationsFromDrive(
+  session: any,
+  fileId: string,
+) {
+  const metadata = await getWorkspaceMetadata(session);
+  return {
+    highlights: (metadata.pdfHighlights?.[fileId] as any[]) ?? [],
+    lastPage: (metadata.pdfLastPages?.[fileId] as number) ?? 1,
+  };
+}
+
 
