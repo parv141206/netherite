@@ -20,6 +20,11 @@ import { MermaidCanvas } from "~/components/canvas/MermaidCanvas";
 import { TikzCanvas } from "~/components/canvas/TikzCanvas";
 import { ImageViewer } from "./ImageViewer";
 import { PdfViewer } from "./PdfViewer";
+import {
+  getPdfHighlights,
+  PDF_HIGHLIGHTS_UPDATED_EVENT,
+  type PdfHighlight,
+} from "~/lib/pdfHighlightStorage";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem, type HighlightItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
@@ -3031,6 +3036,40 @@ export function WorkspaceLayout({
   const documentHighlights = useMemo(() => getHighlights(noteContent), [noteContent]);
   const [activeHeadingId, setActiveHeadingId] = useState<string>("");
 
+  const [pdfHeadings, setPdfHeadings] = useState<HeadingItem[]>([]);
+  const [pdfHighlights, setPdfHighlights] = useState<PdfHighlight[]>([]);
+
+  useEffect(() => {
+    if (isCurrentPdf && activeTabId) {
+      setPdfHighlights(getPdfHighlights(activeTabId));
+    } else if (!isCurrentPdf) {
+      setPdfHighlights([]);
+      setPdfHeadings([]);
+    }
+  }, [isCurrentPdf, activeTabId]);
+
+  useEffect(() => {
+    const handlePdfHighlightsUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<{ fileId: string }>;
+      if (customEvent.detail?.fileId === activeTabId) {
+        setPdfHighlights(getPdfHighlights(activeTabId));
+      }
+    };
+    window.addEventListener(PDF_HIGHLIGHTS_UPDATED_EVENT, handlePdfHighlightsUpdated);
+    return () => {
+      window.removeEventListener(PDF_HIGHLIGHTS_UPDATED_EVENT, handlePdfHighlightsUpdated);
+    };
+  }, [activeTabId]);
+
+  const pdfHighlightsAsItems: HighlightItem[] = useMemo(() => {
+    return pdfHighlights.map((h) => ({
+      id: h.id,
+      text: h.text,
+      color: h.color,
+      sectionTitle: `Page ${h.pageNumber}`,
+    }));
+  }, [pdfHighlights]);
+
   // Track scroll position in editor to highlight current title/subtitle in OutlineSidebar
   useEffect(() => {
     if (!isOutlineOpen || !isCurrentMarkdown) return;
@@ -4055,6 +4094,8 @@ export function WorkspaceLayout({
                         key={activeTabId}
                         fileId={currentNote?.id || ""}
                         fileName={currentNote?.name || "document.pdf"}
+                        onOutlineExtracted={setPdfHeadings}
+                        onHighlightsChanged={(fresh) => setPdfHighlights(fresh)}
                       />
                     ) : isUmlFile(currentNote) ? (
                       isDocumentLoading && isEmptyApollon(noteContent) ? (
@@ -4498,15 +4539,26 @@ export function WorkspaceLayout({
               )}
             </main>
 
-            {/* Right Outline Sidebar - strictly only for Markdown (.md) documents */}
-            {isCurrentMarkdown && (
+            {/* Right Outline Sidebar - for Markdown (.md) and PDF documents */}
+            {(isCurrentMarkdown || isCurrentPdf) && (
               <OutlineSidebar
                 isOpen={isOutlineOpen}
                 onClose={() => setIsOutlineOpen(false)}
-                headings={documentHeadings}
-                highlights={documentHighlights}
-                activeHeadingId={activeHeadingId}
+                headings={isCurrentPdf ? pdfHeadings : documentHeadings}
+                highlights={isCurrentPdf ? pdfHighlightsAsItems : documentHighlights}
+                activeHeadingId={isCurrentPdf ? undefined : activeHeadingId}
                 onSelectHeading={(text, _level, id) => {
+                  if (isCurrentPdf) {
+                    if (id?.startsWith("page-")) {
+                      const pageNum = Number(id.replace("page-", ""));
+                      window.dispatchEvent(
+                        new CustomEvent("netherite-jump-to-pdf-page", {
+                          detail: { fileId: activeTabId, pageNumber: pageNum },
+                        }),
+                      );
+                    }
+                    return;
+                  }
                   const scrollContainer = document.querySelector<HTMLElement>(
                     '[data-editor-scroll-container="true"]'
                   );
@@ -4534,7 +4586,15 @@ export function WorkspaceLayout({
                     }
                   }
                 }}
-                onSelectHighlight={(text) => {
+                onSelectHighlight={(text, id) => {
+                  if (isCurrentPdf) {
+                    window.dispatchEvent(
+                      new CustomEvent("netherite-jump-to-pdf-highlight", {
+                        detail: { fileId: activeTabId, highlightId: id },
+                      }),
+                    );
+                    return;
+                  }
                   const scrollContainer = document.querySelector<HTMLElement>(
                     '[data-editor-scroll-container="true"]'
                   );
@@ -4692,7 +4752,7 @@ export function WorkspaceLayout({
             setMobileScreen("editor");
           }}
           onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
-          showOutline={isCurrentMarkdown}
+          showOutline={isCurrentMarkdown || isCurrentPdf}
           isOutlineOpen={isOutlineOpen}
           isDirty={isDirty}
           isSaving={isSaving}

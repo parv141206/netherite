@@ -1402,4 +1402,45 @@ html.dark [data-landing-page] {
   }
 }
 
+/* PDF.js Interactive Text Layer & Custom Highlighting */
+.pdf-text-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.pdf-text-layer :is(span, br) {
+  color: transparent !important;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.pdf-text-layer ::selection {
+  background: rgba(59, 130, 246, 0.35) !important;
+  color: transparent !important;
+}
+
+.pdf-highlight-mark {
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.pdf-highlight-mark:hover {
+  filter: brightness(0.92);
+}
+
+
 

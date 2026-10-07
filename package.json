@@ -105,6 +105,7 @@
     "next": "^15.2.3",
     "next-auth": "5.0.0-beta.25",
     "pako": "2.0.3",
+    "pdfjs-dist": "^4.10.38",
     "perfect-freehand": "1.2.0",
     "pica": "7.1.1",
     "png-chunk-text": "1.0.0",
