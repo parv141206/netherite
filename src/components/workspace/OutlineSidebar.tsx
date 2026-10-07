@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { ListTree, X, AlignLeft } from "lucide-react";
+import React, { useEffect, useRef } from "react";
+import { ListTree, X, AlignLeft, Hash } from "lucide-react";
 import { useTheme } from "~/components/ThemeProvider";
 
 export interface HeadingItem {
@@ -14,16 +14,32 @@ interface OutlineSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   headings: HeadingItem[];
-  onSelectHeading: (text: string, level: number) => void;
+  activeHeadingId?: string;
+  onSelectHeading: (text: string, level: number, id?: string) => void;
 }
 
 export function OutlineSidebar({
   isOpen,
   onClose,
   headings = [],
+  activeHeadingId,
   onSelectHeading,
 }: OutlineSidebarProps) {
   const { modernUi } = useTheme();
+  const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+  // Auto-scroll the sidebar topics list smoothly so the currently active title/subtitle stays visible
+  useEffect(() => {
+    if (!activeHeadingId) return;
+    const activeEl = itemRefs.current.get(activeHeadingId);
+    if (activeEl) {
+      activeEl.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    }
+  }, [activeHeadingId]);
 
   if (!isOpen) return null;
 
@@ -45,7 +61,7 @@ export function OutlineSidebar({
           <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
             <ListTree className="w-3.5 h-3.5 text-foreground/70" />
             <span>Table of Contents</span>
-            {modernUi && headings.length > 0 && (
+            {headings.length > 0 && (
               <span className="text-[10px] font-normal text-muted-foreground bg-accent/60 px-1.5 py-0.5 rounded-full">
                 {headings.length}
               </span>
@@ -73,53 +89,38 @@ export function OutlineSidebar({
             </div>
           ) : (
             headings.map((h, index) => {
-              if (modernUi) {
-                const indentClass =
-                  h.level === 1
-                    ? "pl-2 font-medium text-foreground"
-                    : h.level === 2
-                    ? "pl-5 font-normal text-foreground/85"
-                    : h.level === 3
-                    ? "pl-8 text-muted-foreground/90 font-normal"
-                    : "pl-11 text-muted-foreground/70 font-normal";
+              const isActive = h.id === activeHeadingId;
+              const isMainTitle = h.level <= 2;
 
-                return (
-                  <button
-                    key={`${h.id}-${index}`}
-                    onClick={() => {
-                      onSelectHeading(h.text, h.level);
-                      if (
-                        typeof window !== "undefined" &&
-                        window.innerWidth < 640
-                      ) {
-                        onClose();
-                      }
-                    }}
-                    className={`w-full group text-left py-1.5 px-2 hover:bg-accent/70 rounded-lg truncate transition-all duration-150 font-sans flex items-center justify-between gap-1.5 ${indentClass}`}
-                    title={`H${h.level}: ${h.text}`}
-                  >
-                    <span className="truncate">{h.text}</span>
-                    <span className="opacity-0 group-hover:opacity-60 text-[9px] font-mono text-muted-foreground shrink-0 uppercase">
-                      H{h.level}
-                    </span>
-                  </button>
-                );
-              }
-
-              const indentClass =
+              const indentPadding =
                 h.level === 1
-                  ? "pl-2 font-bold text-foreground"
+                  ? "pl-2.5"
                   : h.level === 2
-                  ? "pl-5 font-semibold text-foreground/90"
+                  ? "pl-4"
                   : h.level === 3
-                  ? "pl-8 text-muted-foreground"
-                  : "pl-11 text-muted-foreground/80";
+                  ? "pl-6"
+                  : "pl-8";
+
+              const activeClasses = isActive
+                ? "bg-primary/10 text-primary font-semibold shadow-xs border-l-2 border-primary dark:bg-primary/20"
+                : "text-foreground/80 hover:bg-accent/60 hover:text-foreground border-l-2 border-transparent";
+
+              const levelWeightClass = isMainTitle
+                ? "font-medium"
+                : "text-muted-foreground font-normal text-[11.5px]";
 
               return (
                 <button
                   key={`${h.id}-${index}`}
+                  ref={(el) => {
+                    if (el) {
+                      itemRefs.current.set(h.id, el);
+                    } else {
+                      itemRefs.current.delete(h.id);
+                    }
+                  }}
                   onClick={() => {
-                    onSelectHeading(h.text, h.level);
+                    onSelectHeading(h.text, h.level, h.id);
                     if (
                       typeof window !== "undefined" &&
                       window.innerWidth < 640
@@ -127,10 +128,18 @@ export function OutlineSidebar({
                       onClose();
                     }
                   }}
-                  className={`w-full text-left py-1.5 px-2 hover:bg-accent/60 rounded truncate transition-colors font-sans ${indentClass}`}
+                  className={`w-full group text-left py-1.5 pr-2 rounded-r-lg truncate transition-all duration-150 font-sans flex items-center justify-between gap-1.5 ${indentPadding} ${activeClasses} ${levelWeightClass}`}
                   title={`H${h.level}: ${h.text}`}
                 >
-                  <span className="truncate">{h.text}</span>
+                  <span className="truncate flex items-center gap-1.5">
+                    {isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 animate-pulse" />
+                    )}
+                    <span className="truncate">{h.text}</span>
+                  </span>
+                  <span className="opacity-0 group-hover:opacity-60 text-[9px] font-mono text-muted-foreground shrink-0 uppercase">
+                    H{h.level}
+                  </span>
                 </button>
               );
             })

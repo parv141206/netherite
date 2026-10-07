@@ -477,12 +477,23 @@ export function CodeBlockView({
   // CASE 1: Standard Code Block (non-diagram)
   // ==========================================
   if (!isDiagram) {
+    const rawLang = language.startsWith("yaml frontmatter") ? "frontmatter" : language || "code";
+    const [primaryLang, ...titleParts] = rawLang.split(/\s+/);
+    const extraTitle = titleParts.join(" ");
+
     return (
-      <NodeViewWrapper className="relative group/code my-4 rounded-xl border border-border/70 bg-muted/20 dark:bg-muted/10 overflow-hidden shadow-xs">
+      <NodeViewWrapper className="relative group/code my-3 rounded-xl border border-border/70 bg-muted/20 dark:bg-muted/10 overflow-hidden shadow-xs">
         <div className="flex items-center justify-between px-3 py-1.5 bg-muted/60 dark:bg-muted/40 border-b border-border/50 text-xs font-mono text-muted-foreground select-none">
-          <span className="font-semibold uppercase tracking-wider text-[10px] text-foreground/80">
-            {language.startsWith("yaml frontmatter") ? "frontmatter" : language || "code"}
-          </span>
+          <div className="flex items-center gap-2 truncate">
+            <span className="font-semibold uppercase tracking-wider text-[10px] text-foreground/80">
+              {primaryLang}
+            </span>
+            {extraTitle && (
+              <span className="text-[10px] text-muted-foreground/80 font-normal truncate">
+                {extraTitle}
+              </span>
+            )}
+          </div>
           <button
             onClick={handleCopy}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-background/80 hover:text-foreground transition-all text-[11px]"
@@ -501,7 +512,7 @@ export function CodeBlockView({
             )}
           </button>
         </div>
-        <pre className="p-3.5 font-mono text-xs overflow-x-auto m-0 whitespace-pre leading-relaxed text-foreground max-w-full">
+        <pre className="!m-0 !p-3.5 !border-0 !bg-transparent font-mono text-xs overflow-x-auto whitespace-pre leading-relaxed text-foreground max-w-full">
           <NodeViewContent as="div" className="outline-none block w-full whitespace-pre font-mono" />
         </pre>
       </NodeViewWrapper>

@@ -408,6 +408,23 @@ html {
   tab-size: 2;
 }
 
+/* Reset nested pre elements inside TipTap CodeBlockView NodeViews to eliminate double borders and excessive y-margins */
+.ProseMirror [data-node-view-wrapper] pre,
+.ProseMirror .group\/code pre {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0.75rem 1rem !important;
+  line-height: 1.6;
+}
+
+.ProseMirror [data-node-view-wrapper].group\/code,
+.ProseMirror .group\/code {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
 .ProseMirror pre code {
   background: transparent;
   border: none;

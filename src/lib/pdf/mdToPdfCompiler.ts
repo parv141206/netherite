@@ -158,6 +158,14 @@ export async function compileMarkdownForPdf(
   // Normalize CRLF to LF
   text = text.replace(/\r\n/g, "\n");
 
+  // Ensure blank line between closing/self-closing HTML blocks and following markdown blocks (code fences, headings, lists)
+  // In CommonMark, an HTML block absorbs subsequent lines until a blank line. If a code fence or heading follows an HTML tag
+  // without an empty line, markdown parsing is suspended and the entire code fence is treated as raw HTML, breaking the note!
+  text = text.replace(
+    /(<\/(?:center|div|p|h[1-6]|figure|section|table|article|aside|header|footer|blockquote)>|<img\b[^>]*\/?>)\s*\n([ \t]*[`~#\-*+>|0-9])/gi,
+    "$1\n\n$2"
+  );
+
   // Compute word count and reading time
   const cleanWords = text.replace(/```[\s\S]*?```/g, "").match(/\b\w+\b/g) ?? [];
   const wordCount = cleanWords.length;
@@ -172,7 +180,7 @@ export async function compileMarkdownForPdf(
 
   // 1. Extract fenced code blocks (supporting arbitrary backticks/tildes, trailing spaces, CRLF)
   text = text.replace(
-    /(?:^|\n)(`{3,}|~{3,})([^\n`~]*)\n([\s\S]*?)\n\1(?:\n|$)/g,
+    /(?:^|\n)(`{3,}|~{3,})([^\n`~]*)\n([\s\S]*?)\n\1[ \t]*(?:\n|$)/g,
     (_, _fence: string, langSpec: string, code: string) => {
       const cleanLang = (langSpec ?? "").trim().split(/\s+/)[0]?.toLowerCase() ?? "";
       if (cleanLang === "mermaid") {
@@ -199,7 +207,7 @@ export async function compileMarkdownForPdf(
   });
 
   // 3. Extract inline math $ ... $
-  text = text.replace(/(?<!\\)\$([^\n$]+?)(?<!\\)\$/g, (_, latex) => {
+  text = text.replace(/(?<![\$\w\\])\$([^\s\$](?:[^\$\n]*?[^\s\$])?)\$(?![\$\w\d])/g, (_, latex) => {
     const placeholder = `<!--NETHERITE-MATH-INLINE-${mathBlocks.length}-->`;
     mathBlocks.push({ latex: latex.trim(), isDisplay: false, placeholder });
     return placeholder;

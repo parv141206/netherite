@@ -201,5 +201,40 @@ End of note.`;
     );
     expect(splitParagraphWithCode).toBeUndefined();
   });
+
+  it("converts single digit and numeric inline math like $1$ to math", () => {
+    const input = "• I/O Ports per Device: $1$ port per host, $n$ ports on central switch";
+    const preprocessed = preprocessMarkdownMath(input);
+    expect(preprocessed).toContain('data-type="math-inline"');
+    expect(preprocessed).toContain('data-latex="1"');
+    expect(preprocessed).toContain('data-latex="n"');
+
+    const postprocessed = postprocessMathMarkdown(preprocessed);
+    expect(postprocessed).toContain("$1$");
+    expect(postprocessed).toContain("$n$");
+  });
+
+  it("preserves code block and headings following HTML blocks like <center> or <img>", async () => {
+    const input = `<center><h3>Coaxial Cable</h3></center>
+\`\`\`plaintext COAXIAL CABLE CONCENTRIC CROSS-SECTION
+┌───┐ 1. Outer Protective Plastic
+Jacket │ │ ┌───┐ │ │ 2. Braided Metallic Shield
+└───┘
+\`\`\`
+
+##### 1. Why Coaxial Construction is Special
+
+In ordinary parallel wires...`;
+
+    const preprocessed = preprocessMarkdownMath(input);
+    expect(preprocessed).toContain("```plaintext COAXIAL CABLE CONCENTRIC CROSS-SECTION");
+    expect(preprocessed).toContain("##### 1. Why Coaxial Construction is Special");
+
+    const { html, headings } = await compileMarkdownForPdf(input);
+    expect(html).toContain("pdf-code-container");
+    expect(html).toContain("pdf-h5");
+    expect(html).toContain("Why Coaxial Construction is Special");
+    expect(headings.some((h) => h.text.includes("Why Coaxial Construction is Special"))).toBe(true);
+  });
 });
 

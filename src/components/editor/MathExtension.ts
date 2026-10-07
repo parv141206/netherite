@@ -113,8 +113,7 @@ export function insertMathTextIntoEditor(editor: any, text: string) {
         } else if (
           sub.startsWith("$") &&
           sub.endsWith("$") &&
-          sub.length > 2 &&
-          !/^\$\d+(\.\d+)?\$$/.test(sub)
+          sub.length > 2
         ) {
           const latex = cleanLatexString(sub.slice(1, -1));
           const node = schema.nodes.mathInline?.create({ latex });
@@ -177,9 +176,17 @@ export function normalizeDriveImageUrls(content: string): string {
 export function preprocessMarkdownMath(content: string): string {
   if (!content) return "";
 
+  // 0a. Ensure blank line between closing/self-closing HTML blocks and following markdown blocks (code fences, headings, lists)
+  // In CommonMark, an HTML block absorbs subsequent lines until a blank line. If a code fence or heading follows an HTML tag
+  // without an empty line, markdown parsing is suspended and the entire code fence is treated as raw HTML, breaking the note!
+  let s = content.replace(
+    /(<\/(?:center|div|p|h[1-6]|figure|section|table|article|aside|header|footer|blockquote)>|<img\b[^>]*\/?>)\s*\n([ \t]*[`~#\-*+>|0-9])/gi,
+    "$1\n\n$2"
+  );
+
   // 1. Protect code blocks and inline code from regex transformations
   const codeBlocks: string[] = [];
-  let s = content.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+  s = s.replace(/(?:^|\n)(`{3,}|~{3,})[^\n]*\n[\s\S]*?\n\1[ \t]*(?=\n|$)|`[^`\n]+`/g, (match) => {
     const placeholder = `___NETHERITE_CB_${codeBlocks.length}___`;
     codeBlocks.push(match);
     return placeholder;
@@ -244,7 +251,6 @@ export function preprocessMarkdownMath(content: string): string {
 
   // 10. Inline math: $...$ (strict single-line, non-whitespace boundaries, not currency or solitary $$)
   s = s.replace(/(?<![\$\w\\])\$([^\s\$](?:[^\$\n]*?[^\s\$])?)\$(?![\$\w\d])/g, (match, latex) => {
-    if (/^\s*\d+(\.\d+)?\s*$/.test(latex)) return match;
     const clean = cleanLatexString(latex);
     if (!clean) return match;
     return `<span data-type="math-inline" data-latex="${escapeHtmlAttr(clean)}"></span>`;
@@ -372,7 +378,7 @@ function parseInlineMathToNodes(text: string, schema: any, outNodes: any[]): boo
     const latex = match[1] || match[2] || match[3] || match[4] || match[5] || "";
     const clean = cleanLatexString(latex);
 
-    if (!clean || /^\d+(\.\d+)?$/.test(clean)) {
+    if (!clean) {
       continue;
     }
 

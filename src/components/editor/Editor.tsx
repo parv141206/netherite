@@ -1857,6 +1857,7 @@ export function Editor({
 
       {/* Full-width scroll container so scrollbar docks at window/card edge */}
       <div
+        data-editor-scroll-container="true"
         className="flex-1 w-full overflow-y-auto transition-colors duration-200"
         style={{ filter: "var(--editor-filter, none)" }}
       >

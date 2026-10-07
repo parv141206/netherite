@@ -727,6 +727,7 @@ export function calculateSmartPageBreaks(
     isHeading: boolean;
     isBlock: boolean;
     isCodeLine: boolean;
+    isParagraph: boolean;
   }
 
   const boxes: Box[] = elements.map((el) => {
@@ -750,6 +751,7 @@ export function calculateSmartPageBreaks(
         el.classList.contains("pdf-math-display") ||
         el.classList.contains("pdf-code-container"),
       isCodeLine: el.classList.contains("pdf-code-line"),
+      isParagraph: el.classList.contains("pdf-paragraph"),
     };
   });
 
@@ -776,69 +778,99 @@ export function calculateSmartPageBreaks(
       continue;
     }
 
-    // 2. Find natural break point <= maxTargetY
+    // Target fill threshold: only allow snapping backwards to an earlier element boundary
+    // if the page is already at least 65-70% full, preventing massive voids / half-empty pages.
+    const minFillY = currentY + Math.round(maxPageHeightPx * 0.68);
     let bestCutY = maxTargetY;
     let snapped = false;
 
-    // A. Check for table rows crossing maxTargetY
-    const crossingRow = boxes.find(
-      (b) => b.isRow && b.top < maxTargetY && b.bottom > maxTargetY
+    // A. Check for orphan headings near bottom of page (within 120px of maxTargetY)
+    const orphanHeading = boxes.find(
+      (b) =>
+        b.isHeading &&
+        b.top >= minFillY &&
+        b.top < maxTargetY &&
+        maxTargetY - b.top < 120
     );
-    if (crossingRow && crossingRow.top > currentY + 80) {
-      bestCutY = crossingRow.top;
+    if (orphanHeading) {
+      bestCutY = orphanHeading.top;
       snapped = true;
     }
 
-    // B. Check for headings crossing or orphan headings within 85px of page bottom
-    if (!snapped) {
-      const orphanHeading = boxes.find(
-        (b) =>
-          b.isHeading &&
-          b.top > currentY + 80 &&
-          b.top < maxTargetY &&
-          maxTargetY - b.top < 85
-      );
-      if (orphanHeading) {
-        bestCutY = orphanHeading.top;
-        snapped = true;
-      }
-    }
-
-    // C. Check for blocks (callouts, diagrams, images, math, code blocks)
+    // B. Check for blocks that started in the bottom 32% of the page and cross maxTargetY
     if (!snapped) {
       const crossingBlock = boxes.find(
-        (b) => b.isBlock && b.top < maxTargetY && b.bottom > maxTargetY
+        (b) =>
+          b.isBlock &&
+          b.top >= minFillY &&
+          b.top < maxTargetY &&
+          b.bottom > maxTargetY &&
+          b.height <= maxPageHeightPx
       );
       if (crossingBlock) {
-        if (crossingBlock.height <= maxPageHeightPx && crossingBlock.top > currentY + 80) {
-          bestCutY = crossingBlock.top;
-          snapped = true;
-        } else if (crossingBlock.el.classList.contains("pdf-code-container")) {
-          // For long code containers, find the code line crossing maxTargetY
-          const crossingLine = boxes.find(
-            (b) => b.isCodeLine && b.top < maxTargetY && b.bottom > maxTargetY
-          );
-          if (crossingLine && crossingLine.top > currentY + 80) {
-            bestCutY = crossingLine.top;
-            snapped = true;
-          }
-        }
-      }
-    }
-
-    // D. Check for list items
-    if (!snapped) {
-      const crossingLi = boxes.find(
-        (b) => b.el.tagName.toLowerCase() === "li" && b.top < maxTargetY && b.bottom > maxTargetY
-      );
-      if (crossingLi && crossingLi.top > currentY + 60) {
-        bestCutY = crossingLi.top;
+        bestCutY = crossingBlock.top;
         snapped = true;
       }
     }
 
-    // Ensure progress: never cut less than 120px from currentY
-    if (bestCutY <= currentY + 120) {
+    // C. For blocks or content spanning across maxTargetY where block started before minFillY:
+    // Break cleanly at code lines, table rows, list items, or paragraph boundaries before maxTargetY
+    if (!snapped) {
+      // Check code line boundary
+      const codeLineBefore = boxes
+        .filter((b) => b.isCodeLine && b.top >= minFillY && b.bottom <= maxTargetY)
+        .pop();
+      if (codeLineBefore) {
+        bestCutY = codeLineBefore.bottom;
+        snapped = true;
+      }
+    }
+
+    if (!snapped) {
+      // Check table row boundary
+      const rowBefore = boxes
+        .filter((b) => b.isRow && b.top >= minFillY && b.bottom <= maxTargetY)
+        .pop();
+      if (rowBefore) {
+        bestCutY = rowBefore.bottom;
+        snapped = true;
+      }
+    }
+
+    if (!snapped) {
+      // Check list item boundary
+      const liBefore = boxes
+        .filter(
+          (b) =>
+            b.el.tagName.toLowerCase() === "li" &&
+            b.top >= minFillY &&
+            b.bottom <= maxTargetY
+        )
+        .pop();
+      if (liBefore) {
+        bestCutY = liBefore.bottom;
+        snapped = true;
+      }
+    }
+
+    if (!snapped) {
+      // Check paragraph boundary
+      const pBefore = boxes
+        .filter(
+          (b) =>
+            (b.isParagraph || b.el.classList.contains("pdf-paragraph")) &&
+            b.top >= minFillY &&
+            b.bottom <= maxTargetY
+        )
+        .pop();
+      if (pBefore) {
+        bestCutY = pBefore.bottom;
+        snapped = true;
+      }
+    }
+
+    // Ensure forward progress: never cut less than 150px from currentY
+    if (bestCutY <= currentY + 150) {
       bestCutY = maxTargetY;
     }
 
@@ -983,7 +1015,10 @@ export async function generatePdfFile(
             const isKatex =
               (el as HTMLLinkElement).href?.includes("katex") ||
               el.textContent?.includes(".katex");
-            if (!isPdfStyle && !isKatex) {
+            const isFonts =
+              (el as HTMLLinkElement).href?.includes("fonts.googleapis.com") ||
+              (el as HTMLLinkElement).href?.includes("fonts.gstatic.com");
+            if (!isPdfStyle && !isKatex && !isFonts) {
               el.remove();
             }
           });

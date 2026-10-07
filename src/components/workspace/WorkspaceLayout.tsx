@@ -2844,39 +2844,47 @@ export function WorkspaceLayout({
     });
   };
 
-  // Extract headings from active document for Outline sidebar
+  // Extract headings sequentially in document order, ignoring headings inside code blocks
   const getHeadings = (content: string): HeadingItem[] => {
     if (!content) return [];
     const headings: HeadingItem[] = [];
-
-    // 1. Match HTML headings <h1>..<h6>
-    const htmlRegex = /<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
-    let match;
-    let index = 0;
-
-    while ((match = htmlRegex.exec(content)) !== null) {
-      const level = parseInt(match[1] || "1", 10);
-      const text = (match[2] || "").replace(/<[^>]*>/g, "").trim();
-      if (text) {
-        headings.push({
-          id: `heading-html-${index++}`,
-          text,
-          level,
-        });
-      }
-    }
-
-    // 2. Match Markdown headings # .. ######
     const lines = content.split("\n");
-    lines.forEach((line, idx) => {
-      const mdMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    let inCodeBlock = false;
+    let headingCounter = 0;
+
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
+        inCodeBlock = !inCodeBlock;
+        return;
+      }
+      if (inCodeBlock) return;
+
+      // Match markdown heading (#..######)
+      const mdMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
       if (mdMatch && mdMatch[1] && mdMatch[2]) {
         const text = mdMatch[2].replace(/<[^>]*>/g, "").trim();
-        if (text && !headings.some((h) => h.text === text)) {
+        if (text) {
+          headingCounter++;
           headings.push({
-            id: `heading-md-${idx}`,
+            id: `heading-${headingCounter}`,
             text,
             level: mdMatch[1].length,
+          });
+        }
+        return;
+      }
+
+      // Match HTML heading <h1>..<h6>
+      const htmlMatch = trimmed.match(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/i);
+      if (htmlMatch && htmlMatch[1] && htmlMatch[2]) {
+        const text = htmlMatch[2].replace(/<[^>]*>/g, "").trim();
+        if (text) {
+          headingCounter++;
+          headings.push({
+            id: `heading-${headingCounter}`,
+            text,
+            level: parseInt(htmlMatch[1], 10),
           });
         }
       }
@@ -2886,6 +2894,85 @@ export function WorkspaceLayout({
   };
 
   const documentHeadings = getHeadings(noteContent);
+  const [activeHeadingId, setActiveHeadingId] = useState<string>("");
+
+  // Track scroll position in editor to highlight current title/subtitle in OutlineSidebar
+  useEffect(() => {
+    if (!isOutlineOpen || !isCurrentMarkdown) return;
+
+    let cleanup: (() => void) | undefined;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const attachListener = () => {
+      const scrollContainer = document.querySelector<HTMLElement>(
+        '[data-editor-scroll-container="true"]'
+      );
+      if (!scrollContainer) {
+        timer = setTimeout(attachListener, 150);
+        return;
+      }
+
+      let ticking = false;
+
+      const handleScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          const headingElements = Array.from(
+            scrollContainer.querySelectorAll<HTMLElement>(
+              ".ProseMirror h1, .ProseMirror h2, .ProseMirror h3, .ProseMirror h4, .ProseMirror h5, .ProseMirror h6, [data-type='heading']"
+            )
+          );
+
+          if (headingElements.length === 0) return;
+
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const triggerTop = containerRect.top + 120;
+
+          let currentActive: HTMLElement | null = null;
+
+          for (const el of headingElements) {
+            const rect = el.getBoundingClientRect();
+            if (rect.top <= triggerTop) {
+              currentActive = el;
+            } else {
+              break;
+            }
+          }
+
+          if (!currentActive && headingElements.length > 0) {
+            currentActive = headingElements[0]!;
+          }
+
+          if (currentActive) {
+            const text = (currentActive.textContent || "").trim().toLowerCase();
+            const match = documentHeadings.find((h) => {
+              const hText = h.text.trim().toLowerCase();
+              return hText === text || text.includes(hText) || hText.includes(text);
+            });
+            if (match) {
+              setActiveHeadingId(match.id);
+            }
+          }
+        });
+      };
+
+      scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+      handleScroll();
+
+      cleanup = () => {
+        scrollContainer.removeEventListener("scroll", handleScroll);
+      };
+    };
+
+    attachListener();
+
+    return () => {
+      clearTimeout(timer);
+      cleanup?.();
+    };
+  }, [isOutlineOpen, isCurrentMarkdown, documentHeadings]);
 
   const handleOpenSyncModal = () => {
     const hasLocalDraft =
@@ -4262,25 +4349,33 @@ export function WorkspaceLayout({
                 isOpen={isOutlineOpen}
                 onClose={() => setIsOutlineOpen(false)}
                 headings={documentHeadings}
-                onSelectHeading={(text) => {
-                  // Smooth scroll to heading element in editor
+                activeHeadingId={activeHeadingId}
+                onSelectHeading={(text, _level, id) => {
+                  const scrollContainer = document.querySelector<HTMLElement>(
+                    '[data-editor-scroll-container="true"]'
+                  );
                   const editorElements = Array.from(
-                    document.querySelectorAll(
-                      "h1, h2, h3, h4, h5, h6, [data-type='heading']",
-                    ),
+                    (scrollContainer || document).querySelectorAll<HTMLElement>(
+                      ".ProseMirror h1, .ProseMirror h2, .ProseMirror h3, .ProseMirror h4, .ProseMirror h5, .ProseMirror h6, [data-type='heading']"
+                    )
                   );
                   const match = editorElements.find((el) => {
                     const elText = (el.textContent || "").trim().toLowerCase();
                     const targetText = text.trim().toLowerCase();
                     return (
-                      elText.includes(targetText) || targetText.includes(elText)
+                      elText === targetText ||
+                      elText.includes(targetText) ||
+                      targetText.includes(elText)
                     );
                   });
                   if (match) {
                     match.scrollIntoView({
                       behavior: "smooth",
-                      block: "center",
+                      block: "start",
                     });
+                    if (id) {
+                      setActiveHeadingId(id);
+                    }
                   }
                 }}
               />
