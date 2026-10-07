@@ -1072,7 +1072,11 @@ export async function getImageAsset(session: any, fileId: string) {
   });
 }
 
-export async function getPdfStream(session: any, fileId: string) {
+export async function getPdfStream(
+  session: any,
+  fileId: string,
+  rangeHeader?: string | null,
+) {
   if (!fileId || fileId.startsWith("temp-")) return null;
   return withRetry(async () => {
     const drive = await getDriveClient(session);
@@ -1081,16 +1085,26 @@ export async function getPdfStream(session: any, fileId: string) {
       fields: "id, name, mimeType, size",
     });
 
+    const requestHeaders: Record<string, string> = {};
+    if (rangeHeader) {
+      requestHeaders["Range"] = rangeHeader;
+    }
+
     const res = await drive.files.get(
       { fileId, alt: "media" },
-      { responseType: "stream" },
+      { headers: requestHeaders, responseType: "stream" },
     );
+
+    const headers = res.headers as Record<string, any> | undefined;
 
     return {
       id: fileId,
       name: meta.data.name ?? "document.pdf",
       mimeType: meta.data.mimeType ?? "application/pdf",
       size: meta.data.size ? parseInt(meta.data.size, 10) : undefined,
+      status: res.status,
+      contentRange: headers ? (headers["content-range"] as string | undefined) : undefined,
+      contentLength: headers ? (headers["content-length"] as string | undefined) : undefined,
       stream: res.data as import("stream").Readable,
     };
   });

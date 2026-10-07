@@ -109,6 +109,8 @@ const COLOR_PALETTE: Array<{
   },
 ];
 
+const EMPTY_HIGHLIGHTS: PdfHighlight[] = [];
+
 interface FloatingMenuState {
   visible: boolean;
   x: number;
@@ -171,6 +173,17 @@ export function PdfViewer({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
+  // Stable references for parent callbacks to prevent infinite re-render loops
+  const onOutlineExtractedRef = useRef(onOutlineExtracted);
+  useEffect(() => {
+    onOutlineExtractedRef.current = onOutlineExtracted;
+  }, [onOutlineExtracted]);
+
+  const onHighlightsChangedRef = useRef(onHighlightsChanged);
+  useEffect(() => {
+    onHighlightsChangedRef.current = onHighlightsChanged;
+  }, [onHighlightsChanged]);
+
   // Cloud annotations TRPC mutation & query
   const saveAnnotationsMutation = api.notes.savePdfAnnotations.useMutation();
   const { data: driveAnnotations } = api.notes.getPdfAnnotations.useQuery(
@@ -185,14 +198,14 @@ export function PdfViewer({
   useEffect(() => {
     const loaded = getPdfHighlights(fileId);
     setHighlights(loaded);
-    onHighlightsChanged?.(loaded);
+    onHighlightsChangedRef.current?.(loaded);
 
     const handleUpdate = (e: Event) => {
       const customEvent = e as CustomEvent<{ fileId: string }>;
       if (customEvent.detail?.fileId === fileId) {
         const fresh = getPdfHighlights(fileId);
         setHighlights(fresh);
-        onHighlightsChanged?.(fresh);
+        onHighlightsChangedRef.current?.(fresh);
       }
     };
 
@@ -200,7 +213,7 @@ export function PdfViewer({
     return () => {
       window.removeEventListener(PDF_HIGHLIGHTS_UPDATED_EVENT, handleUpdate);
     };
-  }, [fileId, onHighlightsChanged]);
+  }, [fileId]);
 
   // Merge remote Drive annotations when retrieved
   useEffect(() => {
@@ -208,11 +221,11 @@ export function PdfViewer({
       setHighlights((prev) => {
         const merged = mergePdfHighlights(prev, driveAnnotations.highlights);
         savePdfHighlights(fileId, merged);
-        onHighlightsChanged?.(merged);
+        onHighlightsChangedRef.current?.(merged);
         return merged;
       });
     }
-  }, [driveAnnotations, fileId, onHighlightsChanged]);
+  }, [driveAnnotations, fileId]);
 
   // Save annotations to Google Drive (manual or debounced)
   const triggerSaveToDrive = useCallback(
@@ -414,6 +427,89 @@ export function PdfViewer({
     };
   }, [fileId, highlights]);
 
+  // Non-blocking background outline parsing
+  const parseOutlineInBackground = useCallback(
+    async (doc: PDFDocumentProxy) => {
+      try {
+        const rawOutline = await doc.getOutline();
+        if (!rawOutline || rawOutline.length === 0) {
+          const fallback: HeadingItem[] = Array.from(
+            { length: Math.min(doc.numPages, 50) },
+            (_, i) => ({
+              id: `page-${i + 1}`,
+              text: `Page ${i + 1}`,
+              level: 1,
+            }),
+          );
+          onOutlineExtractedRef.current?.(fallback);
+          return;
+        }
+
+        const parsedHeadings: HeadingItem[] = [];
+        const MAX_ITEMS = 150;
+        let count = 0;
+
+        const parseNodes = async (nodes: any[], depth = 1) => {
+          for (let i = 0; i < nodes.length; i++) {
+            if (count >= MAX_ITEMS) break;
+            const node = nodes[i];
+            if (!node || !node.title) continue;
+
+            let targetPageNumber = 1;
+            try {
+              if (typeof node.dest === "string") {
+                const destArray = await doc.getDestination(node.dest);
+                if (destArray && destArray[0]) {
+                  const idx = await doc.getPageIndex(destArray[0]);
+                  targetPageNumber = idx + 1;
+                }
+              } else if (Array.isArray(node.dest) && node.dest[0]) {
+                const idx = await doc.getPageIndex(node.dest[0]);
+                targetPageNumber = idx + 1;
+              }
+            } catch {
+              // destination resolution fallback
+            }
+
+            parsedHeadings.push({
+              id: `page-${targetPageNumber}`,
+              text: String(node.title).trim(),
+              level: Math.min(depth, 3),
+            });
+            count++;
+
+            // Yield control back to browser to keep UI silky smooth
+            if (count % 10 === 0) {
+              await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+
+            if (node.items && node.items.length > 0 && depth < 3) {
+              await parseNodes(node.items, depth + 1);
+            }
+          }
+        };
+
+        await parseNodes(rawOutline);
+        if (parsedHeadings.length > 0) {
+          onOutlineExtractedRef.current?.(parsedHeadings);
+        } else {
+          const fallback: HeadingItem[] = Array.from(
+            { length: Math.min(doc.numPages, 50) },
+            (_, i) => ({
+              id: `page-${i + 1}`,
+              text: `Page ${i + 1}`,
+              level: 1,
+            }),
+          );
+          onOutlineExtractedRef.current?.(fallback);
+        }
+      } catch (e) {
+        console.warn("Could not extract PDF outline:", e);
+      }
+    },
+    [],
+  );
+
   // Load PDF Document
   const loadDocument = useCallback(async () => {
     try {
@@ -423,8 +519,9 @@ export function PdfViewer({
       const url = `/api/notes/pdf?id=${encodeURIComponent(fileId)}`;
       const loadingTask = pdfjsLib.getDocument({
         url,
-        rangeChunkSize: 65536,
-        disableAutoFetch: false,
+        rangeChunkSize: 65536 * 4,
+        disableAutoFetch: true,
+        disableStream: false,
       });
 
       const doc = await loadingTask.promise;
@@ -436,6 +533,14 @@ export function PdfViewer({
       const viewport = firstPage.getViewport({ scale: 1 });
       setBasePageWidth(viewport.width);
       setBasePageHeight(viewport.height);
+
+      // Immediately display document without blocking on outline
+      setIsLoading(false);
+
+      // Run outline extraction in background
+      setTimeout(() => {
+        void parseOutlineInBackground(doc);
+      }, 50);
 
       // Restore last visited page
       const savedLastPage = getPdfLastPage(fileId);
@@ -450,77 +555,12 @@ export function PdfViewer({
           }
         }, 200);
       }
-
-      // Extract outline / bookmarks
-      try {
-        const rawOutline = await doc.getOutline();
-        if (rawOutline && rawOutline.length > 0) {
-          const parsedHeadings: HeadingItem[] = [];
-
-          const parseNodes = async (nodes: any[], depth = 1) => {
-            for (let i = 0; i < nodes.length; i++) {
-              const node = nodes[i];
-              let targetPageNumber = 1;
-
-              if (typeof node.dest === "string") {
-                const destArray = await doc.getDestination(node.dest);
-                if (destArray && destArray[0]) {
-                  const idx = await doc.getPageIndex(destArray[0]);
-                  targetPageNumber = idx + 1;
-                }
-              } else if (Array.isArray(node.dest) && node.dest[0]) {
-                const idx = await doc.getPageIndex(node.dest[0]);
-                targetPageNumber = idx + 1;
-              }
-
-              parsedHeadings.push({
-                id: `page-${targetPageNumber}`,
-                text: node.title,
-                level: Math.min(depth, 3),
-              });
-
-              if (node.items && node.items.length > 0) {
-                await parseNodes(node.items, depth + 1);
-              }
-            }
-          };
-
-          await parseNodes(rawOutline);
-          if (parsedHeadings.length > 0) {
-            onOutlineExtracted?.(parsedHeadings);
-          } else {
-            const fallback: HeadingItem[] = Array.from(
-              { length: Math.min(doc.numPages, 40) },
-              (_, i) => ({
-                id: `page-${i + 1}`,
-                text: `Page ${i + 1}`,
-                level: 1,
-              }),
-            );
-            onOutlineExtracted?.(fallback);
-          }
-        } else {
-          const fallback: HeadingItem[] = Array.from(
-            { length: Math.min(doc.numPages, 40) },
-            (_, i) => ({
-              id: `page-${i + 1}`,
-              text: `Page ${i + 1}`,
-              level: 1,
-            }),
-          );
-          onOutlineExtracted?.(fallback);
-        }
-      } catch (e) {
-        console.warn("Could not extract PDF outline:", e);
-      }
-
-      setIsLoading(false);
     } catch (err: any) {
       console.error("Error loading PDF:", err);
       setLoadingError(err?.message || "Failed to parse PDF document");
       setIsLoading(false);
     }
-  }, [fileId, onOutlineExtracted]);
+  }, [fileId, parseOutlineInBackground]);
 
   useEffect(() => {
     void loadDocument();
@@ -778,6 +818,20 @@ export function PdfViewer({
     );
   }, [fileId]);
 
+  // Fast O(1) lookup of highlights by page
+  const highlightsByPage = useMemo(() => {
+    const map = new Map<number, PdfHighlight[]>();
+    for (const h of highlights) {
+      const list = map.get(h.pageNumber);
+      if (list) {
+        list.push(h);
+      } else {
+        map.set(h.pageNumber, [h]);
+      }
+    }
+    return map;
+  }, [highlights]);
+
   return (
     <div
       className={`relative flex h-full w-full flex-col select-none overflow-hidden transition-colors ${
@@ -1013,23 +1067,51 @@ export function PdfViewer({
 
         {pdfDoc && numPages > 0 && (
           <div className="flex flex-col items-center gap-6 pb-20">
-            {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
-              <VirtualPdfPage
-                key={`page-${pageNum}-${scale}`}
-                ref={(el) => {
-                  if (el) pageRefs.current.set(pageNum, el);
-                  else pageRefs.current.delete(pageNum);
-                }}
-                pdfDoc={pdfDoc}
-                pageNumber={pageNum}
-                scale={scale}
-                defaultWidth={basePageWidth}
-                defaultHeight={basePageHeight}
-                isNightMode={isNightMode}
-                highlights={highlights.filter((h) => h.pageNumber === pageNum)}
-                onHighlightClick={handleOpenHighlightAction}
-              />
-            ))}
+            {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => {
+              // Virtualization window: mount actual canvas for pages within +/- 6 of currentPage
+              const isNearby = Math.abs(pageNum - currentPage) <= 6;
+              if (!isNearby) {
+                return (
+                  <div
+                    key={`page-${pageNum}`}
+                    ref={(el) => {
+                      if (el) pageRefs.current.set(pageNum, el);
+                      else pageRefs.current.delete(pageNum);
+                    }}
+                    data-page-number={pageNum}
+                    style={{
+                      width: `${Math.floor(basePageWidth * scale)}px`,
+                      height: `${Math.floor(basePageHeight * scale)}px`,
+                    }}
+                    className={`pdf-page-container relative shadow-md rounded-sm select-none flex items-center justify-center font-mono text-xs text-muted-foreground/30 ${
+                      isNightMode
+                        ? "bg-[#18181b] border border-zinc-800"
+                        : "bg-white border border-border/40"
+                    }`}
+                  >
+                    Page {pageNum}
+                  </div>
+                );
+              }
+
+              return (
+                <VirtualPdfPage
+                  key={`page-${pageNum}`}
+                  ref={(el) => {
+                    if (el) pageRefs.current.set(pageNum, el);
+                    else pageRefs.current.delete(pageNum);
+                  }}
+                  pdfDoc={pdfDoc}
+                  pageNumber={pageNum}
+                  scale={scale}
+                  defaultWidth={basePageWidth}
+                  defaultHeight={basePageHeight}
+                  isNightMode={isNightMode}
+                  highlights={highlightsByPage.get(pageNum) || EMPTY_HIGHLIGHTS}
+                  onHighlightClick={handleOpenHighlightAction}
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -1134,8 +1216,9 @@ interface VirtualPdfPageProps {
   onHighlightClick: (e: React.MouseEvent, h: PdfHighlight) => void;
 }
 
-const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
-  function VirtualPdfPage(
+const VirtualPdfPage = React.memo(
+  React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
+    function VirtualPdfPage(
     {
       pdfDoc,
       pageNumber,
@@ -1333,5 +1416,5 @@ const VirtualPdfPage = React.forwardRef<HTMLDivElement, VirtualPdfPageProps>(
         )}
       </div>
     );
-  },
+  }),
 );

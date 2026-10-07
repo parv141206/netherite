@@ -3060,6 +3060,13 @@ export function WorkspaceLayout({
       window.removeEventListener(PDF_HIGHLIGHTS_UPDATED_EVENT, handlePdfHighlightsUpdated);
     };
   }, [activeTabId]);
+  const handlePdfHighlightsChanged = useCallback((fresh: PdfHighlight[]) => {
+    setPdfHighlights(fresh);
+  }, []);
+
+  const handlePdfHeadingsExtracted = useCallback((headings: HeadingItem[]) => {
+    setPdfHeadings(headings);
+  }, []);
 
   const pdfHighlightsAsItems: HighlightItem[] = useMemo(() => {
     return pdfHighlights.map((h) => ({
@@ -4094,8 +4101,8 @@ export function WorkspaceLayout({
                         key={activeTabId}
                         fileId={currentNote?.id || ""}
                         fileName={currentNote?.name || "document.pdf"}
-                        onOutlineExtracted={setPdfHeadings}
-                        onHighlightsChanged={(fresh) => setPdfHighlights(fresh)}
+                        onOutlineExtracted={handlePdfHeadingsExtracted}
+                        onHighlightsChanged={handlePdfHighlightsChanged}
                       />
                     ) : isUmlFile(currentNote) ? (
                       isDocumentLoading && isEmptyApollon(noteContent) ? (
