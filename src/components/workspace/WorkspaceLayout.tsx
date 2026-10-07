@@ -19,6 +19,7 @@ import { UmlCanvas } from "~/components/canvas/UmlCanvas";
 import { MermaidCanvas } from "~/components/canvas/MermaidCanvas";
 import { TikzCanvas } from "~/components/canvas/TikzCanvas";
 import { ImageViewer } from "./ImageViewer";
+import { PdfViewer } from "./PdfViewer";
 import { SettingsModal } from "./SettingsModal";
 import { OutlineSidebar, type HeadingItem, type HighlightItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
@@ -124,6 +125,14 @@ const isEmptyExcalidraw = (content?: string | null): boolean => {
   } catch {
     return true;
   }
+};
+
+const isPdfFile = (item?: DriveItem | null): boolean => {
+  if (!item) return false;
+  return (
+    item.mimeType === "application/pdf" ||
+    Boolean(item.name?.toLowerCase().endsWith(".pdf"))
+  );
 };
 
 const isUmlFile = (item?: DriveItem | null): boolean => {
@@ -836,7 +845,19 @@ export function WorkspaceLayout({
     }
   }, [notesData]);
 
-  // Primary Active Note Content Query
+  const currentNote = localNotes.find((n) => n.id === activeTabId);
+  const currentSplitNote = localNotes.find((n) => n.id === splitTabId);
+  const isCurrentImage =
+    currentNote?.mimeType?.startsWith("image/") ||
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNote?.name || "");
+  const isSplitImage =
+    currentSplitNote?.mimeType?.startsWith("image/") ||
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentSplitNote?.name || "");
+
+  const isCurrentPdf = isPdfFile(currentNote);
+  const isSplitPdf = isPdfFile(currentSplitNote);
+
+  // Primary Active Note Content Query (Bypassed for PDFs and Images)
   const {
     data: fetchedContent,
     isLoading: isLoadingContent,
@@ -845,12 +866,16 @@ export function WorkspaceLayout({
     { id: activeTabId! },
     {
       enabled:
-        !!session?.user && !!activeTabId && !activeTabId.startsWith("temp-"),
+        !!session?.user &&
+        !!activeTabId &&
+        !activeTabId.startsWith("temp-") &&
+        !isCurrentPdf &&
+        !isCurrentImage,
       staleTime: 300000,
     },
   );
 
-  // Split Active Note Content Query
+  // Split Active Note Content Query (Bypassed for PDFs and Images)
   const {
     data: fetchedSplitContent,
     isLoading: isLoadingSplitContent,
@@ -862,7 +887,9 @@ export function WorkspaceLayout({
         !!session?.user &&
         !!splitTabId &&
         !splitTabId.startsWith("temp-") &&
-        isSplitView,
+        isSplitView &&
+        !isSplitPdf &&
+        !isSplitImage,
       staleTime: 300000,
     },
   );
@@ -870,12 +897,16 @@ export function WorkspaceLayout({
   const isDocumentLoading =
     Boolean(activeTabId) &&
     !activeTabId?.startsWith("temp-") &&
+    !isCurrentPdf &&
+    !isCurrentImage &&
     (isLoadingContent || (isFetchingContent && fetchedContent === undefined));
 
   const isSplitDocumentLoading =
     Boolean(splitTabId) &&
     !splitTabId?.startsWith("temp-") &&
     isSplitView &&
+    !isSplitPdf &&
+    !isSplitImage &&
     (isLoadingSplitContent ||
       (isFetchingSplitContent && fetchedSplitContent === undefined));
 
@@ -885,15 +916,6 @@ export function WorkspaceLayout({
       setToastMessage((current) => (current === msg ? null : current));
     }, 3500);
   }, []);
-
-  const currentNote = localNotes.find((n) => n.id === activeTabId);
-  const currentSplitNote = localNotes.find((n) => n.id === splitTabId);
-  const isCurrentImage =
-    currentNote?.mimeType?.startsWith("image/") ||
-    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentNote?.name || "");
-  const isSplitImage =
-    currentSplitNote?.mimeType?.startsWith("image/") ||
-    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(currentSplitNote?.name || "");
 
   const isCurrentDrawing =
     currentNote?.name?.endsWith(".excalidraw") ||
@@ -907,7 +929,8 @@ export function WorkspaceLayout({
     !isCurrentUml &&
     !isCurrentMermaid &&
     !isCurrentTikz &&
-    !isCurrentImage;
+    !isCurrentImage &&
+    !isCurrentPdf;
 
   const isSplitDrawing =
     currentSplitNote?.name?.endsWith(".excalidraw") ||
@@ -921,10 +944,11 @@ export function WorkspaceLayout({
     !isSplitUml &&
     !isSplitMermaid &&
     !isSplitTikz &&
-    !isSplitImage;
+    !isSplitImage &&
+    !isSplitPdf;
 
   const isDirty = useMemo(() => {
-    if (isCurrentImage || !activeTabId) return false;
+    if (isCurrentImage || isCurrentPdf || !activeTabId) return false;
     if (noteContent === lastSavedContent) return false;
     if (!noteContent && !lastSavedContent) return false;
 
@@ -934,6 +958,7 @@ export function WorkspaceLayout({
     return noteContent !== lastSavedContent;
   }, [
     isCurrentImage,
+    isCurrentPdf,
     activeTabId,
     noteContent,
     lastSavedContent,
@@ -1368,6 +1393,11 @@ export function WorkspaceLayout({
       return;
     }
     const currentItem = localNotes.find((n) => n.id === activeTabId);
+    if (isPdfFile(currentItem) || currentItem?.mimeType?.startsWith("image/")) {
+      contentFileIdRef.current = activeTabId;
+      setNoteTitle(currentItem?.name || "");
+      return;
+    }
     const isDrawing =
       currentItem?.name.endsWith(".excalidraw") ||
       currentItem?.mimeType === "application/vnd.excalidraw+json";
@@ -1439,6 +1469,7 @@ export function WorkspaceLayout({
     if (contentFileIdRef.current !== activeTabId) return;
 
     const currentItem = localNotes.find((n) => n.id === activeTabId);
+    if (isPdfFile(currentItem) || currentItem?.mimeType?.startsWith("image/")) return;
     const isDrawing =
       currentItem?.name.endsWith(".excalidraw") ||
       currentItem?.mimeType === "application/vnd.excalidraw+json";
@@ -1517,6 +1548,7 @@ export function WorkspaceLayout({
   useEffect(() => {
     if (!splitTabId) return;
     const currentItem = localNotes.find((n) => n.id === splitTabId);
+    if (isPdfFile(currentItem) || currentItem?.mimeType?.startsWith("image/")) return;
     const isDrawing =
       currentItem?.name.endsWith(".excalidraw") ||
       currentItem?.mimeType === "application/vnd.excalidraw+json";
@@ -2579,6 +2611,11 @@ export function WorkspaceLayout({
 
     contentFileIdRef.current = fileId;
 
+    if (isPdfFile(item) || item?.mimeType?.startsWith("image/")) {
+      setActiveTabId(fileId);
+      return;
+    }
+
     const isDrawing =
       item?.name.endsWith(".excalidraw") ||
       item?.mimeType === "application/vnd.excalidraw+json";
@@ -3588,6 +3625,10 @@ export function WorkspaceLayout({
                         size="xs"
                         className="text-foreground shrink-0"
                       />
+                    ) : isPdfFile(note) ? (
+                      <FileText
+                        className={`h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400 ${isActive ? "opacity-100" : "opacity-70"}`}
+                      />
                     ) : note?.name.endsWith(".excalidraw") ||
                       note?.mimeType === "application/vnd.excalidraw+json" ? (
                       <Palette
@@ -3979,6 +4020,8 @@ export function WorkspaceLayout({
                             <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
                           ) : isCurrentTikz ? (
                             <Activity className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+                          ) : isCurrentPdf ? (
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400" />
                           ) : (
                             <FileText className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                           )}
@@ -4006,6 +4049,12 @@ export function WorkspaceLayout({
                         fileId={currentNote?.id || ""}
                         fileName={currentNote?.name || "image"}
                         mimeType={currentNote?.mimeType}
+                      />
+                    ) : isCurrentPdf ? (
+                      <PdfViewer
+                        key={activeTabId}
+                        fileId={currentNote?.id || ""}
+                        fileName={currentNote?.name || "document.pdf"}
                       />
                     ) : isUmlFile(currentNote) ? (
                       isDocumentLoading && isEmptyApollon(noteContent) ? (
@@ -4204,6 +4253,8 @@ export function WorkspaceLayout({
                             <Workflow className="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
                           ) : isSplitTikz ? (
                             <Activity className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+                          ) : isSplitPdf ? (
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400" />
                           ) : (
                             <FileText className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                           )}
@@ -4258,6 +4309,12 @@ export function WorkspaceLayout({
                           fileId={currentSplitNote?.id || ""}
                           fileName={currentSplitNote?.name || "image"}
                           mimeType={currentSplitNote?.mimeType}
+                        />
+                      ) : isSplitPdf ? (
+                        <PdfViewer
+                          key={splitTabId || "split-pdf"}
+                          fileId={currentSplitNote?.id || ""}
+                          fileName={currentSplitNote?.name || "document.pdf"}
                         />
                       ) : isUmlFile(currentSplitNote) ? (
                         isSplitDocumentLoading &&

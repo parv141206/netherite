@@ -6,7 +6,7 @@ import { FileText, Palette, Network, Workflow, Image as ImageIcon, Activity } fr
 
 interface MacFileLoaderProps {
   fileName?: string;
-  fileType?: "note" | "drawing" | "uml" | "mermaid" | "image" | "tikz";
+  fileType?: "note" | "drawing" | "uml" | "mermaid" | "image" | "tikz" | "pdf";
   message?: string;
 }
 
@@ -17,6 +17,8 @@ export function MacFileLoader({
 }: MacFileLoaderProps) {
   const getIcon = () => {
     switch (fileType) {
+      case "pdf":
+        return <FileText className="w-5 h-5 text-rose-500 dark:text-rose-400" />;
       case "drawing":
         return <Palette className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />;
       case "uml":
@@ -32,7 +34,7 @@ export function MacFileLoader({
     }
   };
 
-  const cleanName = fileName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex|png|jpg|jpeg|gif|webp|svg)$/i, "");
+  const cleanName = fileName.replace(/\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex|png|jpg|jpeg|gif|webp|svg|pdf)$/i, "");
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-background text-foreground relative select-none animate-in fade-in duration-150 overflow-hidden">

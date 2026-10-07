@@ -1029,6 +1029,14 @@ export function Sidebar({
         <Activity className="h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
       );
     }
+    if (
+      mimeType === "application/pdf" ||
+      /\.pdf$/i.test(name)
+    ) {
+      return (
+        <FileText className="h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400" />
+      );
+    }
     return (
       <FileText className="text-muted-foreground/70 group-hover:text-foreground h-3.5 w-3.5 shrink-0 transition-colors" />
     );
@@ -1177,7 +1185,10 @@ export function Sidebar({
       const isImage =
         item.mimeType?.startsWith("image/") ||
         /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(item.name);
-      const displayName = isImage
+      const isPdf =
+        item.mimeType === "application/pdf" ||
+        /\.pdf$/i.test(item.name);
+      const displayName = isImage || isPdf
         ? item.name
         : item.name.replace(
             /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,
@@ -1209,6 +1220,11 @@ export function Sidebar({
                 onCommit={(newName) => {
                   if (isImage) {
                     onRenameNote(item.id, newName);
+                  } else if (isPdf) {
+                    const finalName = newName.toLowerCase().endsWith(".pdf")
+                      ? newName
+                      : `${newName}.pdf`;
+                    onRenameNote(item.id, finalName);
                   } else {
                     const clean = newName.replace(
                       /\.(md|excalidraw|apollon|uml|mmd|mermaid|tikz|tex)$/i,

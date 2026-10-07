@@ -194,7 +194,7 @@ export interface FileMetadata {
   id: string;
   name: string;
   mimeType?: string;
-  type: "note" | "drawing" | "folder" | "image" | "uml" | "mermaid";
+  type: "note" | "drawing" | "folder" | "image" | "uml" | "mermaid" | "pdf";
   parentId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -501,9 +501,15 @@ export async function listNotes(session: any) {
           f.mimeType === "text/vnd.mermaid" ||
           f.properties?.netheriteType === "mermaid");
 
+      const isPdf =
+        !isImage &&
+        (f.mimeType === "application/pdf" ||
+          f.name.toLowerCase().endsWith(".pdf") ||
+          f.properties?.netheriteType === "pdf");
+
       let displayName = f.name;
 
-      if (isImage) {
+      if (isImage || isPdf) {
         displayName = f.name;
       } else if (
         !isDrawing &&
@@ -549,7 +555,9 @@ export async function listNotes(session: any) {
                         ? "mermaid"
                         : isImage
                           ? "image"
-                          : "note",
+                          : isPdf
+                            ? "pdf"
+                            : "note",
                   netheriteManaged: "true",
                 },
               },
@@ -560,13 +568,15 @@ export async function listNotes(session: any) {
 
       const effectiveMimeType = isImage
         ? (f.mimeType ?? "image/png")
-        : isDrawing
-          ? "application/vnd.excalidraw+json"
-          : isUml
-            ? "application/vnd.apollon+json"
-            : isMermaid
-              ? "text/vnd.mermaid"
-              : "text/markdown";
+        : isPdf
+          ? (f.mimeType ?? "application/pdf")
+          : isDrawing
+            ? "application/vnd.excalidraw+json"
+            : isUml
+              ? "application/vnd.apollon+json"
+              : isMermaid
+                ? "text/vnd.mermaid"
+                : "text/markdown";
 
       itemsToReturn.push({
         id: f.id,
@@ -583,13 +593,15 @@ export async function listNotes(session: any) {
           mimeType: effectiveMimeType,
           type: isImage
             ? "image"
-            : isDrawing
-              ? "drawing"
-              : isUml
-                ? "uml"
-                : isMermaid
-                  ? "mermaid"
-                  : "note",
+            : isPdf
+              ? "pdf"
+              : isDrawing
+                ? "drawing"
+                : isUml
+                  ? "uml"
+                  : isMermaid
+                    ? "mermaid"
+                    : "note",
           parentId: f.parents?.[0] ?? rootFolderId,
           createdAt:
             f.createdTime ?? f.modifiedTime ?? new Date().toISOString(),
@@ -699,7 +711,12 @@ export async function getNoteContent(session: any, fileId: string) {
       if (typeof res.data === "object" && res.data !== null) {
         return JSON.stringify(res.data);
       }
-      return (res.data as string) ?? "";
+      const textData = (res.data as string) ?? "";
+      // Safeguard: Never return raw binary PDF data as note content
+      if (textData.startsWith("%PDF-")) {
+        return "";
+      }
+      return textData;
     } catch (error: any) {
       // Fallback for Google Docs formats that require export
       if (
@@ -1047,6 +1064,30 @@ export async function getImageAsset(session: any, fileId: string) {
   });
 }
 
+export async function getPdfStream(session: any, fileId: string) {
+  if (!fileId || fileId.startsWith("temp-")) return null;
+  return withRetry(async () => {
+    const drive = await getDriveClient(session);
+    const meta = await drive.files.get({
+      fileId,
+      fields: "id, name, mimeType, size",
+    });
+
+    const res = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "stream" },
+    );
+
+    return {
+      id: fileId,
+      name: meta.data.name ?? "document.pdf",
+      mimeType: meta.data.mimeType ?? "application/pdf",
+      size: meta.data.size ? parseInt(meta.data.size, 10) : undefined,
+      stream: res.data as import("stream").Readable,
+    };
+  });
+}
+
 export async function searchNotesContent(session: any, query: string) {
   return withRetry(async () => {
     const drive = await getDriveClient(session);
@@ -1218,7 +1259,7 @@ export async function uploadFileToFolder(
     if (!fileId) throw new Error("Failed to upload file to Drive");
 
     // Determine type for workspace metadata
-    let type: "note" | "drawing" | "image" | "folder" | "uml" | "mermaid" = "note";
+    let type: "note" | "drawing" | "image" | "folder" | "uml" | "mermaid" | "pdf" = "note";
     const lowerName = fileName.toLowerCase();
     if (mimeType.startsWith("image/")) {
       type = "image";
@@ -1229,6 +1270,8 @@ export async function uploadFileToFolder(
           requestBody: { role: "reader", type: "anyone" },
         });
       } catch {}
+    } else if (mimeType === "application/pdf" || lowerName.endsWith(".pdf")) {
+      type = "pdf";
     } else if (lowerName.endsWith(".excalidraw")) {
       type = "drawing";
     } else if (lowerName.endsWith(".apollon") || lowerName.endsWith(".uml")) {
