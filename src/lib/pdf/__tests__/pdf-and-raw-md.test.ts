@@ -45,6 +45,27 @@ describe("PDF Export Compiler Fixes", () => {
     expect(html).toContain("Host A");
     expect(html).toContain("Host B");
   });
+
+  it("preserves variable-color highlighting in PDF exports", async () => {
+    const input = [
+      "Here is ==pink:important pink concept== and ==blue:cloud architecture==.",
+      "Also <mark class=\"highlight-green\">green section</mark> and <mark class=\"highlight-orange\">orange alert</mark>.",
+      "And default ==yellow key takeaway==."
+    ].join("\n\n");
+
+    const { html } = await compileMarkdownForPdf(input);
+
+    expect(html).toContain("pdf-highlight-pink");
+    expect(html).toContain("important pink concept");
+    expect(html).toContain("pdf-highlight-blue");
+    expect(html).toContain("cloud architecture");
+    expect(html).toContain("pdf-highlight-green");
+    expect(html).toContain("green section");
+    expect(html).toContain("pdf-highlight-orange");
+    expect(html).toContain("orange alert");
+    expect(html).toContain("pdf-highlight-yellow");
+    expect(html).toContain("yellow key takeaway");
+  });
 });
 
 describe("Markdown View Math Pre/Post-processing", () => {

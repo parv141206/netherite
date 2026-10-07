@@ -106,17 +106,21 @@ function formatInlineMarkdown(str: string): string {
   // Underline
   s = s.replace(/\+\+(.*?)\+\+/g, "<u>$1</u>");
 
-  // Highlight standard markdown: ==highlight==
-  s = s.replace(/==(.*?)==/g, '<mark class="pdf-highlight pdf-highlight-yellow">$1</mark>');
+  // Highlight standard markdown: ==highlight== or ==pink:highlight==
+  s = s.replace(/==(?:(yellow|green|blue|pink|purple|orange):)?(.*?)==/gi, (_, color, text) => {
+    const c = (color || "yellow").toLowerCase();
+    return `<mark class="pdf-highlight pdf-highlight-${c}">${text}</mark>`;
+  });
 
-  // Normalize TipTap / HTML <mark> tags to assign clean highlight classes
+  // Normalize TipTap / HTML <mark> tags to assign clean highlight classes across all colors
   s = s.replace(/<mark\b([^>]*)>/gi, (match: string, attrs: string) => {
-    if (attrs.includes("pdf-highlight")) return match;
     let colorClass = "pdf-highlight-yellow";
-    if (/pink/i.test(attrs)) colorClass = "pdf-highlight-pink";
-    else if (/green/i.test(attrs)) colorClass = "pdf-highlight-green";
-    else if (/blue/i.test(attrs)) colorClass = "pdf-highlight-blue";
-    else if (/purple/i.test(attrs)) colorClass = "pdf-highlight-purple";
+    if (/pink|#fbcfe8|#9d174d/i.test(attrs)) colorClass = "pdf-highlight-pink";
+    else if (/green|#bbf7d0|#166534/i.test(attrs)) colorClass = "pdf-highlight-green";
+    else if (/blue|#bfdbfe|#1e40af/i.test(attrs)) colorClass = "pdf-highlight-blue";
+    else if (/purple|#e9d5ff|#6b21a8/i.test(attrs)) colorClass = "pdf-highlight-purple";
+    else if (/orange|#fed7aa|#9a3412/i.test(attrs)) colorClass = "pdf-highlight-orange";
+    else if (/yellow|#fef08a|#854d0e/i.test(attrs)) colorClass = "pdf-highlight-yellow";
 
     if (/class=["']/i.test(attrs)) {
       return match.replace(/class=["']([^"']*)["']/i, `class="$1 pdf-highlight ${colorClass}"`);

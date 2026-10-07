@@ -20,7 +20,7 @@ import { MermaidCanvas } from "~/components/canvas/MermaidCanvas";
 import { TikzCanvas } from "~/components/canvas/TikzCanvas";
 import { ImageViewer } from "./ImageViewer";
 import { SettingsModal } from "./SettingsModal";
-import { OutlineSidebar, type HeadingItem } from "./OutlineSidebar";
+import { OutlineSidebar, type HeadingItem, type HighlightItem } from "./OutlineSidebar";
 import { DiffModal } from "./DiffModal";
 import { DiffSidebar } from "./DiffSidebar";
 import { SyncModal } from "./SyncModal";
@@ -2893,7 +2893,105 @@ export function WorkspaceLayout({
     return headings;
   };
 
-  const documentHeadings = getHeadings(noteContent);
+  // Extract highlights in document order, tracking their current section/heading
+  const getHighlights = (content: string): HighlightItem[] => {
+    if (!content) return [];
+    const highlights: HighlightItem[] = [];
+    const lines = content.split("\n");
+    let inCodeBlock = false;
+    let currentSection = "";
+    let highlightCounter = 0;
+
+    const normalizeColor = (
+      c?: string,
+    ): HighlightItem["color"] => {
+      const lower = (c || "").trim().toLowerCase();
+      if (
+        lower === "yellow" ||
+        lower === "green" ||
+        lower === "blue" ||
+        lower === "pink" ||
+        lower === "purple" ||
+        lower === "orange"
+      ) {
+        return lower;
+      }
+      return "yellow";
+    };
+
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
+        inCodeBlock = !inCodeBlock;
+        return;
+      }
+      if (inCodeBlock) return;
+
+      // Track section heading
+      const mdHeading = trimmed.match(/^(#{1,6})\s+(.+)$/);
+      if (mdHeading && mdHeading[2]) {
+        currentSection = mdHeading[2].replace(/<[^>]*>/g, "").trim();
+      } else {
+        const htmlHeading = trimmed.match(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/i);
+        if (htmlHeading && htmlHeading[1]) {
+          currentSection = htmlHeading[1].replace(/<[^>]*>/g, "").trim();
+        }
+      }
+
+      // 1. Scan for <mark class="..." data-color="...">text</mark>
+      const htmlMarkRegex = /<mark\b([^>]*)>([\s\S]*?)<\/mark>/gi;
+      let htmlMatch: RegExpExecArray | null;
+      while ((htmlMatch = htmlMarkRegex.exec(line)) !== null) {
+        const attrs = htmlMatch[1] || "";
+        const rawText = (htmlMatch[2] || "").replace(/<[^>]*>/g, "").trim();
+        if (!rawText) continue;
+
+        let detectedColor: string | undefined;
+        const colorAttr = attrs.match(/data-color=["']([^"']+)["']/i);
+        if (colorAttr && colorAttr[1]) {
+          detectedColor = colorAttr[1];
+        } else {
+          const classAttr = attrs.match(/class=["']([^"']+)["']/i);
+          if (classAttr && classAttr[1]) {
+            const classMatch = classAttr[1].match(
+              /\b(?:highlight-|bg-)?(yellow|green|blue|pink|purple|orange)\b/i
+            );
+            if (classMatch && classMatch[1]) detectedColor = classMatch[1];
+          }
+        }
+
+        highlightCounter++;
+        highlights.push({
+          id: `highlight-${highlightCounter}`,
+          text: rawText,
+          color: normalizeColor(detectedColor),
+          sectionTitle: currentSection || undefined,
+        });
+      }
+
+      // 2. Scan for ==color:text== or ==text==
+      const mdHighlightRegex = /==(?:([a-zA-Z]+):)?([\s\S]+?)==/g;
+      let mdMatch: RegExpExecArray | null;
+      while ((mdMatch = mdHighlightRegex.exec(line)) !== null) {
+        const specifiedColor = mdMatch[1];
+        const rawText = (mdMatch[2] || "").trim();
+        if (!rawText) continue;
+
+        highlightCounter++;
+        highlights.push({
+          id: `highlight-${highlightCounter}`,
+          text: rawText,
+          color: normalizeColor(specifiedColor),
+          sectionTitle: currentSection || undefined,
+        });
+      }
+    });
+
+    return highlights;
+  };
+
+  const documentHeadings = useMemo(() => getHeadings(noteContent), [noteContent]);
+  const documentHighlights = useMemo(() => getHighlights(noteContent), [noteContent]);
   const [activeHeadingId, setActiveHeadingId] = useState<string>("");
 
   // Track scroll position in editor to highlight current title/subtitle in OutlineSidebar
@@ -4349,6 +4447,7 @@ export function WorkspaceLayout({
                 isOpen={isOutlineOpen}
                 onClose={() => setIsOutlineOpen(false)}
                 headings={documentHeadings}
+                highlights={documentHighlights}
                 activeHeadingId={activeHeadingId}
                 onSelectHeading={(text, _level, id) => {
                   const scrollContainer = document.querySelector<HTMLElement>(
@@ -4376,6 +4475,35 @@ export function WorkspaceLayout({
                     if (id) {
                       setActiveHeadingId(id);
                     }
+                  }
+                }}
+                onSelectHighlight={(text) => {
+                  const scrollContainer = document.querySelector<HTMLElement>(
+                    '[data-editor-scroll-container="true"]'
+                  );
+                  const markElements = Array.from(
+                    (scrollContainer || document).querySelectorAll<HTMLElement>(
+                      "mark, .ProseMirror mark"
+                    )
+                  );
+                  const targetText = text.trim().toLowerCase();
+                  const match = markElements.find((el) => {
+                    const elText = (el.textContent || "").trim().toLowerCase();
+                    return (
+                      elText === targetText ||
+                      elText.includes(targetText) ||
+                      targetText.includes(elText)
+                    );
+                  });
+                  if (match) {
+                    match.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                    match.classList.add("ring-2", "ring-primary", "ring-offset-2", "transition-all", "duration-500");
+                    setTimeout(() => {
+                      match.classList.remove("ring-2", "ring-primary", "ring-offset-2");
+                    }, 1800);
                   }
                 }}
               />

@@ -103,24 +103,28 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       --highlight-blue: ${isDark ? "#1e40af" : "#bfdbfe"};
       --highlight-pink: ${isDark ? "#9d174d" : "#fbcfe8"};
       --highlight-purple: ${isDark ? "#6b21a8" : "#e9d5ff"};
+      --highlight-orange: ${isDark ? "#9a3412" : "#fed7aa"};
     }
 
     /* Highlights */
     mark, .pdf-highlight {
       background-color: var(--highlight-yellow);
-      color: inherit;
+      color: ${isDark ? "#fafafa" : "#09090b"};
       padding: 0.12em 0.35em;
       border-radius: 4px;
       -webkit-box-decoration-break: clone;
       box-decoration-break: clone;
       font-weight: 500;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
-    mark[data-color*="pink"], .pdf-highlight-pink { background-color: var(--highlight-pink) !important; }
-    mark[data-color*="yellow"], .pdf-highlight-yellow { background-color: var(--highlight-yellow) !important; }
-    mark[data-color*="green"], .pdf-highlight-green { background-color: var(--highlight-green) !important; }
-    mark[data-color*="blue"], .pdf-highlight-blue { background-color: var(--highlight-blue) !important; }
-    mark[data-color*="purple"], .pdf-highlight-purple { background-color: var(--highlight-purple) !important; }
+    mark[data-color*="pink"], .pdf-highlight-pink { background-color: var(--highlight-pink) !important; color: ${isDark ? "#fdf2f8" : "#09090b"} !important; }
+    mark[data-color*="yellow"], .pdf-highlight-yellow { background-color: var(--highlight-yellow) !important; color: ${isDark ? "#fefce8" : "#09090b"} !important; }
+    mark[data-color*="green"], .pdf-highlight-green { background-color: var(--highlight-green) !important; color: ${isDark ? "#f0fdf4" : "#09090b"} !important; }
+    mark[data-color*="blue"], .pdf-highlight-blue { background-color: var(--highlight-blue) !important; color: ${isDark ? "#eff6ff" : "#09090b"} !important; }
+    mark[data-color*="purple"], .pdf-highlight-purple { background-color: var(--highlight-purple) !important; color: ${isDark ? "#faf5ff" : "#09090b"} !important; }
+    mark[data-color*="orange"], .pdf-highlight-orange { background-color: var(--highlight-orange) !important; color: ${isDark ? "#fff7ed" : "#09090b"} !important; }
 
     ${
       isMono
@@ -130,7 +134,8 @@ export function buildPdfStylesheet(config: PdfEngineConfig): string {
       mark[data-color*="yellow"],
       mark[data-color*="green"],
       mark[data-color*="blue"],
-      mark[data-color*="purple"] {
+      mark[data-color*="purple"],
+      mark[data-color*="orange"] {
         background-color: #e5e5e5 !important;
         color: #000000 !important;
         border-bottom: 1.5px solid #000000;
