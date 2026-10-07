@@ -461,22 +461,29 @@ export function PdfViewer({
                 const destArray = await doc.getDestination(node.dest);
                 if (destArray && destArray[0]) {
                   const idx = await doc.getPageIndex(destArray[0]);
-                  targetPageNumber = idx + 1;
+                  if (typeof idx === "number" && !isNaN(idx) && idx >= 0) {
+                    targetPageNumber = idx + 1;
+                  }
                 }
               } else if (Array.isArray(node.dest) && node.dest[0]) {
                 const idx = await doc.getPageIndex(node.dest[0]);
-                targetPageNumber = idx + 1;
+                if (typeof idx === "number" && !isNaN(idx) && idx >= 0) {
+                  targetPageNumber = idx + 1;
+                }
               }
             } catch {
               // destination resolution fallback
             }
 
-            parsedHeadings.push({
-              id: `page-${targetPageNumber}`,
-              text: String(node.title).trim(),
-              level: Math.min(depth, 3),
-            });
-            count++;
+            const cleanTitle = String(node.title || "").trim();
+            if (cleanTitle) {
+              parsedHeadings.push({
+                id: `page-${targetPageNumber}`,
+                text: cleanTitle,
+                level: Math.min(depth, 3),
+              });
+              count++;
+            }
 
             // Yield control back to browser to keep UI silky smooth
             if (count % 10 === 0) {

@@ -3069,12 +3069,15 @@ export function WorkspaceLayout({
   }, []);
 
   const pdfHighlightsAsItems: HighlightItem[] = useMemo(() => {
-    return pdfHighlights.map((h) => ({
-      id: h.id,
-      text: h.text,
-      color: h.color,
-      sectionTitle: `Page ${h.pageNumber}`,
-    }));
+    if (!pdfHighlights || !Array.isArray(pdfHighlights)) return [];
+    return pdfHighlights
+      .filter((h) => Boolean(h && h.id && h.text))
+      .map((h) => ({
+        id: String(h.id),
+        text: String(h.text),
+        color: (h.color as any) || "yellow",
+        sectionTitle: `Page ${h.pageNumber || 1}`,
+      }));
   }, [pdfHighlights]);
 
   // Track scroll position in editor to highlight current title/subtitle in OutlineSidebar
@@ -3128,11 +3131,12 @@ export function WorkspaceLayout({
 
           if (currentActive) {
             const text = (currentActive.textContent || "").trim().toLowerCase();
-            const match = documentHeadings.find((h) => {
-              const hText = h.text.trim().toLowerCase();
+            const match = (documentHeadings || []).find((h) => {
+              if (!h || !h.text) return false;
+              const hText = String(h.text).trim().toLowerCase();
               return hText === text || text.includes(hText) || hText.includes(text);
             });
-            if (match) {
+            if (match && match.id) {
               setActiveHeadingId(match.id);
             }
           }
@@ -4551,8 +4555,8 @@ export function WorkspaceLayout({
               <OutlineSidebar
                 isOpen={isOutlineOpen}
                 onClose={() => setIsOutlineOpen(false)}
-                headings={isCurrentPdf ? pdfHeadings : documentHeadings}
-                highlights={isCurrentPdf ? pdfHighlightsAsItems : documentHighlights}
+                headings={isCurrentPdf ? (pdfHeadings || []) : (documentHeadings || [])}
+                highlights={isCurrentPdf ? (pdfHighlightsAsItems || []) : (documentHighlights || [])}
                 activeHeadingId={isCurrentPdf ? undefined : activeHeadingId}
                 onSelectHeading={(text, _level, id) => {
                   if (isCurrentPdf) {

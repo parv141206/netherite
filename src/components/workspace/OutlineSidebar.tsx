@@ -95,16 +95,58 @@ export function OutlineSidebar({
   const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
+  // Deeply sanitize headings to guarantee pure primitive objects
+  const safeHeadings = useMemo<HeadingItem[]>(() => {
+    if (!headings || !Array.isArray(headings)) return [];
+    return headings
+      .filter((h): h is HeadingItem => Boolean(h && typeof h === "object"))
+      .map((h, i) => {
+        const rawText = h.text !== undefined && h.text !== null ? String(h.text) : "";
+        const id = h.id ? String(h.id) : `heading-${i}`;
+        const level = typeof h.level === "number" && !isNaN(h.level) ? Math.min(Math.max(1, h.level), 6) : 1;
+        return {
+          id,
+          text: rawText,
+          level,
+        };
+      })
+      .filter((h) => h.text.trim().length > 0);
+  }, [headings]);
+
+  // Deeply sanitize highlights to guarantee pure primitive objects
+  const safeHighlights = useMemo<HighlightItem[]>(() => {
+    if (!highlights || !Array.isArray(highlights)) return [];
+    return highlights
+      .filter((hl): hl is HighlightItem => Boolean(hl && typeof hl === "object"))
+      .map((hl, i) => {
+        const id = hl.id ? String(hl.id) : `hl-${i}`;
+        const text = hl.text !== undefined && hl.text !== null ? String(hl.text) : "";
+        const color = (hl.color && COLOR_MAP[hl.color] ? hl.color : "yellow") as HighlightItem["color"];
+        const sectionTitle = hl.sectionTitle ? String(hl.sectionTitle) : undefined;
+        return {
+          id,
+          text,
+          color,
+          sectionTitle,
+        };
+      })
+      .filter((hl) => hl.text.trim().length > 0);
+  }, [highlights]);
+
   // Auto-scroll the topics list so the currently active heading stays visible
   useEffect(() => {
     if (activeTab !== "topics" || !activeHeadingId) return;
-    const activeEl = itemRefs.current.get(activeHeadingId);
-    if (activeEl) {
-      activeEl.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "nearest",
-      });
+    try {
+      const activeEl = itemRefs.current.get(activeHeadingId);
+      if (activeEl && typeof activeEl.scrollIntoView === "function") {
+        activeEl.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+      }
+    } catch {
+      // Safe scroll fallback
     }
   }, [activeHeadingId, activeTab]);
 
@@ -112,16 +154,16 @@ export function OutlineSidebar({
 
   // Filtered headings by search query
   const filteredHeadings = useMemo(() => {
-    if (!topicSearchQuery.trim()) return headings;
+    if (!topicSearchQuery.trim()) return safeHeadings;
     const q = topicSearchQuery.trim().toLowerCase();
-    return headings.filter((h) => h.text.toLowerCase().includes(q));
-  }, [headings, topicSearchQuery]);
+    return safeHeadings.filter((h) => h.text.toLowerCase().includes(q));
+  }, [safeHeadings, topicSearchQuery]);
 
   // Filtered highlights by color
-  const filteredHighlights =
-    selectedColorFilter === "all"
-      ? highlights
-      : highlights.filter((h) => h.color === selectedColorFilter);
+  const filteredHighlights = useMemo(() => {
+    if (selectedColorFilter === "all") return safeHighlights;
+    return safeHighlights.filter((h) => h.color === selectedColorFilter);
+  }, [safeHighlights, selectedColorFilter]);
 
   return (
     <>
@@ -149,9 +191,9 @@ export function OutlineSidebar({
             >
               <ListTree className="w-3.5 h-3.5" />
               <span>Topics</span>
-              {headings.length > 0 && (
+              {safeHeadings.length > 0 && (
                 <span className="text-[10px] font-mono opacity-70 bg-accent/60 px-1 py-0.2 rounded-full">
-                  {headings.length}
+                  {safeHeadings.length}
                 </span>
               )}
             </button>
@@ -166,9 +208,9 @@ export function OutlineSidebar({
             >
               <Highlighter className="w-3.5 h-3.5 text-amber-500" />
               <span>Highlights</span>
-              {highlights.length > 0 && (
+              {safeHighlights.length > 0 && (
                 <span className="text-[10px] font-mono opacity-80 bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1 py-0.2 rounded-full font-semibold">
-                  {highlights.length}
+                  {safeHighlights.length}
                 </span>
               )}
             </button>
@@ -188,7 +230,7 @@ export function OutlineSidebar({
         {/* ======================================================== */}
         {activeTab === "topics" && (
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {headings.length > 3 && (
+            {safeHeadings.length > 3 && (
               <div className="px-2.5 pt-2 pb-1.5 border-b border-border/30">
                 <div className="relative flex items-center">
                   <Search className="w-3.5 h-3.5 absolute left-2 text-muted-foreground pointer-events-none" />
@@ -292,7 +334,7 @@ export function OutlineSidebar({
         {activeTab === "highlights" && (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Color Filter Chips Bar */}
-            {highlights.length > 0 && (
+            {safeHighlights.length > 0 && (
               <div className="px-2.5 py-1.5 border-b border-border/40 flex items-center gap-1 overflow-x-auto text-[11px] select-none bg-muted/20">
                 <button
                   onClick={() => setSelectedColorFilter("all")}
@@ -302,12 +344,12 @@ export function OutlineSidebar({
                       : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                   }`}
                 >
-                  All ({highlights.length})
+                  All ({safeHighlights.length})
                 </button>
 
                 {(["yellow", "green", "blue", "pink", "purple", "orange"] as const).map(
                   (col) => {
-                    const count = highlights.filter((h) => h.color === col).length;
+                    const count = safeHighlights.filter((h) => h.color === col).length;
                     if (count === 0) return null;
                     const style = COLOR_MAP[col];
 
@@ -333,7 +375,7 @@ export function OutlineSidebar({
 
             {/* Highlights List */}
             <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1.5 text-xs">
-              {highlights.length === 0 ? (
+              {safeHighlights.length === 0 ? (
                 <div className="px-4 py-12 text-center text-muted-foreground flex flex-col items-center gap-3">
                   <div className="p-3 rounded-full bg-amber-500/10 text-amber-500">
                     <Highlighter className="w-6 h-6" />
