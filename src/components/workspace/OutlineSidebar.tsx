@@ -15,6 +15,8 @@ export interface HighlightItem {
   text: string;
   color: "yellow" | "green" | "blue" | "pink" | "purple" | "orange" | "other";
   sectionTitle?: string;
+  pageNumber?: number;
+  sectionLevel?: number;
 }
 
 interface OutlineSidebarProps {
@@ -77,6 +79,125 @@ const COLOR_MAP: Record<
   },
 };
 
+function HighlightCard({
+  item,
+  editingHighlightId,
+  setEditingHighlightId,
+  onSelectHighlight,
+  onDeleteHighlight,
+  onUpdateHighlightColor,
+  onClose,
+}: {
+  item: HighlightItem;
+  editingHighlightId: string | null;
+  setEditingHighlightId: (id: string | null) => void;
+  onSelectHighlight?: (text: string, id: string) => void;
+  onDeleteHighlight?: (id: string, text: string) => void;
+  onUpdateHighlightColor?: (id: string, color: HighlightItem["color"]) => void;
+  onClose: () => void;
+}) {
+  const style = COLOR_MAP[item.color] || COLOR_MAP.other;
+
+  return (
+    <div
+      className={`relative group/item rounded-lg border border-border/40 hover:border-border transition-all hover:shadow-2xs ${style.bg}`}
+    >
+      <button
+        onClick={() => {
+          onSelectHighlight?.(item.text, item.id);
+          if (typeof window !== "undefined" && window.innerWidth < 640) {
+            onClose();
+          }
+        }}
+        className="w-full text-left p-2 pr-7 flex flex-col gap-1 cursor-pointer"
+        title={`Jump to: "${item.text}"`}
+      >
+        <div className="flex items-start gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${style.dot} shrink-0 mt-1`} />
+          <span className="font-normal text-foreground line-clamp-3 leading-relaxed text-[11.5px]">
+            {item.text}
+          </span>
+        </div>
+
+        <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 pl-3.5 truncate opacity-80 group-hover/item:opacity-100">
+          {item.pageNumber ? (
+            <span className="font-mono text-[9.5px] px-1 py-0.2 rounded bg-background/60 border border-border/30">
+              Page {item.pageNumber}
+            </span>
+          ) : item.sectionTitle ? (
+            <span className="truncate flex items-center gap-1">
+              <Hash className="w-2.5 h-2.5 shrink-0" />
+              <span className="truncate">{item.sectionTitle}</span>
+            </span>
+          ) : null}
+        </div>
+      </button>
+
+      <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150">
+        {onUpdateHighlightColor && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingHighlightId(
+                editingHighlightId === item.id ? null : item.id,
+              );
+            }}
+            className="p-1 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            title="Change Color"
+            aria-label="Change Color"
+          >
+            <Palette className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {onDeleteHighlight && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteHighlight(item.id, item.text);
+            }}
+            className="p-1 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+            title="Remove Highlight"
+            aria-label="Remove Highlight"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Inline Color Selection Palette when Editing */}
+      {editingHighlightId === item.id && onUpdateHighlightColor && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1.5 px-2 py-1.5 border-t border-border/40 bg-background/95 rounded-b-lg backdrop-blur-sm"
+        >
+          <span className="text-[10px] text-muted-foreground font-medium mr-1">
+            Color:
+          </span>
+          {(
+            ["yellow", "green", "blue", "pink", "purple", "orange"] as const
+          ).map((c) => {
+            const cStyle = COLOR_MAP[c];
+            const isCurrent = item.color === c;
+            return (
+              <button
+                key={c}
+                onClick={() => {
+                  onUpdateHighlightColor(item.id, c);
+                  setEditingHighlightId(null);
+                }}
+                className={`w-4 h-4 rounded-full ${cStyle.dot} transition-transform hover:scale-125 ${
+                  isCurrent ? "ring-2 ring-foreground ring-offset-1" : ""
+                }`}
+                title={cStyle.label}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function OutlineSidebar({
   isOpen,
   onClose,
@@ -91,6 +212,7 @@ export function OutlineSidebar({
   const { modernUi } = useTheme();
   const [activeTab, setActiveTab] = useState<"topics" | "highlights">("topics");
   const [selectedColorFilter, setSelectedColorFilter] = useState<string>("all");
+  const [highlightSortMode, setHighlightSortMode] = useState<"section" | "order" | "color">("section");
   const [topicSearchQuery, setTopicSearchQuery] = useState<string>("");
   const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -123,11 +245,15 @@ export function OutlineSidebar({
         const text = hl.text !== undefined && hl.text !== null ? String(hl.text) : "";
         const color = (hl.color && COLOR_MAP[hl.color] ? hl.color : "yellow") as HighlightItem["color"];
         const sectionTitle = hl.sectionTitle ? String(hl.sectionTitle) : undefined;
+        const pageNumber = typeof hl.pageNumber === "number" ? hl.pageNumber : undefined;
+        const sectionLevel = typeof hl.sectionLevel === "number" ? hl.sectionLevel : undefined;
         return {
           id,
           text,
           color,
           sectionTitle,
+          pageNumber,
+          sectionLevel,
         };
       })
       .filter((hl) => hl.text.trim().length > 0);
@@ -164,6 +290,81 @@ export function OutlineSidebar({
     if (selectedColorFilter === "all") return safeHighlights;
     return safeHighlights.filter((h) => h.color === selectedColorFilter);
   }, [safeHighlights, selectedColorFilter]);
+
+  // Hierarchical grouping by Chapter / Section (#, ##)
+  const groupedHighlightsBySection = useMemo(() => {
+    const groups: {
+      sectionKey: string;
+      sectionName: string;
+      sectionLevel: number;
+      items: HighlightItem[];
+    }[] = [];
+
+    const map = new Map<string, (typeof groups)[0]>();
+
+    for (const hl of filteredHighlights) {
+      let key = hl.sectionTitle || "General";
+      let name = key;
+      let level = hl.sectionLevel || 1;
+
+      // Extract markdown hashes if present (e.g. "# Chapter 1")
+      const match = key.match(/^(#{1,6})\s+(.*)$/);
+      if (match) {
+        level = match[1].length;
+        name = match[2];
+      }
+
+      if (!map.has(key)) {
+        const groupObj = {
+          sectionKey: key,
+          sectionName: name,
+          sectionLevel: level,
+          items: [],
+        };
+        map.set(key, groupObj);
+        groups.push(groupObj);
+      }
+      map.get(key)!.items.push(hl);
+    }
+
+    return groups;
+  }, [filteredHighlights]);
+
+  // Grouped by color
+  const groupedHighlightsByColor = useMemo(() => {
+    const groups: {
+      color: HighlightItem["color"];
+      items: HighlightItem[];
+    }[] = [];
+    const colorOrder: HighlightItem["color"][] = [
+      "yellow",
+      "green",
+      "blue",
+      "pink",
+      "purple",
+      "orange",
+    ];
+    for (const c of colorOrder) {
+      const items = filteredHighlights.filter((h) => h.color === c);
+      if (items.length > 0) {
+        groups.push({ color: c, items });
+      }
+    }
+    return groups;
+  }, [filteredHighlights]);
+
+  // Ordered by document page sequence
+  const orderedHighlights = useMemo(() => {
+    if (highlightSortMode === "order") {
+      return [...filteredHighlights].sort((a, b) => {
+        if (a.pageNumber !== undefined && b.pageNumber !== undefined) {
+          return a.pageNumber - b.pageNumber;
+        }
+        return 0;
+      });
+    }
+    return filteredHighlights;
+  }, [filteredHighlights, highlightSortMode]);
 
   return (
     <>
@@ -333,43 +534,88 @@ export function OutlineSidebar({
         {/* ======================================================== */}
         {activeTab === "highlights" && (
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Color Filter Chips Bar */}
+            {/* Sort & Filter Controls Header */}
             {safeHighlights.length > 0 && (
-              <div className="px-2.5 py-1.5 border-b border-border/40 flex items-center gap-1 overflow-x-auto text-[11px] select-none bg-muted/20">
-                <button
-                  onClick={() => setSelectedColorFilter("all")}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
-                    selectedColorFilter === "all"
-                      ? "bg-foreground text-background font-semibold"
-                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-                  }`}
-                >
-                  All ({safeHighlights.length})
-                </button>
+              <div className="px-2.5 py-1.5 border-b border-border/40 flex flex-col gap-1.5 bg-muted/20 select-none shrink-0">
+                {/* Sort Mode Selector */}
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
+                    Sort by
+                  </span>
+                  <div className="inline-flex rounded-md p-0.5 bg-muted/80 border border-border/40 text-[10px]">
+                    <button
+                      onClick={() => setHighlightSortMode("section")}
+                      className={`px-2 py-0.5 rounded transition-all font-medium ${
+                        highlightSortMode === "section"
+                          ? "bg-background text-foreground shadow-2xs font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      title="Group by Chapter and Section (#, ##)"
+                    >
+                      # Section
+                    </button>
+                    <button
+                      onClick={() => setHighlightSortMode("order")}
+                      className={`px-2 py-0.5 rounded transition-all font-medium ${
+                        highlightSortMode === "order"
+                          ? "bg-background text-foreground shadow-2xs font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      title="Sort by Page Order in document"
+                    >
+                      Page Order
+                    </button>
+                    <button
+                      onClick={() => setHighlightSortMode("color")}
+                      className={`px-2 py-0.5 rounded transition-all font-medium ${
+                        highlightSortMode === "color"
+                          ? "bg-background text-foreground shadow-2xs font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      title="Group by Highlight Color"
+                    >
+                      By Color
+                    </button>
+                  </div>
+                </div>
 
-                {(["yellow", "green", "blue", "pink", "purple", "orange"] as const).map(
-                  (col) => {
-                    const count = safeHighlights.filter((h) => h.color === col).length;
-                    if (count === 0) return null;
-                    const style = COLOR_MAP[col];
+                {/* Color Filter Chips Bar */}
+                <div className="flex items-center gap-1 overflow-x-auto text-[11px] pt-0.5 scrollbar-none">
+                  <button
+                    onClick={() => setSelectedColorFilter("all")}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors shrink-0 ${
+                      selectedColorFilter === "all"
+                        ? "bg-foreground text-background font-semibold"
+                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                    }`}
+                  >
+                    All ({safeHighlights.length})
+                  </button>
 
-                    return (
-                      <button
-                        key={col}
-                        onClick={() => setSelectedColorFilter(col)}
-                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] transition-all border ${
-                          selectedColorFilter === col
-                            ? `${style.bg} ${style.border} font-semibold text-foreground`
-                            : "border-transparent text-muted-foreground hover:bg-accent/50"
-                        }`}
-                        title={`Filter by ${style.label}`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${style.dot}`} />
-                        <span>{count}</span>
-                      </button>
-                    );
-                  }
-                )}
+                  {(["yellow", "green", "blue", "pink", "purple", "orange"] as const).map(
+                    (col) => {
+                      const count = safeHighlights.filter((h) => h.color === col).length;
+                      if (count === 0) return null;
+                      const style = COLOR_MAP[col];
+
+                      return (
+                        <button
+                          key={col}
+                          onClick={() => setSelectedColorFilter(col)}
+                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] transition-all border shrink-0 ${
+                            selectedColorFilter === col
+                              ? `${style.bg} ${style.border} font-semibold text-foreground`
+                              : "border-transparent text-muted-foreground hover:bg-accent/50"
+                          }`}
+                          title={`Filter by ${style.label}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${style.dot}`} />
+                          <span>{count}</span>
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
               </div>
             )}
 
@@ -393,109 +639,84 @@ export function OutlineSidebar({
                 <div className="px-3 py-8 text-center text-[11px] text-muted-foreground">
                   No highlights matching this color.
                 </div>
-              ) : (
-                filteredHighlights.map((item, idx) => {
-                  const style = COLOR_MAP[item.color] || COLOR_MAP.other;
-
-                  return (
-                    <div
-                      key={`${item.id}-${idx}`}
-                      className={`relative group/item rounded-lg border border-border/40 hover:border-border transition-all hover:shadow-2xs ${style.bg}`}
-                    >
-                      <button
-                        onClick={() => {
-                          onSelectHighlight?.(item.text, item.id);
-                          if (
-                            typeof window !== "undefined" &&
-                            window.innerWidth < 640
-                          ) {
-                            onClose();
-                          }
-                        }}
-                        className="w-full text-left p-2 pr-7 flex flex-col gap-1 cursor-pointer"
-                        title={`Jump to: "${item.text}"`}
-                      >
-                        <div className="flex items-start gap-1.5">
-                          <span
-                            className={`w-2 h-2 rounded-full ${style.dot} shrink-0 mt-1`}
-                          />
-                          <span className="font-normal text-foreground line-clamp-3 leading-relaxed text-[11.5px]">
-                            {item.text}
-                          </span>
-                        </div>
-
-                        {item.sectionTitle && (
-                          <div className="text-[10px] text-muted-foreground flex items-center gap-1 pl-3.5 truncate opacity-80 group-hover/item:opacity-100">
-                            <Hash className="w-2.5 h-2.5 shrink-0" />
-                            <span className="truncate">{item.sectionTitle}</span>
-                          </div>
-                        )}
-                      </button>
-
-                        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150">
-                          {onUpdateHighlightColor && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingHighlightId(
-                                  editingHighlightId === item.id ? null : item.id,
-                                );
-                              }}
-                              className="p-1 rounded-md hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                              title="Change Color"
-                              aria-label="Change Color"
-                            >
-                              <Palette className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {onDeleteHighlight && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteHighlight(item.id, item.text);
-                              }}
-                              className="p-1 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                              title="Remove Highlight"
-                              aria-label="Remove Highlight"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-
-                      {/* Inline Color Selection Palette when Editing */}
-                      {editingHighlightId === item.id && onUpdateHighlightColor && (
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-1.5 px-2 py-1.5 border-t border-border/40 bg-background/95 rounded-b-lg backdrop-blur-sm"
-                        >
-                          <span className="text-[10px] text-muted-foreground font-medium mr-1">
-                            Color:
-                          </span>
-                          {(
-                            ["yellow", "green", "blue", "pink", "purple", "orange"] as const
-                          ).map((c) => {
-                            const cStyle = COLOR_MAP[c];
-                            const isCurrent = item.color === c;
-                            return (
-                              <button
-                                key={c}
-                                onClick={() => {
-                                  onUpdateHighlightColor(item.id, c);
-                                  setEditingHighlightId(null);
-                                }}
-                                className={`w-4 h-4 rounded-full ${cStyle.dot} transition-transform hover:scale-125 ${
-                                  isCurrent ? "ring-2 ring-foreground ring-offset-1" : ""
-                                }`}
-                                title={cStyle.label}
-                              />
-                            );
-                          })}
-                        </div>
-                      )}
+              ) : highlightSortMode === "section" ? (
+                /* Grouped by Section / Chapter (#, ##) */
+                groupedHighlightsBySection.map((group) => (
+                  <div key={group.sectionKey} className="space-y-1.5 pb-2">
+                    <div className="sticky top-0 z-10 px-2 py-1 bg-background/95 backdrop-blur-xs border-b border-border/30 flex items-center justify-between text-[11px] font-semibold text-foreground rounded-t">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-mono text-primary text-[10px] shrink-0 font-bold">
+                          {"#".repeat(Math.min(group.sectionLevel, 4))}
+                        </span>
+                        <span className="truncate" title={group.sectionName}>
+                          {group.sectionName}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded-full shrink-0 ml-1.5">
+                        {group.items.length}
+                      </span>
                     </div>
-                  );
-                })
+
+                    <div className="space-y-1.5 pl-1">
+                      {group.items.map((item, idx) => (
+                        <HighlightCard
+                          key={`${item.id}-${idx}`}
+                          item={item}
+                          onSelectHighlight={onSelectHighlight}
+                          onDeleteHighlight={onDeleteHighlight}
+                          onUpdateHighlightColor={onUpdateHighlightColor}
+                          editingHighlightId={editingHighlightId}
+                          setEditingHighlightId={setEditingHighlightId}
+                          onClose={onClose}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : highlightSortMode === "color" ? (
+                /* Grouped by Color */
+                groupedHighlightsByColor.map((group) => (
+                  <div key={group.color} className="space-y-1.5 pb-2">
+                    <div className="sticky top-0 z-10 px-2 py-1 bg-background/95 backdrop-blur-xs border-b border-border/30 flex items-center justify-between text-[11px] font-semibold text-foreground rounded-t">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2.5 h-2.5 rounded-full ${COLOR_MAP[group.color].dot}`} />
+                        <span>{COLOR_MAP[group.color].label}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded-full shrink-0">
+                        {group.items.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {group.items.map((item, idx) => (
+                        <HighlightCard
+                          key={`${item.id}-${idx}`}
+                          item={item}
+                          onSelectHighlight={onSelectHighlight}
+                          onDeleteHighlight={onDeleteHighlight}
+                          onUpdateHighlightColor={onUpdateHighlightColor}
+                          editingHighlightId={editingHighlightId}
+                          setEditingHighlightId={setEditingHighlightId}
+                          onClose={onClose}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                /* Ordered by Page */
+                orderedHighlights.map((item, idx) => (
+                  <HighlightCard
+                    key={`${item.id}-${idx}`}
+                    item={item}
+                    onSelectHighlight={onSelectHighlight}
+                    onDeleteHighlight={onDeleteHighlight}
+                    onUpdateHighlightColor={onUpdateHighlightColor}
+                    editingHighlightId={editingHighlightId}
+                    setEditingHighlightId={setEditingHighlightId}
+                    onClose={onClose}
+                  />
+                ))
               )}
             </div>
           </div>

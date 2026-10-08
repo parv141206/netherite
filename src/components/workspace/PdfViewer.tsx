@@ -4,6 +4,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
   useCallback,
   useMemo,
 } from "react";
@@ -463,7 +464,7 @@ export function PdfViewer({
         }
 
         const parsedHeadings: HeadingItem[] = [];
-        const MAX_ITEMS = 150;
+        const MAX_ITEMS = 2000;
         let count = 0;
 
         const parseNodes = async (nodes: any[], depth = 1) => {
@@ -593,7 +594,14 @@ export function PdfViewer({
     };
   }, [loadDocument]);
 
-  // Trackpad pinch-to-zoom & smooth zoom centered on mouse cursor
+  // Zoom anchor to keep focal point completely stable during trackpad pinch zoom
+  const zoomAnchorRef = useRef<{
+    pageNum: number;
+    ratioY: number;
+    clientY: number;
+  } | null>(null);
+
+  // Trackpad pinch-to-zoom anchored to the page and point under mouse cursor
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -602,32 +610,36 @@ export function PdfViewer({
       if (e.ctrlKey) {
         e.preventDefault();
 
-        const rect = container.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        // Identify which page is under the cursor
+        let targetPageNum = currentPage;
 
-        const scrollX = container.scrollLeft;
-        const scrollY = container.scrollTop;
+        for (const [pNum, el] of pageRefs.current.entries()) {
+          const pRect = el.getBoundingClientRect();
+          if (e.clientY >= pRect.top && e.clientY <= pRect.bottom) {
+            targetPageNum = pNum;
+            break;
+          }
+        }
+
+        const targetEl = pageRefs.current.get(targetPageNum);
+        if (targetEl) {
+          const pRect = targetEl.getBoundingClientRect();
+          const pageHeight = Math.max(1, pRect.height);
+          zoomAnchorRef.current = {
+            pageNum: targetPageNum,
+            ratioY: Math.max(0, Math.min(1, (e.clientY - pRect.top) / pageHeight)),
+            clientY: e.clientY,
+          };
+        }
 
         setScale((prevScale) => {
-          // Smooth exponential zoom delta (matching Google Drive / modern PDF engines)
-          const zoomDelta = -e.deltaY * 0.0075;
+          // Smooth exponential zoom delta
+          const zoomDelta = -e.deltaY * 0.005;
           const nextScale = Math.min(
             3.5,
             Math.max(0.4, prevScale * (1 + zoomDelta)),
           );
-          const roundedScale = Math.round(nextScale * 100) / 100;
-
-          // Keep focal point steady under cursor
-          requestAnimationFrame(() => {
-            if (!container) return;
-            const contentX = (scrollX + mouseX) / prevScale;
-            const contentY = (scrollY + mouseY) / prevScale;
-            container.scrollLeft = contentX * roundedScale - mouseX;
-            container.scrollTop = contentY * roundedScale - mouseY;
-          });
-
-          return roundedScale;
+          return Math.round(nextScale * 100) / 100;
         });
       }
     };
@@ -636,7 +648,24 @@ export function PdfViewer({
     return () => {
       container.removeEventListener("wheel", handleWheel);
     };
-  }, []);
+  }, [currentPage]);
+
+  // Readjust scroll position synchronously when scale updates so anchor point never shifts
+  useLayoutEffect(() => {
+    const anchor = zoomAnchorRef.current;
+    if (!anchor || !scrollContainerRef.current) return;
+    zoomAnchorRef.current = null;
+
+    const el = pageRefs.current.get(anchor.pageNum);
+    if (!el) return;
+
+    const container = scrollContainerRef.current;
+    const newRect = el.getBoundingClientRect();
+    const currentPointY = newRect.top + anchor.ratioY * newRect.height;
+    const deltaY = currentPointY - anchor.clientY;
+
+    container.scrollTop += deltaY;
+  }, [scale]);
 
   // Track currently active page via IntersectionObserver focused on top reading band
   useEffect(() => {
@@ -1384,11 +1413,15 @@ const VirtualPdfPage = React.memo(
           canvas.style.width = `${Math.floor(viewport.width)}px`;
           canvas.style.height = `${Math.floor(viewport.height)}px`;
 
-          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+          const transform =
+            pixelRatio !== 1
+              ? [pixelRatio, 0, 0, pixelRatio, 0, 0]
+              : undefined;
 
           renderTask = page.render({
             canvasContext: context,
             viewport,
+            transform,
           });
 
           await renderTask.promise;

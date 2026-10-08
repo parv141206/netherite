@@ -3072,13 +3072,36 @@ export function WorkspaceLayout({
     if (!pdfHighlights || !Array.isArray(pdfHighlights)) return [];
     return pdfHighlights
       .filter((h) => Boolean(h && h.id && h.text))
-      .map((h) => ({
-        id: String(h.id),
-        text: String(h.text),
-        color: (h.color as any) || "yellow",
-        sectionTitle: `Page ${h.pageNumber || 1}`,
-      }));
-  }, [pdfHighlights]);
+      .map((h) => {
+        let enclosingHeading: HeadingItem | null = null;
+        if (pdfHeadings && pdfHeadings.length > 0) {
+          for (const heading of pdfHeadings) {
+            const pageMatch = heading.id?.match(/^page-(\d+)$/);
+            if (pageMatch) {
+              const hPage = parseInt(pageMatch[1], 10);
+              if (hPage <= h.pageNumber) {
+                enclosingHeading = heading;
+              } else {
+                break;
+              }
+            }
+          }
+        }
+
+        const sectionPrefix = enclosingHeading
+          ? `${"#".repeat(Math.min(enclosingHeading.level, 3))} ${enclosingHeading.text}`
+          : `Page ${h.pageNumber || 1}`;
+
+        return {
+          id: String(h.id),
+          text: String(h.text),
+          color: (h.color as any) || "yellow",
+          sectionTitle: sectionPrefix,
+          pageNumber: h.pageNumber,
+          sectionLevel: enclosingHeading ? enclosingHeading.level : 1,
+        };
+      });
+  }, [pdfHighlights, pdfHeadings]);
 
   // Track scroll position in editor to highlight current title/subtitle in OutlineSidebar
   useEffect(() => {
