@@ -702,14 +702,19 @@ export function PdfViewer({
 
       const pageRect = textLayerEl.getBoundingClientRect();
       const clientRects = Array.from(range.getClientRects()).filter(
-        (r) => r.width > 0.5 && r.height > 0.5,
+        (r) =>
+          r.width >= 3 &&
+          r.height >= 3 &&
+          r.bottom >= pageRect.top &&
+          r.top <= pageRect.bottom &&
+          r.left >= pageRect.left - 4 &&
+          r.right <= pageRect.right + 4,
       );
       if (clientRects.length === 0) return;
 
       // Merge contiguous/overlapping rects on the same vertical line
-      // to avoid multiple overlay rects causing darker middle bands
       const sortedRects = [...clientRects].sort((a, b) =>
-        Math.abs(a.top - b.top) > 4 ? a.top - b.top : a.left - b.left,
+        Math.abs(a.top - b.top) > 5 ? a.top - b.top : a.left - b.left,
       );
 
       const mergedClientRects: DOMRect[] = [];
@@ -717,9 +722,9 @@ export function PdfViewer({
         const last = mergedClientRects[mergedClientRects.length - 1];
         if (
           last &&
-          Math.abs(last.top - current.top) < 4 &&
-          Math.abs(last.bottom - current.bottom) < 4 &&
-          current.left <= last.right + 2
+          Math.abs(last.top - current.top) < 6 &&
+          Math.abs(last.bottom - current.bottom) < 6 &&
+          current.left <= last.right + 4
         ) {
           // Merge with last
           const mergedLeft = Math.min(last.left, current.left);
@@ -744,13 +749,25 @@ export function PdfViewer({
         height: (rect.height / pageRect.height) * 100,
       }));
 
-      const firstRect = mergedClientRects[0]!;
-      const lastRect = mergedClientRects[mergedClientRects.length - 1]!;
+      const rangeRect = range.getBoundingClientRect();
+      const popupWidth = 260;
+      const popupHeight = 44;
+      const topToolbarHeight = 56;
+
+      const centerX = rangeRect.left + rangeRect.width / 2;
       const menuX = Math.min(
-        window.innerWidth - 220,
-        Math.max(20, (firstRect.left + lastRect.right) / 2 - 100),
+        window.innerWidth - popupWidth - 16,
+        Math.max(16, centerX - popupWidth / 2),
       );
-      const menuY = Math.max(10, firstRect.top - 46);
+
+      // Prefer displaying 12px above selection; if too close to top toolbar, flip 12px below
+      const menuY =
+        rangeRect.top - popupHeight - 12 > topToolbarHeight
+          ? rangeRect.top - popupHeight - 12
+          : Math.min(
+              window.innerHeight - popupHeight - 16,
+              rangeRect.bottom + 12,
+            );
 
       setFloatingMenu({
         visible: true,
@@ -763,6 +780,60 @@ export function PdfViewer({
       setActionMenu(null);
     }, 40);
   }, []);
+
+  // Catch selection releases anywhere on document
+  useEffect(() => {
+    const handleDocMouseUp = () => {
+      handleSelectionEnd();
+    };
+    document.addEventListener("mouseup", handleDocDocUp);
+    document.addEventListener("touchend", handleDocDocUp);
+    return () => {
+      document.removeEventListener("mouseup", handleDocDocUp);
+      document.removeEventListener("touchend", handleDocDocUp);
+    };
+    function handleDocDocUp() {
+      handleDocMouseUp();
+    }
+  }, [handleSelectionEnd]);
+
+  // Handle click on existing highlight marks
+  const handlePageClick = useCallback(
+    (e: React.MouseEvent) => {
+      const selection = window.getSelection();
+      if (
+        selection &&
+        !selection.isCollapsed &&
+        selection.toString().trim().length > 0
+      ) {
+        return;
+      }
+
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
+      const hlElement = elements.find((el) =>
+        el.classList.contains("pdf-highlight-mark"),
+      );
+      if (hlElement) {
+        const hlId = hlElement.getAttribute("data-highlight-id");
+        const found = highlights.find((h) => h.id === hlId);
+        if (found) {
+          e.stopPropagation();
+          const rect = hlElement.getBoundingClientRect();
+          setActionMenu({
+            visible: true,
+            x: Math.min(
+              window.innerWidth - 240,
+              Math.max(20, rect.left + rect.width / 2 - 110),
+            ),
+            y: Math.max(10, rect.top - 46),
+            highlight: found,
+          });
+          setFloatingMenu(null);
+        }
+      }
+    },
+    [highlights],
+  );
 
   const handleApplyHighlight = (color: PdfHighlightColor) => {
     if (!floatingMenu) return;
@@ -1051,6 +1122,7 @@ export function PdfViewer({
         ref={scrollContainerRef}
         onMouseUp={handleSelectionEnd}
         onTouchEnd={handleSelectionEnd}
+        onClick={handlePageClick}
         className="relative flex-1 w-full h-full overflow-y-auto overflow-x-auto p-4 sm:p-6"
       >
         {isLoading && (
@@ -1342,6 +1414,15 @@ const VirtualPdfPage = React.memo(
             });
 
             await textLayer.render();
+            if (isCancelled) return;
+
+            const endOfContent = document.createElement("div");
+            endOfContent.className = "endOfContent";
+            textLayerContainer.append(endOfContent);
+
+            textLayerContainer.onpointerdown = () => {
+              textLayerContainer.classList.add("selecting");
+            };
           }
 
           setIsRendered(true);
@@ -1364,6 +1445,17 @@ const VirtualPdfPage = React.memo(
       };
     }, [pdfDoc, pageNumber, scale, isVisible]);
 
+    // Clean up selecting class on global pointer release
+    useEffect(() => {
+      const handlePointerUp = () => {
+        textLayerRef.current?.classList.remove("selecting");
+      };
+      document.addEventListener("pointerup", handlePointerUp);
+      return () => {
+        document.removeEventListener("pointerup", handlePointerUp);
+      };
+    }, []);
+
     const colorClasses: Record<PdfHighlightColor, string> = {
       yellow: "bg-amber-300/40 dark:bg-amber-400/40 border-b border-amber-400/70",
       green: "bg-emerald-300/40 dark:bg-emerald-400/40 border-b border-emerald-400/70",
@@ -1381,7 +1473,7 @@ const VirtualPdfPage = React.memo(
           width: `${Math.floor(pageWidth)}px`,
           minHeight: `${Math.floor(pageHeight)}px`,
         }}
-        className={`pdf-page-container relative shadow-md rounded-sm select-none transition-shadow ${
+        className={`pdf-page-container relative shadow-md rounded-sm transition-shadow ${
           isNightMode
             ? "bg-[#18181b] border border-zinc-800 text-zinc-100"
             : "bg-white border border-border/40 text-black"
@@ -1420,7 +1512,7 @@ const VirtualPdfPage = React.memo(
             </div>
 
             {/* Interactive Text Layer for selection (above highlights in z-axis) */}
-            <div ref={textLayerRef} className="pdf-text-layer" />
+            <div ref={textLayerRef} className="pdf-text-layer textLayer" />
           </>
         ) : (
           <div className="flex h-full w-full items-center justify-center pointer-events-none">
