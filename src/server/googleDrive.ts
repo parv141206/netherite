@@ -1072,6 +1072,14 @@ export async function getImageAsset(session: any, fileId: string) {
   });
 }
 
+interface PdfMetaCacheEntry {
+  name: string;
+  mimeType: string;
+  size?: number;
+  cachedAt: number;
+}
+const pdfMetaCache = new Map<string, PdfMetaCacheEntry>();
+
 export async function getPdfStream(
   session: any,
   fileId: string,
@@ -1080,10 +1088,21 @@ export async function getPdfStream(
   if (!fileId || fileId.startsWith("temp-")) return null;
   return withRetry(async () => {
     const drive = await getDriveClient(session);
-    const meta = await drive.files.get({
-      fileId,
-      fields: "id, name, mimeType, size",
-    });
+
+    let meta = pdfMetaCache.get(fileId);
+    if (!meta || Date.now() - meta.cachedAt > 10 * 60 * 1000) {
+      const resMeta = await drive.files.get({
+        fileId,
+        fields: "id, name, mimeType, size",
+      });
+      meta = {
+        name: resMeta.data.name ?? "document.pdf",
+        mimeType: resMeta.data.mimeType ?? "application/pdf",
+        size: resMeta.data.size ? parseInt(resMeta.data.size, 10) : undefined,
+        cachedAt: Date.now(),
+      };
+      pdfMetaCache.set(fileId, meta);
+    }
 
     const requestHeaders: Record<string, string> = {};
     if (rangeHeader) {
@@ -1099,9 +1118,9 @@ export async function getPdfStream(
 
     return {
       id: fileId,
-      name: meta.data.name ?? "document.pdf",
-      mimeType: meta.data.mimeType ?? "application/pdf",
-      size: meta.data.size ? parseInt(meta.data.size, 10) : undefined,
+      name: meta.name,
+      mimeType: meta.mimeType,
+      size: meta.size,
       status: res.status,
       contentRange: headers ? (headers["content-range"] as string | undefined) : undefined,
       contentLength: headers ? (headers["content-length"] as string | undefined) : undefined,

@@ -169,6 +169,23 @@ export function PdfViewer({
   const [copiedNotification, setCopiedNotification] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [resumeNotification, setResumeNotification] = useState<string | null>(null);
+  const [jumpInput, setJumpInput] = useState<string>(String(currentPage));
+
+  useEffect(() => {
+    setJumpInput(String(currentPage));
+  }, [currentPage]);
+
+  const handleJumpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const p = parseInt(jumpInput, 10);
+    if (!isNaN(p) && p >= 1 && p <= numPages) {
+      const el = pageRefs.current.get(p);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setCurrentPage(p);
+    } else {
+      setJumpInput(String(currentPage));
+    }
+  };
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -527,7 +544,7 @@ export function PdfViewer({
       const loadingTask = pdfjsLib.getDocument({
         url,
         rangeChunkSize: 65536 * 4,
-        disableAutoFetch: true,
+        disableAutoFetch: false,
         disableStream: false,
       });
 
@@ -621,7 +638,7 @@ export function PdfViewer({
     };
   }, []);
 
-  // Track currently active page via IntersectionObserver
+  // Track currently active page via IntersectionObserver focused on top reading band
   useEffect(() => {
     if (!scrollContainerRef.current || numPages === 0) return;
 
@@ -636,7 +653,8 @@ export function PdfViewer({
       },
       {
         root: scrollContainerRef.current,
-        threshold: 0.3,
+        rootMargin: "-10% 0px -70% 0px",
+        threshold: 0,
       },
     );
 
@@ -849,68 +867,107 @@ export function PdfViewer({
         if (actionMenu) setActionMenu(null);
       }}
     >
-      {/* Top Cupertino Toolbar */}
+      {/* Top Modern Toolbar */}
       <div
-        className={`flex h-11 shrink-0 items-center justify-between border-b px-3.5 backdrop-blur-md z-10 select-none ${
+        className={`flex h-12 shrink-0 items-center justify-between border-b px-3 sm:px-4 backdrop-blur-md z-10 select-none ${
           isNightMode
             ? "border-zinc-800 bg-zinc-900/90 text-zinc-100"
             : "border-border/40 bg-background/90 text-foreground"
         }`}
       >
-        {/* Left: Document info */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex items-center justify-center rounded-md bg-rose-500/10 p-1 text-rose-500 dark:text-rose-400">
-            <FileText className="h-4 w-4 shrink-0" />
+        {/* Left: PDF badge & direct page jump */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold text-[11px] tracking-wider uppercase">
+            <FileText className="h-3.5 w-3.5 shrink-0" />
+            <span>PDF</span>
           </div>
-          <span
-            className="text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-xs"
-            title={fileName}
-          >
-            {fileName}
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hidden sm:inline-block">
-            PDF
-          </span>
+
           {highlights.length > 0 && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              {highlights.length} {highlights.length === 1 ? "note" : "notes"}
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 hidden sm:inline-block">
+              {highlights.length} {highlights.length === 1 ? "highlight" : "highlights"}
             </span>
           )}
+
+          <div className="w-[1px] h-4 bg-border/60 mx-1 hidden sm:block" />
+
+          {/* Page navigation with interactive jump input */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                const prev = Math.max(1, currentPage - 1);
+                const el = pageRefs.current.get(prev);
+                el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                setCurrentPage(prev);
+              }}
+              disabled={currentPage <= 1}
+              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              title="Previous Page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            <form onSubmit={handleJumpSubmit} className="flex items-center gap-1">
+              <input
+                type="number"
+                min={1}
+                max={numPages || 1}
+                value={jumpInput}
+                onChange={(e) => setJumpInput(e.target.value)}
+                onBlur={() => setJumpInput(String(currentPage))}
+                className="w-12 h-6 px-1 text-center font-mono text-xs font-semibold rounded bg-muted/40 hover:bg-muted/70 focus:bg-background border border-border/50 focus:border-primary focus:outline-none transition-all"
+                title="Type page number and press Enter"
+              />
+              <span className="text-muted-foreground text-xs font-mono">
+                / {numPages || "–"}
+              </span>
+            </form>
+
+            <button
+              onClick={() => {
+                const next = Math.min(numPages, currentPage + 1);
+                const el = pageRefs.current.get(next);
+                el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                setCurrentPage(next);
+              }}
+              disabled={currentPage >= numPages}
+              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              title="Next Page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Center: Page controls */}
-        <div className="flex items-center gap-1 text-xs">
+        {/* Center: Zoom controls */}
+        <div className="flex items-center gap-1">
           <button
-            onClick={() => {
-              const prev = Math.max(1, currentPage - 1);
-              const el = pageRefs.current.get(prev);
-              el?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            disabled={currentPage <= 1}
-            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            title="Previous Page"
+            onClick={() => setScale((s) => Math.max(0.4, Math.round((s - 0.15) * 100) / 100))}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Zoom Out"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ZoomOut className="h-4 w-4" />
           </button>
-          <span className="font-mono text-muted-foreground px-1 text-[11px] whitespace-nowrap">
-            <strong className="text-foreground">{currentPage}</strong> /{" "}
-            {numPages || "–"}
+          <span className="text-xs font-mono font-medium px-1 text-foreground min-w-[3.2rem] text-center">
+            {Math.round(scale * 100)}%
           </span>
           <button
-            onClick={() => {
-              const next = Math.min(numPages, currentPage + 1);
-              const el = pageRefs.current.get(next);
-              el?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            disabled={currentPage >= numPages}
-            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            title="Next Page"
+            onClick={() => setScale((s) => Math.min(3.5, Math.round((s + 0.15) * 100) / 100))}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Zoom In"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleFitWidth}
+            className="px-2 py-1 rounded-md text-xs font-medium hover:bg-muted text-muted-foreground hover:text-foreground transition-colors hidden sm:flex items-center gap-1"
+            title="Fit to Width"
+          >
+            <Maximize2 className="h-3.5 w-3.5" />
+            <span className="text-[11px]">Fit</span>
           </button>
         </div>
 
-        {/* Right: Night mode, Zoom & Save actions */}
+        {/* Right: Quick actions (Night mode, Undo, Save, Download, External) */}
         <div className="flex items-center gap-1">
           {/* Night Mode Toggle */}
           <button
@@ -960,41 +1017,16 @@ export function PdfViewer({
 
           <div className="w-[1px] h-4 bg-border/60 mx-0.5 hidden sm:block" />
 
-          {/* Zoom controls */}
-          <button
-            onClick={() => setScale((s) => Math.max(0.4, s - 0.15))}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors hidden sm:flex"
-            title="Zoom Out"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </button>
-          <span className="text-xs font-mono font-medium px-1 text-muted-foreground min-w-[3rem] text-center hidden sm:inline-block">
-            {Math.round(scale * 100)}%
-          </span>
-          <button
-            onClick={() => setScale((s) => Math.min(3.5, s + 0.15))}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors hidden sm:flex"
-            title="Zoom In"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </button>
-          <button
-            onClick={handleFitWidth}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            title="Fit to Width"
-          >
-            <Maximize2 className="h-4 w-4" />
-          </button>
-
-          <div className="w-[1px] h-4 bg-border/60 mx-0.5 hidden sm:block" />
-
+          {/* Reload PDF */}
           <button
             onClick={() => void loadDocument()}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors hidden sm:flex"
             title="Reload PDF"
           >
             <RotateCw className="h-4 w-4" />
           </button>
+
+          {/* Download PDF */}
           <button
             onClick={handleDownload}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -1002,6 +1034,8 @@ export function PdfViewer({
           >
             <Download className="h-4 w-4" />
           </button>
+
+          {/* Open in New Tab */}
           <button
             onClick={handleOpenExternal}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors hidden md:flex"
@@ -1074,51 +1108,23 @@ export function PdfViewer({
 
         {pdfDoc && numPages > 0 && (
           <div className="flex flex-col items-center gap-6 pb-20">
-            {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => {
-              // Virtualization window: mount actual canvas for pages within +/- 6 of currentPage
-              const isNearby = Math.abs(pageNum - currentPage) <= 6;
-              if (!isNearby) {
-                return (
-                  <div
-                    key={`page-${pageNum}`}
-                    ref={(el) => {
-                      if (el) pageRefs.current.set(pageNum, el);
-                      else pageRefs.current.delete(pageNum);
-                    }}
-                    data-page-number={pageNum}
-                    style={{
-                      width: `${Math.floor(basePageWidth * scale)}px`,
-                      height: `${Math.floor(basePageHeight * scale)}px`,
-                    }}
-                    className={`pdf-page-container relative shadow-md rounded-sm select-none flex items-center justify-center font-mono text-xs text-muted-foreground/30 ${
-                      isNightMode
-                        ? "bg-[#18181b] border border-zinc-800"
-                        : "bg-white border border-border/40"
-                    }`}
-                  >
-                    Page {pageNum}
-                  </div>
-                );
-              }
-
-              return (
-                <VirtualPdfPage
-                  key={`page-${pageNum}`}
-                  ref={(el) => {
-                    if (el) pageRefs.current.set(pageNum, el);
-                    else pageRefs.current.delete(pageNum);
-                  }}
-                  pdfDoc={pdfDoc}
-                  pageNumber={pageNum}
-                  scale={scale}
-                  defaultWidth={basePageWidth}
-                  defaultHeight={basePageHeight}
-                  isNightMode={isNightMode}
-                  highlights={highlightsByPage.get(pageNum) || EMPTY_HIGHLIGHTS}
-                  onHighlightClick={handleOpenHighlightAction}
-                />
-              );
-            })}
+            {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
+              <VirtualPdfPage
+                key={`page-${pageNum}`}
+                ref={(el) => {
+                  if (el) pageRefs.current.set(pageNum, el);
+                  else pageRefs.current.delete(pageNum);
+                }}
+                pdfDoc={pdfDoc}
+                pageNumber={pageNum}
+                scale={scale}
+                defaultWidth={basePageWidth}
+                defaultHeight={basePageHeight}
+                isNightMode={isNightMode}
+                highlights={highlightsByPage.get(pageNum) || EMPTY_HIGHLIGHTS}
+                onHighlightClick={handleOpenHighlightAction}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -1256,7 +1262,7 @@ const VirtualPdfPage = React.memo(
       [ref],
     );
 
-    // Pre-buffer 500px around viewport
+    // Pre-buffer 1200px around viewport for seamless scrolling
     useEffect(() => {
       const el = containerRef.current;
       if (!el) return;
@@ -1268,7 +1274,7 @@ const VirtualPdfPage = React.memo(
             setIsVisible(entry.isIntersecting);
           }
         },
-        { rootMargin: "500px 0px" },
+        { rootMargin: "1200px 0px" },
       );
 
       observer.observe(el);
@@ -1417,8 +1423,8 @@ const VirtualPdfPage = React.memo(
             <div ref={textLayerRef} className="pdf-text-layer" />
           </>
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground/40 font-mono">
-            Page {pageNumber}
+          <div className="flex h-full w-full items-center justify-center pointer-events-none">
+            <div className="h-2 w-16 rounded-full bg-muted/20 animate-pulse" />
           </div>
         )}
       </div>
