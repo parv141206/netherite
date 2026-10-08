@@ -26,6 +26,12 @@ import {
   Save,
   CheckCircle2,
   Undo2,
+  Search,
+  CaseSensitive,
+  ChevronUp,
+  ChevronDown,
+  X,
+  Loader2,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
@@ -129,6 +135,12 @@ interface HighlightActionMenuState {
   highlight: PdfHighlight;
 }
 
+interface SearchMatch {
+  pageNumber: number;
+  matchIndex: number;
+  matchIndexOnPage: number;
+}
+
 export function PdfViewer({
   fileId,
   fileName,
@@ -149,6 +161,24 @@ export function PdfViewer({
   } | null>(null);
   const [basePageWidth, setBasePageWidth] = useState<number>(612);
   const [basePageHeight, setBasePageHeight] = useState<number>(792);
+
+  // Search in PDF state
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [matchCase, setMatchCase] = useState<boolean>(false);
+  const [matches, setMatches] = useState<SearchMatch[]>([]);
+  const [currentMatchIdx, setCurrentMatchIdx] = useState<number>(0);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const pageTextCacheRef = useRef<Map<number, string>>(new Map());
+
+  const activeSearchMatch = useMemo(() => {
+    if (matches.length === 0 || currentMatchIdx < 0 || currentMatchIdx >= matches.length) {
+      return null;
+    }
+    return matches[currentMatchIdx] || null;
+  }, [matches, currentMatchIdx]);
 
   // Night Mode state with persistence
   const [isNightMode, setIsNightMode] = useState<boolean>(() => {
@@ -304,7 +334,175 @@ export function PdfViewer({
     }
   }, [fileId, highlights, triggerSaveToDrive]);
 
-  // Keyboard shortcuts in PDF viewer: Ctrl+S to save, Ctrl+Z to undo
+  // Search match navigation
+  const handleNextMatch = useCallback(() => {
+    if (matches.length === 0) return;
+    const nextIdx = (currentMatchIdx + 1) % matches.length;
+    setCurrentMatchIdx(nextIdx);
+    const m = matches[nextIdx];
+    if (m) {
+      const targetEl = pageRefs.current.get(m.pageNumber);
+      targetEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setCurrentPage(m.pageNumber);
+    }
+  }, [matches, currentMatchIdx]);
+
+  const handlePrevMatch = useCallback(() => {
+    if (matches.length === 0) return;
+    const prevIdx = (currentMatchIdx - 1 + matches.length) % matches.length;
+    setCurrentMatchIdx(prevIdx);
+    const m = matches[prevIdx];
+    if (m) {
+      const targetEl = pageRefs.current.get(m.pageNumber);
+      targetEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setCurrentPage(m.pageNumber);
+    }
+  }, [matches, currentMatchIdx]);
+
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchOpen(false);
+    searchAbortRef.current?.abort();
+    setMatches([]);
+    setCurrentMatchIdx(0);
+    setIsSearching(false);
+  }, []);
+
+  const handleSearchInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handlePrevMatch();
+        } else {
+          handleNextMatch();
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        handleCloseSearch();
+      }
+    },
+    [handleNextMatch, handlePrevMatch, handleCloseSearch],
+  );
+
+  // Cooperative non-blocking background search runner
+  useEffect(() => {
+    if (!isSearchOpen || !pdfDoc || !searchQuery.trim()) {
+      setMatches([]);
+      setCurrentMatchIdx(0);
+      setIsSearching(false);
+      searchAbortRef.current?.abort();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      searchAbortRef.current?.abort();
+      const abortController = new AbortController();
+      searchAbortRef.current = abortController;
+
+      void (async () => {
+        setIsSearching(true);
+        const q = matchCase ? searchQuery.trim() : searchQuery.trim().toLowerCase();
+        const allMatches: SearchMatch[] = [];
+        let firstMatchTriggered = false;
+
+        // Start search from current page, then wrap around
+        const pageOrder: number[] = [];
+        for (let p = currentPage; p <= numPages; p++) pageOrder.push(p);
+        for (let p = 1; p < currentPage; p++) pageOrder.push(p);
+
+        const BATCH_SIZE = 8;
+        for (let i = 0; i < pageOrder.length; i += BATCH_SIZE) {
+          if (abortController.signal.aborted) return;
+
+          const batch = pageOrder.slice(i, i + BATCH_SIZE);
+          await Promise.all(
+            batch.map(async (pNum) => {
+              if (abortController.signal.aborted) return;
+
+              let text = pageTextCacheRef.current.get(pNum);
+              if (text === undefined) {
+                try {
+                  const page = await pdfDoc.getPage(pNum);
+                  const textContent = await page.getTextContent();
+                  text = textContent.items
+                    .map((item: any) => item.str || "")
+                    .join(" ");
+                  pageTextCacheRef.current.set(pNum, text);
+                } catch {
+                  text = "";
+                }
+              }
+
+              if (abortController.signal.aborted) return;
+
+              const compText = matchCase ? text : text.toLowerCase();
+              let pos = 0;
+              let onPageIndex = 0;
+              while ((pos = compText.indexOf(q, pos)) !== -1) {
+                allMatches.push({
+                  pageNumber: pNum,
+                  matchIndex: allMatches.length,
+                  matchIndexOnPage: onPageIndex,
+                });
+                onPageIndex++;
+                pos += q.length;
+              }
+            }),
+          );
+
+          if (abortController.signal.aborted) return;
+
+          if (!firstMatchTriggered && allMatches.length > 0) {
+            firstMatchTriggered = true;
+            const sorted = [...allMatches].sort((a, b) => {
+              const idxA = pageOrder.indexOf(a.pageNumber);
+              const idxB = pageOrder.indexOf(b.pageNumber);
+              return idxA !== idxB ? idxA - idxB : a.matchIndexOnPage - b.matchIndexOnPage;
+            });
+            setMatches(sorted);
+            setCurrentMatchIdx(0);
+            const first = sorted[0];
+            if (first) {
+              const targetEl = pageRefs.current.get(first.pageNumber);
+              targetEl?.scrollIntoView({ behavior: "smooth", block: "start" });
+              setCurrentPage(first.pageNumber);
+            }
+          } else if (allMatches.length > 0) {
+            const sorted = [...allMatches].sort((a, b) => {
+              const idxA = pageOrder.indexOf(a.pageNumber);
+              const idxB = pageOrder.indexOf(b.pageNumber);
+              return idxA !== idxB ? idxA - idxB : a.matchIndexOnPage - b.matchIndexOnPage;
+            });
+            setMatches(sorted);
+          }
+
+          // Yield to browser event loop
+          await new Promise((r) => setTimeout(r, 0));
+        }
+
+        if (abortController.signal.aborted) return;
+
+        // Final sort in document order
+        const finalSorted = [...allMatches].sort((a, b) =>
+          a.pageNumber !== b.pageNumber
+            ? a.pageNumber - b.pageNumber
+            : a.matchIndexOnPage - b.matchIndexOnPage,
+        );
+        for (let idx = 0; idx < finalSorted.length; idx++) {
+          finalSorted[idx]!.matchIndex = idx;
+        }
+        setMatches(finalSorted);
+        setIsSearching(false);
+      })();
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      searchAbortRef.current?.abort();
+    };
+  }, [searchQuery, matchCase, isSearchOpen, pdfDoc, numPages, currentPage]);
+
+  // Keyboard shortcuts in PDF viewer: Ctrl+S to save, Ctrl+Z to undo, Ctrl+F to find
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -320,12 +518,22 @@ export function PdfViewer({
           e.preventDefault();
           handleUndoHighlight();
         }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        }, 50);
+      } else if (e.key === "Escape" && isSearchOpen) {
+        e.preventDefault();
+        handleCloseSearch();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [triggerSaveToDrive, handleUndoHighlight, highlights.length]);
+  }, [triggerSaveToDrive, handleUndoHighlight, highlights.length, isSearchOpen, handleCloseSearch]);
 
   // Handle external highlight deletion event (from OutlineSidebar)
   useEffect(() => {
@@ -1227,6 +1435,30 @@ export function PdfViewer({
             <RotateCw className="h-4 w-4" />
           </button>
 
+          {/* Search in PDF Button */}
+          <button
+            onClick={() => {
+              setIsSearchOpen((prev) => {
+                const next = !prev;
+                if (next) {
+                  setTimeout(() => {
+                    searchInputRef.current?.focus();
+                    searchInputRef.current?.select();
+                  }, 50);
+                }
+                return next;
+              });
+            }}
+            className={`p-1.5 rounded-md transition-colors ${
+              isSearchOpen
+                ? "bg-primary/20 text-primary hover:bg-primary/30"
+                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            title="Search in PDF (Ctrl+F)"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+
           {/* Download PDF */}
           <button
             onClick={handleDownload}
@@ -1246,6 +1478,88 @@ export function PdfViewer({
           </button>
         </div>
       </div>
+
+      {/* Floating Search Bar */}
+      {isSearchOpen && (
+        <div className="absolute top-13 right-4 sm:right-6 z-40 bg-card/95 backdrop-blur-md border border-border/80 rounded-xl shadow-2xl p-1.5 flex items-center gap-1.5 text-xs text-foreground animate-in fade-in slide-in-from-top-2 duration-150 select-none">
+          <div className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2.5 pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchInputKeyDown}
+              placeholder="Find in document…"
+              className="w-44 sm:w-60 pl-8 pr-2 py-1 text-xs bg-background/80 border border-border/50 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+
+          {/* Match Case Toggle */}
+          <button
+            onClick={() => setMatchCase((prev) => !prev)}
+            className={`p-1 rounded-md transition-colors text-xs font-semibold ${
+              matchCase
+                ? "bg-primary/20 text-primary border border-primary/40"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
+            }`}
+            title="Match Case"
+            aria-label="Match Case"
+          >
+            <CaseSensitive className="w-4 h-4" />
+          </button>
+
+          {/* Match Count / Status */}
+          <div className="text-[11px] font-mono text-muted-foreground px-1 min-w-[3.5rem] text-center shrink-0">
+            {isSearching ? (
+              <span className="flex items-center justify-center gap-1 text-primary">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>{matches.length}</span>
+              </span>
+            ) : matches.length > 0 ? (
+              <span>
+                {currentMatchIdx + 1} / {matches.length}
+              </span>
+            ) : searchQuery.trim() ? (
+              <span className="text-muted-foreground/60">0 / 0</span>
+            ) : null}
+          </div>
+
+          {/* Previous Match */}
+          <button
+            onClick={handlePrevMatch}
+            disabled={matches.length === 0}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            title="Previous Match (Shift+Enter)"
+            aria-label="Previous Match"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+
+          {/* Next Match */}
+          <button
+            onClick={handleNextMatch}
+            disabled={matches.length === 0}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            title="Next Match (Enter)"
+            aria-label="Next Match"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+
+          <div className="w-[1px] h-4 bg-border/60 mx-0.5" />
+
+          {/* Close Search */}
+          <button
+            onClick={handleCloseSearch}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Close Search (Esc)"
+            aria-label="Close Search"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Main Canvas Scroll Area */}
       <div
@@ -1331,6 +1645,15 @@ export function PdfViewer({
                 isNightMode={isNightMode}
                 highlights={highlightsByPage.get(pageNum) || EMPTY_HIGHLIGHTS}
                 onHighlightClick={handleOpenHighlightAction}
+                searchQuery={isSearchOpen ? searchQuery : undefined}
+                matchCase={matchCase}
+                isCurrentSearchPage={activeSearchMatch?.pageNumber === pageNum}
+                activeMatchIndexOnPage={activeSearchMatch?.matchIndexOnPage}
+                onTextExtracted={(pNum, text) => {
+                  if (!pageTextCacheRef.current.has(pNum)) {
+                    pageTextCacheRef.current.set(pNum, text);
+                  }
+                }}
               />
             ))}
           </div>
@@ -1435,6 +1758,11 @@ interface VirtualPdfPageProps {
   isNightMode: boolean;
   highlights: PdfHighlight[];
   onHighlightClick: (e: React.MouseEvent, h: PdfHighlight) => void;
+  searchQuery?: string;
+  isCurrentSearchPage?: boolean;
+  activeMatchIndexOnPage?: number;
+  matchCase?: boolean;
+  onTextExtracted?: (pageNumber: number, text: string) => void;
 }
 
 const VirtualPdfPage = React.memo(
@@ -1449,6 +1777,11 @@ const VirtualPdfPage = React.memo(
       isNightMode,
       highlights,
       onHighlightClick,
+      searchQuery,
+      isCurrentSearchPage,
+      activeMatchIndexOnPage,
+      matchCase,
+      onTextExtracted,
     },
     ref,
   ) {
@@ -1547,6 +1880,12 @@ const VirtualPdfPage = React.memo(
             const textContent = await page.getTextContent();
             if (isCancelled) return;
 
+            // Cache text for lightning fast searches
+            const pageStr = textContent.items
+              .map((item: any) => item.str || "")
+              .join(" ");
+            onTextExtracted?.(pageNumber, pageStr);
+
             const textLayer = new pdfjsLib.TextLayer({
               textContentSource: textContent,
               container: textLayerContainer,
@@ -1583,7 +1922,83 @@ const VirtualPdfPage = React.memo(
           } catch {}
         }
       };
-    }, [pdfDoc, pageNumber, scale, isVisible]);
+    }, [pdfDoc, pageNumber, scale, isVisible, onTextExtracted]);
+
+    // Highlight search query occurrences in rendered textLayer
+    useEffect(() => {
+      const textLayerContainer = textLayerRef.current;
+      if (!textLayerContainer || !isRendered) return;
+
+      // Clean up previous search highlights
+      const existingMarks = textLayerContainer.querySelectorAll(".pdf-search-match");
+      existingMarks.forEach((m) => {
+        const parent = m.parentNode;
+        if (parent) {
+          parent.replaceChild(document.createTextNode(m.textContent || ""), m);
+          parent.normalize();
+        }
+      });
+
+      const cleanQuery = searchQuery?.trim() || "";
+      if (!cleanQuery) return;
+
+      const query = matchCase ? cleanQuery : cleanQuery.toLowerCase();
+      const walker = document.createTreeWalker(
+        textLayerContainer,
+        NodeFilter.SHOW_TEXT,
+        null,
+      );
+
+      const nodesToReplace: { node: Text; matchIdx: number }[] = [];
+      let currentNode: Text | null = null;
+      while ((currentNode = walker.nextNode() as Text | null)) {
+        const val = currentNode.nodeValue || "";
+        const comp = matchCase ? val : val.toLowerCase();
+        const idx = comp.indexOf(query);
+        if (idx !== -1) {
+          nodesToReplace.push({ node: currentNode, matchIdx: idx });
+        }
+      }
+
+      let matchCountOnPage = 0;
+      nodesToReplace.forEach(({ node, matchIdx }) => {
+        const text = node.nodeValue || "";
+        const before = text.substring(0, matchIdx);
+        const matched = text.substring(matchIdx, matchIdx + cleanQuery.length);
+        const after = text.substring(matchIdx + cleanQuery.length);
+
+        const isCurrentActive =
+          isCurrentSearchPage && matchCountOnPage === activeMatchIndexOnPage;
+        matchCountOnPage++;
+
+        const mark = document.createElement("mark");
+        mark.className = `pdf-search-match rounded-2xs transition-all ${
+          isCurrentActive
+            ? "bg-amber-400 text-black font-semibold ring-2 ring-primary ring-offset-1 shadow-md animate-pulse"
+            : "bg-amber-300/40 dark:bg-amber-400/30 text-inherit"
+        }`;
+        mark.textContent = matched;
+
+        const frag = document.createDocumentFragment();
+        if (before) frag.appendChild(document.createTextNode(before));
+        frag.appendChild(mark);
+        if (after) frag.appendChild(document.createTextNode(after));
+
+        node.parentNode?.replaceChild(frag, node);
+
+        if (isCurrentActive) {
+          setTimeout(() => {
+            mark.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 40);
+        }
+      });
+    }, [
+      isRendered,
+      searchQuery,
+      isCurrentSearchPage,
+      activeMatchIndexOnPage,
+      matchCase,
+    ]);
 
     // Clean up selecting class on global pointer release
     useEffect(() => {
