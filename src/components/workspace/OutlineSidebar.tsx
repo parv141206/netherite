@@ -643,7 +643,7 @@ export function OutlineSidebar({
                 /* Grouped by Section / Chapter (#, ##) */
                 groupedHighlightsBySection.map((group) => (
                   <div key={group.sectionKey} className="space-y-1.5 pb-2">
-                    <div className="sticky top-0 z-10 px-2 py-1 bg-background/95 backdrop-blur-xs border-b border-border/30 flex items-center justify-between text-[11px] font-semibold text-foreground rounded-t">
+                    <div className="pt-2 pb-1 px-1 flex items-center justify-between text-[11px] font-semibold text-foreground border-b border-border/30 select-none">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="font-mono text-primary text-[10px] shrink-0 font-bold">
                           {"#".repeat(Math.min(group.sectionLevel, 4))}
@@ -677,7 +677,7 @@ export function OutlineSidebar({
                 /* Grouped by Color */
                 groupedHighlightsByColor.map((group) => (
                   <div key={group.color} className="space-y-1.5 pb-2">
-                    <div className="sticky top-0 z-10 px-2 py-1 bg-background/95 backdrop-blur-xs border-b border-border/30 flex items-center justify-between text-[11px] font-semibold text-foreground rounded-t">
+                    <div className="pt-2 pb-1 px-1 flex items-center justify-between text-[11px] font-semibold text-foreground border-b border-border/30 select-none">
                       <div className="flex items-center gap-1.5">
                         <span className={`w-2.5 h-2.5 rounded-full ${COLOR_MAP[group.color].dot}`} />
                         <span>{COLOR_MAP[group.color].label}</span>

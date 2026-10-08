@@ -467,6 +467,39 @@ export function PdfViewer({
         const MAX_ITEMS = 2000;
         let count = 0;
 
+        const destCache = new Map<string, any>();
+        const pageIndexCache = new Map<string | number, number>();
+
+        const resolvePageIndex = async (dest: any): Promise<number> => {
+          if (!dest) return 1;
+          if (typeof dest === "number" && !isNaN(dest) && dest >= 0) {
+            return dest + 1;
+          }
+          if (Array.isArray(dest)) {
+            const first = dest[0];
+            if (typeof first === "number" && !isNaN(first) && first >= 0) {
+              return first + 1;
+            }
+            if (first && typeof first === "object") {
+              const key = first.num !== undefined ? `${first.num}_${first.gen ?? 0}` : String(first);
+              if (pageIndexCache.has(key)) {
+                return pageIndexCache.get(key)!;
+              }
+              try {
+                const idx = await doc.getPageIndex(first);
+                if (typeof idx === "number" && !isNaN(idx) && idx >= 0) {
+                  const pNum = idx + 1;
+                  pageIndexCache.set(key, pNum);
+                  return pNum;
+                }
+              } catch {
+                // destination resolution fallback
+              }
+            }
+          }
+          return 1;
+        };
+
         const parseNodes = async (nodes: any[], depth = 1) => {
           for (let i = 0; i < nodes.length; i++) {
             if (count >= MAX_ITEMS) break;
@@ -476,18 +509,16 @@ export function PdfViewer({
             let targetPageNumber = 1;
             try {
               if (typeof node.dest === "string") {
-                const destArray = await doc.getDestination(node.dest);
-                if (destArray && destArray[0]) {
-                  const idx = await doc.getPageIndex(destArray[0]);
-                  if (typeof idx === "number" && !isNaN(idx) && idx >= 0) {
-                    targetPageNumber = idx + 1;
-                  }
+                let destArray = destCache.get(node.dest);
+                if (!destArray) {
+                  destArray = await doc.getDestination(node.dest);
+                  if (destArray) destCache.set(node.dest, destArray);
                 }
-              } else if (Array.isArray(node.dest) && node.dest[0]) {
-                const idx = await doc.getPageIndex(node.dest[0]);
-                if (typeof idx === "number" && !isNaN(idx) && idx >= 0) {
-                  targetPageNumber = idx + 1;
+                if (destArray) {
+                  targetPageNumber = await resolvePageIndex(destArray);
                 }
+              } else if (Array.isArray(node.dest)) {
+                targetPageNumber = await resolvePageIndex(node.dest);
               }
             } catch {
               // destination resolution fallback
@@ -503,9 +534,14 @@ export function PdfViewer({
               count++;
             }
 
-            // Yield control back to browser to keep UI silky smooth
-            if (count % 10 === 0) {
-              await new Promise((resolve) => setTimeout(resolve, 0));
+            // Yield control back to browser to keep UI silky smooth and space out requests
+            if (count % 5 === 0) {
+              await new Promise((resolve) => setTimeout(resolve, 20));
+            }
+
+            // Progressively publish extracted outline in batches so sidebar updates immediately
+            if (count > 0 && count % 25 === 0) {
+              onOutlineExtractedRef.current?.([...parsedHeadings]);
             }
 
             if (node.items && node.items.length > 0 && depth < 3) {
@@ -544,9 +580,9 @@ export function PdfViewer({
       const url = `/api/notes/pdf?id=${encodeURIComponent(fileId)}`;
       const loadingTask = pdfjsLib.getDocument({
         url,
-        rangeChunkSize: 65536 * 4,
-        disableAutoFetch: false,
-        disableStream: false,
+        rangeChunkSize: 65536 * 16, // 1MB chunks for far faster streaming throughput and fewer requests
+        disableAutoFetch: true, // Only fetch ranges on demand; do not sequentially stream entire 60MB file
+        disableStream: true, // Discrete byte-range requests
       });
 
       const doc = await loadingTask.promise;
@@ -562,10 +598,10 @@ export function PdfViewer({
       // Immediately display document without blocking on outline
       setIsLoading(false);
 
-      // Run outline extraction in background
+      // Run outline extraction after initial page has rendered to prevent network contention
       setTimeout(() => {
         void parseOutlineInBackground(doc);
-      }, 50);
+      }, 1200);
 
       // Restore last visited page
       const savedLastPage = getPdfLastPage(fileId);
@@ -1363,7 +1399,7 @@ const VirtualPdfPage = React.memo(
       [ref],
     );
 
-    // Pre-buffer 1200px around viewport for seamless scrolling
+    // Pre-buffer 450px around viewport for seamless scrolling without thrashing bandwidth on start
     useEffect(() => {
       const el = containerRef.current;
       if (!el) return;
@@ -1375,7 +1411,7 @@ const VirtualPdfPage = React.memo(
             setIsVisible(entry.isIntersecting);
           }
         },
-        { rootMargin: "1200px 0px" },
+        { rootMargin: "450px 0px" },
       );
 
       observer.observe(el);
