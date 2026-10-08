@@ -45,6 +45,7 @@ import {
   type PdfHighlightColor,
   PDF_HIGHLIGHTS_UPDATED_EVENT,
 } from "~/lib/pdfHighlightStorage";
+import { getCachedPdf, setCachedPdf } from "~/lib/pdfCache";
 import type { HeadingItem } from "./OutlineSidebar";
 
 // Configure worker
@@ -141,6 +142,11 @@ export function PdfViewer({
   const [scale, setScale] = useState<number>(1.15);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState<{
+    loaded: number;
+    total: number;
+    percent: number;
+  } | null>(null);
   const [basePageWidth, setBasePageWidth] = useState<number>(612);
   const [basePageHeight, setBasePageHeight] = useState<number>(792);
 
@@ -576,13 +582,70 @@ export function PdfViewer({
     try {
       setIsLoading(true);
       setLoadingError(null);
+      setLoadingProgress(null);
 
-      const url = `/api/notes/pdf?id=${encodeURIComponent(fileId)}`;
+      // Step 1: Check IndexedDB cache for instant (<100ms) reload
+      let pdfData: ArrayBuffer | null = await getCachedPdf(fileId);
+
+      // Step 2: If not in cache, fetch with progressive streaming download
+      if (!pdfData) {
+        const url = `/api/notes/pdf?id=${encodeURIComponent(fileId)}`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`Failed to download PDF (${res.status} ${res.statusText})`);
+        }
+
+        const contentLengthHeader = res.headers.get("Content-Length");
+        const totalBytes = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+
+        if (res.body) {
+          const reader = res.body.getReader();
+          const chunks: Uint8Array[] = [];
+          let loadedBytes = 0;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (value) {
+              chunks.push(value);
+              loadedBytes += value.length;
+              if (totalBytes > 0) {
+                setLoadingProgress({
+                  loaded: loadedBytes,
+                  total: totalBytes,
+                  percent: Math.min(100, Math.round((loadedBytes / totalBytes) * 100)),
+                });
+              } else {
+                setLoadingProgress({
+                  loaded: loadedBytes,
+                  total: 0,
+                  percent: 0,
+                });
+              }
+            }
+          }
+
+          const combined = new Uint8Array(loadedBytes);
+          let offset = 0;
+          for (const chunk of chunks) {
+            combined.set(chunk, offset);
+            offset += chunk.length;
+          }
+          pdfData = combined.buffer;
+
+          // Asynchronously save to IndexedDB cache
+          void setCachedPdf(fileId, pdfData);
+        } else {
+          pdfData = await res.arrayBuffer();
+          void setCachedPdf(fileId, pdfData);
+        }
+      }
+
+      // Step 3: Load document from memory buffer (rock solid, 0 network requests, 0 byte-range bugs)
       const loadingTask = pdfjsLib.getDocument({
-        url,
-        rangeChunkSize: 65536 * 16, // 1MB chunks for far faster streaming throughput and fewer requests
-        disableAutoFetch: true, // Only fetch ranges on demand; do not sequentially stream entire 60MB file
-        disableStream: true, // Discrete byte-range requests
+        data: new Uint8Array(pdfData),
+        cMapUrl: "/cmaps/",
+        cMapPacked: true,
       });
 
       const doc = await loadingTask.promise;
@@ -597,11 +660,12 @@ export function PdfViewer({
 
       // Immediately display document without blocking on outline
       setIsLoading(false);
+      setLoadingProgress(null);
 
-      // Run outline extraction after initial page has rendered to prevent network contention
+      // Run outline extraction after initial page has rendered
       setTimeout(() => {
         void parseOutlineInBackground(doc);
-      }, 1200);
+      }, 500);
 
       // Restore last visited page
       const savedLastPage = getPdfLastPage(fileId);
@@ -614,12 +678,13 @@ export function PdfViewer({
             setResumeNotification(`Resumed at Page ${savedLastPage}`);
             setTimeout(() => setResumeNotification(null), 3000);
           }
-        }, 200);
+        }, 150);
       }
     } catch (err: any) {
       console.error("Error loading PDF:", err);
       setLoadingError(err?.message || "Failed to parse PDF document");
       setIsLoading(false);
+      setLoadingProgress(null);
     }
   }, [fileId, parseOutlineInBackground]);
 
@@ -1195,7 +1260,13 @@ export function PdfViewer({
             <MacFileLoader
               fileName={fileName}
               fileType="pdf"
-              message="Rendering PDF with interactive highlights…"
+              message={
+                loadingProgress && loadingProgress.total > 0
+                  ? `Loading PDF: ${loadingProgress.percent}% (${(loadingProgress.loaded / (1024 * 1024)).toFixed(1)} MB / ${(loadingProgress.total / (1024 * 1024)).toFixed(1)} MB)…`
+                  : loadingProgress && loadingProgress.loaded > 0
+                  ? `Downloading PDF: ${(loadingProgress.loaded / (1024 * 1024)).toFixed(1)} MB…`
+                  : "Rendering PDF with interactive highlights…"
+              }
             />
           </div>
         )}

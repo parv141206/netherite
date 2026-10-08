@@ -38,16 +38,16 @@ export async function GET(req: Request) {
     );
 
     headers.set("Cache-Control", "private, max-age=86400, stale-while-revalidate=604800");
-    headers.set("Accept-Ranges", "bytes");
     headers.set("X-Frame-Options", "SAMEORIGIN");
 
     if (asset.contentRange) {
+      headers.set("Accept-Ranges", "bytes");
       headers.set("Content-Range", asset.contentRange);
     }
 
     if (asset.contentLength) {
       headers.set("Content-Length", asset.contentLength);
-    } else if (asset.size && !asset.contentRange) {
+    } else if (asset.size) {
       headers.set("Content-Length", String(asset.size));
     }
 
